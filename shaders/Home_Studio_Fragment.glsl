@@ -44,6 +44,21 @@ uniform float uR738C1BakePatchResolution;
 uniform float uR738C1BakeDiffuseOnlyMode;
 uniform sampler2D tR738C1BakeAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTexture;
+uniform sampler2D tR7310C1SeColumnNorthShadowTexture;
+uniform sampler2D tR7310C1SeColumnWestShadowTexture;
+uniform sampler2D tR7310C1SouthWallAcShadowTexture;
+uniform sampler2D tR7310C1EastWallBeamShadowTexture;
+uniform sampler2D tR7310C1SwColumnNorthShadowTexture;
+uniform sampler2D tR7310C1WestWallBeamShadowTexture;
+uniform sampler2D tR7310C1SwColumnInnerShadowTexture;
+uniform sampler2D tR7310C1WestBeamInnerShadowTexture;
+uniform sampler2D tR7310C1WestBeamUnderShadowTexture;
+uniform sampler2D tR7310C1EastBeamInnerShadowTexture;
+uniform sampler2D tR7310C1EastBeamUnderShadowTexture;
+uniform sampler2D tR7310C1SouthWindowLeftRevealShadowTexture;
+uniform sampler2D tR7310C1SouthWindowRightRevealShadowTexture;
+uniform sampler2D tR7310C1SouthWindowBottomRevealShadowTexture;
+uniform sampler2D tR7310C1SouthWindowTopRevealShadowTexture;
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -52,9 +67,57 @@ uniform float uR7310C1EastWallDiffuseMode;
 uniform float uR7310C1WestWallDiffuseMode;
 uniform float uR7310C1SouthWallDiffuseMode;
 uniform float uR7310C1CeilingDiffuseMode;
+uniform float uR7310C1StructuralDiffuseMode;
+uniform float uR7310C1SeColumnNorthShadowMode;
+uniform float uR7310C1SeColumnNorthShadowReady;
+uniform float uR7310C1SeColumnNorthShadowResolution;
+uniform float uR7310C1SeColumnWestShadowMode;
+uniform float uR7310C1SeColumnWestShadowReady;
+uniform float uR7310C1SeColumnWestShadowResolution;
+uniform float uR7310C1SouthWallAcShadowMode;
+uniform float uR7310C1SouthWallAcShadowReady;
+uniform float uR7310C1SouthWallAcShadowResolution;
+uniform float uR7310C1EastWallBeamShadowMode;
+uniform float uR7310C1EastWallBeamShadowReady;
+uniform float uR7310C1EastWallBeamShadowResolution;
+uniform float uR7310C1SwColumnNorthShadowMode;
+uniform float uR7310C1SwColumnNorthShadowReady;
+uniform float uR7310C1SwColumnNorthShadowResolution;
+uniform float uR7310C1WestWallBeamShadowMode;
+uniform float uR7310C1WestWallBeamShadowReady;
+uniform float uR7310C1WestWallBeamShadowResolution;
+uniform float uR7310C1WestWallBeamShadowZMaxOverride;
+uniform float uR7310C1SwColumnInnerShadowMode;
+uniform float uR7310C1SwColumnInnerShadowReady;
+uniform float uR7310C1SwColumnInnerShadowResolution;
+uniform float uR7310C1WestBeamInnerShadowMode;
+uniform float uR7310C1WestBeamInnerShadowReady;
+uniform float uR7310C1WestBeamInnerShadowResolution;
+uniform float uR7310C1WestBeamUnderShadowMode;
+uniform float uR7310C1WestBeamUnderShadowReady;
+uniform float uR7310C1WestBeamUnderShadowResolution;
+uniform float uR7310C1EastBeamInnerShadowMode;
+uniform float uR7310C1EastBeamInnerShadowReady;
+uniform float uR7310C1EastBeamInnerShadowResolution;
+uniform float uR7310C1EastBeamUnderShadowMode;
+uniform float uR7310C1EastBeamUnderShadowReady;
+uniform float uR7310C1EastBeamUnderShadowResolution;
+uniform float uR7310C1SouthWindowLeftRevealShadowMode;
+uniform float uR7310C1SouthWindowLeftRevealShadowReady;
+uniform float uR7310C1SouthWindowLeftRevealShadowResolution;
+uniform float uR7310C1SouthWindowRightRevealShadowMode;
+uniform float uR7310C1SouthWindowRightRevealShadowReady;
+uniform float uR7310C1SouthWindowRightRevealShadowResolution;
+uniform float uR7310C1SouthWindowBottomRevealShadowMode;
+uniform float uR7310C1SouthWindowBottomRevealShadowReady;
+uniform float uR7310C1SouthWindowBottomRevealShadowResolution;
+uniform float uR7310C1SouthWindowTopRevealShadowMode;
+uniform float uR7310C1SouthWindowTopRevealShadowReady;
+uniform float uR7310C1SouthWindowTopRevealShadowResolution;
 uniform float uR7310C1RuntimeProbeMode;
 uniform float uR7310C1RuntimeAtlasPatchResolution;
 uniform float uR7310C1RuntimeAtlasPatchCount;
+uniform float uR7310C1RuntimeAtlasGridColumns;
 uniform float uR738C1BakePastePreviewMode;
 uniform float uR738C1BakePastePreviewReady;
 uniform float uR738C1BakePastePreviewStrength;
@@ -429,6 +492,20 @@ vec2 r7310C1SouthWallAtlasUvFromPackedPoint(float x, float y)
 {
 	return vec2((x + 2.11) / 4.22, y / 2.905);
 }
+float r7310C1SouthWallFrontHoleEdgeBand()
+{
+	return max(0.025, 8.0 * 4.22 / max(1.0, uR7310C1RuntimeAtlasPatchResolution));
+}
+float r7310C1SouthWallClampPackedX(float x, float xMin, float xMax)
+{
+	float inset = 4.22 / max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	return clamp(x, xMin + inset, xMax - inset);
+}
+float r7310C1SouthWallClampPackedY(float y, float yMin, float yMax)
+{
+	float inset = 2.905 / max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	return clamp(y, yMin + inset, yMax - inset);
+}
 bool r7310C1SouthWallWindowRevealBakePoint(float x, float y, out vec3 position, out vec3 normal)
 {
 	float revealY = 0.0;
@@ -452,25 +529,107 @@ bool r7310C1SouthWallWindowRevealBakePoint(float x, float y, out vec3 position, 
 		normal = vec3(-1.0, 0.0, 0.0);
 		return true;
 	}
-	if (r7310C1SouthWallAtlasRect(x, y, -1.45, 0.39, 1.10, 1.27))
+	if (r7310C1SouthWallAtlasRect(x, y, -1.52, 0.46, 1.10, 1.27))
 	{
 		float safeY = r7310C1SouthWallRevealBakePackedY(y, 1.10, 1.27);
-		revealX = mix(-1.75, 0.69, (x + 1.45) / (0.39 + 1.45));
+		revealX = mix(-1.75, 0.69, (x + 1.52) / (0.46 + 1.52));
 		revealZ = mix(3.056, 3.256, (safeY - 1.10) / (1.27 - 1.10));
 		position = vec3(revealX, 1.04, revealZ);
 		normal = vec3(0.0, 1.0, 0.0);
 		return true;
 	}
-	if (r7310C1SouthWallAtlasRect(x, y, -1.45, 0.39, 2.675, 2.845))
+	if (r7310C1SouthWallAtlasRect(x, y, -1.52, 0.46, 2.675, 2.845))
 	{
 		float safeY = r7310C1SouthWallRevealBakePackedY(y, 2.675, 2.845);
-		revealX = mix(-1.75, 0.69, (x + 1.45) / (0.39 + 1.45));
+		revealX = mix(-1.75, 0.69, (x + 1.52) / (0.46 + 1.52));
 		revealZ = mix(3.056, 3.256, (safeY - 2.675) / (2.845 - 2.675));
 		position = vec3(revealX, 2.905, revealZ);
 		normal = vec3(0.0, -1.0, 0.0);
 		return true;
 	}
 	return false;
+}
+bool r7310C1SouthWallWindowFrontEdgeDiffuseUv(vec3 visiblePosition, vec3 visibleNormal, out vec2 atlasUv)
+{
+	atlasUv = vec2(0.0);
+	if (visibleNormal.z >= -0.5 ||
+		visiblePosition.z < 3.05 || visiblePosition.z > 3.07 ||
+		visiblePosition.x < -1.75 || visiblePosition.x > 0.69 ||
+		visiblePosition.y < 1.04 || visiblePosition.y > 2.905)
+		return false;
+
+	float leftDistance = visiblePosition.x + 1.75;
+	float rightDistance = 0.69 - visiblePosition.x;
+	float bottomDistance = visiblePosition.y - 1.04;
+	float topDistance = 2.905 - visiblePosition.y;
+	float nearestDistance = min(min(leftDistance, rightDistance), min(bottomDistance, topDistance));
+	if (nearestDistance > r7310C1SouthWallFrontHoleEdgeBand())
+		return false;
+
+	float tx = clamp((visiblePosition.x + 1.75) / (0.69 + 1.75), 0.0, 1.0);
+	float ty = clamp((visiblePosition.y - 1.04) / (2.905 - 1.04), 0.0, 1.0);
+	if (bottomDistance <= topDistance &&
+		bottomDistance <= leftDistance &&
+		bottomDistance <= rightDistance)
+	{
+		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
+			r7310C1SouthWallClampPackedX(mix(-1.52, 0.46, tx), -1.52, 0.46),
+			1.10 + 2.905 / max(1.0, uR7310C1RuntimeAtlasPatchResolution)
+		);
+		return true;
+	}
+	if (topDistance <= leftDistance &&
+		topDistance <= rightDistance)
+	{
+		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
+			r7310C1SouthWallClampPackedX(mix(-1.52, 0.46, tx), -1.52, 0.46),
+			2.675 + 2.905 / max(1.0, uR7310C1RuntimeAtlasPatchResolution)
+		);
+		return true;
+	}
+	if (leftDistance <= rightDistance)
+	{
+		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
+			-1.69 + 4.22 / max(1.0, uR7310C1RuntimeAtlasPatchResolution),
+			r7310C1SouthWallClampPackedY(mix(1.10, 2.845, ty), 1.10, 2.845)
+		);
+		return true;
+	}
+	atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
+		0.46 + 4.22 / max(1.0, uR7310C1RuntimeAtlasPatchResolution),
+		r7310C1SouthWallClampPackedY(mix(1.10, 2.845, ty), 1.10, 2.845)
+	);
+	return true;
+}
+bool r7310C1StructuralSeColumnNorthHiddenByEastBeam(float x, float y)
+{
+	return x >= 1.85 && y >= 2.515;
+}
+bool r7310C1SeColumnNorthShadowHiddenByEastBeam(float x, float y)
+{
+	return x >= 1.85 &&
+		x <= 1.91 &&
+		y >= 2.515 &&
+		y <= 2.905;
+}
+bool r7310C1StructuralSeColumnInnerHiddenByBookshelf(float z, float y)
+{
+	return z >= 2.73 && y <= 2.04;
+}
+bool r7310C1EastWallHiddenByBeamOrSeColumn(float z, float y)
+{
+	return z >= 2.49 || (z <= 2.49 && y >= 2.515);
+}
+bool r7310C1WestWallHiddenByBeamOrSwColumn(float z, float y)
+{
+	return z >= 2.846 || (z <= 2.846 && y >= 2.525);
+}
+bool r7310C1SouthWallAcShadowHiddenBySeColumn(float x, float y)
+{
+	return x >= 1.78 &&
+		x <= 1.91 &&
+		y >= 0.0 &&
+		y <= 2.905;
 }
 bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out vec3 normal, out int hitType, out float objectID)
 {
@@ -501,6 +660,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	{
 		float z = mix(-1.874, 3.056, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1EastWallHiddenByBeamOrSeColumn(z, y))
+			return false;
 		position = vec3(1.91, y, z);
 		normal = vec3(-1.0, 0.0, 0.0);
 		hitType = 1;
@@ -512,6 +673,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 		float z = mix(-1.874, 3.056, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
 		if (z >= -1.874 && z <= -0.984 && y >= 0.09 && y <= 2.04)
+			return false;
+		if (r7310C1WestWallHiddenByBeamOrSwColumn(z, y))
 			return false;
 		position = vec3(-1.91, y, z);
 		normal = vec3(1.0, 0.0, 0.0);
@@ -541,6 +704,262 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	{
 		float x = mix(-2.11, 2.11, uv.x);
 		float z = mix(-2.074, 3.256, uv.y);
+		position = vec3(x, 2.905, z);
+		normal = vec3(0.0, -1.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1007)
+	{
+		if (uv.x >= 0.000 && uv.x <= 0.500 && uv.y >= 0.000 && uv.y <= 0.170)
+		{
+			float tU = (uv.x - 0.000) / 0.500;
+			float tV = (uv.y - 0.000) / 0.170;
+			position = vec3(-1.75, mix(2.525, 2.905, tV), mix(-1.874, 2.848, tU));
+			normal = vec3(1.0, 0.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.000 && uv.x <= 0.500 && uv.y >= 0.180 && uv.y <= 0.260)
+		{
+			float tU = (uv.x - 0.000) / 0.500;
+			float tV = (uv.y - 0.180) / 0.080;
+			position = vec3(mix(-1.91, -1.75, tV), 2.525, mix(-1.874, 2.846, tU));
+			normal = vec3(0.0, -1.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.000 && uv.x <= 0.500 && uv.y >= 0.270 && uv.y <= 0.440)
+		{
+			float tU = (uv.x - 0.000) / 0.500;
+			float tV = (uv.y - 0.270) / 0.170;
+			position = vec3(1.85, mix(2.515, 2.905, tV), mix(-1.874, 2.49, tU));
+			normal = vec3(-1.0, 0.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.000 && uv.x <= 0.500 && uv.y >= 0.450 && uv.y <= 0.530)
+		{
+			float tU = (uv.x - 0.000) / 0.500;
+			float tV = (uv.y - 0.450) / 0.080;
+			position = vec3(mix(1.85, 1.91, tV), 2.515, mix(-1.874, 2.49, tU));
+			normal = vec3(0.0, -1.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.520 && uv.x <= 0.740 && uv.y >= 0.000 && uv.y <= 0.360)
+		{
+			float tU = (uv.x - 0.520) / 0.220;
+			float tV = (uv.y - 0.000) / 0.360;
+			position = vec3(-1.75, mix(0.0, 2.905, tV), mix(2.846, 3.056, tU));
+			normal = vec3(1.0, 0.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.760 && uv.x <= 0.940 && uv.y >= 0.000 && uv.y <= 0.360)
+		{
+			float tU = (uv.x - 0.760) / 0.180;
+			float tV = (uv.y - 0.000) / 0.360;
+			position = vec3(mix(-1.91, -1.75, tU), mix(0.0, 2.525, tV), 2.846);
+			normal = vec3(0.0, 0.0, -1.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.520 && uv.x <= 0.740 && uv.y >= 0.380 && uv.y <= 0.760)
+		{
+			float tU = (uv.x - 0.520) / 0.220;
+			float tV = (uv.y - 0.380) / 0.380;
+			float rawY = mix(0.0, 2.905, tV);
+			float rawZ = mix(2.49, 3.056, tU);
+			if (r7310C1StructuralSeColumnInnerHiddenByBookshelf(rawZ, rawY))
+				return false;
+			position = vec3(1.78, rawY, rawZ);
+			normal = vec3(-1.0, 0.0, 0.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		if (uv.x >= 0.000 && uv.x <= 1.000 && uv.y >= 0.880 && uv.y <= 1.000)
+		{
+			float tU = uv.x;
+			float tV = (uv.y - 0.880) / 0.120;
+			float rawY = mix(0.0, 2.905, tU);
+			float rawX = mix(1.78, 1.91, tV);
+			if (r7310C1StructuralSeColumnNorthHiddenByEastBeam(rawX, rawY))
+				return false;
+			position = vec3(rawX, rawY, 2.49);
+			normal = vec3(0.0, 0.0, -1.0);
+			hitType = 1;
+			objectID = 0.0;
+			return true;
+		}
+		return false;
+	}
+	if (patchId == 1008)
+	{
+		float x = mix(1.78, 1.91, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1SeColumnNorthShadowHiddenByEastBeam(x, y))
+			return false;
+		position = vec3(x, y, 2.49);
+		normal = vec3(0.0, 0.0, -1.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1009)
+	{
+		float z = mix(2.49, 3.056, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1StructuralSeColumnInnerHiddenByBookshelf(z, y))
+			return false;
+		position = vec3(1.78, y, z);
+		normal = vec3(-1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1010)
+	{
+		float x = mix(-2.11, 2.11, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		if (x >= -1.75 && x <= 0.69 && y >= 1.04 && y <= 2.905)
+			return false;
+		if (r7310C1SouthWallAcShadowHiddenBySeColumn(x, y))
+			return false;
+		position = vec3(x, y, 3.056);
+		normal = vec3(0.0, 0.0, -1.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1011)
+	{
+		float z = mix(-1.874, 3.056, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1EastWallHiddenByBeamOrSeColumn(z, y))
+			return false;
+		position = vec3(1.91, y, z);
+		normal = vec3(-1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1012)
+	{
+		float x = mix(-1.91, -1.75, uv.x);
+		float y = mix(0.0, 2.525, uv.y);
+		position = vec3(x, y, 2.846);
+		normal = vec3(0.0, 0.0, -1.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1013)
+	{
+		float z = mix(-1.874, 3.056, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		if (z >= -1.874 && z <= -0.984 && y >= 0.09 && y <= 2.04)
+			return false;
+		if (r7310C1WestWallHiddenByBeamOrSwColumn(z, y))
+			return false;
+		position = vec3(-1.91, y, z);
+		normal = vec3(1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1014)
+	{
+		float z = mix(2.846, 3.256, uv.x);
+		float y = mix(0.0, 2.905, uv.y);
+		position = vec3(-1.75, y, z);
+		normal = vec3(1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1015)
+	{
+		float z = mix(-1.874, 2.848, uv.x);
+		float y = mix(2.525, 2.905, uv.y);
+		position = vec3(-1.75, y, z);
+		normal = vec3(1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1016)
+	{
+		float z = mix(-1.874, 2.846, uv.x);
+		float x = mix(-1.91, -1.75, uv.y);
+		position = vec3(x, 2.525, z);
+		normal = vec3(0.0, -1.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1017)
+	{
+		float z = mix(-1.874, 2.49, uv.x);
+		float y = mix(2.515, 2.905, uv.y);
+		position = vec3(1.85, y, z);
+		normal = vec3(-1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1018)
+	{
+		float z = mix(-1.874, 2.49, uv.x);
+		float x = mix(1.85, 1.91, uv.y);
+		position = vec3(x, 2.515, z);
+		normal = vec3(0.0, -1.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1019)
+	{
+		float z = mix(3.056, 3.256, uv.x);
+		float y = mix(1.04, 2.905, uv.y);
+		position = vec3(-1.75, y, z);
+		normal = vec3(1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1020)
+	{
+		float z = mix(3.056, 3.256, uv.x);
+		float y = mix(1.04, 2.905, uv.y);
+		position = vec3(0.69, y, z);
+		normal = vec3(-1.0, 0.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1021)
+	{
+		float x = mix(-1.75, 0.69, uv.x);
+		float z = mix(3.056, 3.256, uv.y);
+		position = vec3(x, 1.04, z);
+		normal = vec3(0.0, 1.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1022)
+	{
+		float x = mix(-1.75, 0.69, uv.x);
+		float z = mix(3.056, 3.256, uv.y);
 		position = vec3(x, 2.905, z);
 		normal = vec3(0.0, -1.0, 0.0);
 		hitType = 1;
@@ -599,9 +1018,126 @@ vec2 r7310C1CombinedAtlasUv(vec2 localUv, float patchSlot)
 {
 	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
 	float patchCount = max(1.0, uR7310C1RuntimeAtlasPatchCount);
+	float columns = max(1.0, uR7310C1RuntimeAtlasGridColumns);
+	float rows = max(1.0, ceil(patchCount / columns));
+	float slot = clamp(patchSlot, 0.0, patchCount - 1.0);
+	float column = mod(slot, columns);
+	float row = floor(slot / columns);
 	vec2 safeUv = (clamp(localUv, vec2(0.0), vec2(1.0)) * (resolution - 1.0) + 0.5) / resolution;
-	return vec2((safeUv.x + patchSlot) / patchCount, safeUv.y);
+	return vec2((safeUv.x + column) / columns, (safeUv.y + row) / rows);
 }
+vec4 r7310C1FullRoomDiffuseSamplePatchTexel(vec2 pixelCoord, float patchSlot)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	float patchCount = max(1.0, uR7310C1RuntimeAtlasPatchCount);
+	float columns = max(1.0, uR7310C1RuntimeAtlasGridColumns);
+	float rows = max(1.0, ceil(patchCount / columns));
+	float slot = clamp(patchSlot, 0.0, patchCount - 1.0);
+	float column = mod(slot, columns);
+	float row = floor(slot / columns);
+	vec2 localUv = (pixelCoord + vec2(0.5)) / resolution;
+	return texture(tR7310C1FullRoomDiffuseAtlasTexture, vec2((localUv.x + column) / columns, (localUv.y + row) / rows));
+}
+vec3 r7310C1FullRoomDiffuseSamplePatchPixel(vec2 pixelCoord, float patchSlot)
+{
+	return max(r7310C1FullRoomDiffuseSamplePatchTexel(pixelCoord, patchSlot).rgb, vec3(0.0));
+}
+vec3 r7310C1PatchCoverageProbe(vec2 atlasUv, float resolution, float patchSlot, float routeId)
+{
+	float safeResolution = max(1.0, resolution);
+	vec2 pixel = clamp(atlasUv * safeResolution - vec2(0.5), vec2(0.0), vec2(safeResolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(safeResolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1FullRoomDiffuseSamplePatchTexel(p0, patchSlot);
+	vec4 c10 = r7310C1FullRoomDiffuseSamplePatchTexel(vec2(p1.x, p0.y), patchSlot);
+	vec4 c01 = r7310C1FullRoomDiffuseSamplePatchTexel(vec2(p0.x, p1.y), patchSlot);
+	vec4 c11 = r7310C1FullRoomDiffuseSamplePatchTexel(p1, patchSlot);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexel(floor(pixel + vec2(0.5)), patchSlot);
+	return vec3(clamp(weightSum, 0.0, 1.0), clamp(nearest.a, 0.0, 1.0), clamp(routeId / 255.0, 0.0, 1.0));
+}
+vec3 r7310C1FullAtlasCoverageProbe(float routeId)
+{
+	return vec3(1.0, 1.0, clamp(routeId / 255.0, 0.0, 1.0));
+}
+vec3 r7310C1FullRoomDiffuseSampleRectLinear(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 minPixel = ceil(rect.xy * resolution - vec2(0.5));
+	vec2 maxPixel = floor(rect.zw * resolution - vec2(0.5));
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), minPixel, maxPixel);
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), maxPixel);
+	vec2 t = pixel - p0;
+	vec3 c00 = r7310C1FullRoomDiffuseSamplePatchPixel(p0, patchSlot);
+	vec3 c10 = r7310C1FullRoomDiffuseSamplePatchPixel(vec2(p1.x, p0.y), patchSlot);
+	vec3 c01 = r7310C1FullRoomDiffuseSamplePatchPixel(vec2(p0.x, p1.y), patchSlot);
+	vec3 c11 = r7310C1FullRoomDiffuseSamplePatchPixel(p1, patchSlot);
+	return mix(mix(c00, c10, t.x), mix(c01, c11, t.x), t.y);
+}
+vec3 r7310C1FullRoomDiffuseSampleRectTent3(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 pixelStep = vec2(1.0 / resolution);
+	vec3 sum = vec3(0.0);
+	float weightSum = 0.0;
+	for (int y = -1; y <= 1; y++)
+	{
+		for (int x = -1; x <= 1; x++)
+		{
+			float wx = x == 0 ? 2.0 : 1.0;
+			float wy = y == 0 ? 2.0 : 1.0;
+			float w = wx * wy;
+			sum += w * r7310C1FullRoomDiffuseSampleRectLinear(
+				atlasUv + vec2(float(x), float(y)) * pixelStep,
+				patchSlot,
+				rect
+			);
+			weightSum += w;
+		}
+	}
+	return sum / max(1.0, weightSum);
+}
+vec3 r7310C1FullRoomDiffuseSampleRectTent5(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 pixelStep = vec2(1.0 / resolution);
+	vec3 sum = vec3(0.0);
+	float weightSum = 0.0;
+	for (int y = -2; y <= 2; y++)
+	{
+		for (int x = -2; x <= 2; x++)
+		{
+			float wx = 3.0 - abs(float(x));
+			float wy = 3.0 - abs(float(y));
+			float w = wx * wy;
+			sum += w * r7310C1FullRoomDiffuseSampleRectLinear(
+				atlasUv + vec2(float(x), float(y)) * pixelStep,
+				patchSlot,
+				rect
+			);
+			weightSum += w;
+		}
+	}
+	return sum / max(1.0, weightSum);
+}
+vec4 r7310C1EastWallAtlasRect()
+{
+	return vec4(0.0, 0.0, 1.0, 1.0);
+}
+const float R7310_C1_EAST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX = 2.49;
+const float R7310_C1_WEST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX = 2.846;
+const float R7310_C1_WEST_WALL_BEAM_SHADOW_Z_MAX = 3.056;
+const float R7310_C1_WEST_WALL_BEAM_SHADOW_Y_MAX = 2.905;
+const float R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2.475;
+const float R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
+const float R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN = 2.7179;
+const float R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
 bool r7310C1RuntimeSurfaceIsTrueFloor(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
@@ -652,6 +1188,18 @@ bool r7310C1RuntimeSurfaceIsSouthWall(int visibleHitType, float visibleObjectID,
 		visiblePosition.y >= 0.0 &&
 			visiblePosition.y <= 2.905;
 }
+bool r7310C1SouthWallWindowHolePoint(vec3 visiblePosition)
+{
+	return visiblePosition.x >= -1.75 &&
+		visiblePosition.x <= 0.69 &&
+		visiblePosition.y >= 1.04 &&
+		visiblePosition.y <= 2.905;
+}
+bool r7310C1RuntimeSurfaceIsSouthWallAcShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return r7310C1RuntimeSurfaceIsSouthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		!r7310C1SouthWallWindowHolePoint(visiblePosition);
+}
 bool r7310C1RuntimeSurfaceIsCeiling(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
@@ -662,6 +1210,107 @@ bool r7310C1RuntimeSurfaceIsCeiling(int visibleHitType, float visibleObjectID, v
 		visiblePosition.x <= 2.11 &&
 		visiblePosition.z >= -2.074 &&
 		visiblePosition.z <= 3.256;
+}
+float r7310C1StructuralBeamColumnIslandId(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	if (visibleObjectID >= 1.5)
+		return 0.0;
+	if (visibleNormal.x > 0.5 &&
+		visiblePosition.x >= -1.760 && visiblePosition.x <= -1.740 &&
+		visiblePosition.y >= 2.525 && visiblePosition.y <= 2.905 &&
+		visiblePosition.z >= -1.874 && visiblePosition.z <= 2.848)
+		return 1.0;
+	if (visibleNormal.y < -0.5 &&
+		visiblePosition.y >= 2.515 && visiblePosition.y <= 2.535 &&
+		visiblePosition.x >= -1.91 && visiblePosition.x <= -1.75 &&
+		visiblePosition.z >= -1.874 && visiblePosition.z <= 2.846)
+		return 2.0;
+	if (visibleNormal.x < -0.5 &&
+		visiblePosition.x >= 1.840 && visiblePosition.x <= 1.860 &&
+		visiblePosition.y >= 2.515 && visiblePosition.y <= 2.905 &&
+		visiblePosition.z >= -1.874 && visiblePosition.z <= 2.49)
+		return 3.0;
+	if (visibleNormal.y < -0.5 &&
+		visiblePosition.y >= 2.505 && visiblePosition.y <= 2.525 &&
+		visiblePosition.x >= 1.85 && visiblePosition.x <= 1.91 &&
+		visiblePosition.z >= -1.874 && visiblePosition.z <= 2.49)
+		return 4.0;
+	if (visibleNormal.x > 0.5 &&
+		visiblePosition.x >= -1.760 && visiblePosition.x <= -1.740 &&
+		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.905 &&
+		visiblePosition.z >= 2.846 && visiblePosition.z <= 3.056)
+		return 5.0;
+	if (visibleNormal.z < -0.5 &&
+		visiblePosition.z >= 2.838 && visiblePosition.z <= 2.858 &&
+		visiblePosition.x >= -1.91 && visiblePosition.x <= -1.75 &&
+		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.525)
+		return 6.0;
+	if (visibleNormal.x < -0.5 &&
+		visiblePosition.x >= 1.770 && visiblePosition.x <= 1.790 &&
+		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.905 &&
+		visiblePosition.z >= 2.49 && visiblePosition.z <= 3.056 &&
+		!r7310C1StructuralSeColumnInnerHiddenByBookshelf(visiblePosition.z, visiblePosition.y))
+		return 7.0;
+	if (visibleNormal.z < -0.5 &&
+		visiblePosition.z >= 2.480 && visiblePosition.z <= 2.500 &&
+		visiblePosition.x >= 1.78 && visiblePosition.x <= 1.91 &&
+		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.905)
+		return 8.0;
+	return 0.0;
+}
+bool r7310C1RuntimeSurfaceIsStructuralBeamColumn(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return r7310C1StructuralBeamColumnIslandId(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) > 0.5;
+}
+bool r7310C1RuntimeSurfaceIsSeColumnNorthShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.z < -0.5 &&
+		visiblePosition.z >= 2.480 &&
+		visiblePosition.z <= 2.500 &&
+		visiblePosition.x >= 1.78 &&
+		visiblePosition.x <= 1.91 &&
+		visiblePosition.y >= 0.0 &&
+		visiblePosition.y <= 2.905;
+}
+bool r7310C1RuntimeSurfaceIsSeColumnWestShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x < -0.5 &&
+		visiblePosition.x >= 1.770 &&
+		visiblePosition.x <= 1.790 &&
+		visiblePosition.z >= 2.49 &&
+		visiblePosition.z <= 3.056 &&
+		visiblePosition.y >= 0.0 &&
+		visiblePosition.y <= 2.905 &&
+		!r7310C1StructuralSeColumnInnerHiddenByBookshelf(visiblePosition.z, visiblePosition.y);
+}
+bool r7310C1RuntimeSurfaceIsSwColumnNorthShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.z < -0.5 &&
+		visiblePosition.z >= 2.838 &&
+		visiblePosition.z <= 2.858 &&
+		visiblePosition.x >= -1.91 &&
+		visiblePosition.x <= -1.75 &&
+		visiblePosition.y >= 0.0 &&
+		visiblePosition.y <= 2.525;
+}
+vec4 r7310C1StructuralBeamColumnAtlasRect(float islandId)
+{
+	if (islandId < 1.5) return vec4(0.000, 0.000, 0.500, 0.170);
+	if (islandId < 2.5) return vec4(0.000, 0.180, 0.500, 0.260);
+	if (islandId < 3.5) return vec4(0.000, 0.270, 0.500, 0.440);
+	if (islandId < 4.5) return vec4(0.000, 0.450, 0.500, 0.530);
+	if (islandId < 5.5) return vec4(0.520, 0.000, 0.740, 0.360);
+	if (islandId < 6.5) return vec4(0.760, 0.000, 0.940, 0.360);
+	if (islandId < 7.5) return vec4(0.520, 0.380, 0.740, 0.760);
+	if (islandId < 8.5) return vec4(0.000, 0.880, 1.000, 1.000);
+	return vec4(0.0, 0.0, 1.0, 1.0);
+}
+vec4 r7310C1StructuralBeamColumnAtlasRectForPoint(float islandId, vec3 visiblePosition)
+{
+	return r7310C1StructuralBeamColumnAtlasRect(islandId);
 }
 bool r7310C1NorthWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 {
@@ -681,9 +1330,38 @@ bool r7310C1NorthWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 	);
 	return true;
 }
+bool r7310C1NorthWallHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1NorthWallDiffuseMode > 0.5 &&
+		uR7310C1FullRoomDiffuseReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv);
+}
+vec3 r7310C1NorthWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 1.0));
+}
+bool r7310C1NorthWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1002 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
 bool r7310C1EastWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 {
 	if (!r7310C1RuntimeSurfaceIsEastWall(1, 0.0, vec3(-1.0, 0.0, 0.0), visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (visiblePosition.z >= R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN ||
+		visiblePosition.y >= R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN)
 	{
 		atlasUv = vec2(0.0);
 		return false;
@@ -693,6 +1371,757 @@ bool r7310C1EastWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 		visiblePosition.y / 2.905
 	);
 	return true;
+}
+bool r7310C1EastWallHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1EastWallDiffuseMode > 0.5 &&
+		uR7310C1FullRoomDiffuseReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1EastWallDiffuseUv(visiblePosition, atlasUv);
+}
+vec3 r7310C1EastWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1EastWallDiffuseUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
+}
+bool r7310C1EastWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1003 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsEastWallBeamShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		visiblePosition.z < R7310_C1_EAST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX;
+}
+bool r7310C1EastWallBeamShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsEastWallBeamShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.93,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1EastWallBeamShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1EastWallBeamShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 10.0);
+}
+vec3 r7310C1EastWallBeamShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1EastWallBeamShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1EastWallBeamShadowTexel(p0);
+	vec4 c10 = r7310C1EastWallBeamShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1EastWallBeamShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1EastWallBeamShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1EastWallBeamShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1EastWallBeamShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1EastWallBeamShadowMode > 0.5 &&
+		uR7310C1EastWallBeamShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsEastWallBeamShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1EastWallBeamShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1EastWallBeamShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1EastWallBeamShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1EastWallBeamShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1EastWallBeamShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1011 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsWestWallBeamShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return r7310C1RuntimeSurfaceIsWestWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		visiblePosition.z <= max(uR7310C1WestWallBeamShadowZMaxOverride, R7310_C1_WEST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX) &&
+		visiblePosition.y <= R7310_C1_WEST_WALL_BEAM_SHADOW_Y_MAX;
+}
+bool r7310C1WestWallBeamShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsWestWallBeamShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.93,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1WestWallBeamShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1WestWallBeamShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 12.0);
+}
+vec3 r7310C1WestWallBeamShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1WestWallBeamShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1WestWallBeamShadowTexel(p0);
+	vec4 c10 = r7310C1WestWallBeamShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1WestWallBeamShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1WestWallBeamShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1WestWallBeamShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1WestWallBeamShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1WestWallBeamShadowMode > 0.5 &&
+		uR7310C1WestWallBeamShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsWestWallBeamShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1WestWallBeamShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1WestWallBeamShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1WestWallBeamShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1WestWallBeamShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1WestWallBeamShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1013 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsSwColumnInnerShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x > 0.5 &&
+		visiblePosition.x >= -1.760 &&
+		visiblePosition.x <= -1.740 &&
+		visiblePosition.z >= 2.846 &&
+		visiblePosition.z <= 3.256 &&
+		visiblePosition.y >= 0.0 &&
+		visiblePosition.y <= 2.905;
+}
+bool r7310C1SwColumnInnerShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSwColumnInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z - 2.846) / 0.410,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1SwColumnInnerShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1SwColumnInnerShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 13.0);
+}
+vec3 r7310C1SwColumnInnerShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1SwColumnInnerShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SwColumnInnerShadowTexel(p0);
+	vec4 c10 = r7310C1SwColumnInnerShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1SwColumnInnerShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1SwColumnInnerShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SwColumnInnerShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SwColumnInnerShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SwColumnInnerShadowMode > 0.5 &&
+		uR7310C1SwColumnInnerShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsSwColumnInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1SwColumnInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SwColumnInnerShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SwColumnInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SwColumnInnerShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1SwColumnInnerShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1014 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsWestBeamInnerShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x > 0.5 &&
+		visiblePosition.x >= -1.760 &&
+		visiblePosition.x <= -1.740 &&
+		visiblePosition.z >= -1.874 &&
+		visiblePosition.z <= 2.848 &&
+		visiblePosition.y >= 2.525 &&
+		visiblePosition.y <= 2.905;
+}
+bool r7310C1WestBeamInnerShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsWestBeamInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.722,
+		(visiblePosition.y - 2.525) / 0.380
+	);
+	return true;
+}
+vec4 r7310C1WestBeamInnerShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1WestBeamInnerShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 14.0);
+}
+vec3 r7310C1WestBeamInnerShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1WestBeamInnerShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1WestBeamInnerShadowTexel(p0);
+	vec4 c10 = r7310C1WestBeamInnerShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1WestBeamInnerShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1WestBeamInnerShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1WestBeamInnerShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1WestBeamInnerShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1WestBeamInnerShadowMode > 0.5 &&
+		uR7310C1WestBeamInnerShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsWestBeamInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1WestBeamInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1WestBeamInnerShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1WestBeamInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1WestBeamInnerShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1WestBeamInnerShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1015 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsWestBeamUnderShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.y < -0.5 &&
+		visiblePosition.y >= 2.515 &&
+		visiblePosition.y <= 2.535 &&
+		visiblePosition.x >= -1.91 &&
+		visiblePosition.x <= -1.75 &&
+		visiblePosition.z >= -1.874 &&
+		visiblePosition.z <= 2.846;
+}
+bool r7310C1WestBeamUnderShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsWestBeamUnderShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.720,
+		(visiblePosition.x + 1.91) / 0.160
+	);
+	return true;
+}
+vec4 r7310C1WestBeamUnderShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1WestBeamUnderShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 15.0);
+}
+vec3 r7310C1WestBeamUnderShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1WestBeamUnderShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1WestBeamUnderShadowTexel(p0);
+	vec4 c10 = r7310C1WestBeamUnderShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1WestBeamUnderShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1WestBeamUnderShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1WestBeamUnderShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1WestBeamUnderShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1WestBeamUnderShadowMode > 0.5 &&
+		uR7310C1WestBeamUnderShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsWestBeamUnderShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1WestBeamUnderShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1WestBeamUnderShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1WestBeamUnderShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1WestBeamUnderShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1WestBeamUnderShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1016 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsEastBeamInnerShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x < -0.5 &&
+		visiblePosition.x >= 1.840 &&
+		visiblePosition.x <= 1.860 &&
+		visiblePosition.z >= -1.874 &&
+		visiblePosition.z <= 2.49 &&
+		visiblePosition.y >= 2.515 &&
+		visiblePosition.y <= 2.905;
+}
+bool r7310C1EastBeamInnerShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsEastBeamInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.364,
+		(visiblePosition.y - 2.515) / 0.390
+	);
+	return true;
+}
+vec4 r7310C1EastBeamInnerShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1EastBeamInnerShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 16.0);
+}
+vec3 r7310C1EastBeamInnerShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1EastBeamInnerShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1EastBeamInnerShadowTexel(p0);
+	vec4 c10 = r7310C1EastBeamInnerShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1EastBeamInnerShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1EastBeamInnerShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1EastBeamInnerShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1EastBeamInnerShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1EastBeamInnerShadowMode > 0.5 &&
+		uR7310C1EastBeamInnerShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsEastBeamInnerShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1EastBeamInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1EastBeamInnerShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1EastBeamInnerShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1EastBeamInnerShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1EastBeamInnerShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1017 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1RuntimeSurfaceIsEastBeamUnderShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.y < -0.5 &&
+		visiblePosition.y >= 2.505 &&
+		visiblePosition.y <= 2.525 &&
+		visiblePosition.x >= 1.85 &&
+		visiblePosition.x <= 1.91 &&
+		visiblePosition.z >= -1.874 &&
+		visiblePosition.z <= 2.49;
+}
+bool r7310C1EastBeamUnderShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsEastBeamUnderShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z + 1.874) / 4.364,
+		(visiblePosition.x - 1.85) / 0.060
+	);
+	return true;
+}
+vec4 r7310C1EastBeamUnderShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1EastBeamUnderShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 17.0);
+}
+vec3 r7310C1EastBeamUnderShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1EastBeamUnderShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1EastBeamUnderShadowTexel(p0);
+	vec4 c10 = r7310C1EastBeamUnderShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1EastBeamUnderShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1EastBeamUnderShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1EastBeamUnderShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1EastBeamUnderShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1EastBeamUnderShadowMode > 0.5 &&
+		uR7310C1EastBeamUnderShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsEastBeamUnderShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1EastBeamUnderShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1EastBeamUnderShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1EastBeamUnderShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1EastBeamUnderShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1EastBeamUnderShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1018 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+float r7310C1SouthWindowFrontEdgeNearestReveal(vec3 visiblePosition, vec3 visibleNormal)
+{
+	if (visibleNormal.z >= -0.5 ||
+		visiblePosition.z < 3.05 || visiblePosition.z > 3.07 ||
+		visiblePosition.x < -1.75 || visiblePosition.x > 0.69 ||
+		visiblePosition.y < 1.04 || visiblePosition.y > 2.905)
+		return 0.0;
+	float leftDistance = visiblePosition.x + 1.75;
+	float rightDistance = 0.69 - visiblePosition.x;
+	float bottomDistance = visiblePosition.y - 1.04;
+	float topDistance = 2.905 - visiblePosition.y;
+	float nearestDistance = min(min(leftDistance, rightDistance), min(bottomDistance, topDistance));
+	if (nearestDistance > r7310C1SouthWallFrontHoleEdgeBand())
+		return 0.0;
+	if (bottomDistance <= topDistance &&
+		bottomDistance <= leftDistance &&
+		bottomDistance <= rightDistance)
+		return 3.0;
+	if (topDistance <= leftDistance &&
+		topDistance <= rightDistance)
+		return 4.0;
+	if (leftDistance <= rightDistance)
+		return 1.0;
+	return 2.0;
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x > 0.5 &&
+		visiblePosition.z >= 3.056 &&
+		visiblePosition.z <= 3.256 &&
+		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 0.5 &&
+			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 1.5);
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowRightRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		((visibleNormal.x < -0.5 &&
+			visiblePosition.x >= 0.68 && visiblePosition.x <= 0.70 &&
+			visiblePosition.y >= 1.04 && visiblePosition.y <= 2.905 &&
+			visiblePosition.z >= 3.056 && visiblePosition.z <= 3.256) ||
+		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 1.5 &&
+			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 2.5));
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowBottomRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		((visibleNormal.y > 0.5 &&
+			visiblePosition.y >= 1.03 && visiblePosition.y <= 1.05 &&
+			visiblePosition.x >= -1.75 && visiblePosition.x <= 0.69 &&
+			visiblePosition.z >= 3.056 && visiblePosition.z <= 3.256) ||
+		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 2.5 &&
+			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 3.5));
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowTopRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		((visibleNormal.y < -0.5 &&
+			visiblePosition.y >= 2.895 && visiblePosition.y <= 2.915 &&
+			visiblePosition.x >= -1.75 && visiblePosition.x <= 0.69 &&
+			visiblePosition.z >= 3.056 && visiblePosition.z <= 3.256) ||
+		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 3.5 &&
+			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 4.5));
+}
+bool r7310C1SouthWindowLeftRevealShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		clamp((visiblePosition.z - 3.056) / 0.200, 0.0, 1.0),
+		clamp((visiblePosition.y - 1.04) / 1.865, 0.0, 1.0)
+	);
+	return true;
+}
+bool r7310C1SouthWindowRightRevealShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSouthWindowRightRevealShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		clamp((visiblePosition.z - 3.056) / 0.200, 0.0, 1.0),
+		clamp((visiblePosition.y - 1.04) / 1.865, 0.0, 1.0)
+	);
+	return true;
+}
+bool r7310C1SouthWindowBottomRevealShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSouthWindowBottomRevealShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		clamp((visiblePosition.x + 1.75) / 2.44, 0.0, 1.0),
+		clamp((visiblePosition.z - 3.056) / 0.200, 0.0, 1.0)
+	);
+	return true;
+}
+bool r7310C1SouthWindowTopRevealShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSouthWindowTopRevealShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		clamp((visiblePosition.x + 1.75) / 2.44, 0.0, 1.0),
+		clamp((visiblePosition.z - 3.056) / 0.200, 0.0, 1.0)
+	);
+	return true;
+}
+vec4 r7310C1SouthWindowRevealShadowTexel(vec2 pixelCoord, float resolution, float slot)
+{
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), slot);
+}
+vec3 r7310C1SouthWindowRevealShadowSampleValidLinear(vec2 atlasUv, float resolution, float slot)
+{
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SouthWindowRevealShadowTexel(p0, resolution, slot);
+	vec4 c10 = r7310C1SouthWindowRevealShadowTexel(vec2(p1.x, p0.y), resolution, slot);
+	vec4 c01 = r7310C1SouthWindowRevealShadowTexel(vec2(p0.x, p1.y), resolution, slot);
+	vec4 c11 = r7310C1SouthWindowRevealShadowTexel(p1, resolution, slot);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SouthWindowRevealShadowTexel(floor(pixel + vec2(0.5)), resolution, slot);
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SouthWindowLeftRevealShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SouthWindowLeftRevealShadowMode > 0.5 &&
+		uR7310C1SouthWindowLeftRevealShadowReady > 0.5 &&
+		r7310C1SouthWindowLeftRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SouthWindowLeftRevealShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SouthWindowLeftRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowLeftRevealShadowResolution), 18.0);
+}
+bool r7310C1SouthWindowRightRevealShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SouthWindowRightRevealShadowMode > 0.5 &&
+		uR7310C1SouthWindowRightRevealShadowReady > 0.5 &&
+		r7310C1SouthWindowRightRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SouthWindowRightRevealShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SouthWindowRightRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowRightRevealShadowResolution), 19.0);
+}
+bool r7310C1SouthWindowBottomRevealShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SouthWindowBottomRevealShadowMode > 0.5 &&
+		uR7310C1SouthWindowBottomRevealShadowReady > 0.5 &&
+		r7310C1SouthWindowBottomRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SouthWindowBottomRevealShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SouthWindowBottomRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowBottomRevealShadowResolution), 20.0);
+}
+bool r7310C1SouthWindowTopRevealShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SouthWindowTopRevealShadowMode > 0.5 &&
+		uR7310C1SouthWindowTopRevealShadowReady > 0.5 &&
+		r7310C1SouthWindowTopRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SouthWindowTopRevealShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SouthWindowTopRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowTopRevealShadowResolution), 21.0);
+}
+bool r7310C1SouthWindowLeftRevealShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1019 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SouthWindowRightRevealShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1020 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SouthWindowBottomRevealShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1021 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SouthWindowTopRevealShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1022 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
 }
 bool r7310C1WestWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 {
@@ -706,15 +2135,46 @@ bool r7310C1WestWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 		atlasUv = vec2(0.0);
 		return false;
 	}
+	if (visiblePosition.z >= R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN ||
+		visiblePosition.y >= R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	atlasUv = vec2(
 		(visiblePosition.z + 1.874) / 4.93,
 		visiblePosition.y / 2.905
 	);
 	return true;
 }
+bool r7310C1WestWallHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1WestWallDiffuseMode > 0.5 &&
+		uR7310C1FullRoomDiffuseReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsWestWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1WestWallDiffuseUv(visiblePosition, atlasUv);
+}
+vec3 r7310C1WestWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1WestWallDiffuseUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 3.0));
+}
+bool r7310C1WestWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1004 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
 bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNormal, out vec2 atlasUv)
 {
 	float revealT = 0.0;
+	if (r7310C1SouthWallWindowFrontEdgeDiffuseUv(visiblePosition, visibleNormal, atlasUv))
+		return true;
 	if (visiblePosition.z < 3.056 || visiblePosition.z > 3.256)
 	{
 		atlasUv = vec2(0.0);
@@ -726,8 +2186,8 @@ bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNor
 	{
 		revealT = (visiblePosition.z - 3.056) / (3.256 - 3.056);
 		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
-			mix(-1.69, -1.52, revealT),
-			mix(1.10, 2.845, (visiblePosition.y - 1.04) / (2.905 - 1.04))
+			r7310C1SouthWallClampPackedX(mix(-1.69, -1.52, revealT), -1.69, -1.52),
+			r7310C1SouthWallClampPackedY(mix(1.10, 2.845, (visiblePosition.y - 1.04) / (2.905 - 1.04)), 1.10, 2.845)
 		);
 		return true;
 	}
@@ -737,8 +2197,8 @@ bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNor
 	{
 		revealT = (visiblePosition.z - 3.056) / (3.256 - 3.056);
 		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
-			mix(0.46, 0.63, revealT),
-			mix(1.10, 2.845, (visiblePosition.y - 1.04) / (2.905 - 1.04))
+			r7310C1SouthWallClampPackedX(mix(0.46, 0.63, revealT), 0.46, 0.63),
+			r7310C1SouthWallClampPackedY(mix(1.10, 2.845, (visiblePosition.y - 1.04) / (2.905 - 1.04)), 1.10, 2.845)
 		);
 		return true;
 	}
@@ -748,8 +2208,8 @@ bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNor
 	{
 		revealT = (visiblePosition.z - 3.056) / (3.256 - 3.056);
 		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
-			mix(-1.45, 0.39, (visiblePosition.x + 1.75) / (0.69 + 1.75)),
-			mix(1.10, 1.27, revealT)
+			r7310C1SouthWallClampPackedX(mix(-1.52, 0.46, (visiblePosition.x + 1.75) / (0.69 + 1.75)), -1.52, 0.46),
+			r7310C1SouthWallClampPackedY(mix(1.10, 1.27, revealT), 1.10, 1.27)
 		);
 		return true;
 	}
@@ -759,8 +2219,8 @@ bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNor
 	{
 		revealT = (visiblePosition.z - 3.056) / (3.256 - 3.056);
 		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
-			mix(-1.45, 0.39, (visiblePosition.x + 1.75) / (0.69 + 1.75)),
-			mix(2.675, 2.845, revealT)
+			r7310C1SouthWallClampPackedX(mix(-1.52, 0.46, (visiblePosition.x + 1.75) / (0.69 + 1.75)), -1.52, 0.46),
+			r7310C1SouthWallClampPackedY(mix(2.675, 2.845, revealT), 2.675, 2.845)
 		);
 		return true;
 	}
@@ -800,6 +2260,347 @@ bool r7310C1CeilingDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 	);
 	return true;
 }
+bool r7310C1StructuralBeamColumnDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	float islandId = r7310C1StructuralBeamColumnIslandId(visibleHitType, visibleObjectID, visibleNormal, visiblePosition);
+	if (islandId < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (islandId < 1.5)
+	{
+		// west_beam_inner_x
+		atlasUv = vec2(
+			mix(0.000, 0.500, (visiblePosition.z + 1.874) / 4.930),
+			mix(0.000, 0.170, (visiblePosition.y - 2.525) / 0.380)
+		);
+		return true;
+	}
+	if (islandId < 2.5)
+	{
+		// west_beam_under_y
+		atlasUv = vec2(
+			mix(0.000, 0.500, (visiblePosition.z + 1.874) / 4.722),
+			mix(0.180, 0.260, (visiblePosition.x + 1.910) / 0.160)
+		);
+		return true;
+	}
+	if (islandId < 3.5)
+	{
+		// east_beam_inner_x
+		atlasUv = vec2(
+			mix(0.000, 0.500, (visiblePosition.z + 1.874) / 4.364),
+			mix(0.270, 0.440, (visiblePosition.y - 2.515) / 0.390)
+		);
+		return true;
+	}
+	if (islandId < 4.5)
+	{
+		// east_beam_under_y
+		atlasUv = vec2(
+			mix(0.000, 0.500, (visiblePosition.z + 1.874) / 4.364),
+			mix(0.450, 0.530, (visiblePosition.x - 1.850) / 0.060)
+		);
+		return true;
+	}
+	if (islandId < 5.5)
+	{
+		// sw_column_inner_x
+		atlasUv = vec2(
+			mix(0.520, 0.740, (visiblePosition.z - 2.846) / 0.210),
+			mix(0.000, 0.360, visiblePosition.y / 2.905)
+		);
+		return true;
+	}
+	if (islandId < 6.5)
+	{
+		// sw_column_north_z
+		atlasUv = vec2(
+			mix(0.760, 0.940, (visiblePosition.x + 1.910) / 0.160),
+			mix(0.000, 0.360, visiblePosition.y / 2.525)
+		);
+		return true;
+	}
+	if (islandId < 7.5)
+	{
+		// se_column_inner_x
+		atlasUv = vec2(
+			mix(0.520, 0.740, (visiblePosition.z - 2.490) / 0.566),
+			mix(0.380, 0.760, visiblePosition.y / 2.905)
+		);
+		return true;
+	}
+	if (islandId < 8.5)
+	{
+		// se_column_north_z
+		if (r7310C1StructuralSeColumnNorthHiddenByEastBeam(visiblePosition.x, visiblePosition.y))
+		{
+			atlasUv = vec2(0.0);
+			return false;
+		}
+		atlasUv = vec2(
+			mix(0.000, 1.000, visiblePosition.y / 2.905),
+			mix(0.880, 1.000, (visiblePosition.x - 1.780) / 0.130)
+		);
+		return true;
+	}
+	atlasUv = vec2(0.0);
+	return false;
+}
+bool r7310C1SeColumnNorthShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSeColumnNorthShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (r7310C1SeColumnNorthShadowHiddenByEastBeam(visiblePosition.x, visiblePosition.y))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.x - 1.78) / 0.13,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1SeColumnNorthShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1SeColumnNorthShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 7.0);
+}
+vec3 r7310C1SeColumnNorthShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1SeColumnNorthShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SeColumnNorthShadowTexel(p0);
+	vec4 c10 = r7310C1SeColumnNorthShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1SeColumnNorthShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1SeColumnNorthShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SeColumnNorthShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SeColumnNorthShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SeColumnNorthShadowMode > 0.5 &&
+		uR7310C1SeColumnNorthShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsSeColumnNorthShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1SeColumnNorthShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SeColumnNorthShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SeColumnNorthShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SeColumnNorthShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1SeColumnNorthShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1008 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SeColumnWestShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSeColumnWestShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.z - 2.49) / 0.566,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1SeColumnWestShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1SeColumnWestShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 8.0);
+}
+vec3 r7310C1SeColumnWestShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1SeColumnWestShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SeColumnWestShadowTexel(p0);
+	vec4 c10 = r7310C1SeColumnWestShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1SeColumnWestShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1SeColumnWestShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SeColumnWestShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SeColumnWestShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SeColumnWestShadowMode > 0.5 &&
+		uR7310C1SeColumnWestShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsSeColumnWestShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1SeColumnWestShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SeColumnWestShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SeColumnWestShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SeColumnWestShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1SeColumnWestShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1009 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SwColumnNorthShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSwColumnNorthShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.x + 1.91) / 0.16,
+		visiblePosition.y / 2.525
+	);
+	return true;
+}
+vec4 r7310C1SwColumnNorthShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1SwColumnNorthShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 11.0);
+}
+vec3 r7310C1SwColumnNorthShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1SwColumnNorthShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SwColumnNorthShadowTexel(p0);
+	vec4 c10 = r7310C1SwColumnNorthShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1SwColumnNorthShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1SwColumnNorthShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SwColumnNorthShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SwColumnNorthShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SwColumnNorthShadowMode > 0.5 &&
+		uR7310C1SwColumnNorthShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsSwColumnNorthShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1SwColumnNorthShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SwColumnNorthShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SwColumnNorthShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SwColumnNorthShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1SwColumnNorthShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1012 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
+bool r7310C1SouthWallAcShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsSouthWallAcShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	atlasUv = vec2(
+		(visiblePosition.x + 2.11) / 4.22,
+		visiblePosition.y / 2.905
+	);
+	return true;
+}
+vec4 r7310C1SouthWallAcShadowTexel(vec2 pixelCoord)
+{
+	float resolution = max(1.0, uR7310C1SouthWallAcShadowResolution);
+	return r7310C1FullRoomDiffuseSamplePatchTexel(clamp(pixelCoord, vec2(0.0), vec2(resolution - 1.0)), 9.0);
+}
+vec3 r7310C1SouthWallAcShadowSampleValidLinear(vec2 atlasUv)
+{
+	float resolution = max(1.0, uR7310C1SouthWallAcShadowResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1SouthWallAcShadowTexel(p0);
+	vec4 c10 = r7310C1SouthWallAcShadowTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1SouthWallAcShadowTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1SouthWallAcShadowTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1SouthWallAcShadowTexel(floor(pixel + vec2(0.5)));
+	return max(nearest.rgb, vec3(0.0));
+}
+bool r7310C1SouthWallAcShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1SouthWallAcShadowMode > 0.5 &&
+		uR7310C1SouthWallAcShadowReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsSouthWallAcShadow(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1SouthWallAcShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1SouthWallAcShadowHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1SouthWallAcShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWallAcShadowSampleValidLinear(atlasUv);
+}
+bool r7310C1SouthWallAcShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1010 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
+}
 bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, int visibleIsRayExiting, out vec3 bakedRadiance)
 {
 	bakedRadiance = vec3(0.0);
@@ -829,7 +2630,7 @@ bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectI
 		r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		r7310C1EastWallDiffuseUv(visiblePosition, atlasUv))
 	{
-		vec3 r7310EastWallBakedRadiance = r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 2.0));
+		vec3 r7310EastWallBakedRadiance = r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
 		bakedRadiance = r7310EastWallBakedRadiance;
 		return true;
 	}
@@ -863,6 +2664,15 @@ bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectI
 	{
 		vec3 r7310CeilingBakedRadiance = r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 5.0));
 		bakedRadiance = r7310CeilingBakedRadiance;
+		return true;
+	}
+	float structuralIslandId = r7310C1StructuralBeamColumnIslandId(visibleHitType, visibleObjectID, visibleNormal, visiblePosition);
+	if (uR7310C1StructuralDiffuseMode > 0.5 &&
+		structuralIslandId > 0.5 &&
+		r7310C1StructuralBeamColumnDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+	{
+		vec3 r7310StructuralBeamColumnBakedRadiance = r7310C1FullRoomDiffuseSampleRectLinear(atlasUv, 6.0, r7310C1StructuralBeamColumnAtlasRectForPoint(structuralIslandId, visiblePosition));
+		bakedRadiance = r7310StructuralBeamColumnBakedRadiance;
 		return true;
 	}
 	return false;
@@ -1820,6 +3630,79 @@ bool isBoxCulled(vec3 bmin, vec3 bmax, float cullable)
 	return false;
 }
 
+bool r7310C1WestBeamSwColumnLUnionWallFace(int boxIdx, vec3 boxNormal, vec3 boxMin, vec3 boxMax)
+{
+	bool westBeamInnerFace = boxIdx == 28 &&
+		boxNormal.x > 0.5 &&
+		boxMin.x >= -1.92 && boxMin.x <= -1.90 &&
+		boxMax.x >= -1.76 && boxMax.x <= -1.74 &&
+		boxMin.y >= 2.52 && boxMin.y <= 2.53 &&
+		boxMax.y >= 2.89 && boxMax.y <= 2.92 &&
+		boxMin.z >= -1.88 && boxMin.z <= -1.86 &&
+		boxMax.z >= 2.84 && boxMax.z <= 2.86;
+	bool swColumnInnerFace = boxIdx == 30 &&
+		boxNormal.x > 0.5 &&
+		boxMin.x >= -1.92 && boxMin.x <= -1.90 &&
+		boxMax.x >= -1.76 && boxMax.x <= -1.74 &&
+		boxMin.z >= 2.84 && boxMin.z <= 2.86 &&
+		boxMax.z >= 3.05 && boxMax.z <= 3.07;
+	return westBeamInnerFace || swColumnInnerFace;
+}
+
+vec3 r7310C1DynamicSouthWallBaseColor()
+{
+	return vec3(0.75, 0.738, 0.71175);
+}
+
+bool r7310C1HiddenSwColumnSouthWallJoinFace(vec3 boxNormal, vec3 boxMin, vec3 boxMax, vec3 candidatePosition)
+{
+	bool sameWallSlab =
+		boxMin.x >= -1.92 && boxMin.x <= -1.90 &&
+		boxMax.x >= -1.76 && boxMax.x <= -1.74 &&
+		boxMin.y >= -0.01 && boxMin.y <= 0.01 &&
+		boxMax.y >= 2.89 && boxMax.y <= 2.92;
+	bool swColumnSide =
+		boxMin.z >= 2.84 && boxMin.z <= 2.86 &&
+		boxMax.z >= 3.05 && boxMax.z <= 3.07;
+	bool southWallSide =
+		boxMin.z >= 3.05 && boxMin.z <= 3.07 &&
+		boxMax.z >= 3.25;
+	bool southCutawayKeepsColumnFace = uXrayEnabled > 0.5 &&
+		uCamPos.z > uRoomMax.z + uCullEpsilon &&
+		swColumnSide;
+	if (southCutawayKeepsColumnFace)
+		return false;
+	return sameWallSlab &&
+		(swColumnSide || southWallSide) &&
+		abs(boxNormal.z) > 0.5 &&
+		abs(candidatePosition.z - 3.056) <= 0.002 &&
+		candidatePosition.x >= -1.912 &&
+		candidatePosition.x <= -1.748 &&
+		candidatePosition.y >= -0.002 &&
+		candidatePosition.y <= 2.907;
+}
+
+bool r7310C1HiddenWestBeamSwColumnJoinFace(vec3 boxNormal, vec3 boxMin, vec3 boxMax, vec3 candidatePosition)
+{
+	bool sameWestSlab =
+		boxMin.x >= -1.92 && boxMin.x <= -1.90 &&
+		boxMax.x >= -1.76 && boxMax.x <= -1.74;
+	bool westBeamSide =
+		boxMin.y >= 2.52 && boxMin.y <= 2.53 &&
+		boxMax.y >= 2.89 && boxMax.y <= 2.92 &&
+		boxMin.z >= -1.88 && boxMin.z <= -1.86 &&
+		boxMax.z >= 2.84 && boxMax.z <= 2.86;
+	bool hiddenWestBeamContact = sameWestSlab &&
+		westBeamSide &&
+		abs(boxNormal.z) > 0.5 &&
+		abs(candidatePosition.z - 2.848) <= 0.002 &&
+		candidatePosition.x >= -1.912 &&
+		candidatePosition.x <= -1.748 &&
+		candidatePosition.y >= 2.527 &&
+		candidatePosition.y <= 2.907;
+	return hiddenWestBeamContact;
+}
+
 float SceneIntersect( )
 {
 	vec3 normal, n;
@@ -1871,10 +3754,17 @@ float SceneIntersect( )
 				d = BoxIntersect(boxMin, boxMax, rayOrigin, rayDirection, n, isRayExiting);
 				if (d < t && n != vec3(0,0,0))
 				{
+					vec3 candidatePosition = rayOrigin + rayDirection * d;
+					if (r7310C1HiddenWestBeamSwColumnJoinFace(n, boxMin, boxMax, candidatePosition))
+						continue;
+					if (r7310C1HiddenSwColumnSouthWallJoinFace(n, boxMin, boxMax, candidatePosition))
+						continue;
 					t = d;
 					hitNormal = n;
 					hitEmission = boxEmission;
 					hitColor = boxColor;
+					if (r7310C1WestBeamSwColumnLUnionWallFace(boxIdx, n, boxMin, boxMax))
+						hitColor = r7310C1DynamicSouthWallBaseColor();
 					// R2-UI（fix19）：對所有結構表面（地板/天花板/牆/樑/柱，陣列索引 0..31）套用 uWallAlbedo，家具（索引 32+）與貼圖物件不受影響
 					// 歷史：原寫 index 1..15，但 fix10 地板/天花板重切後陣列索引重排，導致僅 2a/2b 被套用 albedo 而 3a 起不受影響，造成木門西側 asymmetric 暗化
 					if (boxIdx <= 31) hitColor *= uWallAlbedo;
@@ -3287,13 +5177,517 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				continue;
 			}
 			vec3 r7310BakedRadiance = vec3(0.0);
+			bool r7310NorthWallHybridFirstHit = bounces == 0 &&
+				r7310C1NorthWallHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SeColumnNorthHybridFirstHit = bounces == 0 &&
+				r7310C1SeColumnNorthShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SeColumnWestHybridFirstHit = bounces == 0 &&
+				r7310C1SeColumnWestShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SouthWallAcHybridFirstHit = bounces == 0 &&
+				r7310C1SouthWallAcShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310EastWallBeamHybridFirstHit = bounces == 0 &&
+				r7310C1EastWallBeamShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310EastWallHybridFirstHit = bounces == 0 &&
+				!r7310EastWallBeamHybridFirstHit &&
+				r7310C1EastWallHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SwColumnNorthHybridFirstHit = bounces == 0 &&
+				r7310C1SwColumnNorthShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310WestWallBeamHybridFirstHit = bounces == 0 &&
+				r7310C1WestWallBeamShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310WestWallHybridFirstHit = bounces == 0 &&
+				!r7310WestWallBeamHybridFirstHit &&
+				r7310C1WestWallHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SwColumnInnerShadowHybridFirstHit = bounces == 0 &&
+				r7310C1SwColumnInnerShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310WestBeamInnerShadowHybridFirstHit = bounces == 0 &&
+				!r7310SwColumnInnerShadowHybridFirstHit &&
+				r7310C1WestBeamInnerShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310WestBeamUnderShadowHybridFirstHit = bounces == 0 &&
+				r7310C1WestBeamUnderShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310EastBeamInnerShadowHybridFirstHit = bounces == 0 &&
+				r7310C1EastBeamInnerShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310EastBeamUnderShadowHybridFirstHit = bounces == 0 &&
+				r7310C1EastBeamUnderShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SouthWindowLeftRevealShadowHybridFirstHit = bounces == 0 &&
+				r7310C1SouthWindowLeftRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SouthWindowRightRevealShadowHybridFirstHit = bounces == 0 &&
+				r7310C1SouthWindowRightRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SouthWindowBottomRevealShadowHybridFirstHit = bounces == 0 &&
+				r7310C1SouthWindowBottomRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310SouthWindowTopRevealShadowHybridFirstHit = bounces == 0 &&
+				r7310C1SouthWindowTopRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310NorthWallHybridGuard = !r7310NorthWallHybridFirstHit;
+			bool r7310SeColumnNorthHybridGuard = !r7310SeColumnNorthHybridFirstHit;
+			bool r7310SeColumnWestHybridGuard = !r7310SeColumnWestHybridFirstHit;
+			bool r7310SouthWallAcHybridGuard = !r7310SouthWallAcHybridFirstHit;
+			bool r7310EastWallBeamHybridGuard = !r7310EastWallBeamHybridFirstHit;
+			bool r7310EastWallHybridGuard = !r7310EastWallHybridFirstHit;
+			bool r7310SwColumnNorthHybridGuard = !r7310SwColumnNorthHybridFirstHit;
+			bool r7310WestWallHybridGuard = !r7310WestWallHybridFirstHit;
+			bool r7310WestWallBeamHybridGuard = !r7310WestWallBeamHybridFirstHit;
+			bool r7310SwColumnInnerShadowHybridGuard = !r7310SwColumnInnerShadowHybridFirstHit;
+			bool r7310WestBeamInnerShadowHybridGuard = !r7310WestBeamInnerShadowHybridFirstHit;
+			bool r7310WestBeamUnderShadowHybridGuard = !r7310WestBeamUnderShadowHybridFirstHit;
+			bool r7310EastBeamInnerShadowHybridGuard = !r7310EastBeamInnerShadowHybridFirstHit;
+			bool r7310EastBeamUnderShadowHybridGuard = !r7310EastBeamUnderShadowHybridFirstHit;
+			bool r7310SouthWindowLeftRevealShadowHybridGuard = !r7310SouthWindowLeftRevealShadowHybridFirstHit;
+			bool r7310SouthWindowRightRevealShadowHybridGuard = !r7310SouthWindowRightRevealShadowHybridFirstHit;
+			bool r7310SouthWindowBottomRevealShadowHybridGuard = !r7310SouthWindowBottomRevealShadowHybridFirstHit;
+			bool r7310SouthWindowTopRevealShadowHybridGuard = !r7310SouthWindowTopRevealShadowHybridFirstHit;
+			bool r7310NorthWallIndirectBakeFirstHit = r7310C1NorthWallIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310EastWallIndirectBakeFirstHit = r7310C1EastWallIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SeColumnNorthIndirectBakeFirstHit = r7310C1SeColumnNorthShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SeColumnWestIndirectBakeFirstHit = r7310C1SeColumnWestShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SouthWallAcIndirectBakeFirstHit = r7310C1SouthWallAcShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310EastWallBeamIndirectBakeFirstHit = r7310C1EastWallBeamShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SwColumnNorthIndirectBakeFirstHit = r7310C1SwColumnNorthShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310WestWallIndirectBakeFirstHit = r7310C1WestWallIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310WestWallBeamIndirectBakeFirstHit = r7310C1WestWallBeamShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SwColumnInnerShadowIndirectBakeFirstHit = r7310C1SwColumnInnerShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310WestBeamInnerShadowIndirectBakeFirstHit = r7310C1WestBeamInnerShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310WestBeamUnderShadowIndirectBakeFirstHit = r7310C1WestBeamUnderShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310EastBeamInnerShadowIndirectBakeFirstHit = r7310C1EastBeamInnerShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310EastBeamUnderShadowIndirectBakeFirstHit = r7310C1EastBeamUnderShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SouthWindowLeftRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowLeftRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SouthWindowRightRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowRightRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowBottomRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310SouthWindowTopRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowTopRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
 			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 21.5 &&
+				r7310C1RuntimeProbeMode < 26.5)
+			{
+				float r7310WestJoinRouteId = 0.0;
+				float r7310WestJoinTargetOffset = 0.0;
+				float r7310WestJoinStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+				if (r7310SwColumnNorthHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 1.0;
+					r7310WestJoinTargetOffset = 12.0;
+				}
+				else if (r7310WestWallHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 2.0;
+					r7310WestJoinTargetOffset = 3.0;
+				}
+				else if (r7310WestWallBeamHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 3.0;
+					r7310WestJoinTargetOffset = 13.0;
+				}
+				else if (r7310SwColumnInnerShadowHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 4.0;
+					r7310WestJoinTargetOffset = 14.0;
+				}
+				else if (r7310WestBeamInnerShadowHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 5.0;
+					r7310WestJoinTargetOffset = 15.0;
+				}
+				else if (r7310WestBeamUnderShadowHybridFirstHit)
+				{
+					r7310WestJoinRouteId = 6.0;
+					r7310WestJoinTargetOffset = 16.0;
+				}
+				else if (r7310WestJoinStructuralIslandId > 0.5)
+				{
+					r7310WestJoinRouteId = 7.0;
+					r7310WestJoinTargetOffset = 6.0;
+				}
+				if (r7310C1RuntimeProbeMode > 21.5 && r7310C1RuntimeProbeMode < 22.5)
+					accumCol = vec3(r7310WestJoinRouteId / 255.0, r7310WestJoinStructuralIslandId / 255.0, r7310WestJoinTargetOffset / 255.0);
+				else if (r7310C1RuntimeProbeMode > 22.5 && r7310C1RuntimeProbeMode < 23.5)
+					accumCol = nl * 0.5 + 0.5;
+				else if (r7310C1RuntimeProbeMode > 23.5 && r7310C1RuntimeProbeMode < 24.5)
+					accumCol = vec3(
+						clamp((x.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((x.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((x.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				else if (r7310C1RuntimeProbeMode > 24.5 && r7310C1RuntimeProbeMode < 25.5)
+				{
+					float h = float(hitType);
+					float oid = hitObjectID;
+					accumCol = vec3(
+						clamp(h / 255.0, 0.0, 1.0),
+						clamp(mod(oid, 256.0) / 255.0, 0.0, 1.0),
+						clamp(floor(oid / 256.0) / 255.0, 0.0, 1.0)
+					);
+				}
+				else
+				{
+					vec3 r7310WestJoinRadiance = vec3(0.0);
+					if (r7310SwColumnNorthHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1SwColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestWallHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1WestWallHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestWallBeamHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1WestWallBeamShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310SwColumnInnerShadowHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1SwColumnInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestBeamInnerShadowHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1WestBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestBeamUnderShadowHybridFirstHit)
+						r7310WestJoinRadiance = r7310C1WestBeamUnderShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestJoinStructuralIslandId > 0.5)
+					{
+						vec2 r7310WestJoinStructuralUv = vec2(0.0);
+						if (r7310C1StructuralBeamColumnDiffuseUv(hitType, hitObjectID, nl, x, r7310WestJoinStructuralUv))
+							r7310WestJoinRadiance = r7310C1FullRoomDiffuseSampleRectLinear(r7310WestJoinStructuralUv, 6.0, r7310C1StructuralBeamColumnAtlasRectForPoint(r7310WestJoinStructuralIslandId, x));
+					}
+					accumCol = clamp(r7310WestJoinRadiance, vec3(0.0), vec3(1.0));
+				}
+				break;
+			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 26.5 &&
+				r7310C1RuntimeProbeMode < 30.5)
+			{
+				float r7310EastJoinRouteId = 0.0;
+				float r7310EastJoinTargetOffset = 0.0;
+				float r7310EastJoinStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+				if (r7310SeColumnNorthHybridFirstHit)
+				{
+					r7310EastJoinRouteId = 1.0;
+					r7310EastJoinTargetOffset = 8.0;
+				}
+				else if (r7310SeColumnWestHybridFirstHit)
+				{
+					r7310EastJoinRouteId = 2.0;
+					r7310EastJoinTargetOffset = 9.0;
+				}
+				else if (r7310EastWallBeamHybridFirstHit)
+				{
+					r7310EastJoinRouteId = 3.0;
+					r7310EastJoinTargetOffset = 11.0;
+				}
+				else if (r7310EastWallHybridFirstHit)
+				{
+					r7310EastJoinRouteId = 4.0;
+					r7310EastJoinTargetOffset = 3.0;
+				}
+				else if (r7310EastJoinStructuralIslandId > 0.5)
+				{
+					r7310EastJoinRouteId = 5.0;
+					r7310EastJoinTargetOffset = 6.0;
+				}
+
+				if (r7310C1RuntimeProbeMode > 26.5 && r7310C1RuntimeProbeMode < 27.5)
+				{
+					accumCol = vec3(r7310EastJoinRouteId / 255.0, r7310EastJoinStructuralIslandId / 255.0, r7310EastJoinTargetOffset / 255.0);
+				}
+				else if (r7310C1RuntimeProbeMode > 27.5 && r7310C1RuntimeProbeMode < 28.5)
+				{
+					vec2 r7310CoverageUv = vec2(0.0);
+					vec3 r7310Coverage = vec3(0.0);
+					if (r7310SeColumnNorthHybridFirstHit &&
+						r7310C1SeColumnNorthShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1SeColumnNorthShadowResolution, 7.0, 1.0);
+					else if (r7310SeColumnWestHybridFirstHit &&
+						r7310C1SeColumnWestShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1SeColumnWestShadowResolution, 8.0, 2.0);
+					else if (r7310EastWallBeamHybridFirstHit &&
+						r7310C1EastWallBeamShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1EastWallBeamShadowResolution, 10.0, 3.0);
+					else if (r7310EastWallHybridFirstHit)
+						r7310Coverage = r7310C1FullAtlasCoverageProbe(4.0);
+					else if (r7310SwColumnNorthHybridFirstHit &&
+						r7310C1SwColumnNorthShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1SwColumnNorthShadowResolution, 11.0, 5.0);
+					else if (r7310WestWallBeamHybridFirstHit &&
+						r7310C1WestWallBeamShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1WestWallBeamShadowResolution, 12.0, 6.0);
+					else if (r7310WestWallHybridFirstHit)
+						r7310Coverage = r7310C1FullAtlasCoverageProbe(7.0);
+					else if (r7310SwColumnInnerShadowHybridFirstHit &&
+						r7310C1SwColumnInnerShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310CoverageUv))
+						r7310Coverage = r7310C1PatchCoverageProbe(r7310CoverageUv, uR7310C1SwColumnInnerShadowResolution, 13.0, 8.0);
+					accumCol = r7310Coverage;
+				}
+				else if (r7310C1RuntimeProbeMode > 28.5 && r7310C1RuntimeProbeMode < 29.5)
+				{
+					accumCol = vec3(
+						uXrayEnabled > 0.5 ? 1.0 : 0.0,
+						r7310C1StructuralSeColumnNorthHiddenByEastBeam(x.x, x.y) ? 1.0 : 0.0,
+						r7310C1StructuralSeColumnInnerHiddenByBookshelf(x.z, x.y) ? 1.0 : 0.0
+					);
+				}
+				else
+				{
+					vec3 r7310JoinRadiance = vec3(0.0);
+					if (r7310SeColumnNorthHybridFirstHit)
+						r7310JoinRadiance = r7310C1SeColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310SeColumnWestHybridFirstHit)
+						r7310JoinRadiance = r7310C1SeColumnWestShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310EastWallBeamHybridFirstHit)
+						r7310JoinRadiance = r7310C1EastWallBeamShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310EastWallHybridFirstHit)
+						r7310JoinRadiance = r7310C1EastWallHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310SwColumnNorthHybridFirstHit)
+						r7310JoinRadiance = r7310C1SwColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestWallBeamHybridFirstHit)
+						r7310JoinRadiance = r7310C1WestWallBeamShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310WestWallHybridFirstHit)
+						r7310JoinRadiance = r7310C1WestWallHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310SwColumnInnerShadowHybridFirstHit)
+						r7310JoinRadiance = r7310C1SwColumnInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					accumCol = clamp(r7310JoinRadiance, vec3(0.0), vec3(1.0));
+				}
+				break;
+			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 10.5 &&
+				r7310C1RuntimeProbeMode < 14.5)
+			{
+				float r7310BeamUnderRouteId = 0.0;
+				float r7310BeamUnderTargetOffset = 0.0;
+				float r7310BeamUnderStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+				bool r7310WestBeamUnderGeometryHit = r7310C1RuntimeSurfaceIsWestBeamUnderShadow(hitType, hitObjectID, nl, x);
+				bool r7310EastBeamUnderGeometryHit = r7310C1RuntimeSurfaceIsEastBeamUnderShadow(hitType, hitObjectID, nl, x);
+				if (r7310WestBeamUnderShadowHybridFirstHit)
+				{
+					r7310BeamUnderRouteId = 1.0;
+					r7310BeamUnderTargetOffset = 16.0;
+				}
+				else if (r7310EastBeamUnderShadowHybridFirstHit)
+				{
+					r7310BeamUnderRouteId = 2.0;
+					r7310BeamUnderTargetOffset = 18.0;
+				}
+				else if (r7310WestBeamUnderGeometryHit)
+				{
+					r7310BeamUnderRouteId = 3.0;
+					r7310BeamUnderTargetOffset = 16.0;
+				}
+				else if (r7310EastBeamUnderGeometryHit)
+				{
+					r7310BeamUnderRouteId = 4.0;
+					r7310BeamUnderTargetOffset = 18.0;
+				}
+				else if (r7310BeamUnderStructuralIslandId > 1.5 && r7310BeamUnderStructuralIslandId < 2.5)
+				{
+					r7310BeamUnderRouteId = 5.0;
+					r7310BeamUnderTargetOffset = 16.0;
+				}
+				else if (r7310BeamUnderStructuralIslandId > 3.5 && r7310BeamUnderStructuralIslandId < 4.5)
+				{
+					r7310BeamUnderRouteId = 6.0;
+					r7310BeamUnderTargetOffset = 18.0;
+				}
+				if (r7310C1RuntimeProbeMode > 10.5 && r7310C1RuntimeProbeMode < 11.5)
+					accumCol = vec3(r7310BeamUnderRouteId / 255.0, r7310BeamUnderStructuralIslandId / 255.0, r7310BeamUnderTargetOffset / 255.0);
+				else if (r7310C1RuntimeProbeMode > 11.5 && r7310C1RuntimeProbeMode < 12.5)
+					accumCol = nl * 0.5 + 0.5;
+				else if (r7310C1RuntimeProbeMode > 12.5 && r7310C1RuntimeProbeMode < 13.5)
+					accumCol = vec3(
+						clamp((x.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((x.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((x.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				else if (r7310C1RuntimeProbeMode > 13.5 && r7310C1RuntimeProbeMode < 14.5)
+				{
+					float h = float(hitType);
+					float oid = hitObjectID;
+					accumCol = vec3(
+						clamp(h / 255.0, 0.0, 1.0),
+						clamp(mod(oid, 256.0) / 255.0, 0.0, 1.0),
+						clamp(floor(oid / 256.0) / 255.0, 0.0, 1.0)
+					);
+				}
+				break;
+			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 16.5 &&
+				r7310C1RuntimeProbeMode < 21.5)
+			{
+				// Phase 2B route labels: sw_column_inner_shadow_hybrid, south_window_left_reveal_shadow_hybrid, west_beam_inner_shadow_hybrid.
+				float r7310Phase2BRouteId = 0.0;
+				float r7310Phase2BTargetOffset = 0.0;
+				float r7310Phase2BStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+				bool r7310Phase2BSwColumnGeometryHit = r7310C1RuntimeSurfaceIsSwColumnInnerShadow(hitType, hitObjectID, nl, x);
+				bool r7310Phase2BSouthWindowLeftGeometryHit = r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow(hitType, hitObjectID, nl, x);
+				bool r7310Phase2BWestBeamGeometryHit = r7310C1RuntimeSurfaceIsWestBeamInnerShadow(hitType, hitObjectID, nl, x);
+				if (r7310SwColumnInnerShadowHybridFirstHit)
+				{
+					r7310Phase2BRouteId = 1.0;
+					r7310Phase2BTargetOffset = 14.0;
+				}
+				else if (r7310SouthWindowLeftRevealShadowHybridFirstHit)
+				{
+					r7310Phase2BRouteId = 2.0;
+					r7310Phase2BTargetOffset = 19.0;
+				}
+				else if (r7310WestBeamInnerShadowHybridFirstHit)
+				{
+					r7310Phase2BRouteId = 6.0;
+					r7310Phase2BTargetOffset = 15.0;
+				}
+				else if (r7310Phase2BSwColumnGeometryHit)
+				{
+					r7310Phase2BRouteId = 3.0;
+					r7310Phase2BTargetOffset = 14.0;
+				}
+				else if (r7310Phase2BSouthWindowLeftGeometryHit)
+				{
+					r7310Phase2BRouteId = 4.0;
+					r7310Phase2BTargetOffset = 19.0;
+				}
+				else if (r7310Phase2BWestBeamGeometryHit)
+				{
+					r7310Phase2BRouteId = 7.0;
+					r7310Phase2BTargetOffset = 15.0;
+				}
+				else if (r7310Phase2BStructuralIslandId > 4.5 && r7310Phase2BStructuralIslandId < 5.5)
+				{
+					r7310Phase2BRouteId = 5.0;
+					r7310Phase2BTargetOffset = 14.0;
+				}
+				if (r7310C1RuntimeProbeMode > 16.5 && r7310C1RuntimeProbeMode < 17.5)
+					accumCol = vec3(r7310Phase2BRouteId / 255.0, r7310Phase2BStructuralIslandId / 255.0, r7310Phase2BTargetOffset / 255.0);
+				else if (r7310C1RuntimeProbeMode > 17.5 && r7310C1RuntimeProbeMode < 18.5)
+					accumCol = nl * 0.5 + 0.5;
+				else if (r7310C1RuntimeProbeMode > 18.5 && r7310C1RuntimeProbeMode < 19.5)
+					accumCol = vec3(
+						clamp((x.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((x.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((x.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				else if (r7310C1RuntimeProbeMode > 19.5 && r7310C1RuntimeProbeMode < 20.5)
+				{
+					float h = float(hitType);
+					float oid = hitObjectID;
+					accumCol = vec3(
+						clamp(h / 255.0, 0.0, 1.0),
+						clamp(mod(oid, 256.0) / 255.0, 0.0, 1.0),
+						clamp(floor(oid / 256.0) / 255.0, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode > 20.5 && r7310C1RuntimeProbeMode < 21.5)
+				{
+					vec3 r7310Phase2BRadiance = vec3(0.0);
+					if (r7310Phase2BSwColumnGeometryHit)
+						r7310Phase2BRadiance = r7310C1SwColumnInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310Phase2BSouthWindowLeftGeometryHit)
+						r7310Phase2BRadiance = r7310C1SouthWindowLeftRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					else if (r7310Phase2BWestBeamGeometryHit)
+						r7310Phase2BRadiance = r7310C1WestBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					accumCol = clamp(r7310Phase2BRadiance, vec3(0.0), vec3(1.0));
+				}
+				break;
+			}
+			if (r7310NorthWallHybridFirstHit)
+				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310EastWallHybridFirstHit)
+				accumCol += mask * r7310C1EastWallHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SeColumnNorthHybridFirstHit)
+				accumCol += mask * r7310C1SeColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SeColumnWestHybridFirstHit)
+				accumCol += mask * r7310C1SeColumnWestShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SouthWallAcHybridFirstHit)
+				accumCol += mask * r7310C1SouthWallAcShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310EastWallBeamHybridFirstHit)
+				accumCol += mask * r7310C1EastWallBeamShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SwColumnNorthHybridFirstHit)
+				accumCol += mask * r7310C1SwColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310WestWallHybridFirstHit)
+				accumCol += mask * r7310C1WestWallHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310WestWallBeamHybridFirstHit)
+				accumCol += mask * r7310C1WestWallBeamShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SwColumnInnerShadowHybridFirstHit)
+				accumCol += mask * r7310C1SwColumnInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310WestBeamInnerShadowHybridFirstHit)
+				accumCol += mask * r7310C1WestBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310WestBeamUnderShadowHybridFirstHit)
+				accumCol += mask * r7310C1WestBeamUnderShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310EastBeamInnerShadowHybridFirstHit)
+				accumCol += mask * r7310C1EastBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310EastBeamUnderShadowHybridFirstHit)
+				accumCol += mask * r7310C1EastBeamUnderShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SouthWindowLeftRevealShadowHybridFirstHit)
+				accumCol += mask * r7310C1SouthWindowLeftRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SouthWindowRightRevealShadowHybridFirstHit)
+				accumCol += mask * r7310C1SouthWindowRightRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SouthWindowBottomRevealShadowHybridFirstHit)
+				accumCol += mask * r7310C1SouthWindowBottomRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310SouthWindowTopRevealShadowHybridFirstHit)
+				accumCol += mask * r7310C1SouthWindowTopRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 14.5 &&
+				r7310C1RuntimeProbeMode < 16.5)
+			{
+				float r7310BeamUnderDirectProbeRouteId = 0.0;
+				if (r7310WestBeamUnderShadowHybridFirstHit)
+					r7310BeamUnderDirectProbeRouteId = 1.0;
+				else if (r7310EastBeamUnderShadowHybridFirstHit)
+					r7310BeamUnderDirectProbeRouteId = 2.0;
+
+				if (r7310BeamUnderDirectProbeRouteId > 0.5)
+				{
+					vec3 r7310BeamUnderDirectProbeWeight;
+					float r7310BeamUnderDirectProbePdf;
+					int r7310BeamUnderDirectProbePickedIdx;
+					int r7310BeamUnderDirectProbeZeroClass;
+					int r7310BeamUnderDirectProbeThetaBin;
+					vec3 r7310BeamUnderDirectProbeFacingDiagnostic;
+					vec3 r7310BeamUnderDirectProbeDirection = sampleStochasticLightDynamic(
+						x,
+						nl,
+						light,
+						r7310BeamUnderDirectProbeWeight,
+						r7310BeamUnderDirectProbePdf,
+						r7310BeamUnderDirectProbePickedIdx,
+						r7310BeamUnderDirectProbeZeroClass,
+						r7310BeamUnderDirectProbeThetaBin,
+						r7310BeamUnderDirectProbeFacingDiagnostic
+					);
+					vec3 r7310BeamUnderDirectProbeContribution = max(mask * hitColor * r7310BeamUnderDirectProbeWeight * uLegacyGain, vec3(0.0));
+					float r7310BeamUnderDirectProbeLuma = dot(r7310BeamUnderDirectProbeContribution, vec3(0.2126, 0.7152, 0.0722));
+					float r7310BeamUnderDirectProbeSourceFacing = max(0.0, dot(nl, r7310BeamUnderDirectProbeDirection));
+					if (r7310C1RuntimeProbeMode > 14.5 && r7310C1RuntimeProbeMode < 15.5)
+						accumCol = vec3(
+							r7310BeamUnderDirectProbeRouteId / 255.0,
+							clamp(r7310BeamUnderDirectProbeLuma, 0.0, 1.0),
+							clamp((float(r7310BeamUnderDirectProbePickedIdx) + 1.0) / 255.0, 0.0, 1.0)
+						);
+					else
+						accumCol = vec3(
+							r7310BeamUnderDirectProbeRouteId / 255.0,
+							clamp(r7310BeamUnderDirectProbeSourceFacing, 0.0, 1.0),
+							clamp(float(r7310BeamUnderDirectProbeZeroClass) / 255.0, 0.0, 1.0)
+						);
+				}
+				else
+					accumCol = vec3(0.0);
+				break;
+			}
+			if (!(r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+				bounces == 0 &&
 				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, r7310BakedRadiance))
 			{
-				float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
 				vec2 r7310RuntimeProbeAtlasUv = vec2(0.0);
 				if (r7310C1RuntimeProbeMode > 0.5 && r7310C1RuntimeProbeMode < 1.5)
-					accumCol += (uR7310C1CeilingDiffuseMode > 0.5 && r7310C1RuntimeSurfaceIsCeiling(hitType, hitObjectID, nl, x)) ? vec3(1.0, 1.0, 1.0) : ((uR7310C1SouthWallDiffuseMode > 0.5 && r7310C1SouthWallWindowRevealDiffuseUv(x, nl, r7310RuntimeProbeAtlasUv)) ? vec3(0.0, 0.0, 1.0) : (r7310C1RuntimeSurfaceIsSouthWall(hitType, hitObjectID, nl, x) ? vec3(0.0, 0.0, 1.0) : (r7310C1RuntimeSurfaceIsWestWall(hitType, hitObjectID, nl, x) ? vec3(1.0, 1.0, 0.0) : (r7310C1RuntimeSurfaceIsEastWall(hitType, hitObjectID, nl, x) ? vec3(1.0, 0.0, 1.0) : (r7310C1RuntimeSurfaceIsNorthWall(hitType, hitObjectID, nl, x) ? vec3(0.0, 1.0, 1.0) : vec3(0.0, 1.0, 0.0))))));
+				{
+					vec3 r7310ProbeClassColor = vec3(0.0, 1.0, 0.0);
+					if (uR7310C1StructuralDiffuseMode > 0.5 &&
+						r7310C1RuntimeSurfaceIsStructuralBeamColumn(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(1.0, 0.0, 0.0);
+					else if (uR7310C1CeilingDiffuseMode > 0.5 &&
+						r7310C1RuntimeSurfaceIsCeiling(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(1.0, 1.0, 1.0);
+					else if (uR7310C1SouthWallDiffuseMode > 0.5 &&
+						r7310C1SouthWallWindowRevealDiffuseUv(x, nl, r7310RuntimeProbeAtlasUv))
+						r7310ProbeClassColor = vec3(0.0, 0.0, 1.0);
+					else if (r7310C1RuntimeSurfaceIsSouthWall(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(0.0, 0.0, 1.0);
+					else if (r7310C1RuntimeSurfaceIsWestWall(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(1.0, 1.0, 0.0);
+					else if (r7310C1RuntimeSurfaceIsEastWall(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(1.0, 0.0, 1.0);
+					else if (r7310C1RuntimeSurfaceIsNorthWall(hitType, hitObjectID, nl, x))
+						r7310ProbeClassColor = vec3(0.0, 1.0, 1.0);
+					accumCol += r7310ProbeClassColor;
+				}
 				else if (r7310C1RuntimeProbeMode > 1.5 && r7310C1RuntimeProbeMode < 2.5)
 					accumCol += nl * 0.5 + 0.5;
 				else if (r7310C1RuntimeProbeMode > 2.5 && r7310C1RuntimeProbeMode < 3.5)
@@ -3327,6 +5721,33 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					// CODEX P1：診斷覆寫，不可用 += （否則混入前面已累積的 radiance，污染 row/col/world readback）
 					accumCol = vec3(r7310ProbeRow / r7310ProbeRes, r7310ProbeCol / r7310ProbeRes, r7310ProbeWorld);
 				}
+				else if (r7310C1RuntimeProbeMode > 7.5 && r7310C1RuntimeProbeMode < 8.5)
+				{
+					vec2 r7310StructuralIslandUv = vec2(0.0);
+					float r7310StructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+					if (uR7310C1StructuralDiffuseMode > 0.5 &&
+						r7310StructuralIslandId > 0.5 &&
+						r7310C1StructuralBeamColumnDiffuseUv(hitType, hitObjectID, nl, x, r7310StructuralIslandUv))
+						accumCol = vec3(r7310StructuralIslandId / 255.0, r7310StructuralIslandUv.x, r7310StructuralIslandUv.y);
+					else
+						accumCol = vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode > 8.5 && r7310C1RuntimeProbeMode < 9.5)
+				{
+					if (uR7310C1StructuralDiffuseMode > 0.5 &&
+						r7310C1RuntimeSurfaceIsStructuralBeamColumn(hitType, hitObjectID, nl, x))
+						accumCol = x;
+					else
+						accumCol = vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode > 9.5 && r7310C1RuntimeProbeMode < 10.5)
+				{
+					if (uR7310C1EastWallDiffuseMode > 0.5 &&
+						r7310C1RuntimeSurfaceIsEastWall(hitType, hitObjectID, nl, x))
+						accumCol = x;
+					else
+						accumCol = vec3(0.0);
+				}
 				else
 					accumCol += mask * r7310BakedRadiance;
 				break;
@@ -3340,13 +5761,231 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 			rayOrigin = x + nl * uEPS_intersect;
 
-        if (float(diffuseCount) < uMaxBounces)
+        if (float(diffuseCount) < uMaxBounces &&
+				!(r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+				r7310NorthWallHybridGuard &&
+				r7310EastWallHybridGuard &&
+				r7310SeColumnNorthHybridGuard &&
+				r7310SeColumnWestHybridGuard &&
+				r7310SouthWallAcHybridGuard &&
+				r7310EastWallBeamHybridGuard &&
+				r7310SwColumnNorthHybridGuard &&
+				r7310WestWallHybridGuard &&
+				r7310WestWallBeamHybridGuard &&
+				r7310SwColumnInnerShadowHybridGuard &&
+				r7310WestBeamInnerShadowHybridGuard &&
+				r7310WestBeamUnderShadowHybridGuard &&
+				r7310EastBeamInnerShadowHybridGuard &&
+				r7310EastBeamUnderShadowHybridGuard &&
+				r7310SouthWindowLeftRevealShadowHybridGuard &&
+				r7310SouthWindowRightRevealShadowHybridGuard &&
+				r7310SouthWindowBottomRevealShadowHybridGuard &&
+				r7310SouthWindowTopRevealShadowHybridGuard)
         {
 				diffuseBounceMask = mask;
 				diffuseBounceRayOrigin = rayOrigin;
 				diffuseBounceRayDirection = randomCosWeightedDirectionInHemisphere(nl);
 				misBsdfBounceNl = nl; misBsdfBounceOrigin = x; misPBsdfStashed = cosWeightedPdf(diffuseBounceRayDirection, nl); // R3-6 Phase-3: cache BSDF-bounce state for MIS indirect-hit
 				willNeedDiffuseBounceRay = TRUE;
+			}
+			if (r7310NorthWallIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310EastWallIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310SeColumnNorthIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310SeColumnWestIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310SouthWallAcIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310EastWallBeamIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310SwColumnNorthIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310WestWallIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310WestWallBeamIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310SwColumnInnerShadowIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310WestBeamInnerShadowIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310WestBeamUnderShadowIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310EastBeamInnerShadowIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310EastBeamUnderShadowIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if ((r7310SouthWindowLeftRevealShadowIndirectBakeFirstHit ||
+				r7310SouthWindowRightRevealShadowIndirectBakeFirstHit ||
+				r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit ||
+				r7310SouthWindowTopRevealShadowIndirectBakeFirstHit) &&
+				willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
 			}
 
 			// R3-6：NEE dispatch 升 6-args，抓 p_nee solid-angle PDF + pickedIdx 供 MIS heuristic + observability。

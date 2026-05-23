@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>R7-3.10 Phase 2B Seam Gap ROI - 2026-05-20 12:19</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111111;
+      --panel: #1b1b1b;
+      --panel-soft: #232323;
+      --text: #f4eee6;
+      --muted: #b9b0a2;
+      --line: #40382f;
+      --accent: #ffb14a;
+      --danger: #ff6859;
+      --ok: #83d68a;
+      --code: #080808;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 24px 64px;
+      width: 100%;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      border-left: 1px solid var(--line);
+      background: #171717;
+      padding: 18px;
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; }
+    h1 { font-size: 30px; letter-spacing: 0; }
+    h2 {
+      font-size: 23px;
+      margin-top: 34px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    h3 { font-size: 18px; }
+    p { margin: 10px 0 0; color: var(--muted); }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 12px 0 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code);
+      border: 1px solid #2d2d2d;
+      color: #eee1cc;
+    }
+    a { color: var(--accent); }
+    button {
+      appearance: none;
+      border: 1px solid #5a4b3d;
+      background: #2a2119;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    textarea, input, select {
+      width: 100%;
+      border: 1px solid #3d3d3d;
+      background: #0d0d0d;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 124px;
+      resize: vertical;
+    }
+    .hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 0;
+    }
+    .pill, .card, figure, .note-card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+    }
+    .pill {
+      padding: 12px 14px;
+      color: var(--muted);
+    }
+    .pill strong {
+      color: var(--text);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card { padding: 16px; }
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 28px;
+      border-radius: 999px;
+      background: #392615;
+      color: #ffd09b;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .issue {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .shot-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+    figure {
+      margin: 0;
+      overflow: hidden;
+      background: var(--panel-soft);
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000;
+      user-select: text;
+    }
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      flex: 0 0 auto;
+    }
+    .dot.fail { background: var(--danger); }
+    .dot.ok { background: var(--ok); }
+    .checklist {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .checklist li {
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: #171717;
+      color: var(--muted);
+    }
+    .inline-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .annotation-panel h2 {
+      border: 0;
+      padding: 0;
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+    .annotation-panel p {
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .selection-box {
+      min-height: 74px;
+      padding: 10px 12px;
+      border: 1px dashed #5b5047;
+      border-radius: 8px;
+      color: #f4dcc2;
+      background: #101010;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+    .field { margin-top: 12px; }
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+    .note-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .note-card {
+      padding: 12px;
+      background: #101010;
+    }
+    .note-card strong {
+      display: block;
+      color: #ffd09b;
+      margin-bottom: 6px;
+    }
+    .note-card blockquote {
+      margin: 8px 0;
+      padding-left: 10px;
+      border-left: 3px solid #5b5047;
+      color: var(--muted);
+    }
+    .note-card .body {
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+    .note-card .stamp {
+      margin-top: 8px;
+      color: #8d857b;
+      font-size: 12px;
+    }
+    .note-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .note-actions button {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+    .selectable {
+      outline: 1px solid transparent;
+      outline-offset: 4px;
+    }
+    .selectable:hover {
+      outline-color: rgba(255, 177, 74, 0.35);
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: static;
+        height: auto;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+      .meta, .roi-grid, .shot-grid { grid-template-columns: 1fr; }
+      main { padding: 26px 16px 44px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <main>
+      <section class="hero selectable" data-topic="總覽">
+        <h1>R7-3.10 Phase 2B 邊界黑線回歸 ROI 報告</h1>
+        <p>紀錄時間：2026-05-20 12:19。來源畫面為 <code>http://127.0.0.1:9002/Home_Studio.html?v=r7310-phase2b-roi-fix-v1</code>。本報告記錄「馬賽克問題消失後，東西牆邊界黑線與縫隙感回歸」的兩個新觀察點，並提供右側註解面板供逐段討論。</p>
+        <div class="meta">
+          <div class="pill"><strong>共同目標</strong>消除不合理的縫隙，使房間看起來是正常的一體成形。</div>
+          <div class="pill"><strong>架構目標</strong>直接光與第一道直接陰影走 LIVE，漫射光走 BAKE。</div>
+          <div class="pill"><strong>目前狀態</strong>此檔為問題報告與 ROI 排序，修復前先鎖定根因。</div>
+        </div>
+      </section>
+
+      <section class="selectable" data-topic="ROI 排序">
+        <h2>ROI 排序</h2>
+        <div class="roi-grid">
+          <article class="card selectable" data-topic="ROI 1 西側三面交界">
+            <div class="rank">ROI 1</div>
+            <h3>西牆三面交界角落的縫隙黑線</h3>
+            <p>最高優先。西側同時牽涉西牆、西樑、西南柱，且剛修過西牆馬賽克 route。這個回歸很可能直接指向「專用 route 接手後，幾何交界或法線鄰接處缺少一致的可見面覆蓋」。西側是目前最容易驗證修 A 壞 B 的位置。</p>
+          </article>
+          <article class="card selectable" data-topic="ROI 2 東側三面交界">
+            <div class="rank">ROI 2</div>
+            <h3>東牆三面交界角落的縫隙黑線</h3>
+            <p>第二優先。東側是鏡像檢查點，可用來判斷西側問題是單一幾何個案，或是東西牆共用的接觸區 ownership / atlas route 規則造成。西側根因釐清後，東側可以用相同方法驗證。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="issue selectable" id="issue-west" data-topic="問題 1 西側三面交界">
+        <h2>問題 1：西牆三面交界角落處出現縫隙黑線</h2>
+        <p>使用者觀察：馬賽克問題已解決，西樑與西牆交界、西樑與西南柱交界又出現黑線與縫隙感。預期結果是西牆、西樑、西南柱在角落看起來一體成形，只保留自然陰影過渡。</p>
+        <div class="status"><span class="dot ok"></span>本機重現截圖包：<code>.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609</code></div>
+        <div class="shot-grid">
+          <figure class="selectable" data-topic="西側 all-on 截圖">
+            <img src="../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609/all-on.png" alt="西側三面交界 all-on 截圖">
+            <figcaption>all-on：可見西牆與西樑、西南柱附近的細黑線與縫隙感。</figcaption>
+          </figure>
+          <figure class="selectable" data-topic="西側 LIVE 參考截圖">
+            <img src="../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609/all-off-live.png" alt="西側三面交界 all-off-live 截圖">
+            <figcaption>all-off-live：後續用來比對縫隙是否來自幾何可見性、LIVE 直接陰影或 BAKE route。</figcaption>
+          </figure>
+        </div>
+        <pre>cameraState={"position":{"x":-1.798925,"y":2.461438,"z":2.730018},"yaw":2.312015,"pitch":0.336,"fov":55,"forward":{"x":-0.696398,"y":0.329713,"z":0.637431}}
+forward={"x":-0.696398,"y":0.329713,"z":0.637431}
+view={"facing":"西(-X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+        <ul class="checklist">
+          <li>第一個根因方向：西牆 beam-shadow route 優先後，接觸邊緣可能缺少幾何重疊或 guard coverage，導致邊線露出背景或錯誤陰影。</li>
+          <li>第二個根因方向：西樑、西南柱、西牆三者在 shader 的 ownership 邊界分離，接縫 pixel 可能在 route 間跳動。</li>
+          <li>驗收重點：同視角下消除西樑與西牆交界、西樑與西南柱交界的黑線；西牆保持無馬賽克。</li>
+        </ul>
+        <div class="inline-tools">
+          <button data-copy="#west-command">複製重現指令</button>
+          <button data-focus-topic="問題 1 西側三面交界">註解此問題</button>
+        </div>
+        <pre id="west-command">node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-mosaic-diagnostic --camera-state-json='{"position":{"x":-1.798925,"y":2.461438,"z":2.730018},"yaw":2.312015,"pitch":0.336,"fov":55,"forward":{"x":-0.696398,"y":0.329713,"z":0.637431}}' --target-samples=1 --timeout-ms=180000</pre>
+      </section>
+
+      <section class="issue selectable" id="issue-east" data-topic="問題 2 東側三面交界">
+        <h2>問題 2：東牆三面交界角落處出現縫隙黑線</h2>
+        <p>使用者觀察：馬賽克問題已解決，東牆與東南柱交界又出現黑線與縫隙感。預期結果是東牆、東樑、東南柱在角落看起來一體成形，只保留自然陰影過渡。</p>
+        <div class="status"><span class="dot ok"></span>本機重現截圖包：<code>.omc/r7-3-10-east-wall-shadow-visual/20260520-121851</code></div>
+        <div class="shot-grid">
+          <figure class="selectable" data-topic="東側 all-on 截圖">
+            <img src="../../.omc/r7-3-10-east-wall-shadow-visual/20260520-121851/east-wall-shadow-same-view.png" alt="東側三面交界 all-on 截圖">
+            <figcaption>all-on：可見東牆與東南柱交界附近的垂直黑線與縫隙感。</figcaption>
+          </figure>
+          <figure class="selectable" data-topic="東側 LIVE 參考截圖">
+            <img src="../../.omc/r7-3-10-east-wall-shadow-visual/20260520-121851/east-wall-shadow-all-bakes-off-reference.png" alt="東側三面交界 all-bakes-off 參考截圖">
+            <figcaption>all-bakes-off reference：後續用來比對黑線是否仍存在於 LIVE 幾何。</figcaption>
+          </figure>
+        </div>
+        <pre>cameraState={"position":{"x":1.89663,"y":2.501376,"z":2.476232},"yaw":-2.283971,"pitch":0.389,"fov":55,"forward":{"x":0.699786,"y":0.379263,"z":0.605359}}
+forward={"x":0.699786,"y":0.379263,"z":0.605359}
+view={"facing":"東(+X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+        <ul class="checklist">
+          <li>第一個根因方向：東牆 beam-shadow route 的接觸區 ownership 可能和東南柱 route 在邊界處分離。</li>
+          <li>第二個根因方向：東側鏡像幾何的延伸長度、厚度或法線條件與西側不同，造成縫隙感只在某些角度放大。</li>
+          <li>驗收重點：同視角下消除東牆與東南柱交界黑線；東牆維持無垂直異常貼圖。</li>
+        </ul>
+        <div class="inline-tools">
+          <button data-copy="#east-command">複製重現指令</button>
+          <button data-focus-topic="問題 2 東側三面交界">註解此問題</button>
+        </div>
+        <pre id="east-command">node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --camera-state-json='{"position":{"x":1.89663,"y":2.501376,"z":2.476232},"yaw":-2.283971,"pitch":0.389,"fov":55,"forward":{"x":0.699786,"y":0.379263,"z":0.605359}}' --target-samples=1 --timeout-ms=180000</pre>
+      </section>
+
+      <section class="selectable" data-topic="修復驗收條件">
+        <h2>修復驗收條件</h2>
+        <ul class="checklist">
+          <li>西側同視角：西樑與西牆交界、西樑與西南柱交界沒有不合理黑線或縫隙。</li>
+          <li>東側同視角：東牆與東南柱交界沒有不合理黑線或縫隙。</li>
+          <li>西牆維持馬賽克已解決狀態，東牆維持垂直異常貼圖已解決狀態。</li>
+          <li>修復後需重跑兩個同視角截圖 helper，並保存 before / after 圖包。</li>
+          <li>若黑線在 all-bakes-off reference 仍存在，優先查幾何密合；若只在 BAKE 開啟後出現，優先查 route ownership 與 atlas 取樣。</li>
+        </ul>
+      </section>
+    </main>
+
+    <aside class="annotation-panel">
+      <h2>右側註解</h2>
+      <p>先選取左側文字，再按「加入選取文字」。也可以直接按各問題的「註解此問題」。註解會存在此瀏覽器的 localStorage。</p>
+      <div class="field">
+        <label for="topic">段落</label>
+        <input id="topic" type="text" value="總覽">
+      </div>
+      <div class="field">
+        <label>選取文字</label>
+        <div id="selection" class="selection-box">尚未選取文字。</div>
+      </div>
+      <div class="inline-tools">
+        <button id="capture-selection">加入選取文字</button>
+        <button id="clear-selection">清空選取</button>
+      </div>
+      <div class="field">
+        <label for="note">註解內容</label>
+        <textarea id="note" placeholder="在這裡寫想討論的疑點、判斷或下一步。"></textarea>
+      </div>
+      <div class="inline-tools">
+        <button id="save-note">儲存註解</button>
+        <button id="export-notes">匯出註解 JSON</button>
+        <button id="clear-notes">清除全部</button>
+      </div>
+      <div id="notes" class="note-list"></div>
+    </aside>
+  </div>
+
+  <script>
+    const storageKey = 'r7310-phase2b-seam-gap-annotatable-20260520-1219';
+    const topicInput = document.getElementById('topic');
+    const selectionBox = document.getElementById('selection');
+    const noteInput = document.getElementById('note');
+    const notesNode = document.getElementById('notes');
+    let selectedText = '';
+
+    function loadNotes() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveNotes(notes) {
+      localStorage.setItem(storageKey, JSON.stringify(notes, null, 2));
+    }
+
+    function renderNotes() {
+      const notes = loadNotes();
+      notesNode.innerHTML = '';
+      if (!notes.length) {
+        const empty = document.createElement('p');
+        empty.textContent = '尚無註解。';
+        notesNode.appendChild(empty);
+        return;
+      }
+      notes.forEach((entry, index) => {
+        const card = document.createElement('article');
+        card.className = 'note-card';
+        card.innerHTML = `
+          <strong>${escapeHtml(entry.topic || '未命名段落')}</strong>
+          ${entry.selection ? `<blockquote>${escapeHtml(entry.selection)}</blockquote>` : ''}
+          <div class="body">${escapeHtml(entry.note || '')}</div>
+          <div class="stamp">${escapeHtml(entry.createdAt || '')}</div>
+          <div class="note-actions"><button data-delete="${index}">刪除</button></div>
+        `;
+        notesNode.appendChild(card);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function nearestTopicFromSelection() {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return '';
+      let node = selection.anchorNode;
+      if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+      const holder = node && node.closest ? node.closest('[data-topic]') : null;
+      return holder ? holder.getAttribute('data-topic') : '';
+    }
+
+    document.getElementById('capture-selection').addEventListener('click', () => {
+      const text = String(window.getSelection ? window.getSelection() : '').trim();
+      selectedText = text;
+      selectionBox.textContent = text || '尚未選取文字。';
+      const topic = nearestTopicFromSelection();
+      if (topic) topicInput.value = topic;
+    });
+
+    document.getElementById('clear-selection').addEventListener('click', () => {
+      selectedText = '';
+      selectionBox.textContent = '尚未選取文字。';
+    });
+
+    document.getElementById('save-note').addEventListener('click', () => {
+      const note = noteInput.value.trim();
+      const topic = topicInput.value.trim();
+      if (!note && !selectedText) return;
+      const notes = loadNotes();
+      notes.unshift({
+        topic,
+        selection: selectedText,
+        note,
+        createdAt: new Date().toLocaleString('zh-Hant-TW')
+      });
+      saveNotes(notes);
+      noteInput.value = '';
+      renderNotes();
+    });
+
+    document.getElementById('export-notes').addEventListener('click', async () => {
+      const text = JSON.stringify(loadNotes(), null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('註解 JSON 已複製。');
+      } catch (error) {
+        const blob = new Blob([text], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'r7310-phase2b-seam-gap-notes.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    document.getElementById('clear-notes').addEventListener('click', () => {
+      if (!confirm('確定清除全部註解？')) return;
+      saveNotes([]);
+      renderNotes();
+    });
+
+    notesNode.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-delete]');
+      if (!button) return;
+      const notes = loadNotes();
+      notes.splice(Number(button.dataset.delete), 1);
+      saveNotes(notes);
+      renderNotes();
+    });
+
+    document.querySelectorAll('[data-focus-topic]').forEach((button) => {
+      button.addEventListener('click', () => {
+        topicInput.value = button.dataset.focusTopic || '未命名段落';
+        selectedText = '';
+        selectionBox.textContent = '尚未選取文字。';
+        noteInput.focus();
+      });
+    });
+
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const target = document.querySelector(button.dataset.copy);
+        if (!target) return;
+        const text = target.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = '已複製';
+          setTimeout(() => { button.textContent = '複製重現指令'; }, 1200);
+        } catch (error) {
+          alert(text);
+        }
+      });
+    });
+
+    document.addEventListener('selectionchange', () => {
+      const topic = nearestTopicFromSelection();
+      if (topic) topicInput.value = topic;
+    });
+
+    renderNotes();
+  </script>
+</body>
+</html>

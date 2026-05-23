@@ -1,0 +1,702 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_structural_beams_columns_diffuse_short_circuit",
+  "runtimeEnabledDefault": true,
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp",
+  "batch": "structural_beams_columns",
+  "targetId": 1007,
+  "surfaceName": "c1_structural_beams_columns",
+  "requestedSamples": 1000,
+  "targetAtlasResolution": 1024,
+  "diffuseOnly": true,
+  "bakedRadianceKind": null,
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": false,
+  "upscaled": false,
+  "worldBounds": null,
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "coverageReport": "coverage-report.json",
+    "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "fb55adc400bbdf192db7e3c1dd69d8c9736cbe8369c6cb98d073525cfd81447e",
+    "texelMetadataPatch0Sha256": "868b83b5f05f57a4052c5d1e0182905bfb849b7e2a657ccca9b0aba583c6607f"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 0.5577869415283203
+  },
+  "mapping": "packed_rect_islands",
+  "runtimeAtlasSlot": 6,
+  "geometryGateReport": {
+    "status": "pass",
+    "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+    "unresolvedMixedFaces": [],
+    "sourceBoxes": [
+      {
+        "index": 28,
+        "name": "west_beam",
+        "bounds": {
+          "min": {
+            "x": -1.91,
+            "y": 2.525,
+            "z": -1.874
+          },
+          "max": {
+            "x": -1.75,
+            "y": 2.905,
+            "z": 2.848
+          }
+        }
+      },
+      {
+        "index": 29,
+        "name": "east_beam",
+        "bounds": {
+          "min": {
+            "x": 1.85,
+            "y": 2.515,
+            "z": -1.874
+          },
+          "max": {
+            "x": 2.11,
+            "y": 2.905,
+            "z": 3.056
+          }
+        }
+      },
+      {
+        "index": 30,
+        "name": "southwest_column",
+        "bounds": {
+          "min": {
+            "x": -1.91,
+            "y": 0,
+            "z": 2.846
+          },
+          "max": {
+            "x": -1.75,
+            "y": 2.905,
+            "z": 3.056
+          }
+        }
+      },
+      {
+        "index": 31,
+        "name": "southeast_column",
+        "bounds": {
+          "min": {
+            "x": 1.78,
+            "y": 0,
+            "z": 2.49
+          },
+          "max": {
+            "x": 1.91,
+            "y": 2.905,
+            "z": 3.056
+          }
+        }
+      }
+    ],
+    "checkedFaces": [
+      {
+        "name": "se_column_upper_inner_x",
+        "candidateFace": "x=1.78, y=2.515..2.905, z=2.49..3.056",
+        "normal": "-X",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "visible",
+        "ownerIsland": "se_column_inner_x",
+        "occludingFace": null,
+        "excludedInterval": null,
+        "visibleIntervals": [
+          "x=1.78, y=2.515..2.905, z=2.49..3.056"
+        ],
+        "excludedIntervals": []
+      },
+      {
+        "name": "se_column_inner_x_bookshelf_overlap",
+        "candidateFace": "x=1.78, y=0..2.515, z=2.49..3.056",
+        "normal": "-X",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "mixed",
+        "ownerIsland": "se_column_inner_x",
+        "occludingFace": "southeast_bookshelf x=1.02..1.78, y=0..2.04, z=2.73..3.056",
+        "excludedInterval": "x=1.78, y=0..2.04, z=2.73..3.056",
+        "visibleIntervals": [
+          "x=1.78, y=2.04..2.515, z=2.49..3.056",
+          "x=1.78, y=0..2.04, z=2.49..2.73"
+        ],
+        "excludedIntervals": [
+          "x=1.78, y=0..2.04, z=2.73..3.056"
+        ]
+      },
+      {
+        "name": "se_column_north_z_full_face",
+        "candidateFace": "z=2.49, x=1.78..1.91, y=0..2.905",
+        "normal": "-Z",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "mixed",
+        "ownerIsland": "se_column_north_z",
+        "occludingFace": "east_beam x=1.85..2.11, y=2.515..2.905, z=-1.874..3.056",
+        "excludedInterval": "z=2.49, x=1.85..1.91, y=2.515..2.905",
+        "visibleIntervals": [
+          "z=2.49, x=1.78..1.85, y=0..2.905",
+          "z=2.49, x=1.85..1.91, y=0..2.515"
+        ],
+        "excludedIntervals": [
+          "z=2.49, x=1.85..1.91, y=2.515..2.905"
+        ]
+      },
+      {
+        "name": "east_beam_under_y_wall_overlap",
+        "candidateFace": "y=2.515, x=1.91..2.11, z=-1.874..3.056",
+        "normal": "-Y",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "hidden",
+        "ownerIsland": null,
+        "occludingFace": "sceneBox_19 x=1.91..2.11, y=0..2.905, z=-1.874..3.056",
+        "excludedInterval": "y=2.515, x=1.91..2.11, z=-1.874..3.056",
+        "visibleIntervals": [],
+        "excludedIntervals": [
+          "y=2.515, x=1.91..2.11, z=-1.874..3.056"
+        ]
+      },
+      {
+        "name": "east_beam_se_column_overlap_x",
+        "candidateFace": "x=1.85, y=2.515..2.905, z=2.49..3.056",
+        "normal": "-X",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "hidden",
+        "ownerIsland": null,
+        "occludingFace": "southeast_column x=1.78..1.91, y=0..2.905, z=2.49..3.056",
+        "excludedInterval": "x=1.85, y=2.515..2.905, z=2.49..3.056",
+        "visibleIntervals": [],
+        "excludedIntervals": [
+          "x=1.85, y=2.515..2.905, z=2.49..3.056"
+        ]
+      },
+      {
+        "name": "east_beam_se_column_overlap_under_y",
+        "candidateFace": "y=2.515, x=1.85..1.91, z=2.49..3.056",
+        "normal": "-Y",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "hidden",
+        "ownerIsland": null,
+        "occludingFace": "southeast_column x=1.78..1.91, y=0..2.905, z=2.49..3.056",
+        "excludedInterval": "y=2.515, x=1.85..1.91, z=2.49..3.056",
+        "visibleIntervals": [],
+        "excludedIntervals": [
+          "y=2.515, x=1.85..1.91, z=2.49..3.056"
+        ]
+      },
+      {
+        "name": "sw_column_upper_north_z",
+        "candidateFace": "z=2.846, x=-1.91..-1.75, y=2.525..2.905",
+        "normal": "-Z",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "hidden",
+        "ownerIsland": null,
+        "occludingFace": "west_beam x=-1.91..-1.75, y=2.525..2.905, z=-1.874..2.848",
+        "excludedInterval": "z=2.846, x=-1.91..-1.75, y=2.525..2.905",
+        "visibleIntervals": [],
+        "excludedIntervals": [
+          "z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+        ]
+      },
+      {
+        "name": "sw_column_upper_inner_coplanar_x",
+        "candidateFace": "x=-1.75, y=2.525..2.905, z=2.846..3.056",
+        "normal": "+X",
+        "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+        "decision": "visible",
+        "ownerIsland": "sw_column_inner_x",
+        "occludingFace": null,
+        "excludedInterval": null,
+        "visibleIntervals": [
+          "x=-1.75, y=2.525..2.905, z=2.846..3.056"
+        ],
+        "excludedIntervals": []
+      }
+    ],
+    "finalIslandRegistrySource": "geometry_gate",
+    "finalIslandCount": 8,
+    "finalIslandRegistry": [
+      {
+        "name": "west_beam_inner_x",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0,
+          "uMax": 0.5,
+          "vMax": 0.17
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": -1.75,
+          "yMin": 2.525,
+          "yMax": 2.905,
+          "zMin": -1.874,
+          "zMax": 2.848
+        },
+        "normal": "+X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "west_beam_under_y",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.18,
+          "uMax": 0.5,
+          "vMax": 0.26
+        },
+        "worldFace": {
+          "axis": "y",
+          "value": 2.525,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "zMin": -1.874,
+          "zMax": 2.846
+        },
+        "normal": "-Y",
+        "axes": {
+          "u": "z",
+          "v": "x"
+        }
+      },
+      {
+        "name": "east_beam_inner_x",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.27,
+          "uMax": 0.5,
+          "vMax": 0.44
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": 1.85,
+          "yMin": 2.515,
+          "yMax": 2.905,
+          "zMin": -1.874,
+          "zMax": 2.49
+        },
+        "normal": "-X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "east_beam_under_y",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.45,
+          "uMax": 0.5,
+          "vMax": 0.53
+        },
+        "worldFace": {
+          "axis": "y",
+          "value": 2.515,
+          "xMin": 1.85,
+          "xMax": 1.91,
+          "zMin": -1.874,
+          "zMax": 2.49
+        },
+        "normal": "-Y",
+        "axes": {
+          "u": "z",
+          "v": "x"
+        }
+      },
+      {
+        "name": "sw_column_inner_x",
+        "atlasRect": {
+          "uMin": 0.52,
+          "vMin": 0,
+          "uMax": 0.74,
+          "vMax": 0.36
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": -1.75,
+          "yMin": 0,
+          "yMax": 2.905,
+          "zMin": 2.846,
+          "zMax": 3.056
+        },
+        "normal": "+X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "sw_column_north_z",
+        "atlasRect": {
+          "uMin": 0.76,
+          "vMin": 0,
+          "uMax": 0.94,
+          "vMax": 0.36
+        },
+        "worldFace": {
+          "axis": "z",
+          "value": 2.846,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "yMin": 0,
+          "yMax": 2.525
+        },
+        "normal": "-Z",
+        "axes": {
+          "u": "x",
+          "v": "y"
+        }
+      },
+      {
+        "name": "se_column_inner_x",
+        "atlasRect": {
+          "uMin": 0.52,
+          "vMin": 0.38,
+          "uMax": 0.74,
+          "vMax": 0.76
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": 1.78,
+          "yMin": 0,
+          "yMax": 2.905,
+          "zMin": 2.49,
+          "zMax": 3.056
+        },
+        "normal": "-X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "se_column_north_z",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.88,
+          "uMax": 1,
+          "vMax": 1
+        },
+        "worldFace": {
+          "axis": "z",
+          "value": 2.49,
+          "xMin": 1.78,
+          "xMax": 1.91,
+          "yMin": 0,
+          "yMax": 2.905
+        },
+        "normal": "-Z",
+        "axes": {
+          "u": "y",
+          "v": "x"
+        }
+      }
+    ],
+    "excludedContactFaces": [
+      "east_beam_under_y wall-overlap y=2.515, x=1.91..MAX_X, z=-1.874..3.056",
+      "east_beam_inner_x southeast-column overlap x=1.85, y=2.515..2.905, z=2.49..3.056",
+      "east_beam_under_y southeast-column overlap y=2.515, x=1.85..1.91, z=2.49..3.056",
+      "se_column_north_z east-beam overlap z=2.49, x=1.85..1.91, y=2.515..2.905",
+      "se_column_inner_x southeast-bookshelf overlap x=1.78, y=0..2.04, z=2.73..3.056",
+      "west_beam_under_y southwest-column overlap y=2.525, x=-1.91..-1.75, z=2.846..2.848",
+      "sw_column_north_z west-beam internal contact z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+    ],
+    "notes": [
+      "se_column_upper_inner_x is visible and extends se_column_inner_x to y=0.0..2.905",
+      "se_column_inner_x subtracts the southeast bookshelf coplanar overlap before bake/runtime sampling",
+      "se_column_north_z is one continuous island; the east-beam overlap is excluded inside the same island owner",
+      "west_beam_inner_x ends at z=2.848 and sw_column_inner_x owns the L vertical leg to y=2.905",
+      "sw_column_upper_inner_coplanar_x is visible and assigned to sw_column_inner_x"
+    ]
+  },
+  "islands": [
+    {
+      "name": "west_beam_inner_x",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0,
+        "uMax": 0.5,
+        "vMax": 0.17
+      },
+      "worldFace": {
+        "axis": "x",
+        "value": -1.75,
+        "yMin": 2.525,
+        "yMax": 2.905,
+        "zMin": -1.874,
+        "zMax": 2.848
+      },
+      "normal": "+X",
+      "axes": {
+        "u": "z",
+        "v": "y"
+      }
+    },
+    {
+      "name": "west_beam_under_y",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0.18,
+        "uMax": 0.5,
+        "vMax": 0.26
+      },
+      "worldFace": {
+        "axis": "y",
+        "value": 2.525,
+        "xMin": -1.91,
+        "xMax": -1.75,
+        "zMin": -1.874,
+        "zMax": 2.846
+      },
+      "normal": "-Y",
+      "axes": {
+        "u": "z",
+        "v": "x"
+      }
+    },
+    {
+      "name": "east_beam_inner_x",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0.27,
+        "uMax": 0.5,
+        "vMax": 0.44
+      },
+      "worldFace": {
+        "axis": "x",
+        "value": 1.85,
+        "yMin": 2.515,
+        "yMax": 2.905,
+        "zMin": -1.874,
+        "zMax": 2.49
+      },
+      "normal": "-X",
+      "axes": {
+        "u": "z",
+        "v": "y"
+      }
+    },
+    {
+      "name": "east_beam_under_y",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0.45,
+        "uMax": 0.5,
+        "vMax": 0.53
+      },
+      "worldFace": {
+        "axis": "y",
+        "value": 2.515,
+        "xMin": 1.85,
+        "xMax": 1.91,
+        "zMin": -1.874,
+        "zMax": 2.49
+      },
+      "normal": "-Y",
+      "axes": {
+        "u": "z",
+        "v": "x"
+      }
+    },
+    {
+      "name": "sw_column_inner_x",
+      "atlasRect": {
+        "uMin": 0.52,
+        "vMin": 0,
+        "uMax": 0.74,
+        "vMax": 0.36
+      },
+      "worldFace": {
+        "axis": "x",
+        "value": -1.75,
+        "yMin": 0,
+        "yMax": 2.905,
+        "zMin": 2.846,
+        "zMax": 3.056
+      },
+      "normal": "+X",
+      "axes": {
+        "u": "z",
+        "v": "y"
+      }
+    },
+    {
+      "name": "sw_column_north_z",
+      "atlasRect": {
+        "uMin": 0.76,
+        "vMin": 0,
+        "uMax": 0.94,
+        "vMax": 0.36
+      },
+      "worldFace": {
+        "axis": "z",
+        "value": 2.846,
+        "xMin": -1.91,
+        "xMax": -1.75,
+        "yMin": 0,
+        "yMax": 2.525
+      },
+      "normal": "-Z",
+      "axes": {
+        "u": "x",
+        "v": "y"
+      }
+    },
+    {
+      "name": "se_column_inner_x",
+      "atlasRect": {
+        "uMin": 0.52,
+        "vMin": 0.38,
+        "uMax": 0.74,
+        "vMax": 0.76
+      },
+      "worldFace": {
+        "axis": "x",
+        "value": 1.78,
+        "yMin": 0,
+        "yMax": 2.905,
+        "zMin": 2.49,
+        "zMax": 3.056
+      },
+      "normal": "-X",
+      "axes": {
+        "u": "z",
+        "v": "y"
+      }
+    },
+    {
+      "name": "se_column_north_z",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0.88,
+        "uMax": 1,
+        "vMax": 1
+      },
+      "worldFace": {
+        "axis": "z",
+        "value": 2.49,
+        "xMin": 1.78,
+        "xMax": 1.91,
+        "yMin": 0,
+        "yMax": 2.905
+      },
+      "normal": "-Z",
+      "axes": {
+        "u": "y",
+        "v": "x"
+      }
+    }
+  ],
+  "excludedContactFaces": [
+    "east_beam_under_y wall-overlap y=2.515, x=1.91..MAX_X, z=-1.874..3.056",
+    "east_beam_inner_x southeast-column overlap x=1.85, y=2.515..2.905, z=2.49..3.056",
+    "east_beam_under_y southeast-column overlap y=2.515, x=1.85..1.91, z=2.49..3.056",
+    "se_column_north_z east-beam overlap z=2.49, x=1.85..1.91, y=2.515..2.905",
+    "se_column_inner_x southeast-bookshelf overlap x=1.78, y=0..2.04, z=2.73..3.056",
+    "west_beam_under_y southwest-column overlap y=2.525, x=-1.91..-1.75, z=2.846..2.848",
+    "sw_column_north_z west-beam internal contact z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+  ],
+  "islandCoverageByName": {
+    "west_beam_inner_x": {
+      "totalTexels": 89088,
+      "validTexels": 89088,
+      "nonzeroTexels": 89088,
+      "validTexelRatio": 1
+    },
+    "west_beam_under_y": {
+      "totalTexels": 41984,
+      "validTexels": 41984,
+      "nonzeroTexels": 41984,
+      "validTexelRatio": 1
+    },
+    "east_beam_inner_x": {
+      "totalTexels": 89600,
+      "validTexels": 89600,
+      "nonzeroTexels": 89600,
+      "validTexelRatio": 1
+    },
+    "east_beam_under_y": {
+      "totalTexels": 41984,
+      "validTexels": 41984,
+      "nonzeroTexels": 41984,
+      "validTexelRatio": 1
+    },
+    "sw_column_inner_x": {
+      "totalTexels": 83394,
+      "validTexels": 83394,
+      "nonzeroTexels": 58082,
+      "validTexelRatio": 1
+    },
+    "sw_column_north_z": {
+      "totalTexels": 68265,
+      "validTexels": 68265,
+      "nonzeroTexels": 47546,
+      "validTexelRatio": 1
+    },
+    "se_column_inner_x": {
+      "totalTexels": 87914,
+      "validTexels": 87914,
+      "nonzeroTexels": 87914,
+      "validTexelRatio": 1
+    },
+    "se_column_north_z": {
+      "totalTexels": 125952,
+      "validTexels": 125952,
+      "nonzeroTexels": 125952,
+      "validTexelRatio": 1
+    }
+  },
+  "islandLumaByName": {
+    "west_beam_inner_x": {
+      "meanLuma": 0.25531465099183365,
+      "maxLuma": 0.5865595638751984,
+      "nonzeroTexels": 89088
+    },
+    "west_beam_under_y": {
+      "meanLuma": 0.47957188756833397,
+      "maxLuma": 0.7796258926391602,
+      "nonzeroTexels": 41984
+    },
+    "east_beam_inner_x": {
+      "meanLuma": 0.3412618727147486,
+      "maxLuma": 0.7278034289677938,
+      "nonzeroTexels": 89600
+    },
+    "east_beam_under_y": {
+      "meanLuma": 0.4442280287605282,
+      "maxLuma": 0.7527832786242167,
+      "nonzeroTexels": 41984
+    },
+    "sw_column_inner_x": {
+      "meanLuma": 0.1963822400057543,
+      "maxLuma": 0.42821526527404785,
+      "nonzeroTexels": 58082
+    },
+    "sw_column_north_z": {
+      "meanLuma": 0.37612567372241024,
+      "maxLuma": 0.708445151646932,
+      "nonzeroTexels": 47546
+    },
+    "se_column_inner_x": {
+      "meanLuma": 0.421910886316908,
+      "maxLuma": 0.6472805241743723,
+      "nonzeroTexels": 87914
+    },
+    "se_column_north_z": {
+      "meanLuma": 0.5887223398023801,
+      "maxLuma": 0.8122749328613281,
+      "nonzeroTexels": 125952
+    }
+  }
+}

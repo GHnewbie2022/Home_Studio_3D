@@ -7,7 +7,7 @@
   ],
   "missingSurfaceNames": [],
   "validTexelRatioBySurface": {
-    "c1_south_wall": 0.7310161590576172
+    "c1_south_wall": 0.7347393035888672
   },
   "dilationAppliedBySurface": {
     "c1_south_wall": false

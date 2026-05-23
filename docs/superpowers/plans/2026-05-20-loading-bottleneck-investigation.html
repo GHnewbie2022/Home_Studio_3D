@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loading 瓶頸調查與優化方案 — 2026-05-20</title>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --surface-2: #222;
+    --border: #333;
+    --text: #d4d4d4;
+    --text-dim: #888;
+    --accent: #e2b96f;
+    --accent-dim: #a07c3e;
+    --green: #5cb85c;
+    --yellow: #e8c44a;
+    --red: #c9534a;
+    --blue: #5fa8d3;
+    --code-bg: #1a1a1a;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --sans: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 40px 24px 80px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.6em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 1.2em;
+    color: var(--accent);
+    margin-top: 40px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.05em;
+    color: #ccc;
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 8px 0 16px 20px; }
+  li { margin-bottom: 6px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #e8c44a;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 10px 0 18px;
+    line-height: 1.55;
+    color: #ccc;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .card-title {
+    font-weight: 600;
+    color: #eee;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.72em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+  }
+  .badge-low    { background: #1a3a1a; color: var(--green); border: 1px solid #2a5a2a; }
+  .badge-mid    { background: #3a3418; color: var(--yellow); border: 1px solid #5a5028; }
+  .badge-high   { background: #3a1a18; color: var(--red);    border: 1px solid #5a2a28; }
+  .badge-impact { background: #1a2a3a; color: var(--blue);   border: 1px solid #2a4a5a; }
+  .metric-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+  .metric {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 180px;
+  }
+  .metric-value {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+  .metric-label {
+    font-size: 0.78em;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 0.88em;
+  }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--surface); }
+  .priority-list {
+    list-style: none;
+    margin-left: 0;
+    counter-reset: priority-counter;
+  }
+  .priority-list li {
+    counter-increment: priority-counter;
+    position: relative;
+    padding-left: 36px;
+    margin-bottom: 10px;
+  }
+  .priority-list li::before {
+    content: counter(priority-counter);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    color: #fff;
+    font-size: 0.78em;
+    font-weight: 700;
+  }
+  .timeline {
+    border-left: 2px solid var(--border);
+    margin: 16px 0 16px 12px;
+    padding-left: 20px;
+  }
+  .timeline-step {
+    position: relative;
+    margin-bottom: 14px;
+    padding: 8px 0;
+  }
+  .timeline-step::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 2px solid var(--accent);
+  }
+  .timeline-step .step-label {
+    font-size: 0.78em;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+  .timeline-step .step-desc {
+    color: var(--text);
+  }
+  .timeline-step .step-time {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    color: var(--yellow);
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+  .file-ref {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    color: var(--blue);
+  }
+  .callout {
+    background: #1a2018;
+    border-left: 3px solid var(--green);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    font-size: 0.92em;
+  }
+  .callout-warn {
+    background: #2a2218;
+    border-left-color: var(--yellow);
+  }
+  @media (max-width: 600px) {
+    body { padding: 20px 14px 60px; }
+    h1 { font-size: 1.3em; }
+    .metric-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Loading 瓶頸調查與優化方案</h1>
+<div class="subtitle">2026-05-20 ｜ R7-3.10 靜態漫射烘焙擴張期間 ｜ 診斷報告 + 優化提案</div>
+
+<!-- ===== 症狀 ===== -->
+<h2>一、症狀描述</h2>
+<p>開啟 <code>http://localhost:9001/Home_Studio.html</code> 時，loading 圓圈動畫會顯示到 5～6% 後卡住好幾秒，然後才繼續上升到 100%。</p>
+
+<!-- ===== 量化數據 ===== -->
+<h2>二、量化數據</h2>
+<div class="metric-row">
+  <div class="metric">
+    <div class="metric-value">22</div>
+    <div class="metric-label">烘焙面（atlas bin 檔案數）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">16 MB</div>
+    <div class="metric-label">每個 atlas bin（Float32 RGBA, 1024²）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">352 MB</div>
+    <div class="metric-label">啟動時下載總量（cache: 'no-store'）</div>
+  </div>
+</div>
+<div class="metric-row">
+  <div class="metric">
+    <div class="metric-value">66</div>
+    <div class="metric-label">HTTP fetch 總數（每面 3 個）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">22 次</div>
+    <div class="metric-label">atlas 合成重建次數（每完成 1 面重建 1 次）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">384 MB</div>
+    <div class="metric-label">每次合成分配的 Float32Array 大小</div>
+  </div>
+</div>
+
+<!-- ===== 根因 ===== -->
+<h2>三、根因分析</h2>
+
+<h3>進度條公式</h3>
+<pre>// InitCommon.js L209
+var progress = 0.08 + 0.90 * (ready / total);
+// total = 22, ready = 0 → 顯示 8%（動畫插值中先經過 5%、6%）
+// 每完成 1 面 → +4.09%</pre>
+<p>在第一個面載入完成之前，進度值固定在 8%，所以使用者看到 5～6% 的動畫插值後就停住。</p>
+
+<h3>啟動時間軸</h3>
+<div class="timeline">
+  <div class="timeline-step">
+    <div class="step-label">階段 A — JS 腳本解析</div>
+    <div class="step-desc">InitCommon.js 517KB + Home_Studio.js 384KB 解析</div>
+    <div class="step-time">≈ 50～100 ms（不是瓶頸）</div>
+  </div>
+  <div class="timeline-step">
+    <div class="step-label">階段 B — Shader 檔案載入 + 編譯</div>
+    <div class="step-desc">Home_Studio_Fragment.glsl 255KB 透過 fileLoader.load() 載入，Three.js 在首次 render() 時觸發 WebGL compile + link，主執行緒被鎖住</div>
+    <div class="step-time">≈ 2～5 秒（GPU-bound，主執行緒凍結）</div>
+  </div>
+  <div class="timeline-step">
+    <div class="step-label">階段 C — 22 個 bake 面並行下載</div>
+    <div class="step-desc">每面三段串行 fetch（pointer JSON → validation JSON → 16MB atlas bin），全部帶 cache: 'no-store'。HTTP/1.1 最多 6 連線同時下載</div>
+    <div class="step-time">≈ 3～10 秒（取決於 server 與磁碟 I/O）</div>
+  </div>
+  <div class="timeline-step">
+    <div class="step-label">階段 D — atlas 合成（重複 22 次）</div>
+    <div class="step-desc">每完成 1 面就呼叫 refreshR7310C1CombinedDiffuseRuntimeTexture()，分配 384 MB Float32Array 並逐像素複製 22 個 slot</div>
+    <div class="step-time">≈ 每次 200～500 ms × 22 次</div>
+  </div>
+</div>
+
+<p>階段 B 和 C 時間重疊，但 shader 編譯期間主執行緒被鎖住，即使 fetch 回來了也無法執行 callback，進度條動畫凍結。這就是使用者看到「卡在 5～6%」的直接原因。</p>
+
+<h3>涉及檔案</h3>
+<table>
+  <tr>
+    <th>檔案</th>
+    <th>角色</th>
+    <th>大小</th>
+  </tr>
+  <tr>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>loading 進度條邏輯、22 個 bake loader、atlas 合成、cache: 'no-store' 設定</td>
+    <td>517 KB</td>
+  </tr>
+  <tr>
+    <td class="file-ref">shaders/Home_Studio_Fragment.glsl</td>
+    <td>path tracing 主 fragment shader（WebGL 編譯瓶頸來源）</td>
+    <td>255 KB</td>
+  </tr>
+  <tr>
+    <td class="file-ref">assets/bakes/r7-3-10/c1-static-diffuse/*/atlas-patch-000-rgba-f32.bin</td>
+    <td>22 個 bake atlas 二進位檔案</td>
+    <td>各 16 MB</td>
+  </tr>
+  <tr>
+    <td class="file-ref">docs/data/r7-3-10-c1-*-runtime-package.json</td>
+    <td>22 個 pointer JSON</td>
+    <td>各 1～2 KB</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<!-- ===== 優化方案 ===== -->
+<h2>四、優化方案</h2>
+
+<!-- 第一層 -->
+<h3>第一層：低風險、高回報</h3>
+
+<div class="card">
+  <div class="card-title">
+    方案 1：移除 cache: 'no-store'，改用帶版本號的 URL
+    <span class="badge badge-low">低風險</span>
+    <span class="badge badge-impact">最高回報</span>
+  </div>
+  <p><strong>現況：</strong>66 個 fetch 全部帶 <code>{ cache: 'no-store' }</code>，每次開頁面都重抓 352 MB。</p>
+  <p><strong>做法：</strong>atlas bin 的 URL 加上 cache-buster query string（跟 CSS / JS 已經在做的一樣，例如 <code>?v=r7310-xxx</code>），移除 <code>cache: 'no-store'</code>。瀏覽器第二次開啟後直接從 disk cache 讀取。</p>
+  <p><strong>預估改善：</strong>第二次以後載入從數秒降到幾乎為零。第一次載入不變。</p>
+  <p><strong>改動範圍：</strong>InitCommon.js 中約 44 處 fetch 呼叫的 option，加上 URL 拼接改用版本號。</p>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    方案 2：延遲 atlas 合成（只在全部到齊後做一次）
+    <span class="badge badge-low">低風險</span>
+  </div>
+  <p><strong>現況：</strong><code>refreshR7310C1CombinedDiffuseRuntimeTexture()</code> 在每個面載入完成後都呼叫一次。22 面 = 重建 22 次，每次分配 384 MB。</p>
+  <p><strong>做法：</strong>收到一個面 → 存起來 → 更新進度條 → 不合成。等全部到齊後做一次。</p>
+  <p><strong>預估改善：</strong>合成從 22 次降到 1 次。減少約 21 × 384 MB 記憶體分配與逐像素複製。</p>
+  <p><strong>副作用：</strong>loading screen 期間 partial bake 不會即時生效，但使用者看不到。</p>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    方案 3：進度條加入下載細粒度
+    <span class="badge badge-low">低風險</span>
+  </div>
+  <p><strong>現況：</strong>進度只在「面完成」時跳一格（每格 4%），下載 16 MB bin 期間沒有中間回報。</p>
+  <p><strong>做法：</strong>拆分三段 fetch 分別回報進度；或用 <code>response.body.getReader()</code> 逐塊讀取 bin 檔案，根據已讀位元數回報中間百分比。</p>
+  <p><strong>預估改善：</strong>視覺感受大幅改善，進度條持續在動。</p>
+</div>
+
+<!-- 第二層 -->
+<h3>第二層：中等風險、高回報</h3>
+
+<div class="card">
+  <div class="card-title">
+    方案 4：並行下載重構
+    <span class="badge badge-mid">中風險</span>
+  </div>
+  <p><strong>現況：</strong>每面的三段 fetch 嚴格串行。22 面之間雖並行，但 HTTP/1.1 最多 6 連線同時。</p>
+  <p><strong>做法：</strong></p>
+  <pre>A. Promise.all 一次拿 22 個 pointer JSON
+B. Promise.all 一次拿 22 個 validation JSON
+C. Promise.all 一次下載 22 個 atlas bin</pre>
+  <p>額外可搭配 HTTP/2 server（如 npm <code>http-server --ssl</code>）解除 6 連線上限。</p>
+  <p><strong>預估改善：</strong>下載總時間取決於最慢的單一 bin，而非串接延遲。</p>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    方案 5：Shader 編譯不阻塞進度動畫
+    <span class="badge badge-mid">中風險</span>
+  </div>
+  <p><strong>現況：</strong>Three.js 在首次 <code>renderer.render()</code> 時觸發 WebGL shader compile，主執行緒被鎖住數秒，進度條凍結。</p>
+  <p><strong>做法（兩個方向）：</strong></p>
+  <pre>A. 使用 KHR_parallel_shader_compile 擴充功能
+   Three.js r150+ 支援。Shader 在 GPU 背景編譯，主執行緒不被鎖住。
+
+B. 在 loading screen 顯示期間先呼叫 renderer.compile(scene, camera)
+   把 shader 編譯提前到 loading 階段。</pre>
+  <p><strong>預估改善：</strong>消除進度條凍結的體感。</p>
+</div>
+
+<!-- 第三層 -->
+<h3>第三層：大工程、長期考量</h3>
+
+<div class="card">
+  <div class="card-title">
+    方案 6：atlas bin 壓縮格式
+    <span class="badge badge-high">高風險</span>
+  </div>
+  <p><strong>現況：</strong>每個 atlas 是 raw RGBA Float32，1024² × 16 bytes = 16 MB。</p>
+  <p><strong>做法：</strong>儲存為 RGBE（每像素 4 bytes）或 Float16（每像素 8 bytes），runtime 解碼。</p>
+  <p><strong>預估改善：</strong>下載從 352 MB 降到 88～176 MB。</p>
+  <p><strong>風險：</strong>需要修改 bake pipeline 輸出格式、shader 解碼邏輯、驗證視覺品質。</p>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    方案 7：預合成單一 atlas 檔案
+    <span class="badge badge-high">高風險</span>
+  </div>
+  <p><strong>現況：</strong>runtime 下載 22 個獨立 bin 後在 JS 端逐像素合成一張 6144×4096 的合併貼圖。</p>
+  <p><strong>做法：</strong>bake 完成後用 Node.js 工具預先合成 <code>combined-atlas.bin</code>，runtime 一次 fetch 直接使用。</p>
+  <p><strong>預估改善：</strong>省掉 JS 端合成步驟。搭配方案 6 的壓縮格式效果更好。</p>
+  <p><strong>風險：</strong>需要新增 build 工具，維護「重烘焙 → 重合成」流程。</p>
+</div>
+
+<hr class="divider">
+
+<!-- ===== 推薦順序 ===== -->
+<h2>五、推薦優先順序</h2>
+
+<table>
+  <tr>
+    <th>優先</th>
+    <th>方案</th>
+    <th>風險</th>
+    <th>改動量</th>
+    <th>預估效果</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>移除 cache: 'no-store'</td>
+    <td><span class="badge badge-low">低</span></td>
+    <td>~44 行</td>
+    <td>第二次載入接近瞬間</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>延遲 atlas 合成</td>
+    <td><span class="badge badge-low">低</span></td>
+    <td>~30 行</td>
+    <td>省 21 次 384 MB 重建</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>進度條細粒度</td>
+    <td><span class="badge badge-low">低</span></td>
+    <td>~50 行</td>
+    <td>進度條持續在動</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>提前 shader compile</td>
+    <td><span class="badge badge-mid">中</span></td>
+    <td>~10 行</td>
+    <td>消除凍結感</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>並行下載重構</td>
+    <td><span class="badge badge-mid">中</span></td>
+    <td>~200 行</td>
+    <td>首次載入加速 30～50%</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>壓縮格式 / 預合成</td>
+    <td><span class="badge badge-high">高</span></td>
+    <td>大工程</td>
+    <td>下載量減半以上</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>建議：</strong>方案 1 + 2 + 3 三個合在一起做，改動量小、風險低。第二次以後開啟頁面的載入等待應該從「卡在 5% 好幾秒」變成「幾乎瞬間到 100%」。
+</div>
+
+<hr class="divider">
+
+<!-- ===== 附錄 ===== -->
+<h2>六、附錄：關鍵程式碼位置</h2>
+
+<table>
+  <tr>
+    <th>功能</th>
+    <th>檔案</th>
+    <th>行號</th>
+  </tr>
+  <tr>
+    <td>進度條百分比公式</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L209</td>
+  </tr>
+  <tr>
+    <td>進度條 UI 動畫</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L107–147</td>
+  </tr>
+  <tr>
+    <td>loading screen 淡出</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L149–168</td>
+  </tr>
+  <tr>
+    <td>22 面 enabled 預設值（全部 true）</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L1613–1780</td>
+  </tr>
+  <tr>
+    <td>bake loader（floor 範例）</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L2634–2697</td>
+  </tr>
+  <tr>
+    <td>atlas 合成函式</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L2307–2370</td>
+  </tr>
+  <tr>
+    <td>refresh 觸發點（每面完成都呼叫）</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L2372–2514</td>
+  </tr>
+  <tr>
+    <td>啟動時觸發所有 bake 載入</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L8019–8068</td>
+  </tr>
+  <tr>
+    <td>啟動入口（呼叫 ensureR7310...）</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L10058–10059</td>
+  </tr>
+  <tr>
+    <td>shader 檔案載入 + 材質建立</td>
+    <td class="file-ref">js/InitCommon.js</td>
+    <td>L10096–10127</td>
+  </tr>
+  <tr>
+    <td>Loading screen HTML</td>
+    <td class="file-ref">Home_Studio.html</td>
+    <td>L32–40</td>
+  </tr>
+</table>
+
+<div class="subtitle" style="margin-top: 40px; text-align: right;">
+  報告結束 — 2026-05-20T04:21 +08:00
+</div>
+
+</body>
+</html>

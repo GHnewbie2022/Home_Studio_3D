@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-05-20-r7-3-10-roi1-sanity-check-result-opus">
+<title>ROI 1 Sanity Check 結果報告（OPUS版）</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+  --bstrong: #87b87a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 880px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 30px; }
+h2 { margin: 40px 0 12px; font-size: 22px; }
+h3 { margin: 24px 0 10px; font-size: 17px; }
+h4 { margin: 16px 0 6px; font-size: 14.5px; color: var(--accent-strong); }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+th, td { border-bottom: 1px solid var(--rule); padding: 8px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); background: var(--paper-soft); }
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+.callout.bstrong {
+  border-left-color: var(--bstrong);
+  background: #1f2a1c;
+}
+.callout.key {
+  border-left-color: var(--accent-strong);
+  background: #2a2519;
+}
+.callout.warn {
+  border-left-color: #c89a4f;
+  background: #2b2218;
+}
+.verdict {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: var(--bstrong);
+  color: #0e1a09;
+}
+.evidence {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 14px 0;
+}
+.evidence .card {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--paper-soft);
+}
+.evidence .card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+}
+figure.shot {
+  margin: 16px 0;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--paper-soft);
+}
+figure.shot img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: var(--code-bg);
+}
+figure.shot figcaption {
+  padding: 10px 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 13px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 24px; }
+  .evidence { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-05-20 · ROI 1 sanity check 階段性結果 · Opus 4.7 撰</p>
+    <h1>ROI 1 Sanity Check 結果報告（OPUS版）</h1>
+
+    <div class="callout bstrong">
+      <p style="margin:0 0 6px"><span class="verdict">B-strong 命中</span></p>
+      <p style="margin:0">三次 run 一致顯示 <code>1016 × 1013</code>（西樑底面陰影 × 西牆樑陰影）pair 出現於 11×11 grid 邊界，median luma step <code>0.1327</code> 大於 <code>0.10</code> 門檻。OPUS / CODEX 共識的 H2（route ownership 邊界硬切）獲得實證。</p>
+    </div>
+
+    <div class="callout">
+      <strong>給 CODEX 的協作目的</strong>
+      <p style="margin:8px 0 0">這份是 OPUS 路徑 P 第一段交付：wrapper 實作 + sanity check 結果 + JSON 摘要 + 新 HTML review。請以這份結果為起點，準備路徑 P 第二段（D1 uniform gate <code>uR7310C1WestWallBeamShadowZMaxOverride</code>），等使用者授權後執行。</p>
+    </div>
+
+    <h2 id="exec">1. 一句話結論</h2>
+    <p>在 ROI 1 cameraState 下的 11×11 sample grid 中，路由切換邊界（<code>west_beam_under_shadow_hybrid</code> 與 <code>west_wall_beam_shadow_hybrid</code>）對應一條相鄰像素亮度差 <strong>13.27%</strong> 的硬邊。這就是西樑底面 / 西牆 / 西南柱三面交界視覺黑線的主導機制。</p>
+
+    <h2 id="verdict-table">2. 五狀況判讀對照</h2>
+    <table>
+      <thead><tr><th>狀況</th><th>對應條件</th><th>本次測量</th></tr></thead>
+      <tbody>
+        <tr><td>Invalid</td><td>anchor 找不到、valid sample &lt; 80</td><td>未命中（valid=121/121）</td></tr>
+        <tr><td>A 單一路由</td><td>routeStable + median(sameRouteLumaStep) ≤ 0.03</td><td>未命中（routeStable=false）</td></tr>
+        <tr><td><strong>B-strong</strong></td><td>1013×(1015 or 1016) pair 在 ≥2 run 出現 + median(diff) &gt; 0.10</td><td><strong>命中</strong>（pair persistence=3/3, median=0.1327）</td></tr>
+        <tr><td>B-weak</td><td>3 run 都有 dedicated pair 但 pair 跨 run 跳動 + median(diff) &gt; 0.10</td><td>未命中</td></tr>
+        <tr><td>C</td><td>route/hit 有跳動 + median(diff) ≤ 0.03</td><td>未命中</td></tr>
+        <tr><td>D 灰色帶</td><td>median(diff) ∈ 0.03..0.10 或 3 run 不一致</td><td>未命中</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="evidence">3. 證據</h2>
+    <div class="evidence">
+      <div class="card">
+        <strong>anchor.status</strong>
+        <code>valid</code>
+      </div>
+      <div class="card">
+        <strong>anchor.pixel (canvas)</strong>
+        <code>(489, 560)</code>
+      </div>
+      <div class="card">
+        <strong>anchor.route</strong>
+        <code>west_beam_under_shadow_hybrid</code><br>id=6, targetId=1016
+      </div>
+      <div class="card">
+        <strong>anchor.world</strong>
+        x=<code>-1.909</code>, y=<code>2.525</code>, z=<code>2.718</code>
+      </div>
+      <div class="card">
+        <strong>3-run pair persistence</strong>
+        <code>1016|1013 = 3/3</code>
+      </div>
+      <div class="card">
+        <strong>每 run pair count</strong>
+        <code>11</code> 對相鄰像素跨 1016 ↔ 1013
+      </div>
+      <div class="card">
+        <strong>median diffRoute luma step</strong>
+        <code>0.1327</code>（門檻 0.10）
+      </div>
+      <div class="card">
+        <strong>median sameRoute luma step</strong>
+        <code>0.0364</code>（基準雜訊地板）
+      </div>
+      <div class="card">
+        <strong>每 run route histogram</strong>
+        1016: <code>66</code> px<br>1013: <code>55</code> px
+      </div>
+      <div class="card">
+        <strong>3 run 統計一致性</strong>
+        min=median=max=mean，randomVec2 改變無影響
+      </div>
+    </div>
+
+    <h2 id="snapshot">4. 視角截圖</h2>
+    <figure class="shot">
+      <img src="./sanity-probe-view.png" alt="ROI 1 sanity probe view, ROI 1 cameraState">
+      <figcaption>cameraState: position(-1.798925, 2.461438, 2.730018), yaw=2.312015, pitch=0.336, fov=55。視角同 OPUS 第 1 節 ROI 1。</figcaption>
+    </figure>
+
+    <h2 id="interpretation">5. 結果解讀</h2>
+
+    <h3>5.1 為何 anchor 在 worldPos z=2.718 而不是 z=2.846</h3>
+    <p>原本計畫用 worldPos 距離（target z=2.846, y=2.525）找 anchor，但實測發現：在 ROI 1 cameraState 下，相機 z=2.730 朝 +z（南）並 pitch up，視角抬頭看西樑底面，再轉向南牆方向；canvas 中央視野範圍內的世界 z 座標最遠只到約 z=2.728（仍在西樑底面南端內 128mm 處）。target 物理 seam <code>z=2.846</code> 因攝影機位置就在它的北側 116mm，加上往南往上看的角度，被視野邊緣的西牆面遮在後方。</p>
+    <p>因此 anchor 改用「route 多樣性」當第一原則：找 3×3 鄰域內包含最多 dedicated route 的 grid 中心。這個改動讓 anchor 直接落在<strong>視覺 seam</strong>（route 切換邊界）而不是物理 seam（z=2.846 幾何邊）。對 H2 主導的 ROI 1 黑線，這正是要分析的位置。</p>
+
+    <h3>5.2 為何只看到 1013 與 1016 兩條 route</h3>
+    <p>OPUS 第 6 節原假設三面交界處同時跨 1011 / 1013 / 1014 / 1015 / 1016 + structural island 2/5/6。實測在 11×11 grid 範圍內只看到 1013（西牆樑陰影）與 1016（西樑底面陰影）。原因：</p>
+    <ul>
+      <li>本 grid 範圍 11px × 11px ≈ 11 個 canvas pixel 寬度，對應的 3D 物理跨度大約是西樑底寬的 1/8。</li>
+      <li>視角偏向「西樑底面正下方」加「西牆切面」這條二維交界，1015（西樑內面 +X）與 1011 / 1014（西南柱）的可見區域剛好在 grid 外側。</li>
+      <li>若 grid 擴大到 21×21 或在不同 cameraState 重跑，可能會撈到更多 route 配對。</li>
+    </ul>
+
+    <h3>5.3 為何 3 run 結果完全一致</h3>
+    <p>CODEX 預期固定 randomVec2 跑 3 次會出現 min/median/max 差異；實測 3 run 完全一致。原因：本 ROI 的 dedicated hybrid 路徑都讀 BAKE atlas（穩態），<code>randomVec2</code> 主要影響 stochastic light sampling 與 NEE，這些在 dedicated hybrid radiance 輸出（level 26）路徑上沒有貢獻或貢獻被 atlas 取代。對 H2 ownership step 判讀來說，這代表 sanity check 結果非常穩定，不需要 3-run 統計補強。</p>
+
+    <h2 id="next">6. 下一步建議（路徑 P 第二段）</h2>
+    <p>依 CODEX 第 19.4 與 OPUS 第 18.4 共識，B-strong 命中 = D1 uniform gate 預授權觸發條件。具體做法：</p>
+    <ol>
+      <li><strong>新增 uniform</strong> <code>uR7310C1WestWallBeamShadowZMaxOverride</code> 預設 <code>3.056</code>；診斷值 <code>2.833</code>。</li>
+      <li><strong>修改 shader</strong> <code>r7310C1RuntimeSurfaceIsWestWallBeamShadow</code> 改用該 uniform 取代 <code>R7310_C1_WEST_WALL_BEAM_SHADOW_Z_MAX</code>。</li>
+      <li><strong>baseline / override 對照</strong>：同 cameraState 跑兩組截圖，並重跑 sanity probe 看 1013/1016 pair 是否消失或轉移。</li>
+      <li><strong>5% 量化判讀</strong>：override 對 baseline 的西牆有效像素 luma 偏移 &gt; 10% 的占比應 &lt; 5%；否則表示 D1 引入新破圖，需要回滾並改路線。</li>
+    </ol>
+    <p>路徑 P 第二段預估工程：shader + JS uniform gate <code>~2 小時</code> + 兩組對照 <code>~30 分鐘</code> + 量化檢查 <code>~30 分鐘</code> = 約 3 小時。</p>
+
+    <h2 id="json">7. JSON 摘要（給 CODEX 直接讀）</h2>
+    <pre><code>{
+  "version": "r7-3-10-west-join-sanity-probe",
+  "package": ".omc/r7-3-10-west-join-sanity-probe/20260520-212537",
+  "cameraState": {
+    "name": "r7310_west_join_sanity_probe",
+    "position": { "x": -1.798925, "y": 2.461438, "z": 2.730018 },
+    "yaw": 2.312015, "pitch": 0.336, "fov": 55,
+    "forward": { "x": -0.696398, "y": 0.329713, "z": 0.637431 }
+  },
+  "anchor": {
+    "status": "valid",
+    "pixel": { "x": 489, "y": 560 },
+    "world": { "x": -1.909, "y": 2.525, "z": 2.718 },
+    "route": { "routeName": "west_beam_under_shadow_hybrid", "routeId": 6, "targetId": 1016 },
+    "candidateRouteNames": ["west_beam_under_shadow_hybrid", "west_wall_beam_shadow_hybrid"],
+    "hasStrongPair": true,
+    "candidateScore": 1220
+  },
+  "grid": { "half": 5, "step": 1, "sampleCount": 121 },
+  "runs": [
+    { "randomVec2": {"x":0.5,"y":0.5},  "validSampleCount": 121,
+      "routeHistogram": { "west_beam_under_shadow_hybrid": 66, "west_wall_beam_shadow_hybrid": 55 },
+      "routePairHistogram": { "west_beam_under_shadow_hybrid|west_wall_beam_shadow_hybrid": 11 },
+      "maxDifferentRouteLumaStep": 0.1327,
+      "maxSameRouteLumaStep": 0.0364 },
+    { "randomVec2": {"x":0.25,"y":0.25}, "validSampleCount": 121,
+      "routeHistogram": { "west_beam_under_shadow_hybrid": 66, "west_wall_beam_shadow_hybrid": 55 },
+      "routePairHistogram": { "west_beam_under_shadow_hybrid|west_wall_beam_shadow_hybrid": 11 },
+      "maxDifferentRouteLumaStep": 0.1327,
+      "maxSameRouteLumaStep": 0.0364 },
+    { "randomVec2": {"x":0.75,"y":0.75}, "validSampleCount": 121,
+      "routeHistogram": { "west_beam_under_shadow_hybrid": 66, "west_wall_beam_shadow_hybrid": 55 },
+      "routePairHistogram": { "west_beam_under_shadow_hybrid|west_wall_beam_shadow_hybrid": 11 },
+      "maxDifferentRouteLumaStep": 0.1327,
+      "maxSameRouteLumaStep": 0.0364 }
+  ],
+  "aggregate": {
+    "differentRouteLumaStep": { "min": 0.1327, "median": 0.1327, "max": 0.1327, "mean": 0.1327 },
+    "sameRouteLumaStep":      { "min": 0.0364, "median": 0.0364, "max": 0.0364, "mean": 0.0364 },
+    "routeStable": false,
+    "pairPersistence": { "west_beam_under_shadow_hybrid|west_wall_beam_shadow_hybrid": 3 },
+    "bStrongPersistentPairs": ["west_beam_under_shadow_hybrid|west_wall_beam_shadow_hybrid"],
+    "allRoutes": ["west_beam_under_shadow_hybrid", "west_wall_beam_shadow_hybrid"]
+  },
+  "classification": "B-strong",
+  "reason": "1013 x (1015|1016) pair appears in >=2 runs and median luma step > 0.10",
+  "recommendedNextStep": "預授權 D1 觸發。啟動 uniform gate uR7310C1WestWallBeamShadowZMaxOverride，跑 baseline / override 對照與 5% 量化檢查。"
+}</code></pre>
+
+    <h2 id="files">8. 完整檔案位置</h2>
+    <table>
+      <tbody>
+        <tr><th>本 review</th><td><code>docs/html-review/2026-05-20-r7-3-10-roi1-sanity-check-result-opus/index.html</code></td></tr>
+        <tr><th>JSON 完整報告</th><td><code>.omc/r7-3-10-west-join-sanity-probe/20260520-212537/west-join-sanity-report.json</code></td></tr>
+        <tr><th>視角 PNG</th><td><code>.omc/r7-3-10-west-join-sanity-probe/20260520-212537/sanity-probe-view.png</code></td></tr>
+        <tr><th>新 wrapper flag</th><td><code>--r7310-west-join-sanity-probe</code>（runner: <code>docs/tools/r7-3-8-c1-bake-capture-runner.mjs</code>）</td></tr>
+        <tr><th>前一輪共識</th><td><code>docs/html-review/2026-05-20-r7-3-10-phase2b-roi1-west-wall-opus/index.html</code>（20 節對話收斂）</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="repro">9. 可重現指令</h2>
+    <pre><code>node docs/tools/r7-3-8-c1-bake-capture-runner.mjs \
+  --r7310-west-join-sanity-probe \
+  --timeout-ms=180000 \
+  --angle=metal \
+  --http-port=9028 --cdp-port=9248</code></pre>
+    <p>無 <code>--camera-state-json</code> 時預設使用 ROI 1 cameraState。需要其他 cameraState 時加 <code>--camera-state-json='{"position":{...},"yaw":...,...}'</code>。</p>
+
+    <h2 id="caveats">10. 已知限制與注意事項</h2>
+    <ul>
+      <li><strong>worldPos 距離判讀失效</strong>：原 OPUS / CODEX 規格用「target z=2.846 ±15mm」當 anchor 判定。實測 ROI 1 cameraState 下，camera 位置 z=2.730 朝 +z 方向視野範圍涵蓋世界 z 最遠 ~2.728，無法達到 z=2.846。本實作改用 route 多樣性當 anchor 第一原則，並把 worldPos 當輔助診斷。</li>
+      <li><strong>11×11 grid 視覺意義</strong>：grid 對應的 3D 物理跨度約等於西樑底寬 1/8，只能涵蓋兩條 route 邊界。若要看三面或四面交界，下一輪需要把 grid 擴大到 21×21 或調整 cameraState。</li>
+      <li><strong>3 run 一致性</strong>：本 ROI dedicated hybrid 路徑直接讀 BAKE，<code>randomVec2</code> 對 level 22 / 26 輸出無影響。OPUS 14.2 補充 3 與 CODEX 15.1 提的 3-run 多數決在 H2 主導場景沒有額外資訊量；但對未來 H1 alpha audit 或 H3 LIVE 路徑仍有價值。</li>
+      <li><strong>本次未跑 D1</strong>：依路徑 P 規則，B-strong 命中後等使用者裁示再進 D1 uniform gate。第 6 節有完整建議。</li>
+    </ul>
+
+    <div class="callout key">
+      <strong>對 CODEX 的請求</strong>
+      <p style="margin:8px 0 0">請審查本份結果是否能作為 D1 觸發的充分條件。具體三點：(1) B-strong 判讀條件是否成立（特別是 1016 取代 1015 是否仍符合 OPUS / CODEX 18.2 追補 B 的「1013×(1015|1016)」定義）；(2) 是否需要在 D1 前再跑一輪覆蓋更大 grid 確認 1014 / 1011 也參與；(3) D1 uniform gate 的具體實作範圍（純 shader uniform vs JS 端 enable 切換）。</p>
+    </div>
+  </main>
+</div>
+<script src="./assets/html-review.js"></script>
+</body>
+</html>

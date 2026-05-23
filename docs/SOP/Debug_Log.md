@@ -2,9 +2,352 @@
 
 > 接手導讀：本檔是完整 debug 總帳，內容刻意保留歷史細節。一般接手請先讀 `docs/SOP/Debug_Log_Index.md`，再依任務讀本檔對應章節。只有使用者明確要求「全文讀完」或要追溯舊根因時，才全檔讀取。
 >
-> 目前接手重點：R7-3.10 已完成 floor / north / east / west / south / ceiling 六面 1024 靜態漫射 bake，UI 六顆開關預設全開。使用者已肉眼確認：南牆窗洞 reveal 黑線 OK，東西牆與地板近距離接縫黑線 OK。`main` 已推到 GitHub：`2d79953 fix(R7-3.10): clean south reveal and floor side seams`。目前新分支是 `codex/r7-3-10-beam-column-bake-expansion`，下一步只準備樑柱烘焙；不回 fallback，不改鄰格取樣，不破壞既有六面 1024 bake。反射維持 LIVE path tracing。
+> 目前接手重點：R7-3.10 已完成 floor / north / east / west / south / ceiling 六面 1024 靜態漫射 bake，runtime atlas slot 0..5。`main` 已推到 GitHub：`2d79953 fix(R7-3.10): clean south reveal and floor side seams`。目前分支是 `codex/r7-3-10-beam-column-bake-expansion`，樑柱 static diffuse bake 已接成 slot 6；專用混合陰影面目前接到 targetId 1008..1022 / slot 7..21，包含東南扁柱北面、西面、南牆冷氣陰影、東牆東樑陰影、西南柱北面、西牆西樑陰影、西南柱內面、西樑東面、西樑下面、東樑西面、東樑下面、南窗四個切面。合併圖集總數為 22 slot，runtime atlas 使用 6 欄 x 4 列，快取版本號是 `r7310-phase2b-west-wall-mosaic-guard-v1`。專用混合面只讀間接漫射烘焙，直接光、斜陰影與反射維持即時路徑追蹤。使用者已肉眼確認 OK：西樑東面、東樑西面、東牆、西牆、東南扁柱北面、東南扁柱西面、西南柱北面、南牆冷氣陰影區、南牆窗洞切面、西牆與西樑交界、西樑底面與西南柱北面黑線 / 縫隙。Phase 1 已用 same-view probe 證明西樑下面與東樑下面都進到既有 under_shadow hybrid route，不需新增 corrected targets，也不需重烘。Phase 2B 已把西樑與西南柱做成一體 L 型：西樑 zMax=2.848，西南柱上段 +X 面由 sw_column_inner_x 擁有，同視角 probe 記在 `.omc/r7-3-10-south-window-sw-column-continuity/20260519-151717/south-window-sw-column-continuity-report.json`。最新補修已關閉西樑底面與西南柱北面交界的幾何縫，且已清掉西牆 / 西樑 / 西南柱近距離紅框內的矩形馬賽克陰影；同視角截圖包記在 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702/`。最新 debug map 仍需查：西牆鐵門旁三個窄面、北牆、地板、天花板、登入後前 3 秒 SPP 抖動、LOADING 6% 停頓。Phase 0 baseline 已記在 `.omc/r7-3-10-full-room-diffuse-ui-toggle/20260519-001446/ui-toggle-report.json`，patch count / grid / error 通過；Phase 1 probe 已記在 `.omc/r7-3-10-beam-under-shadow-probe/20260519-010334/probe-report.json`；inventory gate 是 `docs/tests/r7-3-10-bake-gap-debug-map.test.js`，beam-under probe gate 是 `docs/tests/r7-3-10-beam-under-shadow-probe.test.js`。下一步照 `docs/superpowers/plans/2026-05-18-r7-3-10-bake-gap-and-loading-debug-map.md` 從 Phase 3 西牆鐵門旁三個窄面開始。
+>
+> 2026-05-19 補充：最新快取版本號已更新為 `r7310-phase2b-l-gap-closure-v5`。使用者更正判讀：LIVE 在西樑下面與西南柱北面交界是乾淨的，剩餘問題只在烘焙路徑。v5 把 `sw-column-north-shadow` 可見烘焙範圍截到 `yMax=2.525`，把 `west-beam-under-shadow` 可見烘焙範圍截到 `zMax=2.846`，並同步 structural island contract 後重烘 `sw-column-north-shadow`、`west-beam-under-shadow`、`structural-beams-columns`。使用者指定視角最新截圖 `.omc/r7-3-10-south-window-sw-column-continuity/20260519-221412/south-window-sw-column-bake-spp1.png` 已看不到黑線或縫隙；使用者判定剩下斜向暗帶是正常陰影。驗證網址：`http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-gap-closure-v5`。
+
+> 2026-05-19 補充 2：最新快取版本號已更新為 `r7310-phase2b-west-wall-mosaic-guard-v1`。使用者近距離紅框指出西牆與西樑 / 西南柱交界旁有矩形馬賽克陰影。根因分兩段：`c1_west_wall_beam_shadow` 專用 atlas 的高 z 隱藏接觸 texel 會被 bilinear 取樣拉進畫面；補掉後，剩餘矩形來自完整 `c1_west_wall` atlas 缺少西南角鏡像 guard。已新增 `fillR7310C1WestWallBeamShadowGuardTexels()` 與 `fillR7310C1WestWallSouthwestGuardTexels()`，重烘 `west-wall-beam-shadow` 與 `west-wall` 1024/1000spp package；同視角診斷包 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702/` 的 all-on 與 crop 已看不到原本紅框內的矩形像素塊，剩下是連續斜向陰影。驗證網址：`http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-mosaic-guard-v1`。
+
+> 2026-05-21 補充：北牆與東牆已從原本 full-room diffuse short-circuit 升級為 first-hit HYBRID。runtime scope 改成 `c1_north_wall_first_hit_hybrid` / `c1_east_wall_first_hit_hybrid`，slot 仍是 1 / 2；兩面正式 package 已重烘 1024px / 1000spp，pointer 宣告 `bakedRadianceKind: indirect_diffuse_radiance`、`directLightAlreadyIncluded: false`、`addDirectLightAfterBakeLookup: true`。東牆東樑陰影 1011 維持 seam guard `z < 2.475`，東南接觸區交給一般東牆 HYBRID。快取版本號：`r7310-north-east-hybrid-v1`。驗證網址：`http://localhost:9002/Home_Studio.html?v=r7310-north-east-hybrid-v1`。
 
 ---
+
+### R7-3.10-north-east-wall-first-hit-hybrid
+
+```yaml
+date: 2026-05-21
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-formal-baked
+scope:
+  - c1_north_wall targetId 1002 slot 1
+  - c1_east_wall targetId 1003 slot 2
+architecture:
+  - Both surfaces now use first-hit HYBRID runtime routes.
+  - Runtime pointers use `c1_north_wall_first_hit_hybrid` and `c1_east_wall_first_hit_hybrid`.
+  - The stored atlas is indirect diffuse radiance.
+  - Direct light and reflection stay on the live path-traced route.
+  - East wall beam shadow target 1011 keeps seam guard `z < 2.475`; the southeast contact zone is owned by the regular east-wall HYBRID route.
+packages:
+  northWallPointer: docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json
+  northWallPackage: assets/bakes/r7-3-10/c1-static-diffuse/north-wall-door-hole-1024px-1000spp
+  eastWallPointer: docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json
+  eastWallPackage: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp
+formal_bake:
+  northWall:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=north-wall --target-samples=1000 --atlas-resolution=1024 --timeout-ms=900000
+    status: pass
+    validTexelRatio: 0.868896484375
+  eastWall:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=east-wall --target-samples=1000 --atlas-resolution=1024 --timeout-ms=900000
+    status: pass
+    validTexelRatio: 1
+validation:
+  - node docs/tests/r7-3-10-north-east-wall-hybrid.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-west-wall-single-hybrid.test.js
+      status: pass
+  - node docs/tests/r7-3-10-bake-gap-debug-map.test.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - git diff --check on touched runtime and test files
+      status: pass
+notes:
+  - Cache-bust URL: http://localhost:9002/Home_Studio.html?v=r7310-north-east-hybrid-v1
+```
+
+### R7-3.10-east-wall-beam-shadow-hybrid-indirect-bake-live-direct
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-same-view-captured
+trigger:
+  - User accepted the same hybrid route on the south wall AC shadow.
+  - User then requested the east wall, where the east beam casts the visible diagonal shadow.
+architecture:
+  - Added targetId 1011, surface `c1_east_wall_beam_shadow`.
+  - The target is one continuous east-wall plane:
+      x: 1.91
+      y: 0..2.905
+      z: -1.874..3.056
+      normal: -X
+  - Runtime stores this package in combined atlas slot 10.
+  - `uR7310C1RuntimeAtlasPatchCount` was 11.0 at this east-wall step; the later west-side mirror step raises the current value to 13.0.
+  - The runtime receiver is guarded to `visiblePosition.z < 2.475` so it does not own the east-wall / southeast-column contact at `z=2.49`.
+  - First visible hit on this east-wall hybrid surface adds only baked indirect diffuse radiance.
+  - Direct light, the east-beam diagonal shadow edge, and reflections stay on the live path-traced route.
+  - The old east-wall full diffuse short-circuit is guarded so it does not also catch the same first hit.
+package:
+  pointer: docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json
+  packageDir: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-1024px-1000spp
+  targetAtlasResolution: 1024
+  actualSamples: 1000
+  bakedRadianceKind: indirect_diffuse_radiance
+  directLightAlreadyIncluded: false
+  addDirectLightAfterBakeLookup: true
+  runtimeAtlasSlot: 10
+  atlasVisibleLuma:
+    nonzeroTexels: 582110
+    totalTexels: 1048576
+    meanLuma: 0.1382617565562874
+    maxLuma: 0.4947078327337901
+same_view_evidence:
+  defaultHelperPackage: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173203
+  userCameraPackage: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350
+  userCameraLiveReference: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350/live-reference.png
+  userCameraHybridBake: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350/east-wall-beam-shadow-bake.png
+  userCameraReport: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350/visual-report.json
+  cameraState: {"position":{"x":1.752762,"y":2.439962,"z":2.328648},"yaw":-2.3416,"pitch":0.292,"fov":53,"forward":{"x":0.686986,"y":0.287868,"z":0.66722}}
+validation:
+  - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=east-wall-beam-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-beam-shadow-visual-test --target-samples=1 --timeout-ms=180000 --angle=metal --camera-state-json='{"position":{"x":1.752762,"y":2.439962,"z":2.328648},"yaw":-2.3416,"pitch":0.292,"fov":53,"forward":{"x":0.686986,"y":0.287868,"z":0.66722}}'
+      status: pass
+      package: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350
+notes:
+  - This follows the user-accepted rule from southeast-column and south-wall shadows: bake only indirect diffuse; keep the visible direct shadow edge live.
+  - Browser refresh URL: http://localhost:9002/Home_Studio.html?v=r7310-east-wall-beam-seam-guard-v1
+```
+
+### R7-3.10-east-wall-beam-shadow-seam-guard-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-user-camera-captured
+trigger:
+  - User reported that the east wall east-beam shadow itself was OK.
+  - The same view showed a new black vertical line at the east wall / southeast flat-column contact.
+user_camera:
+  cameraState: {"position":{"x":1.82148,"y":2.422026,"z":2.379761},"yaw":-1.906,"pitch":0.635,"fov":55,"forward":{"x":0.760264,"y":0.593178,"z":0.264838}}
+  view: {"facing":"東(+X)","config":1,"samples":167,"paused":true,"sppCap":1000}
+  viewport: {"innerWidth":727,"innerHeight":741,"canvasCssWidth":727,"canvasCssHeight":409,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}
+root_cause:
+  - `r7310C1RuntimeSurfaceIsEastWallBeamShadow(...)` initially matched the full east wall by calling `r7310C1RuntimeSurfaceIsEastWall(...)`.
+  - That made the dedicated east-wall beam hybrid route own the physical `z=2.49` contact between the east wall and southeast flat column.
+  - With all bakes enabled, the contact edge showed as a black vertical line.
+fix:
+  - Added `R7310_C1_EAST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX = 2.475`.
+  - `r7310C1RuntimeSurfaceIsEastWallBeamShadow(...)` now also requires `visiblePosition.z < R7310_C1_EAST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX`.
+  - The contract and east-wall beam package now record `seamGuard` with `columnNorthZ: 2.49` and `hybridZMax: 2.475`.
+  - Browser cache token changed to `r7310-east-wall-beam-seam-guard-v1`.
+visual_evidence:
+  before_guard_package: .omc/r7-3-10-east-wall-shadow-visual/20260518-175430
+  after_guard_64_samples: .omc/r7-3-10-east-wall-shadow-visual/20260518-180124/east-wall-shadow-same-view.png
+  after_guard_167_samples: .omc/r7-3-10-east-wall-shadow-visual/20260518-180308/east-wall-shadow-same-view.png
+  after_guard_report: .omc/r7-3-10-east-wall-shadow-visual/20260518-180308/visual-report.json
+validation:
+  - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --target-samples=167 --timeout-ms=300000 --angle=metal --camera-state-json='<user cameraState>'
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260518-180308
+notes:
+  - The guard keeps the accepted live-direct east-beam shadow route on the visible east-wall area.
+  - The guard leaves the structural contact edge to the original wall / column handling path.
+```
+
+### R7-3.10-south-wall-ac-shadow-hybrid-user-accepted
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: user-accepted
+summary:
+  - South-wall AC shadow uses targetId 1010, slot 9.
+  - The package stores indirect diffuse radiance only.
+  - Direct shadow and reflection stay live.
+user_acceptance:
+  - User reported the south wall succeeded and asked to continue to the east wall.
+takeaway:
+  - The same hybrid route is now the preferred route for visible stair-step direct-shadow artifacts on static receiving faces.
+```
+
+### R7-3.10-se-column-north-hybrid-all-bakes-guard
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-all-bakes-on-verified
+trigger:
+  - User opened the same URL with all bake toggles enabled and reported two regressions:
+      1. the southeast flat-column north-face diagonal shadow still looked like small steps
+      2. the same north face became too bright
+root_cause:
+  - The earlier same-view helper isolated the new southeast-column north hybrid path.
+  - In the real UI all bake toggles are enabled by default.
+  - The shader added slot 7 indirect radiance for `r7310SeColumnNorthHybridFirstHit`, then still allowed the broad structural slot 6 `r7310C1FullRoomDiffuseShortCircuit(...)` to catch the same first hit.
+  - That double route reintroduced old structural stair artifacts and added extra baked radiance on the same visible hit.
+fix:
+  - Guarded the broad full-room short-circuit with `!r7310SeColumnNorthHybridFirstHit`.
+  - Resulting first-hit order:
+      1. southeast-column north hybrid first hit adds slot 7 indirect radiance
+      2. live path tracing keeps direct light, diagonal direct shadow, and reflection
+      3. old structural slot 6 skips that same first hit
+  - Bumped browser cache tokens to `r7310-se-column-hybrid-guard-v1`.
+same_view_evidence:
+  userCameraState: {"position":{"x":1.752762,"y":2.439962,"z":2.328648},"yaw":-2.3416,"pitch":0.292,"fov":53,"forward":{"x":0.686986,"y":0.287868,"z":0.66722}}
+  allBakesOnLowSamples: .omc/r7-3-10-east-wall-shadow-visual/20260518-140425/east-wall-shadow-same-view.png
+  allBakesOn1000Samples: .omc/r7-3-10-east-wall-shadow-visual/20260518-141959/east-wall-shadow-same-view.png
+  allBakesOnReport: .omc/r7-3-10-east-wall-shadow-visual/20260518-141959/visual-report.json
+validation:
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --camera-state-json='{"position":{"x":1.752762,"y":2.439962,"z":2.328648},"yaw":-2.3416,"pitch":0.292,"fov":53,"forward":{"x":0.686986,"y":0.287868,"z":0.66722}}' --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260518-141959
+notes:
+  - At 1 spp, the direct-shadow half is live path tracing, so single-sample roughness remains visible until more samples accumulate.
+  - The fixed regression is the all-bakes-on double-application path.
+user_acceptance:
+  date: 2026-05-18
+  cameraState: {"position":{"x":1.862444,"y":2.493635,"z":2.45656},"yaw":-2.7244,"pitch":0.447,"fov":55,"forward":{"x":0.365384,"y":0.432262,"z":0.824405}}
+  view: {"facing":"南(+Z)","config":1,"samples":1,"paused":true,"sppCap":1000}
+  viewport: {"innerWidth":727,"innerHeight":741,"canvasCssWidth":727,"canvasCssHeight":409,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}
+  verdict:
+    - User zoomed in extremely close and confirmed the shadow remains smooth with no stair-step artifacts.
+    - User accepts the slight 1SPP dirt introduced by keeping direct shadow on the live path.
+  takeaway:
+    - For this class of visible stair-step direct-shadow artifacts, the successful route is baked indirect diffuse plus live direct shadow and live reflection on the affected face.
+```
+
+### R7-3.10-se-column-north-shadow-hybrid-indirect-bake-live-direct
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-same-view-captured
+trigger:
+  - User asked to apply the hybrid architecture to the southeast flat-column north face first.
+  - User rejected the old dedicated full-diffuse bake visual because the diagonal shadow was still visibly stepped.
+architecture:
+  - Runtime first visible hit on `c1_se_column_north_shadow` adds the baked indirect diffuse radiance from atlas slot 7.
+  - Direct light and the diagonal direct shadow stay on the live path-traced route for that first hit.
+  - Bake capture for targetId 1008 skips the first-hit direct layer and starts from the first diffuse bounce, so the package stores indirect diffuse radiance only.
+package:
+  pointer: docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json
+  packageDir: assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp
+  targetAtlasResolution: 1024
+  actualSamples: 1000
+  bakedRadianceKind: indirect_diffuse_radiance
+  directLightAlreadyIncluded: false
+  addDirectLightAfterBakeLookup: true
+  atlasVisibleLuma:
+    nonzeroTexels: 983780
+    totalTexels: 1048576
+    meanLuma: 0.3640767035656526
+    maxLuma: 1.4023816188176472
+same_view_evidence:
+  package: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435
+  liveReference: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435/live-reference.png
+  hybridBake: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435/se-column-north-shadow-bake.png
+  report: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435/visual-report.json
+  cameraState: {"position":{"x":1.778248,"y":2.471443,"z":2.329741},"yaw":-2.5192,"pitch":0.161,"fov":55}
+  samples: 1000
+validation:
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=se-column-north-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-se-column-north-shadow-visual-test --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435
+notes:
+  - Current acceptance image set compares same-camera live path tracing against the hybrid output.
+  - The old `.omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711` full-diffuse bake output is superseded by this hybrid run.
+```
+
+### R7-3.10-se-column-north-shadow-live-match-bake
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-same-view-captured
+trigger:
+  - User clarified the south wall reference had south-wall bake enabled.
+  - User rejected the old "small pieces form a diagonal" route.
+  - User requested highest-accuracy same-view match against the immediate path-traced result.
+  - User explicitly said old bake validation was not needed; acceptance is new result versus the immediate path-traced result.
+root_cause:
+  - The old structural package used packed small islands for beams and columns.
+  - The southeast flat-column shadow landed inside a narrow structural island near an excluded contact area.
+  - More local sampling only created more visible steps, because the source shape still came from a small packed island and chart boundary policy.
+  - A separate attempt to activate `tR7310C1SeColumnNorthShadowTexture` as one more runtime sampler made path tracing return black, including a 1 spp floor smoke test.
+fix:
+  - Added targetId 1008, surface `c1_se_column_north_shadow`.
+  - The bake target is one continuous planar face:
+      x: 1.78..1.91
+      y: 0..2.905
+      z: 2.49
+      normal: -Z
+  - Runtime lookup checks this dedicated face before the broad structural lookup.
+  - Runtime data is stored in `tR7310C1FullRoomDiffuseAtlasTexture` slot 7.
+  - `uR7310C1RuntimeAtlasPatchCount` is now 8.0.
+  - `tR7310C1SeColumnNorthShadowTexture` remains declared as a contract alias, while active sampling uses the combined atlas slot.
+package:
+  pointer: docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json
+  packageDir: assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp
+  targetAtlasResolution: 1024
+  actualSamples: 1000
+  validTexelRatio: 1
+  atlasVisibleLuma:
+    nonzeroTexels: 983780
+    totalTexels: 1048576
+    meanLuma: 0.5773935263191323
+    maxLuma: 0.8190731207529703
+same_view_evidence:
+  package: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711
+  liveReference: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711/live-reference.png
+  newBake: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711/se-column-north-shadow-bake.png
+  report: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711/visual-report.json
+  cameraState: {"position":{"x":1.778248,"y":2.471443,"z":2.329741},"yaw":-2.5192,"pitch":0.161,"fov":55}
+  samples: 1000
+validation:
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=floor --atlas-resolution=16 --target-samples=1 --timeout-ms=60000 --angle=metal --smoke-test
+      status: pass after slot-7 pivot
+      package: .omc/r7-3-10-full-room-diffuse-bake/20260518-124409
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=se-column-north-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-se-column-north-shadow-visual-test --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-se-column-north-shadow-live-match/20260518-124711
+notes:
+  - Acceptance image set intentionally contains only the immediate path-traced reference and the new dedicated bake output.
+  - Old structural bake output is excluded from this acceptance path.
+  - Browser refresh URL: http://localhost:9002/Home_Studio.html?v=r7310-se-column-north-shadow-live-match-v1
+```
 
 ## R7-3.10｜Static diffuse bake expansion roadmap consolidation
 
@@ -36,6 +379,183 @@
     - docs/SOP/Debug_Log_Index.md
     - docs/架構升級計畫/混音室數位孿生_光照採購導向_ThreeJS_WebGPU架構升級與實作SOP.md
     - docs/AI交接必讀.md
+```
+
+### R7-3.10-east-wall-shadow-chart-aware-reconstruction
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+trigger:
+  - User supplied exact camera pose for the east-beam shadow on the east wall:
+      cameraState: {"position":{"x":1.772783,"y":2.418704,"z":2.267062},"yaw":-0.462793,"pitch":0.396,"fov":55}
+      forward: {"x":0.413879,"y":0.385731,"z":0.82457}
+      view: {"facing":"南(+Z)","config":1,"samples":1,"paused":true,"sppCap":1000}
+  - User also supplied a reference pose where the air-conditioner shadow on the south wall is visually smooth.
+  - User requested root-cause resolution, not another local symptom patch.
+root_cause:
+  - The east-wall and south-wall packages are both 1024 / 1000spp diffuse bakes; the issue was not caused by a lower east-wall bake resolution.
+  - The broken east-wall runtime path sampled slot 2 with global nearest lookup:
+      r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 2.0))
+  - The reported camera is close to the east wall and looks along the beam-shadow gradient, so nearest texel reconstruction turns the soft shadow into visible steps.
+  - The east-wall visible chart also borders the southeast-column contact at z=2.49; sampling must not blend into the hidden black region behind the column.
+  - The south-wall reference uses a broader continuous wall/reveal chart in that view, so the same shadow family does not expose the same close-range nearest-grid artifact.
+fix:
+  - Added `r7310C1EastWallAtlasRect()`.
+  - Reused the rect-clamped manual linear sampler `r7310C1FullRoomDiffuseSampleRectLinear(...)` for east-wall slot 2.
+  - East-wall runtime now samples:
+      r7310C1FullRoomDiffuseSampleRectLinear(atlasUv, 2.0, r7310C1EastWallAtlasRect())
+  - The east-wall rect clamps U to the visible side of the southeast-column contact plus half a texel.
+  - The global runtime texture still uses `NearestFilter`; the smoothing is chart-aware and local to the east-wall lookup.
+visual_evidence:
+  same_view_package: .omc/r7-3-10-east-wall-shadow-visual/20260517-214040
+  same_view_screenshot: .omc/r7-3-10-east-wall-shadow-visual/20260517-214040/east-wall-shadow-same-view.png
+  cameraState: {"position":{"x":1.772783,"y":2.418704,"z":2.267062},"yaw":-0.462793,"pitch":0.396,"fov":55}
+  sampleCounter: 203
+validation:
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-214255
+      eastWallSurfaceHitCount: 699773
+      eastWallShortCircuitCount: 699773
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260517-214040
+      samples: 203
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-214349
+      bakedSurfaceShortCircuitCount: 95909
+  - git diff --check
+      status: pass
+notes:
+  - No new bake package was generated for this fix.
+  - This does not claim the southeast flat-column air-conditioner shadow is fixed; that remains a separate same-pose target after the east-wall fix is user-checked.
+  - Browser refresh URL: http://localhost:9002/Home_Studio.html?v=r7310-east-wall-chart-filter-v1
+```
+
+### R7-3.10-east-wall-beam-shadow-tent-reconstruction
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+trigger:
+  - User rejected the previous east-wall chart-filter fix.
+  - User supplied a closer same-view camera pose:
+      cameraState: {"position":{"x":1.830026,"y":2.469767,"z":2.391893},"yaw":-0.547993,"pitch":0.342,"fov":55}
+      forward: {"x":0.490803,"y":0.335372,"z":0.804138}
+      view: {"facing":"南(+Z)","config":1,"samples":1,"paused":true,"sppCap":1000}
+root_cause_correction:
+  - The previous validation used the first user pose and missed the closer beam / wall contact view.
+  - all-surfaces probe confirmed the reported shadow pixels are east wall hits, while the beam underside is structural island 4.
+  - The previous `r7310C1EastWallAtlasRect()` only guarded the southeast-column `z=2.49` boundary.
+  - The failing pixels sit at east-wall world `y=2.47..2.50`, right below the east-beam underside at `y=2.515`.
+  - East-wall atlas luma near that upper contact contains visible texel steps:
+      row_850_maxStep: 0.04455
+      row_860_maxStep: 0.05554
+      row_880_maxStep: 0.04749
+      col_805_maxStep_near_contact: 0.19451
+  - A one-texel bilinear footprint still preserved these baked texel steps at the user's close camera distance.
+fix:
+  - `r7310C1EastWallAtlasRect()` now clamps both:
+      uMax: southeast-column visible side around z=2.49
+      vMax: east-beam underside visible side around y=2.515
+  - Added `r7310C1FullRoomDiffuseSampleRectTent3(...)`.
+  - East-wall runtime slot 2 now uses chart-clamped 3x3 tent reconstruction:
+      r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect())
+  - Runtime combined atlas texture remains `NearestFilter`; the reconstruction is explicit and chart-clamped.
+  - Added all-surfaces runtime probe support and east-wall world-position probe level 10 for same-view debugging.
+  - Cache tokens bumped to `r7310-east-wall-tent-reconstruct-v1`.
+visual_evidence:
+  before_close_pose_after_old_fix: .omc/r7-3-10-east-wall-shadow-visual/20260517-215256/east-wall-shadow-same-view.png
+  after_tent_reconstruction: .omc/r7-3-10-east-wall-shadow-visual/20260517-221418/east-wall-shadow-same-view.png
+  samples: 207
+validation:
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-probe-sample-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-220211
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-221214
+      eastWallSurfaceHitCount: 699773
+      eastWallShortCircuitCount: 699773
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-221313
+      bakedSurfaceShortCircuitCount: 95909
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260517-221418
+      samples: 207
+  - git diff --check
+      status: pass
+  - curl -s -I 'http://localhost:9002/Home_Studio.html?v=r7310-east-wall-tent-reconstruct-v1'
+      status: HTTP 200
+notes:
+  - No new bake package was generated.
+  - This fix is east-wall runtime reconstruction only.
+  - The user still needs to visually accept the exact browser view.
+  - Browser refresh URL: http://localhost:9002/Home_Studio.html?v=r7310-east-wall-tent-reconstruct-v1
+```
+
+### R7-3.10-camera-pose-replay-forward-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-verified
+trigger:
+  - User pointed out the Codex screenshot direction did not match the user's screenshot direction.
+  - User asked whether the INFO block was wrong and whether it includes correct rotation information.
+root_cause:
+  - INFO `forward` was trustworthy because it came from `worldCamera.getWorldDirection(...)`.
+  - INFO `cameraState.yaw/pitch` was not a reliable replay contract because it used `inputRotationHorizontal/inputRotationVertical`, which can diverge from the actual camera matrix orientation.
+  - The failed replay reproduced `x/y` direction but flipped `z`:
+      expectedForward: {"x":0.662097,"y":0.273471,"z":0.69774}
+      replayForward: {"x":0.662033,"y":0.273468,"z":-0.697802}
+fix:
+  - `cameraState` now includes a `forward` field.
+  - `cameraState.yaw/pitch` are derived from the actual `forward`, not from input rotation accumulators.
+  - `window.setR739Config1ValidationCameraState(...)` now uses `state.forward` as the highest-priority replay source when present.
+  - INFO now includes a fourth copy line: `viewport={...}` with window size, canvas CSS size, drawing buffer size, devicePixelRatio, and camera aspect.
+  - East-wall visual helper now sets a 2048x1120 viewport before navigating.
+  - East-wall visual helper now fails immediately when replayed `forward` differs from expected `forward`.
+validation:
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-camera-pose-info-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-camera-pose-info/20260517-224745
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260517-224842
+      screenshot: .omc/r7-3-10-east-wall-shadow-visual/20260517-224842/east-wall-shadow-same-view.png
+notes:
+  - Any screenshot validation before this fix that relied only on pasted yaw/pitch must be treated as orientation-suspect.
+  - Future camera replay should use `cameraState.forward` and compare replayed `forward`.
+  - Browser refresh URL: http://localhost:9002/Home_Studio.html?v=r7310-camera-pose-replay-v1
 ```
 
 ## R7-3.10｜Static diffuse bake expansion east wall 1024 runtime
@@ -8477,4 +8997,2075 @@ guards:
   - Keep bake capture anti-contamination guards.
 handoff:
   - docs/superpowers/plans/2026-05-17-r7-3-10-beam-column-bake-expansion-handoff.md
+```
+
+### R7-3.10-beam-column-static-diffuse-bake
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented_and_runtime_verified
+goal:
+  - Add static diffuse bake for the structural beam / column geometry.
+  - Keep existing floor / north / east / west / south / ceiling 1024 bake packages intact.
+  - Keep reflection LIVE path tracing.
+target:
+  - targetId: 1007
+  - surfaceName: c1_structural_beams_columns
+  - atlasResolution: 1024
+  - samples: 1000
+  - runtimeAtlasSlot: 6
+  - runtimeAtlasPatchCount: 7.0
+geometryGate:
+  - tool: docs/tools/r7-3-10-structural-geometry-gate.mjs
+  - status: pass
+  - finalIslandCount: 8
+  - islands:
+      west_beam_inner_x
+      west_beam_under_y
+      east_beam_inner_x
+      east_beam_under_y
+      sw_column_inner_x
+      sw_column_north_z
+      se_column_inner_x
+      se_column_north_z
+post_visual_fix:
+  - user_report: 東樑與東南扁柱相接處，東南扁柱有一小片未烘到。
+  - root_cause: `z=2.49, x=1.78..1.85, y=2.515..2.905` 這片東南扁柱上方北向可見面，原本沒有放進 structural island registry。
+  - first_fix_issue: 獨立小 island 已烘到，但與同一根東南扁柱北面其餘部分出現色差。
+  - final_fix: 移除獨立小 island，把 `se_column_north_z` 重新定義為整個東南扁柱北面 `z=2.49, x=1.78..1.91, y=0..2.905`，atlas rect `[0.760,0.380]..[0.940,0.880]`，再只重烘 structural package。
+  - excluded_inside_same_island: `z=2.49, x=1.85..1.91, y=2.515..2.905` 仍記錄為東樑遮住的區域，不作 runtime 取樣。
+  - existing_six_1024_packages_changed: false
+formalPackage:
+  - assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp/
+  - atlas-patch-000-rgba-f32.bin: 16M
+  - texel-metadata-patch-000-f32.bin: 48M
+runtimePointer:
+  - docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json
+  - packageStatus: architecture_probe
+  - runtimeScope: c1_structural_beams_columns_diffuse_short_circuit
+  - runtimeEnabledDefault: true
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=structural-beams-columns --atlas-resolution=1024 --samples=1000 --target-samples=1000 --timeout-ms=3600000
+      status: pass
+      post_visual_fix_rerun: true
+      package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+      bakeContaminationGuardSnapshot:
+        uR7310C1FullRoomDiffuseMode: 0
+        uR7310C1FloorDiffuseMode: 0
+        uR7310C1NorthWallDiffuseMode: 0
+        uR7310C1EastWallDiffuseMode: 0
+        uR7310C1WestWallDiffuseMode: 0
+        uR7310C1SouthWallDiffuseMode: 0
+        uR7310C1CeilingDiffuseMode: 0
+        uR7310C1StructuralDiffuseMode: 0
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-structural-runtime-test --timeout-ms=120000
+      status: pass
+      structuralPending: false
+      structuralShortCircuitCount: 11
+      sampleDecodedIslands:
+        west_beam_inner_x: 1
+        east_beam_under_y: 1
+        se_column_north_z: 1
+      assetCoverageConfirmed:
+        se_column_north_z:
+          validTexels: 94720
+          nonzeroTexels: 88786
+          maxLuma: 0.8183351159095764
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ui-toggle-test --timeout-ms=120000
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000
+      status: pass
+      bakedSurfaceShortCircuitCount: 95909
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-north-wall-runtime-test --timeout-ms=120000
+      status: pass
+      northWallShortCircuitCount: 480847
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000
+      status: pass
+      eastWallShortCircuitCount: 699773
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-runtime-test --timeout-ms=120000
+      status: pass
+      westWallShortCircuitCount: 771911
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-wall-runtime-test --timeout-ms=120000
+      status: pass
+      southWallShortCircuitCount: 241306
+      southRevealShortCircuitCount: 241306
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ceiling-runtime-test --timeout-ms=120000
+      status: pass
+      ceilingShortCircuitCount: 619091
+notes:
+  - Existing six package pointers were left intact.
+  - Runtime now has seven atlas slots; structural uses slot 6.
+  - UI now has seven bake buttons, all default on.
+  - No fallback route was added.
+  - Neighbor sampling was not changed.
+  - Reflection remains LIVE.
+```
+
+### R7-3.10-beam-column-se-column-contact-padding-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented_and_runtime_verified
+symptom:
+  - User reported a very thin dark line at close range where the southeast flat column, east beam, and east wall meet.
+  - User clarified this line is separate from the east beam shadow.
+rootCause:
+  - Formal structural atlas `se_column_north_z` was one continuous island, but the east-beam overlap area inside that island baked to black:
+      visible_left_cut x=1.849 / y=2.70: 0.25197866321504114
+      contact_right_top x=1.851 / y=2.70: 0
+      contact_deep_right_top x=1.88 / y=2.70: 0
+      beam_bottom_contact x=1.88 / y=2.515: 0
+  - The texture uses nearest sampling, so close-range boundary hits can land on those black contact texels.
+  - The east wall atlas also has black texels behind the southeast column. The first fix targets the new structural package because it is the newly added slot and preserves the six accepted 1024 packages.
+fix:
+  - Kept `se_column_north_z` as one continuous southeast column north-face island.
+  - Added structural bake-source contact padding only for `se_column_north_z` at `x>=1.85, y>=2.515`.
+  - Contact texels keep their atlas cells and bake from the nearest visible edge on the same face.
+  - JS metadata now mirrors the same contact padding coordinates.
+  - Re-baked only the formal structural package.
+  - Existing floor / north / east / west / south / ceiling package pointers were left intact.
+package:
+  - formal_asset: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp/
+  - atlasResolution: 1024
+  - samples: 1000
+  - atlasPatch0Sha256: 0f1cd4d2039e9f9ebf604df0ec4beac2ee41455e00385265707506c5c2594854
+  - texelMetadataPatch0Sha256: c1fea04aa2077c860c1928c7f647f00eb713be91f91d83829e46ac4df77116e5
+postFixEvidence:
+  - Formal structural atlas after promotion:
+      visible_left_cut x=1.849 / y=2.70: 0.25197866321504114
+      contact_right_top x=1.851 / y=2.70: 0.23917412016689776
+      contact_deep_right_top x=1.88 / y=2.70: 0.25686063120365143
+      beam_bottom_contact x=1.88 / y=2.515: 0.22092665264308453
+      visible_right_below_cut x=1.88 / y=2.50: 0.33503713339567187
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=structural-beams-columns --atlas-resolution=1024 --samples=1000 --target-samples=1000 --timeout-ms=3600000
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+      bakeContaminationGuardSnapshot:
+        uR7310C1FullRoomDiffuseMode: 0
+        uR7310C1FloorDiffuseMode: 0
+        uR7310C1NorthWallDiffuseMode: 0
+        uR7310C1EastWallDiffuseMode: 0
+        uR7310C1WestWallDiffuseMode: 0
+        uR7310C1SouthWallDiffuseMode: 0
+        uR7310C1CeilingDiffuseMode: 0
+        uR7310C1StructuralDiffuseMode: 0
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-structural-runtime-test --timeout-ms=120000
+      status: pass
+      structuralPending: false
+      structuralShortCircuitCount: 11
+      sampleDecodedIslands:
+        west_beam_inner_x: 1
+        east_beam_under_y: 1
+        se_column_north_z: 1
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000
+      status: pass
+      bakedSurfaceShortCircuitCount: 95909
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ui-toggle-test --timeout-ms=120000
+      status: pass
+notes:
+  - This is the same family as the previous wardrobe seam issue: a boundary texel in the bake atlas was black and close-range lookup exposed it.
+  - The fix uses same-face bake-source padding for the new structural slot.
+  - Runtime reflection remains LIVE.
+  - Neighbor-cell sampling was left unchanged.
+  - If the user still sees a line, the next evidence candidate is the east wall atlas contact texels behind the southeast column.
+```
+
+### R7-3.10-east-wall-southeast-column-contact-edge-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented_and_runtime_verified
+symptom:
+  - User confirmed beam / column contact is normal.
+  - User then reported a clear dark line between the southeast flat column and east wall.
+rootCause:
+  - Formal east-wall atlas had a black contact column at the southeast column front edge:
+      visible_side_z_2_485_y_1_5: 0.6003693103253841
+      contact_edge_z_2_49_y_1_5: 0
+      hidden_behind_column_z_2_50_y_1_5: 0
+  - Runtime east-wall UV samples by `z/y`. At close range, the visible wall edge can land on the `z=2.49` contact column.
+  - Structural atlas contact padding had already fixed the beam / column side, so the remaining line was traced to east wall slot 2.
+fix:
+  - Added east-wall bake-source contact padding for the southeast-column edge only.
+  - A one-column band around `z=2.49`, below the east beam (`y<2.515`), keeps its atlas cell but bakes from `z=2.49 - oneTexel`.
+  - Deeper hidden east-wall texels behind the southeast column stay black.
+  - Runtime east-wall UV lookup stays unchanged.
+  - Re-baked and promoted the formal east-wall 1024 / 1000spp asset.
+package:
+  - formal_asset: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp/
+  - source_package: .omc/r7-3-10-full-room-diffuse-bake/20260517-171224
+  - atlasResolution: 1024
+  - samples: 1000
+  - atlasPatch0Sha256: e65c1191a91eefac61f92818d9a25c19e1420cf8143befce2a50fa0566f84804
+  - texelMetadataPatch0Sha256: 6d58735d97c2dbf747f2f57a656690f922c38eb77995a0fb750557a5d549dcc3
+postFixEvidence:
+  - Formal east-wall atlas after promotion:
+      visible_side_z_2_485_y_1_5: 0.5995332371234894
+      contact_edge_z_2_49_y_1_5: 0.6192122716724873
+      hidden_behind_column_z_2_50_y_1_5: 0
+      contact_edge_above_beam_z_2_49_y_2_7: 0
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=east-wall --atlas-resolution=1024 --samples=1000 --target-samples=1000 --timeout-ms=3600000
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-bake/20260517-171224
+      bakeContaminationGuardSnapshot:
+        uR7310C1FullRoomDiffuseMode: 0
+        uR7310C1FloorDiffuseMode: 0
+        uR7310C1NorthWallDiffuseMode: 0
+        uR7310C1EastWallDiffuseMode: 0
+        uR7310C1WestWallDiffuseMode: 0
+        uR7310C1SouthWallDiffuseMode: 0
+        uR7310C1CeilingDiffuseMode: 0
+        uR7310C1StructuralDiffuseMode: 0
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000
+      status: pass
+      eastWallShortCircuitCount: 699773
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000
+      status: pass
+      bakedSurfaceShortCircuitCount: 95909
+notes:
+  - This updates the formal east-wall asset because the remaining line was in the east-wall slot.
+  - Floor / north / west / south / ceiling / structural package pointers stay on their current accepted assets.
+  - Runtime reflection remains LIVE.
+  - Neighbor-cell sampling was left unchanged.
+```
+
+### R7-3.10-southeast-column-shadow-preserving-contact-refinement
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented_and_runtime_verified
+symptom:
+  - User confirmed the black lines were gone.
+  - User then reported the east beam shadow on the southeast flat column north face looked quantized.
+  - User also reported the east beam shadow on the east wall looked shortened, as if the soft falloff was truncated.
+rootCause:
+  - The first structural contact padding fixed the line by brightening too much of the east-beam overlap quadrant inside `se_column_north_z`.
+  - A deep hidden probe point at `x=1.88, y=2.70` became luma `0.24857752521832785`, so the bake introduced a short rectangular bright area that changed the shadow shape.
+  - The first east-wall contact padding sampled one full wall texel inward from `z=2.49`, which could cut into the soft east-beam shadow falloff near the wall edge.
+fix:
+  - Kept `se_column_north_z` as one continuous island.
+  - Replaced broad structural overlap padding with an edge-only contact band.
+  - Structural contact band now uses the `se_column_north_z` atlas rect scale:
+      insetX: "0.13 / (0.180 * resolution)"
+      insetY: "2.905 / (0.500 * resolution)"
+      band: "two rect texels around x=1.85 or y=2.515"
+      source: "visible same-face centroid at 0.25 rect texel"
+  - Kept the deep hidden structural overlap black.
+  - East-wall contact source now samples only `0.25` wall texel to the visible side of `z=2.49`.
+  - Runtime UV lookup, neighbor-cell sampling, material values, light values, bounce route, and reflection route stayed unchanged.
+packages:
+  - structural_asset: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp/
+  - east_wall_asset: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp/
+  - structural_atlasPatch0Sha256: 95ab0051942bc986b89a2ede1c7de46fe30a976d2221933422c329b09989b37d
+  - structural_texelMetadataPatch0Sha256: 227d5685f8a25ebaf7ddd544c88b7b2e1c8e814f29a9eac49aa2f7b32f4df535
+  - east_wall_atlasPatch0Sha256: e73f7721db0bd99d8f97d898e84af02980da4d15d269158d4566f9d956dd470f
+  - east_wall_texelMetadataPatch0Sha256: 05ffa99d58cbd3e677f124bbb4baf3c1e5c66d24a0e0a0b80f8c889cabe4448b
+evidence:
+  structural_luma:
+    contact_x_1_851_y_2_7: 0.23926041246652602
+    beam_bottom_x_1_88_y_2_515: 0.2170319620579481
+    deep_hidden_x_1_88_y_2_7: 0
+    visible_below_x_1_88_y_2_50: 0.33503713339567187
+  east_wall_luma:
+    visible_z_2_485_y_1_5: 0.6060901952207087
+    contact_z_2_49_y_1_5: 0.621544977748394
+    hidden_z_2_50_y_1_5: 0
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=structural-beams-columns --atlas-resolution=1024 --samples=1000 --target-samples=1000 --timeout-ms=3600000
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+      bakeContaminationGuardSnapshot:
+        uR7310C1FullRoomDiffuseMode: 0
+        uR7310C1FloorDiffuseMode: 0
+        uR7310C1NorthWallDiffuseMode: 0
+        uR7310C1EastWallDiffuseMode: 0
+        uR7310C1WestWallDiffuseMode: 0
+        uR7310C1SouthWallDiffuseMode: 0
+        uR7310C1CeilingDiffuseMode: 0
+        uR7310C1StructuralDiffuseMode: 0
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=east-wall --atlas-resolution=1024 --samples=1000 --target-samples=1000 --timeout-ms=3600000
+      status: pass
+      source_package: .omc/r7-3-10-full-room-diffuse-bake/20260517-173647
+      promoted_to: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp
+      bakeContaminationGuardSnapshot:
+        uR7310C1FullRoomDiffuseMode: 0
+        uR7310C1FloorDiffuseMode: 0
+        uR7310C1NorthWallDiffuseMode: 0
+        uR7310C1EastWallDiffuseMode: 0
+        uR7310C1WestWallDiffuseMode: 0
+        uR7310C1SouthWallDiffuseMode: 0
+        uR7310C1CeilingDiffuseMode: 0
+        uR7310C1StructuralDiffuseMode: 0
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-structural-runtime-test --timeout-ms=120000
+      status: pass
+      structuralPending: false
+      structuralShortCircuitCount: 11
+      sampleDecodedIslands:
+        se_column_north_z: 1
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000
+      status: pass
+      eastWallShortCircuitCount: 699773
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000
+      status: pass
+      bakedSurfaceShortCircuitCount: 95909
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ui-toggle-test --timeout-ms=120000
+      status: pass
+notes:
+  - This supersedes the broad contact padding recorded in `R7-3.10-beam-column-se-column-contact-padding-fix`.
+  - This supersedes the full one-texel east-wall contact source recorded in `R7-3.10-east-wall-southeast-column-contact-edge-fix`.
+  - Existing floor / north / west / south / ceiling package pointers stay on their accepted assets.
+  - Runtime reflection remains LIVE.
+  - Neighbor-cell sampling was left unchanged.
+  - User visual check is still required for the final shadow shape at the reported close-range angle.
+```
+
+### R7-3.10-south-window-lower-reveal-gap-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: runtime-verified-user-visual-no-go
+trigger:
+  - User asked to fix the two south window black lines after the atlas seam audit.
+root_cause:
+  - The south wall atlas packed the bottom reveal and the left / right reveal as separated rectangles.
+  - The two lower-corner midpoints between those rectangles were invalid black texels.
+  - This was measured by `docs/tools/r7-3-10-atlas-seam-audit.mjs`.
+before_audit:
+  classification: gap_or_strong_luma_jump_present
+  bottom_reveal_right_inside: 0.2688
+  gap_bottom_to_right_mid: 0
+  right_reveal_lower_inside: 0.3172
+  bottom_reveal_left_inside: 0.2497
+  gap_bottom_to_left_mid: 0
+  left_reveal_lower_inside: 0.2136
+fix:
+  - Added `docs/tools/r7-3-10-atlas-seam-audit.mjs` as a reusable numeric seam classifier.
+  - Repacked the south wall horizontal reveal atlas ranges so they meet the left / right reveal entrances:
+      bottomReveal: -1.45..0.39 -> -1.52..0.46
+      topReveal: -1.45..0.39 -> -1.52..0.46
+  - Updated matching shader bake mapping, runtime UV mapping, JS metadata mapping, contract assertions, and south wall pointer metadata.
+  - Rebaked and promoted only the south wall formal package.
+formal_asset:
+  path: assets/bakes/r7-3-10/c1-static-diffuse/south-wall-window-hole-1024px-1000spp/
+  source_package: .omc/r7-3-10-full-room-diffuse-bake/20260517-201117
+  smoke_package: .omc/r7-3-10-full-room-diffuse-bake/20260517-200949
+  atlasResolution: 1024
+  samples: 1000
+  atlasPatch0Sha256: 3225fe77f96def62382e2841a306c78db983d68b92bf0ef03924182ac68040f0
+  texelMetadataPatch0Sha256: 2d06b27f27c31dc3b3094848a7777d06e9589cf6a318cea81a66b62430b70220
+after_audit:
+  classification: no_large_gap_jump_at_probe_points
+  bottom_reveal_right_inside: 0.2550
+  gap_bottom_to_right_mid: 0.2589
+  right_reveal_lower_inside: 0.3172
+  bottom_reveal_left_inside: 0.2256
+  gap_bottom_to_left_mid: 0.2391
+  left_reveal_lower_inside: 0.2136
+  top_reveal_right_gap_mid: 0.1375
+  top_reveal_left_gap_mid: 0.1160
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node --check docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+      southRevealLowerCornerGap: no_large_gap_jump_at_probe_points
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=south-wall --samples=1 --target-samples=1 --atlas-resolution=64 --timeout-ms=180000 --http-port=9002 --cdp-port=9223 --angle=metal --smoke-test
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-bake/20260517-200949
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=south-wall --samples=1000 --target-samples=1000 --atlas-resolution=1024 --timeout-ms=3600000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-bake/20260517-201117
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      southWallShortCircuitCount: 241306
+      southRevealShortCircuitCount: 241306
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      bakedSurfaceShortCircuitCount: 95909
+notes:
+  - This fix is a south reveal atlas ownership / repack fix, not neighbor-cell sampling.
+  - Existing floor / north / east / west / ceiling / structural packages were not intentionally changed by this step.
+  - Runtime reflection remains LIVE.
+  - Audit still reports separate unresolved buckets for east / west shadow edge reconstruction, structural invalid nonzero RGB, and west beam top ownership.
+```
+
+### R7-3.10-south-window-front-edge-runtime-guard-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+trigger:
+  - User refreshed after `R7-3.10-south-window-lower-reveal-gap-fix` and reported that the two south window black lines were still visible.
+correction:
+  - The previous fix only repaired the atlas midpoint gaps between bottom reveal and side reveal rectangles.
+  - The real visible line also came from primary hits on the south wall front plane inside the window hole, close to the physical opening edge.
+  - Those front-plane hole-edge hits were rejected by `r7310C1SouthWallDiffuseUv`, so they fell back to live shading / black instead of using the reveal bake.
+evidence:
+  atlas_samples_before_guard:
+    bottom_hole_gap_center: "0 / invalid"
+    bottom_hole_gap_near_edge: "0 / invalid"
+    right_hole_gap_mid: "0 / invalid"
+    bottom_left_corner_exact: "0 valid corner"
+    bottom_right_corner_exact: "0 valid corner"
+  audit_after_guard:
+    southWindowFrontEdgeGuard: runtime_front_edge_guard_present
+    bottom_reveal_room_edge_center: 0.3000
+    right_reveal_front_edge_mid: 0.2241
+fix:
+  - Added `r7310C1SouthWallWindowFrontEdgeDiffuseUv` in `shaders/Home_Studio_Fragment.glsl`.
+  - For south wall front-plane hits inside the window hole and within the opening-edge band, route UVs to the corresponding reveal island.
+  - Clamp the routed packed UV one texel inward with `r7310C1SouthWallClampPackedX/Y`, avoiding exact black corner texels.
+  - Bumped `Home_Studio_Fragment.glsl` cache token through `js/Home_Studio.js` and `Home_Studio.html`.
+  - Extended `docs/tools/r7-3-10-atlas-seam-audit.mjs` to report `south window front edge guard`.
+  - Added `--r7310-south-window-front-edge-visual-test` to the runner for a reproducible south-window screenshot.
+visual_evidence:
+  screenshot: .omc/r7-3-10-south-window-front-edge-visual/20260517-202553/south-window-front-edge.png
+  report: .omc/r7-3-10-south-window-front-edge-visual/20260517-202553/visual-report.json
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node --check docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+      southWindowFrontEdgeGuard: runtime_front_edge_guard_present
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-202433
+      southWallShortCircuitCount: 241306
+      southRevealShortCircuitCount: 241306
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-window-front-edge-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-south-window-front-edge-visual/20260517-202553
+      samples: 125
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-202704
+      bakedSurfaceShortCircuitCount: 95909
+  - git diff --check
+      status: pass
+notes:
+  - This is a runtime front-edge ownership guard; no new south wall bake package was generated in this step.
+  - Existing runtime reflection remains LIVE.
+  - Same-view human validation is still the final acceptance signal for the user's exact camera.
+```
+
+### R7-3.10-south-window-reveal-corner-runtime-clamp-fix
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+corrected_user_target:
+  - 南牆窗洞下緣。
+  - 南牆窗洞左 / 右側邊。
+  - 兩者形成的 90 度內角交界。
+prior_miss:
+  - `R7-3.10-south-window-front-edge-runtime-guard-fix` 只處理 south-wall front-plane hole-edge hit。
+  - 使用者指出的實際黑線位於 reveal surface 之間的 90 度內角。
+root_cause:
+  - Formal south package 中，side reveal 下排 texel 是 valid，但 luma 為 0。
+  - Bottom reveal 往內一點有正常亮度，左右 exact corner 會採到 side reveal 下排黑 texel。
+  - Runtime reveal UV 原本把 physical edge 直接映射到 packed chart exact edge。
+evidence_before_clamp:
+  right_side_reveal_bottom_row_front: "valid, luma 0"
+  right_side_reveal_bottom_row_mid: "valid, luma 0"
+  right_side_reveal_interior_mid: 0.2986
+  left_side_reveal_bottom_row_front: "valid, luma 0"
+  left_side_reveal_bottom_row_mid: "valid, luma 0"
+  left_side_reveal_interior_mid: 0.2684
+  bottom_reveal_right_corner_edge: 0
+  bottom_reveal_right_inner: 0.2949
+  bottom_reveal_left_corner_edge: 0
+  bottom_reveal_left_inner: 0.2879
+fix:
+  - `r7310C1SouthWallWindowRevealDiffuseUv` now clamps all four reveal-surface runtime packed UVs one texel inward.
+  - Left / right side reveal clamp X and Y inside their chart ranges.
+  - Bottom / top reveal clamp X and Y inside their chart ranges.
+  - Cache tokens bumped to `r7310-south-reveal-corner-clamp-v1`.
+  - `docs/tools/r7-3-10-atlas-seam-audit.mjs` now reports `south reveal 90-degree corner clamp`.
+  - `docs/tools/r7-3-8-c1-bake-capture-runner.mjs` now has `--r7310-south-reveal-corner-visual-test` for close right / left / lower-span screenshots.
+visual_evidence:
+  package: .omc/r7-3-10-south-reveal-corner-visual/20260517-204043
+  right_lower_corner: .omc/r7-3-10-south-reveal-corner-visual/20260517-204043/south-reveal-right-lower-corner.png
+  left_lower_corner: .omc/r7-3-10-south-reveal-corner-visual/20260517-204043/south-reveal-left-lower-corner.png
+  lower_span: .omc/r7-3-10-south-reveal-corner-visual/20260517-204043/south-reveal-lower-span.png
+validation:
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node --check docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+      southRevealCornerClamp: runtime_reveal_corner_clamp_present
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-204029
+      southWallShortCircuitCount: 241306
+      southRevealShortCircuitCount: 241306
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-reveal-corner-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-south-reveal-corner-visual/20260517-204043
+      views: [right-lower-corner, left-lower-corner, lower-span]
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-204134
+      bakedSurfaceShortCircuitCount: 95909
+notes:
+  - This is a runtime reveal-surface exact-edge clamp; no new south wall bake package was generated in this step.
+  - Exact atlas edge texels remain black in the formal package, but runtime now avoids those exact chart edges for visible reveal hits.
+  - Existing runtime reflection remains LIVE.
+  - Same-view human validation is still the final acceptance signal for the user's exact camera.
+```
+
+### R7-3.10-structural-shadow-linear-reconstruction
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+trigger:
+  - User confirmed the south window lower reveal corner black line was fixed.
+  - User then reported discontinuous soft-shadow gradients on the southeast flat column.
+  - User observed the air-conditioner shadow on the south wall was smooth, while the same family of shadow on the southeast flat column was stepped.
+difference_review:
+  smooth_reference:
+    surface: south wall
+    runtime_slot: 4
+    package: assets/bakes/r7-3-10/c1-static-diffuse/south-wall-window-hole-1024px-1000spp/
+    mapping: full south-wall atlas plane / reveal charts
+  stepped_surface:
+    surface: structural beams and columns
+    runtime_slot: 6
+    package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp/
+    mapping: small packed structural islands
+    affected_islands:
+      - se_column_inner_x
+      - se_column_north_z
+root_cause:
+  - The lighting data itself was not missing.
+  - The visible stair-step came from runtime nearest reconstruction of small structural islands at close camera distance.
+  - South wall uses a large continuous atlas plane, so the same texture-grid reconstruction is less visible there.
+  - The southeast flat column uses a smaller structural island, so nearest texels become visible as banding under soft shadow gradients.
+measured_evidence:
+  se_column_inner_x_y_profile_z2_72:
+    nearest:
+      maxStep: 0.051043
+      meanStep: 0.011883
+      largeStepsOver003: 10
+    rect_clamped_linear:
+      maxStep: 0.040203
+      meanStep: 0.006517
+      largeStepsOver003: 1
+  se_column_inner_x_z_profile_y1_6:
+    nearest:
+      maxStep: 0.133365
+      meanStep: 0.009002
+      largeStepsOver003: 19
+    rect_clamped_linear:
+      maxStep: 0.022191
+      meanStep: 0.003782
+      largeStepsOver003: 0
+  se_column_north_z_y_profile_x1_825:
+    nearest:
+      maxStep: 0.043501
+      meanStep: 0.013606
+      largeStepsOver003: 16
+    rect_clamped_linear:
+      maxStep: 0.029625
+      meanStep: 0.008640
+      largeStepsOver003: 0
+fix:
+  - Added `r7310C1FullRoomDiffuseSamplePatchPixel`.
+  - Added `r7310C1FullRoomDiffuseSampleRectLinear`.
+  - Added `r7310C1StructuralBeamColumnAtlasRect`.
+  - Structural short-circuit now samples slot 6 with rect-clamped linear reconstruction inside each structural island.
+  - Floor / north / east / west / south / ceiling runtime sampling remains on the previous route.
+  - The combined bake texture stays `NearestFilter`; the linear reconstruction is manual and structural-only.
+  - Cache tokens bumped to `r7310-structural-linear-reconstruct-v1`.
+visual_evidence:
+  package: .omc/r7-3-10-se-column-shadow-visual/20260517-205951
+  ac_shadow_view: .omc/r7-3-10-se-column-shadow-visual/20260517-205951/se-column-ac-shadow.png
+  beam_shadow_view: .omc/r7-3-10-se-column-shadow-visual/20260517-205951/se-column-beam-shadow.png
+validation:
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node --check docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-10-atlas-seam-audit.mjs
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-structural-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-205433
+      structuralShortCircuitCount: 11
+      seColumnNorthProbePresent: true
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-se-column-shadow-visual-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-se-column-shadow-visual/20260517-205951
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260517-205907
+      bakedSurfaceShortCircuitCount: 95909
+notes:
+  - No new bake package was generated.
+  - This is a runtime reconstruction fix, not a lighting or geometry rebake.
+  - Reflection remains LIVE.
+  - Same-view human validation failed after user refreshed and inspected the real reported view.
+  - Treat this as evidence that the previous scripted camera did not cover the user's reported close-range shadow zones.
+```
+
+### R7-3.10-camera-pose-info-for-same-view-shadow-debug
+
+```yaml
+date: 2026-05-17
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-runtime-verified
+trigger:
+  - User reported that the east-beam shadow on the east wall and the air-conditioner shadow on the southeast flat column still show discontinuous gradients.
+  - User requested a pure-text INFO area with current camera position and facing direction, so screenshots can include an exact reproducible camera state.
+decision:
+  - Add a readonly pure-text camera pose field to the page.
+  - The field outputs three copyable lines: cameraState, forward, view.
+  - The `cameraState` line is intentionally compatible with the existing `window.setR739Config1ValidationCameraState(...)` route.
+  - Future shadow screenshots should include this text before another fix attempt is called complete.
+implementation:
+  - Added `#cameraPoseInfo` readonly textarea in `Home_Studio.html`.
+  - Added CSS making the field selectable and copyable despite the app-level no-select rule.
+  - Added `formatR7310CameraPoseInfo()`, `window.reportR7310CameraPoseInfo()`, and per-frame textarea refresh in `js/Home_Studio.js`.
+  - Added pointer-lock guard for `cameraPoseInfo`.
+  - Added `--r7310-camera-pose-info-test` to `docs/tools/r7-3-8-c1-bake-capture-runner.mjs`.
+validation:
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-camera-pose-info-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-camera-pose-info/20260517-212142
+      copyText:
+        cameraState={"position":{"x":-1.4,"y":2.3,"z":3.9},"yaw":-0.4,"pitch":-0.18,"fov":55}
+        forward={"x":0.383127,"y":-0.17903,"z":-0.90618}
+        view={"facing":"北(-Z)","config":1,"samples":119,"paused":false,"sppCap":1000}
+next_shadow_debug_gate:
+  - Do not accept another east-beam / southeast-column shadow fix from scripted visual angles alone.
+  - First reproduce the user-reported camera by applying the pasted `cameraState`.
+  - Then compare the exact view with east / structural bake toggles on and off.
+```
+
+### R7-3.10-east-wall-same-view-guard-texel-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: implemented-and-same-view-verified
+trigger:
+  - User provided same-view baked-OFF reference for the east-beam shadow on the east wall.
+  - User required the baked-ON result to match the smooth continuous diagonal shadow before asking for human verification.
+camera:
+  cameraState:
+    position: { x: 1.771481, y: 2.444076, z: 2.329989 }
+    yaw: -2.44
+    pitch: 0.343
+    fov: 55
+    forward: { x: 0.607838, y: 0.336314, z: 0.719323 }
+  viewport:
+    innerWidth: 1458
+    innerHeight: 741
+    canvasCssWidth: 1318
+    canvasCssHeight: 741
+root_cause:
+  - The east wall formal bake itself used true planar coordinates, but the southeast guard zone next to `z=2.49` / `y=2.515` still contained zero radiance.
+  - A full runtime filter sampled those zero guard texels and produced a black vertical edge.
+  - A rect clamp avoided zero texels but shortened the diagonal shadow and repeated edge texels into a dark blob.
+  - Linear sampling avoided the blob but exposed visible atlas grain.
+fix:
+  - Added `fillR7310C1EastWallSoutheastGuardTexels(...)` after east-wall bake averaging.
+  - The east-wall southeast guard copies adjacent visible east-wall texels into the right and upper guard regions:
+      z guard: source column just before `z=2.49`
+      y guard: source row just before `y=2.515`
+  - East wall runtime keeps full atlas rect `vec4(0.0, 0.0, 1.0, 1.0)`.
+  - East wall runtime samples slot 2 with chart-aware Tent3 reconstruction:
+      `r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect())`
+  - The formal east-wall 1024px / 1000spp package was regenerated in place.
+formal_asset:
+  package: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp
+  pointer: docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json
+  atlasPatch0Sha256: 1d41c19ba7f9d6f7fe2c5e53ca156e3ac0580e141f49aba8dd0fb30841850b6c
+  texelMetadataPatch0Sha256: dcb1cafd107d947aa07441d311287f4524d03b0463c32c97a1a441c8613c2e23
+measured_evidence:
+  before_guard_fill:
+    y2_460_z2_500_luma: 0.0000
+    y2_540_z2_420_luma: 0.0000
+  after_guard_fill:
+    y2_460_z2_500_luma: 0.3374
+    y2_540_z2_420_luma: 0.1588
+visual_evidence:
+  package: .omc/r7-3-10-east-wall-shadow-visual/20260518-003331
+  baked_on: .omc/r7-3-10-east-wall-shadow-visual/20260518-003331/east-wall-shadow-same-view.png
+  baked_off_reference: .omc/r7-3-10-east-wall-shadow-visual/20260518-003331/east-wall-shadow-all-bakes-off-reference.png
+validation:
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=east-wall --samples=1000 --atlas-resolution=1024 --timeout-ms=180000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --target-samples=1000 --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      baked_on: .omc/r7-3-10-east-wall-shadow-visual/20260518-003331/east-wall-shadow-same-view.png
+      baked_off_reference: .omc/r7-3-10-east-wall-shadow-visual/20260518-003331/east-wall-shadow-all-bakes-off-reference.png
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-003537
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-structural-runtime-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-003505
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=120000 --http-port=9002 --cdp-port=9223 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-003644
+  - git diff --check
+      status: pass
+notes:
+  - The earlier east-wall rect clamp evidence is superseded by this same-view guard-fill result.
+  - The southeast flat-column air-conditioner shadow remains the next same-pose target.
+```
+
+### R7-3.10-east-beam-same-view-structural-bookshelf-overlap-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: candidate-same-view-verified-not-user-accepted-yet
+trigger:
+  - User rejected the `r7310-east-wall-guard-texel-v2` result at a closer exact camera.
+  - User required same-camera baked ON and all-bakes-OFF 100SPP reference to be nearly identical.
+  - User explicitly identified stair-like shadow bands as failure.
+camera:
+  cameraState:
+    position: { x: 1.786518, y: 2.426144, z: 2.375295 }
+    yaw: -2.5156
+    pitch: 0.613
+    fov: 55
+    forward: { x: 0.479224, y: 0.575324, z: 0.662832 }
+  viewport:
+    innerWidth: 1458
+    innerHeight: 741
+    canvasCssWidth: 1318
+    canvasCssHeight: 741
+    drawingBufferWidth: 1280
+    drawingBufferHeight: 720
+    devicePixelRatio: 3.5
+wrong_lessons_recorded:
+  - Runner `status: pass` is not visual acceptance.
+  - Earlier scripted visual helpers missed the user's close-range camera.
+  - The previous east-wall guard-texel fix was incomplete for this reported view.
+  - Structural formal validation can report `status: pass` even when `reprojectionStatus: fail` and `reprojectionComparisons: 0`.
+isolation:
+  four_way_package: .omc/r7-3-10-east-wall-shadow-visual/20260518-010549
+  result:
+    - structural OFF was closest to all-bakes-OFF reference.
+    - east wall OFF while structural stayed ON retained the artifact family.
+  conclusion: latest same-view stair source is structural slot 6.
+root_cause:
+  - `se_column_inner_x` claimed `x=1.78, y=0..2.905, z=2.49..3.056` as visible structural surface.
+  - The southeast bookshelf touches the same plane at `x=1.78, y=0..2.04, z=2.73..3.056`.
+  - That overlap is hidden and must be excluded from structural bake/runtime ownership.
+  - Pre-fix `se_column_inner_x` contained about 40 percent black zero texels in that hidden overlap.
+fix:
+  - Added southeast bookshelf blocker to `docs/tools/r7-3-10-structural-geometry-gate.mjs`.
+  - Added geometry-gate and contract assertions for `se_column_inner_x_bookshelf_overlap`.
+  - Added shader bake/runtime guard `r7310C1StructuralSeColumnInnerHiddenByBookshelf(...)`.
+  - Added JS metadata/runtime guard `r7310StructuralSeColumnInnerHiddenByBookshelf(...)`.
+  - Added structural hidden-texel guard fill `fillR7310C1StructuralSeColumnInnerBookshelfGuardTexels(...)`.
+  - Bumped cache tokens to `r7310-structural-bookshelf-guard-v1`.
+assets:
+  structural_package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+  contract_pointer: docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json
+measured_evidence:
+  se_column_inner_x_zero_ratio_before: 0.4045
+  se_column_inner_x_zero_ratio_after: 0.0008
+  same_view_package: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555
+  baked_on: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555/east-wall-shadow-same-view.png
+  baked_off_reference: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555/east-wall-shadow-all-bakes-off-reference.png
+  crop_montage: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555/crop-montage-on-ref-structuralOff.png
+  diff_summary: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555/crop-diff-summary.json
+  same_view_forward_delta: { x: 0, y: 0, z: 0 }
+  same_view_target_samples_reached: 109
+  crop_diff_on_vs_reference:
+    meanDiff: 1.2142
+    p95: 3.0
+    p99: 6.6667
+validation:
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=structural-beams-columns --samples=1000 --atlas-resolution=1024 --timeout-ms=180000 --http-port=9002 --cdp-port=9323 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --target-samples=100 --timeout-ms=180000 --http-port=9002 --cdp-port=9323 --angle=metal --camera-state-json='<user cameraState>'
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260518-014555
+acceptance_note:
+  - Do not mark this user-accepted until the same-view baked ON image is checked against the user's visual criterion.
+  - Future reports must include exact `cameraState`, baked ON image, and all-bakes-OFF reference image.
+```
+
+### R7-3.10-east-beam-same-view-structural-linear-sampling-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: user-accepted
+trigger:
+  - User rejected the previous same-view result with red-box screenshots.
+  - User clarified the marked area is the east beam / southeast flat-column junction, away from the southeast bookshelf.
+camera:
+  cameraState:
+    position: { x: 1.76428, y: 2.443067, z: 2.334591 }
+    yaw: -2.4136
+    pitch: 0.418
+    fov: 55
+    forward: { x: 0.608086, y: 0.405933, z: 0.682239 }
+  viewport:
+    innerWidth: 1458
+    innerHeight: 741
+    canvasCssWidth: 1318
+    canvasCssHeight: 741
+    drawingBufferWidth: 1280
+    drawingBufferHeight: 720
+    devicePixelRatio: 3.5
+wrong_lessons:
+  - Previous southeast-bookshelf attribution was a wrong candidate for this red-box area.
+  - Runner `status: pass` remains only helper completion; visual crop comparison is required.
+  - Guard-fill plus 6px Tent sampling reduced invalid black bleed but made the narrow east-beam contact shadow too bright.
+runtime_probe:
+  package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-053523
+  result:
+    - red-box samples hit structural island 4 `east_beam_under_y`.
+    - red-box samples hit structural island 8 `se_column_north_z`.
+    - no sampled red-box point hit furniture.
+fix:
+  - Kept `se_column_north_z` east-beam hidden-overlap guard padding.
+  - Kept full-rect structural atlas ownership.
+  - Changed structural runtime lookup from `r7310C1FullRoomDiffuseSampleRectTent3(...)` to `r7310C1FullRoomDiffuseSampleRectLinear(...)`.
+  - East-wall slot 2 Tent3 sampling was left unchanged.
+visual_evidence:
+  failed_before_linear_sampling: .omc/r7-3-10-east-wall-shadow-visual/20260518-051510
+  self_checked_after_linear_sampling: .omc/r7-3-10-east-wall-shadow-visual/20260518-054136
+  baked_on_crop: .omc/r7-3-10-east-wall-shadow-visual/20260518-054136/redbox-on.png
+  structural_off_crop: .omc/r7-3-10-east-wall-shadow-visual/20260518-054136/redbox-structural-off.png
+  all_bakes_off_crop: .omc/r7-3-10-east-wall-shadow-visual/20260518-054136/redbox-all-off.png
+  redbox_on_vs_all_bakes_off_diff:
+    mean_rgb_diff_8bit: [1.2665, 1.2973, 1.2475]
+    rms_rgb_diff_8bit: [2.2122, 2.2755, 2.2044]
+    max_channel_diff_8bit: 25
+validation:
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-probe-sample-test --timeout-ms=180000 --http-port=9029 --cdp-port=9340 --angle=metal --camera-state-json='<user cameraState>'
+      status: pass
+      package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-053523
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --target-samples=1000 --timeout-ms=240000 --http-port=9030 --cdp-port=9341 --angle=metal --camera-state-json='<user cameraState>'
+      status: pass
+      package: .omc/r7-3-10-east-wall-shadow-visual/20260518-054136
+acceptance_note:
+  - This is self-checked evidence, not user acceptance.
+```
+
+### R7-3.10-se-column-west-hybrid-indirect-bake
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: candidate-self-checked-not-user-accepted-yet
+trigger:
+  - User accepted the southeast column north-face hybrid route and requested the southeast column west face to use the same architecture.
+architecture:
+  - targetId 1009 owns `c1_se_column_west_shadow`.
+  - Runtime atlas slot 8 stores the west-face indirect diffuse bake.
+  - Runtime first hit on the west face adds baked indirect diffuse only.
+  - Direct light, visible direct-shadow edge, and reflection stay live path traced.
+  - Structural slot 6 is guarded so the west-face first hit does not also enter broad structural short-circuit.
+geometry:
+  surface: x=1.78, normal=-X, z=2.49..3.056, y=0..2.905
+  invalid_texel_region: southeast bookshelf overlap at z>=2.73 and y<=2.04
+assets:
+  west_shadow_package: assets/bakes/r7-3-10/c1-static-diffuse/se-column-west-shadow-1024px-1000spp
+  pointer: docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json
+  visual_package: .omc/r7-3-10-se-column-west-shadow-live-match/20260518-155345
+  live_reference: .omc/r7-3-10-se-column-west-shadow-live-match/20260518-155345/live-reference.png
+  new_bake: .omc/r7-3-10-se-column-west-shadow-live-match/20260518-155345/se-column-west-shadow-bake.png
+measured_evidence:
+  requestedSamples: 1000
+  targetAtlasResolution: 1024
+  validTexelRatio: 0.5954418182373047
+  atlasVisibleLumaMean: 0.13351944753293304
+  atlasVisibleLumaMax: 0.3790048410495122
+  runnerStatus: pass
+  bakeContaminationGuardSnapshot:
+    uR7310C1FullRoomDiffuseMode: 0
+    uR7310C1StructuralDiffuseMode: 0
+    uR7310C1SeColumnNorthShadowMode: 0
+    uR7310C1SeColumnWestShadowMode: 0
+    uR738C1BakeCaptureMode: 2
+validation:
+  - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=se-column-west-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/se-column-west-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-se-column-west-shadow-visual-test --target-samples=1 --timeout-ms=180000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-se-column-west-shadow-live-match/20260518-155345
+acceptance_note:
+  - User reported the southeast column west face succeeded before requesting the south wall AC shadow next.
+```
+
+### R7-3.10-south-wall-ac-shadow-hybrid-indirect-bake
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: candidate-self-checked-awaiting-user-visual-verdict
+trigger:
+  - User confirmed the southeast column west face succeeded.
+  - User then requested the AC shadow on the south wall to use the same successful hybrid architecture.
+architecture:
+  - targetId 1010 owns `c1_south_wall_ac_shadow`.
+  - Runtime atlas slot 9 stores the south-wall AC-shadow indirect diffuse bake.
+  - Runtime first hit on the south wall main face adds baked indirect diffuse only.
+  - Direct light, visible direct-shadow edge, and reflection stay live path traced.
+  - South wall full diffuse slot 4 is guarded by the first-hit hybrid path so the close AC-shadow area does not enter the old full-diffuse staircase route.
+geometry:
+  surface: z=3.056, normal=-Z, x=-2.11..2.11, y=0..2.905
+  invalid_texel_region: south window hole x=-1.75..0.69, y=1.04..2.905
+assets:
+  ac_shadow_package: assets/bakes/r7-3-10/c1-static-diffuse/south-wall-ac-shadow-1024px-1000spp
+  pointer: docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json
+  visual_package: .omc/r7-3-10-south-wall-ac-shadow-live-match/20260518-164308
+  live_reference: .omc/r7-3-10-south-wall-ac-shadow-live-match/20260518-164308/live-reference.png
+  new_bake: .omc/r7-3-10-south-wall-ac-shadow-live-match/20260518-164308/south-wall-ac-shadow-bake.png
+measured_evidence:
+  requestedSamples: 1000
+  targetAtlasResolution: 1024
+  validTexelRatio: 0.6290740966796875
+  atlasVisibleLumaMean: 0.047025868922288036
+  atlasVisibleLumaMax: 0.31246056656042737
+  runnerStatus: pass
+  bakeContaminationGuardSnapshot:
+    uR7310C1FullRoomDiffuseMode: 0
+    uR7310C1StructuralDiffuseMode: 0
+    uR7310C1SeColumnNorthShadowMode: 0
+    uR7310C1SeColumnWestShadowMode: 0
+    uR7310C1SouthWallAcShadowMode: 0
+    uR738C1BakeCaptureMode: 2
+runtime_probe:
+  same_view_helper_status: pass
+  live_runtime_enabled: false
+  bake_runtime_enabled_only:
+    southWallAcShadowEnabled: true
+    southWallEnabled: false
+validation:
+  - node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=south-wall-ac-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/south-wall-ac-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-wall-ac-shadow-visual-test --target-samples=1 --timeout-ms=180000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-south-wall-ac-shadow-live-match/20260518-164308
+acceptance_note:
+  - This is self-checked evidence. User visual verdict is still needed for the south wall AC shadow.
+```
+
+### R7-3.10-west-beam-shadow-mirror-hybrid-indirect-bake
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: candidate-self-checked-awaiting-user-visual-verdict
+trigger:
+  - User confirmed the east wall beam shadow was OK.
+  - User requested the west-side mirror path for the southwest column and west wall, both carrying the west beam shadow.
+architecture:
+  - targetId 1012 owns `c1_sw_column_north_shadow`.
+  - targetId 1013 owns `c1_west_wall_beam_shadow`.
+  - Runtime atlas slot 11 stores the southwest-column north-face indirect diffuse bake.
+  - Runtime atlas slot 12 stores the west-wall west-beam-shadow indirect diffuse bake.
+  - The runtime atlas patch count is now 13.0.
+  - Runtime first hit on either west-side target adds baked indirect diffuse only.
+  - Direct light, the visible direct-shadow edge, and reflection stay live path traced.
+  - West wall beam-shadow mode has a seam guard near the southwest-column contact, so the vertical contact keeps the regular west-wall or live route.
+geometry:
+  sw_column_north_shadow: z=2.848, x=-1.91..-1.75, y=0..2.905
+  west_wall_beam_shadow: x=-1.91, z=-1.874..3.056, y=0..2.905
+  west_wall_invalid_texel_region: iron door hole z=-1.874..-0.984, y=0.09..2.04
+assets:
+  sw_column_package: assets/bakes/r7-3-10/c1-static-diffuse/sw-column-north-shadow-1024px-1000spp
+  sw_column_pointer: docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json
+  sw_column_visual_package: .omc/r7-3-10-sw-column-north-shadow-live-match/20260518-190721
+  sw_column_live_reference: .omc/r7-3-10-sw-column-north-shadow-live-match/20260518-190721/live-reference.png
+  sw_column_new_bake: .omc/r7-3-10-sw-column-north-shadow-live-match/20260518-190721/sw-column-north-shadow-bake.png
+  west_wall_package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp
+  west_wall_pointer: docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json
+  west_wall_visual_package: .omc/r7-3-10-west-wall-beam-shadow-live-match/20260518-190911
+  west_wall_live_reference: .omc/r7-3-10-west-wall-beam-shadow-live-match/20260518-190911/live-reference.png
+  west_wall_new_bake: .omc/r7-3-10-west-wall-beam-shadow-live-match/20260518-190911/west-wall-beam-shadow-bake.png
+measured_evidence:
+  sw_column:
+    requestedSamples: 1000
+    targetAtlasResolution: 1024
+    validTexelRatio: 1
+    rawMeanLuma: 0.4683801542118244
+    runnerStatus: pass
+  west_wall:
+    requestedSamples: 1000
+    targetAtlasResolution: 1024
+    validTexelRatio: 0.8787927627563477
+    validTexelRatioMinimum: 0.80
+    rawMeanLuma: 0.33819388811011153
+    runnerStatus: pass
+runtime_probe:
+  cameraState:
+    position: { x: -1.652805, y: 2.453416, z: 2.729668 }
+    yaw: 2.257985
+    pitch: 0.267
+    fov: 55
+    forward: { x: -0.745641, y: 0.263839, z: 0.611889 }
+  same_view_helper_status: pass
+  live_runtime_enabled: false
+  bake_runtime_enabled_only:
+    swColumnNorthShadowEnabled: true
+    westWallBeamShadowEnabled: true
+validation:
+  - node docs/tests/r7-3-10-west-beam-shadow-mirror.test.js
+      status: pass
+  - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+      status: pass
+  - node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+      status: pass
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+      status: pass
+  - node --check js/InitCommon.js
+      status: pass
+  - node --check js/Home_Studio.js
+      status: pass
+  - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      status: pass
+  - git diff --check
+      status: pass
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=sw-column-north-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/sw-column-north-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=west-wall-beam-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+      status: pass
+      package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-sw-column-north-shadow-visual-test --target-samples=1 --timeout-ms=180000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-sw-column-north-shadow-live-match/20260518-190721
+  - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-beam-shadow-visual-test --target-samples=1 --timeout-ms=180000 --angle=metal
+      status: pass
+      package: .omc/r7-3-10-west-wall-beam-shadow-live-match/20260518-190911
+acceptance_note:
+  - This is self-checked evidence. User visual verdict is still needed for the west-side mirror shadow path.
+```
+
+### R7-3.10-west-beam-shadow-bake-point-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: self-checked-after-user-correction
+trigger:
+  - User reported that the west-side mirror result was visibly wrong.
+  - User clarified the failure: a south-facing/north-looking picture was compressed onto the southwest-column north face and west wall.
+root_cause:
+  - The west-side metadata, runtime slot, and package wiring existed, but `r7310C1BakeSurfacePoint` only mapped patchId 1000..1011.
+  - patchId 1012 and patchId 1013 therefore did not have their own bake-time world-surface mapping.
+  - The bake capture generated wrong image-like content for the new west-side targets.
+fix:
+  - Added patchId 1012 mapping for `c1_sw_column_north_shadow`: position `vec3(x, y, 2.848)`, normal `vec3(0.0, 0.0, -1.0)`.
+  - Added patchId 1013 mapping for `c1_west_wall_beam_shadow`: position `vec3(-1.91, y, z)`, normal `vec3(1.0, 0.0, 0.0)`.
+  - Preserved the west-wall iron-door invalid texel region.
+  - Updated cache token to `r7310-west-beam-mirror-bake-point-v3`.
+  - Re-baked both formal 1024px / 1000spp west-side packages after the shader fix.
+assets:
+  sw_column_package: assets/bakes/r7-3-10/c1-static-diffuse/sw-column-north-shadow-1024px-1000spp
+  west_wall_package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp
+evidence:
+  regression_test:
+    - docs/tests/r7-3-10-west-beam-shadow-mirror.test.js now asserts patchId 1012 and 1013 bake surface mappings.
+  rebake:
+    - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=sw-column-north-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+    - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=west-wall-beam-shadow --atlas-resolution=1024 --target-samples=1000 --timeout-ms=900000 --angle=metal
+  all_bakes_visual_probe:
+    - .omc/r7-3-10-east-wall-shadow-visual/20260518-210227/east-wall-shadow-same-view.png
+lesson:
+  - New R7-3.10 dedicated shadow targets require four linked pieces: target metadata, runtime package/slot, runtime surface activation, and `r7310C1BakeSurfacePoint` bake-time world mapping.
+  - Mirroring an already-successful east-side route still requires explicit coordinate mapping for each west-side target.
+```
+
+### R7-3.10-beam-column-dedicated-hybrid-upgrade
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: self-checked-awaiting-user-visual-verdict
+trigger:
+  - User accepted the dedicated hybrid route for southeast-column north/west, south-wall AC, east wall beam shadow, southwest-column north, and west wall beam shadow.
+  - User requested all remaining listed east/west beam/column faces to use the same upgraded architecture because 1SPP noise mismatch was still visible.
+scope:
+  unchanged:
+    - c1_east_wall
+    - c1_west_wall
+    - c1_east_wall_beam_shadow
+    - c1_west_wall_beam_shadow
+  upgraded_targets:
+    - targetId: 1014
+      runtimeAtlasSlot: 13
+      surfaceName: c1_sw_column_inner_shadow
+      sourceIsland: sw_column_inner_x
+    - targetId: 1015
+      runtimeAtlasSlot: 14
+      surfaceName: c1_west_beam_inner_shadow
+      sourceIsland: west_beam_inner_x
+    - targetId: 1016
+      runtimeAtlasSlot: 15
+      surfaceName: c1_west_beam_under_shadow
+      sourceIsland: west_beam_under_y
+    - targetId: 1017
+      runtimeAtlasSlot: 16
+      surfaceName: c1_east_beam_inner_shadow
+      sourceIsland: east_beam_inner_x
+    - targetId: 1018
+      runtimeAtlasSlot: 17
+      surfaceName: c1_east_beam_under_shadow
+      sourceIsland: east_beam_under_y
+fix:
+  - Runtime atlas patch count increased from 13 to 18.
+  - Added five dedicated runtime package pointers, loaders, setters, uniforms, atlas slots, UV helpers, hybrid first-hit guards, and bake-time world mappings.
+  - Dedicated surfaces bake indirect diffuse only; direct light, direct shadow edge, and reflection remain live path tracing.
+  - Added the five new modes to the bake contamination guard snapshot; final formal packages show every runtime mode was 0 during capture.
+assets:
+  - assets/bakes/r7-3-10/c1-static-diffuse/sw-column-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/west-beam-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/west-beam-under-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/east-beam-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/east-beam-under-shadow-1024px-1000spp
+runtime_pointers:
+  - docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json
+  - docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json
+  - docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json
+  - docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json
+  - docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json
+validation:
+  formal_rebake:
+    - sw-column-inner-shadow: pass / targetId 1014 / slot 13 / samples 1000 / dirtyModes 0
+    - west-beam-inner-shadow: pass / targetId 1015 / slot 14 / samples 1000 / dirtyModes 0
+    - west-beam-under-shadow: pass / targetId 1016 / slot 15 / samples 1000 / dirtyModes 0
+    - east-beam-inner-shadow: pass / targetId 1017 / slot 16 / samples 1000 / dirtyModes 0
+    - east-beam-under-shadow: pass / targetId 1018 / slot 17 / samples 1000 / dirtyModes 0
+  commands:
+    - node docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+    - node docs/tests/r7-3-10-west-beam-shadow-mirror.test.js
+    - node docs/tests/r7-3-10-se-column-west-shadow.test.js
+    - node docs/tests/r7-3-10-se-column-north-shadow.test.js
+    - node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+    - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+    - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+    - node --check js/InitCommon.js
+    - node --check js/Home_Studio.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+    - git diff --check
+    - node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=240000 --angle=metal
+cache_token:
+  - r7310-beam-column-dedicated-hybrid-v1
+lesson:
+  - A dedicated hybrid target needs matching target metadata, bake-time world mapping, runtime surface activation, runtime atlas slot, contamination guard, and formal package pointer.
+  - East/west wall packages can stay unchanged while adjacent beam/column faces move to dedicated indirect-diffuse slots.
+```
+
+### R7-3.10-beam-column-dedicated-hybrid-runtime-atlas-grid-fix
+
+```yaml
+date: 2026-05-18
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: fixed-and-runner-verified
+trigger:
+  - User opened v=r7310-beam-column-dedicated-hybrid-v1 with bake toggles on and reported the room was largely black.
+root_cause:
+  - Runtime atlas patch count increased from 13 to 18.
+  - Combined runtime atlas still used one horizontal strip.
+  - 1024px x 18 slots produced a 18432 x 1024 texture.
+  - This exceeds the common WebGL 16384 texture-width limit, so atlas upload or sampling can fail and baked surfaces can render black.
+fix:
+  - Kept all 18 dedicated 1024px slots.
+  - Packed the combined runtime atlas as 6 columns x 3 rows.
+  - Effective atlas size is now 6144 x 3072.
+  - Added R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS = 6.
+  - Added uR7310C1RuntimeAtlasGridColumns = 6.0.
+  - Updated r7310C1CombinedAtlasUv and r7310C1FullRoomDiffuseSamplePatchTexel to compute slot column and row.
+  - Updated cache token to r7310-beam-column-atlas-grid-v1.
+tests:
+  - node docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js
+  - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+  - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+  - node docs/tests/r7-3-10-west-beam-shadow-mirror.test.js
+  - node docs/tests/r7-3-10-structural-geometry-gate.test.js
+  - node docs/tests/r7-3-10-structural-sampling-guard.test.js
+  - node --check js/InitCommon.js
+  - node --check js/Home_Studio.js
+  - git diff --check
+runner:
+  command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-runtime-short-circuit-test --timeout-ms=240000 --angle=metal
+  status: pass
+  bakedSurfaceHitCount: 96170
+  bakedSurfaceShortCircuitCount: 95909
+  package: .omc/r7-3-10-full-room-diffuse-runtime/20260518-233333
+lesson:
+  - Any future runtime atlas slot expansion must check the final texture width and height against WebGL limits before visual testing.
+  - The 1024px precision can stay intact; extra slots should be packed in a grid, not a longer strip.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase0
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: phase0-complete
+scope:
+  - Capture all-on baseline for the current R7-3.10 18-slot atlas-grid build.
+  - Record reusable cameraState seeds for the remaining visual gaps.
+  - Add the Phase 0 inventory contract test before any next shader behavior change.
+baseline:
+  command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ui-toggle-test --timeout-ms=180000 --angle=metal
+  status: pass
+  package: .omc/r7-3-10-full-room-diffuse-ui-toggle/20260519-001446/ui-toggle-report.json
+  report_source: initial.report
+  runtimeAtlasPatchCount: 18
+  runtimeAtlasGridColumns: 6
+  runtimeAtlasGridRows: 3
+  error: null
+inventory_test:
+  file: docs/tests/r7-3-10-bake-gap-debug-map.test.js
+  command: node docs/tests/r7-3-10-bake-gap-debug-map.test.js
+  status: pass
+  checks:
+    - 18 current R7-3.10 atlas targets have unique targetId values.
+    - 18 current R7-3.10 atlas targets have unique runtime slot values.
+    - Every current target appears in the runner allow-list and capture helper map.
+    - Runtime atlas patch count stays 18 and grid columns stay 6.
+    - The combined atlas builder keeps the 6 x 3 slot order.
+camera_states:
+  written_to: docs/superpowers/plans/2026-05-18-r7-3-10-bake-gap-and-loading-debug-map.md
+  covers:
+    - east beam bottom face
+    - west beam bottom face
+    - south window reveal span and lower inside corners
+    - west iron door reveal probe
+    - north wall
+    - floor
+    - ceiling
+notes:
+  - The all-on report passes the required patch count, grid, and error checks.
+  - Several later dedicated slots are still pending in the first all-on report, so Phase 1 must use same-view probe evidence before accepting those user-visible faces.
+  - Next work starts at Phase 1 beam underside probes.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase1-beam-under-shadow-probe
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: phase1-complete
+scope:
+  - Check whether the existing west/east beam under-shadow targets hit the visible beam underside routes.
+  - Add a probe-only diagnostic path for route, normal, world position, and hit object.
+  - Decide whether corrected bottom targets and new 1024px / 1000spp packages are needed.
+code_changes:
+  - docs/tests/r7-3-10-beam-under-shadow-probe.test.js
+  - docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  - js/InitCommon.js
+  - shaders/Home_Studio_Fragment.glsl
+probe:
+  command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-beam-under-shadow-probe --timeout-ms=180000 --angle=metal
+  status: pass
+  package: .omc/r7-3-10-beam-under-shadow-probe/20260519-010334/probe-report.json
+  screenshots:
+    west: .omc/r7-3-10-beam-under-shadow-probe/20260519-010334/west-beam-under-shadow-probe.png
+    east: .omc/r7-3-10-beam-under-shadow-probe/20260519-010334/east-beam-under-shadow-probe.png
+evidence:
+  west_beam_under_shadow:
+    route: west_beam_under_shadow_hybrid
+    targetId: 1016
+    acceptedSamples: 404
+    bestSample:
+      screen: [990, 59]
+      normal: [0, -1, 0]
+      world: [-1.7503505468, 2.525, 2.7438486814]
+      hitType: 1
+      objectID: 1
+  east_beam_under_shadow:
+    route: east_beam_under_shadow_hybrid
+    targetId: 1018
+    acceptedSamples: 282
+    bestSample:
+      screen: [87, 59]
+      normal: [0, -1, 0]
+      world: [1.8764264822, 2.5149999619, 2.3731730819]
+      hitType: 1
+      objectID: 1
+decision:
+  correctedTargetsCreated: false
+  rebuildFormalPackages: false
+  reason:
+    - Existing c1_west_beam_under_shadow maps to the intended visible west beam underside hybrid route.
+    - Existing c1_east_beam_under_shadow maps to the intended visible east beam underside hybrid route.
+    - The active 1024px / 1000spp packages remain the correct target packages.
+notes:
+  - The probe uses fixed randomVec2 = [0.5, 0.5] so route, normal, world position, and hit object readbacks use aligned camera rays.
+  - If the user still sees a visual mismatch on these two areas, treat it as a visual match / shadow smoothness question, not as a target-coverage or naming bug.
+  - Next work starts at Phase 2 south wall window cut-face probes.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2-south-window-reveal-hybrid
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: user-visual-accepted
+scope:
+  - Upgrade south wall window cut faces from the older broad south-wall reveal mapping to dedicated hybrid indirect-diffuse slots.
+user_verdict:
+  - User confirmed the south wall window cut faces were successfully upgraded.
+root_cause:
+  - The visible reveal cut faces were already covered by the south-wall slot 4 package through r7310C1SouthWallWindowRevealDiffuseUv().
+  - That old route stored broad south-wall diffuse radiance and short-circuited first-hit radiance, so it did not follow the accepted dedicated hybrid contract.
+fix:
+  - Added four dedicated hybrid targets for left / right / bottom / top reveal faces.
+  - Added runtime classifiers, UV mapping, bake-time surface point mapping, loaders, uniforms, combined atlas slots, runner allow-list, pointer JSON, and contract coverage.
+  - Routed south window front rim / opening-edge hits to the nearest dedicated reveal target.
+  - Bound the four reveal targets to the south-wall UI toggle.
+targets:
+  left:
+    targetId: 1019
+    runtimeAtlasSlot: 18
+    surfaceName: c1_south_window_left_reveal_shadow
+    world: x -1.75, y 1.04..2.905, z 3.056..3.256
+    normal: +X
+  right:
+    targetId: 1020
+    runtimeAtlasSlot: 19
+    surfaceName: c1_south_window_right_reveal_shadow
+    world: x 0.69, y 1.04..2.905, z 3.056..3.256
+    normal: -X
+  bottom:
+    targetId: 1021
+    runtimeAtlasSlot: 20
+    surfaceName: c1_south_window_bottom_reveal_shadow
+    world: y 1.04, x -1.75..0.69, z 3.056..3.256
+    normal: +Y
+  top:
+    targetId: 1022
+    runtimeAtlasSlot: 21
+    surfaceName: c1_south_window_top_reveal_shadow
+    world: y 2.905, x -1.75..0.69, z 3.056..3.256
+    normal: -Y
+packages:
+  left:
+    pointer: docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json
+    packageDir: assets/bakes/r7-3-10/c1-static-diffuse/south-window-left-reveal-shadow-1024px-1000spp/
+    validation: pass / 1000 samples / 1024px / validTexelRatio 1
+  right:
+    pointer: docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json
+    packageDir: assets/bakes/r7-3-10/c1-static-diffuse/south-window-right-reveal-shadow-1024px-1000spp/
+    validation: pass / 1000 samples / 1024px / validTexelRatio 1
+  bottom:
+    pointer: docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json
+    packageDir: assets/bakes/r7-3-10/c1-static-diffuse/south-window-bottom-reveal-shadow-1024px-1000spp/
+    validation: pass / 1000 samples / 1024px / validTexelRatio 1
+  top:
+    pointer: docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json
+    packageDir: assets/bakes/r7-3-10/c1-static-diffuse/south-window-top-reveal-shadow-1024px-1000spp/
+    validation: pass / 1000 samples / 1024px / validTexelRatio 1
+runtime:
+  bakedRadianceKind: indirect_diffuse_radiance
+  liveAdds:
+    - direct light
+    - direct shadow edge
+    - reflection
+  atlasPatchCount: 22
+  atlasGridColumns: 6
+  atlasGridRows: 4
+verification:
+  contract:
+    - node docs/tests/r7-3-10-bake-gap-debug-map.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+  syntax:
+    - node --check js/InitCommon.js
+    - node --check js/Home_Studio.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  ui_toggle:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-ui-toggle-test --timeout-ms=180000 --angle=metal --http-port=9016 --cdp-port=9236
+    status: pass
+    report: .omc/r7-3-10-full-room-diffuse-ui-toggle/20260519-020226/ui-toggle-report.json
+  visual_helper:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-reveal-corner-visual-test --timeout-ms=180000 --angle=metal --http-port=9017 --cdp-port=9237
+    status: pass
+    report: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/visual-report.json
+    right_lower_corner:
+      live: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/live-south-reveal-right-lower-corner.png
+      bake: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/bake-south-reveal-right-lower-corner.png
+    left_lower_corner:
+      live: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/live-south-reveal-left-lower-corner.png
+      bake: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/bake-south-reveal-left-lower-corner.png
+    lower_span:
+      live: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/live-south-reveal-lower-span.png
+      bake: .omc/r7-3-10-south-reveal-corner-visual/20260519-020357/bake-south-reveal-lower-span.png
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2-south-window-reveal-hybrid
+next:
+  - New highest ROI is Phase 2B: continuity between the south window west reveal and the southwest column east face.
+  - After Phase 2B, Phase 3 starts with west wall iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-south-window-sw-column-continuity-todo
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: todo-recorded-highest-roi
+trigger:
+  - User confirmed Phase 2 south wall window cut faces are successfully upgraded.
+  - User reported a new visible boundary and color difference between two surfaces that should read as continuous.
+surfaces:
+  south_window_west_reveal:
+    description: south wall west-side window reveal
+    normal: +X / east
+    candidateTarget: c1_south_window_left_reveal_shadow
+    candidateTargetId: 1019
+    candidateRuntimeAtlasSlot: 18
+  southwest_column_east_face:
+    description: southwest column east face
+    candidateTarget: c1_sw_column_inner_shadow
+    candidateTargetId: 1014
+    candidateRuntimeAtlasSlot: 13
+observed_view:
+  url: http://localhost:9002/Home_Studio.html?v=r7310-phase2-south-window-reveal-hybrid
+  samples: 1
+  paused: true
+  positionApprox: { x: 0.556955, y: 1.983879, z: 1.566054 }
+  forwardApprox: { x: -0.870418, y: -0.075927, z: 0.486423 }
+  facing: -X
+problem_statement:
+  - These two surfaces are geometrically adjacent and should appear continuous.
+  - Current screenshot shows a visible boundary and color step.
+roi_order_update:
+  1: Phase 2B south window west reveal / southwest column east continuity.
+  2: Phase 3 west wall iron door narrow faces.
+  3: Phase 4 north wall / floor / ceiling.
+  4: Phase 5 startup SPP jitter.
+  5: Phase 6 LOADING 6% pause.
+required_first_steps:
+  - Reproduce the same user view.
+  - Probe runtime route, normal, world position, targetId, and atlas slot on both sides of the boundary.
+  - Compare whether both sides use the same dedicated hybrid contract.
+  - Decide fix only after route evidence is recorded.
+acceptance:
+  - Same-view A/B no longer shows a visible color step between the south window west reveal and southwest column east face.
+  - 1SPP noise family remains consistent with the accepted dedicated hybrid route.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-south-window-sw-column-continuity-fix
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_after_v1_rejected_by_user
+scope:
+  - Phase 2B south window west +X reveal and southwest column east +X face continuity.
+v1_rejection:
+  user_camera: '{"position":{"x":-0.316405,"y":1.08795,"z":1.701729},"yaw":2.3108,"pitch":0.302,"fov":55,"forward":{"x":-0.705046,"y":0.29743,"z":0.643775}}'
+  failure:
+    - Southwest column top and lower area showed texture-like artifacts.
+    - Southwest column / west beam and southwest column / south window west +X cut still showed visible color mismatch.
+  reproduced_report: .omc/r7-3-10-south-window-sw-column-continuity/20260519-121841/south-window-sw-column-continuity-report.json
+root_cause:
+  - The two visually continuous +X surfaces were split between south_window_left_reveal_shadow and sw_column_inner_shadow runtime ownership.
+  - V1 expanded runtime ownership and JS metadata for c1_sw_column_inner_shadow to z 2.848..3.256 / y 0..2.905, but r7310C1BakeSurfacePoint patchId 1014 still emitted the old z 2.848..3.056 / y 0..2.525 plane.
+  - r7310C1DynamicSouthWallBaseColor returned beam base color vec3(1.0, 0.984, 0.949) and included uWallAlbedo, while the adjacent south wall cut uses wall base color vec3(0.75, 0.738, 0.71175) and receives uWallAlbedo later.
+  - The south wall west box and southwest column box kept an internal z=3.056 join face, which could block rays inside what should behave as one continuous slab.
+  - The V1 probe did not measure the west-beam adjacent area and did not hide cameraPoseInfo from screenshots.
+fix:
+  - Expanded R7310_C1_SW_COLUMN_INNER_SHADOW_WORLD_BOUNDS to z 2.848..3.256 and y 0..2.905.
+  - Updated r7310C1BakeSurfacePoint patchId 1014 to the same z 2.848..3.256 / y 0..2.905 plane.
+  - Removed the left-reveal x-plane branch from r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow; left reveal keeps only the true front-edge reveal band.
+  - Corrected r7310C1DynamicSouthWallBaseColor to return vec3(0.75, 0.738, 0.71175), leaving uWallAlbedo to the existing structural-material path.
+  - Added r7310C1HiddenSwColumnSouthWallJoinFace to skip the internal z=3.056 join face between the south wall west slab and the southwest column.
+  - Extended Phase 2B continuity runner/probe with west_beam_inner_shadow_hybrid, westBeamContinuityMeanDelta, and hidden cameraPoseInfo / bottom-right-group screenshots.
+rebake:
+  command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=sw-column-inner-shadow --samples=1000 --atlas-resolution=1024 --timeout-ms=300000 --angle=metal --http-port=9021 --cdp-port=9241
+  status: pass
+  package: assets/bakes/r7-3-10/c1-static-diffuse/sw-column-inner-shadow-1024px-1000spp
+verification:
+  contract:
+    - node docs/tests/r7-3-10-phase2b-continuity.test.js
+  whitespace:
+    - git diff --check
+  same_view_probe:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-window-sw-column-continuity-probe --timeout-ms=240000 --angle=metal --http-port=9024 --cdp-port=9244 --camera-state-json='{"position":{"x":-0.316405,"y":1.08795,"z":1.701729},"yaw":2.3108,"pitch":0.302,"fov":55,"forward":{"x":-0.705046,"y":0.29743,"z":0.643775}}'
+    status: pass
+    report: .omc/r7-3-10-south-window-sw-column-continuity/20260519-130400/south-window-sw-column-continuity-report.json
+    continuityMeanDelta: -0.006983810594261813
+    westBeamContinuityMeanDelta: -0.012341558627094074
+    visuals:
+      bake_spp1: .omc/r7-3-10-south-window-sw-column-continuity/20260519-130400/south-window-sw-column-bake-spp1.png
+      bake_spp96: .omc/r7-3-10-south-window-sw-column-continuity/20260519-130400/south-window-sw-column-bake-spp96.png
+      live_spp96: .omc/r7-3-10-south-window-sw-column-continuity/20260519-130400/south-window-sw-column-live-spp96.png
+  eyedropper:
+    south_window_cut_vs_sw_column_mid_delta_luma: 0.0021
+    south_window_cut_vs_sw_column_low_delta_luma: 0.0150
+    sw_column_vs_west_beam_top_delta_luma: 0.0045
+    sw_column_vs_west_beam_upper_mid_delta_luma: 0.0129
+acceptance:
+  - Same-view screenshot no longer shows the V1 texture artifacts on the southwest column top / lower area.
+  - Southwest column / west beam and southwest column / south window west +X cut are within measured small color deltas; remaining differences read as shadow transition.
+  - The remaining visible edge is the physical window/main-wall corner.
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-continuity-material-v2
+next:
+  - Highest ROI moves to Phase 3 west iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-beam-sw-column-l-union-fix
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_after_user_marked_crop_rework
+scope:
+  - West beam +X face and southwest-column +X face must read as one integrated L shape.
+user_verdict_before_fix:
+  - The previous v2 reduced brightness mismatch.
+  - The west beam still looked like a rectangle protruding into the southwest column.
+  - The only accepted shape is one L-shaped surface with shadow transition.
+root_cause:
+  - The west beam source box and structural contract still allowed west_beam_inner_x ownership into the southwest-column upper +X region.
+  - The dedicated west_beam_inner_shadow target and the sw_column_inner_shadow target still split one visible L plane into separate ownership domains.
+  - The internal z=2.848 contact was not guarded consistently across scene intersection, structural island ownership, and the dedicated hybrid routes.
+fix:
+  - Shortened the west beam geometry to zMax=2.848 in js/Home_Studio.js.
+  - Updated patchId 1015, runtime surface bounds, UV scale, and R7310_C1_WEST_BEAM_INNER_SHADOW_WORLD_BOUNDS to stop at z=2.848.
+  - Added r7310C1WestBeamSwColumnLUnionWallFace so the visible west-beam +X and southwest-column +X L share the same wall-color material basis.
+  - Added r7310C1HiddenWestBeamSwColumnJoinFace to skip the internal z=2.848 contact during scene intersection.
+  - Updated R7310_C1_STRUCTURAL_ISLANDS, docs/tools/r7-3-10-structural-geometry-gate.mjs, and docs/data/r7-3-10-full-room-diffuse-bake-contract.json so sw_column_upper_inner_coplanar_x is owned by sw_column_inner_x.
+rebake:
+  - assets/bakes/r7-3-10/c1-static-diffuse/west-beam-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/sw-column-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+verification:
+  commands:
+    - node docs/tests/r7-3-10-phase2b-continuity.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tools/r7-3-10-structural-geometry-gate.mjs
+    - node --check js/InitCommon.js
+    - node --check js/Home_Studio.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  same_view_probe:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-window-sw-column-continuity-probe --timeout-ms=240000 --angle=metal --http-port=9036 --cdp-port=9256 --camera-state-json='{"position":{"x":0.211734,"y":1.541394,"z":1.997826},"yaw":1.9724,"pitch":0.119,"fov":55,"forward":{"x":-0.913926,"y":0.118719,"z":0.38813}}'
+    status: pass
+    report: .omc/r7-3-10-south-window-sw-column-continuity/20260519-151717/south-window-sw-column-continuity-report.json
+    continuityMeanDelta: -0.006790035322859128
+    westBeamContinuityMeanDelta: -0.011225053869436202
+    visuals:
+      bake_spp1: .omc/r7-3-10-south-window-sw-column-continuity/20260519-151717/south-window-sw-column-bake-spp1.png
+      bake_spp96: .omc/r7-3-10-south-window-sw-column-continuity/20260519-151717/south-window-sw-column-bake-spp96.png
+      live_spp96: .omc/r7-3-10-south-window-sw-column-continuity/20260519-151717/south-window-sw-column-live-spp96.png
+  geometry_gate:
+    west_beam_zMax: 2.848
+    sw_column_upper_inner_coplanar_x_owner: sw_column_inner_x
+    sw_column_upper_north_z: hidden_by_west_beam_internal_contact
+acceptance:
+  - User-marked crop area no longer shows a bright rectangular west-beam patch intruding into the southwest column.
+  - West beam + southwest column reads as one L-shaped surface; remaining variation is shadow transition.
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-union-material-v6
+next:
+  - Highest ROI remains Phase 3 west wall iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-closeup-mosaic-guard
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_same_view_closeup_mosaic_removed
+scope:
+  - West wall / west beam / southwest-column close-up baked shadow mosaic.
+user_report:
+  url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-gap-closure-v5
+  cameraState: '{"position":{"x":-1.881727,"y":2.502503,"z":2.816512},"yaw":2.1224,"pitch":0.356,"fov":55,"forward":{"x":-0.798283,"y":0.348528,"z":0.491195}}'
+  finding:
+    - The black line was already solved.
+    - At very close distance, the west wall contact area still showed rectangular baked shadow pixels near the west beam and southwest column.
+root_cause:
+  - c1_west_wall_beam_shadow still contained hidden high-z contact texels outside the visible runtime z range.
+  - Bilinear sampling pulled those hidden texels into the visible west-beam shadow band.
+  - After that dedicated atlas was guarded, the remaining rectangular blocks came from the full c1_west_wall atlas.
+  - The full west-wall atlas lacked a west-side mirror guard for the southwest beam / column contact area, leaving hidden texels at z >= 2.833 and y >= 2.523 available to close-up sampling.
+fix:
+  - Added fillR7310C1WestWallBeamShadowGuardTexels() for c1_west_wall_beam_shadow.
+  - Added fillR7310C1WestWallSouthwestGuardTexels() for the full c1_west_wall package.
+  - Both guards copy adjacent valid wall texels into hidden contact texels before the atlas is written.
+  - Re-baked the affected 1024 / 1000spp packages.
+  - Updated cache tokens to r7310-phase2b-west-wall-mosaic-guard-v1.
+rebake:
+  west_wall_beam_shadow:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=west-wall-beam-shadow --samples=1000 --atlas-resolution=1024 --timeout-ms=420000 --angle=metal --http-port=9014 --cdp-port=9234
+    status: pass
+    package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp
+  west_wall:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=west-wall --samples=1000 --atlas-resolution=1024 --timeout-ms=420000 --angle=metal --http-port=9018 --cdp-port=9238
+    status: pass
+    package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-iron-door-hole-1024px-1000spp
+verification:
+  commands:
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tests/r7-3-10-bake-gap-debug-map.test.js
+    - node docs/tests/r7-3-10-west-beam-shadow-mirror.test.js
+    - node --check js/InitCommon.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  same_view_diagnostic:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-mosaic-diagnostic --target-samples=1 --timeout-ms=240000 --angle=metal --http-port=9019 --cdp-port=9239 --camera-state-json='{"position":{"x":-1.881727,"y":2.502503,"z":2.816512},"yaw":2.1224,"pitch":0.356,"fov":55,"forward":{"x":-0.798283,"y":0.348528,"z":0.491195}}'
+    package: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702
+    all_on: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702/all-on.png
+    crop: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702/all-on-problem-crop.png
+acceptance:
+  - Same-view all-on close-up screenshot no longer shows the original rectangular mosaic pixels inside the user-marked red area.
+  - Remaining west beam / west wall shading reads as one continuous diagonal shadow transition.
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-mosaic-guard-v1
+next:
+  - Highest ROI remains Phase 3 west wall iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-live-direct-ownership
+
+```yaml
+date: 2026-05-20
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_same_view_full_west_wall_live_direct_ownership
+scope:
+  - West wall / west beam and west wall / southwest-column close-up baked direct-shadow mosaic.
+user_report:
+  screenshot: /Users/eajrockmacmini/Desktop/截圖 2026-05-20 凌晨12.53.09.png
+  cameraState: '{"position":{"x":-1.854712,"y":2.492962,"z":2.799862},"yaw":2.0384,"pitch":0.256,"fov":55,"forward":{"x":-0.86356,"y":0.253213,"z":0.436059}}'
+  finding:
+    - The previous guard-fill result still left close-up rectangular direct-shadow bake pixels.
+    - The required route is direct light and direct shadow from LIVE, with diffuse radiance from bake.
+root_cause:
+  - The red-marked west-wall pixels still reached the old c1_west_wall full diffuse short-circuit.
+  - That full wall route carried old direct-shadow-shaped baked pixels near the west beam and southwest-column contact.
+  - c1_west_wall_beam_shadow was clipped to z < 2.833 and y <= 2.523, splitting one close-up west-wall shadow area between two runtime routes.
+fix:
+  - Expanded c1_west_wall_beam_shadow ownership to full c1_west_wall bounds: z -1.874..3.056 and y 0..2.905.
+  - Kept that route as indirect_diffuse_radiance and addDirectLightAfterBakeLookup=true.
+  - Removed the visible-area guard-column copy from c1_west_wall_beam_shadow capture.
+  - Re-baked west-wall-beam-shadow 1024 / 1000spp with real visible texels for the full west-wall bounds.
+  - Updated cache tokens to r7310-phase2b-west-wall-live-direct-v1.
+rebake:
+  west_wall_beam_shadow:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-full-room-diffuse-bake --r7310-surface=west-wall-beam-shadow --samples=1000 --atlas-resolution=1024 --timeout-ms=420000 --angle=metal --http-port=9024 --cdp-port=9244
+    status: pass
+    package: assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp
+    artifactHash: 8a562c107b223576fa0ebe626ff2ad6191d0a93001ce64da5352fe42f8c9cb90
+verification:
+  commands_passed:
+    - node docs/tests/r7-3-10-west-beam-shadow-mirror.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tests/r7-3-10-bake-gap-debug-map.test.js
+    - node docs/tests/r7-3-10-phase2b-continuity.test.js
+    - node docs/tests/r7-3-10-loading-ui-contract.test.js
+    - node --check js/InitCommon.js
+    - node --check js/Home_Studio.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  known_stale_tests:
+    - docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js expects runtime atlas patch count 18.0, while current runtime uses 22.0.
+    - docs/tests/r7-3-10-beam-under-shadow-probe.test.js expects probe-level clamp 16, while current runtime has moved on.
+  same_view_diagnostic:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-mosaic-diagnostic --target-samples=1 --timeout-ms=240000 --angle=metal --http-port=9025 --cdp-port=9245 --camera-state-json='{"position":{"x":-1.854712,"y":2.492962,"z":2.799862},"yaw":2.0384,"pitch":0.256,"fov":55,"forward":{"x":-0.86356,"y":0.253213,"z":0.436059}}'
+    package: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-012349
+    all_on: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-012349/all-on.png
+    only_west_wall_full: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-012349/only-west-wall-full.png
+acceptance:
+  - Same-view all-on close-up screenshot no longer shows the red-marked rectangular baked direct-shadow mosaic.
+  - only-west-wall-full still reproduces the old blocky direct-shadow pattern, confirming source ownership.
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-live-direct-v1
+next:
+  - Highest ROI remains Phase 3 west wall iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-strict-ready-guard
+
+```yaml
+date: 2026-05-20
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_strict_runtime_ready_black_rectangle_removed
+scope:
+  - West wall / west beam / southwest-column close-up diagnostic capture.
+user_report:
+  finding:
+    - The southwest desk gray rectangle was gone, but the prior screenshot showed a black rectangle near the southwest column lower area.
+root_cause:
+  - waitForR7310C1FullRoomDiffuseRuntimeReady() returned while several enabled dedicated packages were still pending.
+  - The old all-on diagnostic capture had westWallBeamShadow, swColumnInnerShadow, westBeamInnerShadow, and westBeamUnderShadow pending with uniforms still 0.
+  - The black rectangle came from a half-loaded diagnostic capture path.
+fix:
+  - waitForR7310C1FullRoomDiffuseRuntimeReady() now requires every enabled package to be actually ready.
+  - Added westJoin runtime probe levels 22..26 for route / normal / world position / hit object / indirect radiance.
+  - Added southwest black-rectangle probe sample points.
+  - Updated cache tokens to r7310-phase2b-west-wall-strict-ready-v1.
+verification:
+  visual_packages:
+    - .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-035138/all-on.png
+    - .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-033529/all-on.png
+    - .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-033811/all-on.png
+    - .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-033819/all-on.png
+  primary_strict_config:
+    package: .omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-035138
+    black_pixel_check: 0 black pixels and 0 dark pixels in crop [1500,1000,2300,1600]
+    ready: westWallBeamShadow, swColumnInnerShadow, westBeamInnerShadow, westBeamUnderShadow, southWindowLeftReveal, southWindowTopReveal
+  probe:
+    package: .omc/r7-3-10-full-room-diffuse-runtime/20260520-032006
+    sw_black_rect_center_route: sw_column_inner_shadow_hybrid
+    sw_black_rect_center_luma: 0.2315
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-strict-ready-v1
+next:
+  - Highest ROI remains Phase 3 west wall iron door narrow faces.
+```
+
+### R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-beam-under-sw-column-north-gap-closure
+
+```yaml
+date: 2026-05-19
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_same_view_baked_gap_closed_v5
+scope:
+  - West beam underside and southwest-column north-face junction.
+user_report:
+  cameraState: '{"position":{"x":-1.787824,"y":2.507179,"z":2.75973},"yaw":2.8772,"pitch":0.33,"fov":60,"forward":{"x":-0.247223,"y":0.324043,"z":0.913169}}'
+  finding:
+    - The black line was a real geometric slit.
+    - Looking south while hugging the west wall revealed the exterior night image through the junction.
+root_cause:
+  - West beam zMax and southwest column zMin both sat at z=2.848.
+  - The two boxes only touched at an exact edge; close grazing primary rays could pass through the zero-overlap contact.
+  - Follow-up correction from the user: LIVE is clean in the required close view; the remaining visible issue is baked-only.
+  - Final baked-route root cause was hidden internal contact ownership: sw-column-north-shadow and west-beam-under-shadow still included the west-beam / southwest-column overlap bands in bake/runtime mapping, so edge texels could preserve a seam-like dark row after the geometry overlap closed the actual opening.
+fix:
+  - Kept the accepted west beam zMax=2.848 L shape.
+  - Extended southwest column zMin from 2.848 to 2.846 in js/Home_Studio.js.
+  - Clipped sw-column-north-shadow bake/runtime ownership to yMax=2.525.
+  - Clipped west-beam-under-shadow bake/runtime ownership to zMax=2.846.
+  - Synchronized structural island bounds for west_beam_under_y and sw_column_north_z.
+  - Updated cache tokens to r7310-phase2b-l-gap-closure-v5.
+rebake:
+  - assets/bakes/r7-3-10/c1-static-diffuse/sw-column-north-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/west-beam-under-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/sw-column-inner-shadow-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+verification:
+  commands:
+    - node docs/tests/r7-3-10-phase2b-continuity.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tools/r7-3-10-structural-geometry-gate.mjs
+    - node --check js/Home_Studio.js
+    - node --check js/InitCommon.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  same_view_capture:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-south-window-sw-column-continuity-probe --timeout-ms=240000 --target-samples=1 --angle=metal --http-port=9064 --cdp-port=9284 --camera-state-json='{"position":{"x":-1.805511,"y":2.481113,"z":2.782358},"yaw":2.8784,"pitch":0.509,"fov":55,"forward":{"x":-0.227184,"y":0.487304,"z":0.843162}}'
+    package: .omc/r7-3-10-south-window-sw-column-continuity/20260519-221412
+    bake_spp1: .omc/r7-3-10-south-window-sw-column-continuity/20260519-221412/south-window-sw-column-bake-spp1.png
+    live_spp1: .omc/r7-3-10-south-window-sw-column-continuity/20260519-221412/south-window-sw-column-live-spp1.png
+    note: The continuity report routeCounts stay none for this view because the continuity route classifier does not include this west-beam-underside / southwest-column-north face pair.
+  beam_under_probe:
+    command: node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-beam-under-shadow-probe --timeout-ms=240000 --target-samples=1 --angle=metal --http-port=9066 --cdp-port=9286 --camera-state-json='{"position":{"x":-1.805511,"y":2.481113,"z":2.782358},"yaw":2.8784,"pitch":0.509,"fov":55,"forward":{"x":-0.227184,"y":0.487304,"z":0.843162}}'
+    package: .omc/r7-3-10-beam-under-shadow-probe/20260519-222402
+    status: pass
+    accepted: 772
+    routeMatches: 772
+    directNonZero: 0
+    sourceFacingNonZero: 0
+  pixel_check:
+    main_seam_no_window:
+      crop: [900, 1680, 4800, 2100]
+      dark_pixels: 0
+      night_colored_pixels: 0
+      min_rgb: [68, 55, 44]
+      mean_rgb: [121.12, 104.58, 88.4]
+    upper_join_no_window:
+      crop: [900, 1450, 4800, 1760]
+      dark_pixels: 0
+      night_colored_pixels: 0
+      min_rgb: [68, 55, 44]
+      mean_rgb: [125.89, 108.46, 90.5]
+acceptance:
+  - Same-view baked screenshot no longer shows a black line or visible gap.
+  - User corrected the diagnosis: LIVE is fully fine; only baked had the issue.
+  - User accepted the remaining diagonal dark band as normal shadow.
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-gap-closure-v5
+next:
+  - Highest ROI remains Phase 3 west wall iron door narrow faces.
+```
+
+### R7-3.10-ne-furniture-wall-bake-variants
+
+```yaml
+date: 2026-05-21
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_runtime_variant_switch
+scope:
+  - C1 / C2 northeast furniture bed-vs-wardrobe wall-bake variants.
+user_report:
+  cameraState: '{"position":{"x":-1.021219,"y":1.993119,"z":1.221167},"yaw":-0.7396,"pitch":-0.324,"fov":55,"forward":{"x":0.638924,"y":-0.318361,"z":-0.700301}}'
+  finding:
+    - When northeast furniture was bed, the east wall still showed wardrobe shadow residue.
+    - When northeast furniture was wardrobe, the north wall still showed bed shadow residue.
+root_cause:
+  - The furniture geometry was runtime-switchable through sceneBoxes[32].
+  - North wall slot 1 and east wall slot 2 each had only one HYBRID bake pointer.
+  - The single wall bake kept bake-time occlusion from the opposite furniture state after geometry switched.
+fix:
+  - Added bed / wardrobe metadata to north and east wall runtime pointers.
+  - Added wardrobe runtime pointers for north wall and east wall.
+  - Added `--r7310-ne-furniture=bed|wardrobe` to the bake runner.
+  - Added runtime selection so `setC2NortheastFurnitureMode()` switches geometry and wall atlas together.
+  - Added browser runtime check `--r7310-ne-furniture-runtime-test`.
+rebake:
+  - assets/bakes/r7-3-10/c1-static-diffuse/north-wall-wardrobe-door-hole-1024px-1000spp
+  - assets/bakes/r7-3-10/c1-static-diffuse/east-wall-wardrobe-1024px-1000spp
+pointers:
+  bed:
+    north: docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json
+    east: docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json
+  wardrobe:
+    north: docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json
+    east: docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json
+verification:
+  commands:
+    - node docs/tests/r7-3-10-ne-furniture-wall-bake-variants.test.js
+    - node docs/tests/r7-3-10-c2-ne-furniture-toggle.test.js
+    - node docs/tests/r7-3-10-north-east-wall-hybrid.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+    - node --check js/Home_Studio.js
+    - node --check js/InitCommon.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+    - git diff --check -- js/Home_Studio.js js/InitCommon.js docs/tools/r7-3-8-c1-bake-capture-runner.mjs docs/tests/r7-3-10-ne-furniture-wall-bake-variants.test.js docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json
+  bake_runner:
+    north_wardrobe: pass 1000spp 1024px validTexelRatio 0.868896484375
+    east_wardrobe: pass 1000spp 1024px validTexelRatio 1
+  runtime_package:
+    package: .omc/r7-3-10-ne-furniture-runtime/20260521-015323
+    status: pass
+    bed_north_package: assets/bakes/r7-3-10/c1-static-diffuse/north-wall-door-hole-1024px-1000spp
+    wardrobe_north_package: assets/bakes/r7-3-10/c1-static-diffuse/north-wall-wardrobe-door-hole-1024px-1000spp
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-ne-furniture-wall-variants-v1
+next:
+  - User visual check should toggle northeast furniture bed / wardrobe from the same camera and confirm north/east wall shadow residue clears.
+```
+
+### R7-3.10-ne-furniture-east-wall-beam-shadow-variant-fix
+
+```yaml
+date: 2026-05-21
+branch: codex/r7-3-10-beam-column-bake-expansion
+status: pass_same_view_bed_east_wall_overlay
+scope:
+  - C1 northeast furniture bed-vs-wardrobe variant for east wall beam-shadow slot 10.
+user_report:
+  cameraState: '{"position":{"x":-1.1822,"y":1.726115,"z":0.69287},"yaw":-0.9652,"pitch":-0.263,"fov":55,"forward":{"x":0.793892,"y":-0.259979,"z":-0.549678}}'
+  finding:
+    - Wardrobe state made north wall look normal.
+    - Bed state still showed a wardrobe-shaped shadow residue on east wall.
+root_cause:
+  - Main north wall slot 1 and main east wall slot 2 already had bed / wardrobe variants.
+  - The east wall beam-shadow overlay still used one old package at runtime slot 10.
+  - That slot owns the user's visible east-wall region near the beam, so the bed view still sampled an old wardrobe-occlusion bake.
+fix:
+  - Added `R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL`.
+  - Added bed / wardrobe runtime selection for east wall beam-shadow standalone texture and combined atlas slot 10.
+  - Added `northeastFurnitureMode` to `reportR7310C1EastWallBeamShadowBakeAfterSamples()`.
+  - Extended `--r7310-ne-furniture-runtime-test` to validate `eastWallBeamShadowFurnitureVariant`.
+  - Extended `docs/tests/r7-3-10-ne-furniture-wall-bake-variants.test.js` to require slot 10 bed / wardrobe contracts.
+rebake:
+  bed:
+    package: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-1024px-1000spp
+    pointer: docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json
+    status: pass 1000spp 1024px
+  wardrobe:
+    package: assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-wardrobe-1024px-1000spp
+    pointer: docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json
+    status: pass 1000spp 1024px
+verification:
+  commands:
+    - node docs/tests/r7-3-10-ne-furniture-wall-bake-variants.test.js
+    - node docs/tests/r7-3-10-c2-ne-furniture-toggle.test.js
+    - node docs/tests/r7-3-10-north-east-wall-hybrid.test.js
+    - node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+    - node docs/tests/r7-3-10-east-wall-beam-shadow.test.js
+    - node --check js/Home_Studio.js
+    - node --check js/InitCommon.js
+    - node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+    - git diff --check -- js/InitCommon.js docs/tools/r7-3-8-c1-bake-capture-runner.mjs docs/tests/r7-3-10-ne-furniture-wall-bake-variants.test.js docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-1024px-1000spp assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-wardrobe-1024px-1000spp
+  runtime_package:
+    package: .omc/r7-3-10-ne-furniture-runtime/20260521-023620
+    status: pass
+  same_view_package:
+    package: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260521-023747
+    status: pass
+    screenshot: .omc/r7-3-10-east-wall-beam-shadow-live-match/20260521-023747/east-wall-beam-shadow-bake.png
+validation_url: http://localhost:9002/Home_Studio.html?v=r7310-ne-furniture-east-overlay-variant-v1
+next:
+  - User visual check should use the provided camera and switch northeast furniture to bed; east wall should no longer keep the wardrobe-shaped shadow residue.
 ```

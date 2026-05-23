@@ -1,13 +1,25 @@
 {
   "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
   "phase": "quick_preview_architecture_probe",
-  "configs": [1],
-  "nextConfigs": [2],
-  "deferredConfigs": [3, 4],
+  "configs": [
+    1
+  ],
+  "nextConfigs": [
+    2
+  ],
+  "deferredConfigs": [
+    3,
+    4
+  ],
   "bakeMode": "quick_preview",
   "quickPreviewSamples": 1000,
   "comparisonMode": "sample_milestones",
-  "comparisonSampleMilestones": [100, 200, 500, 1000],
+  "comparisonSampleMilestones": [
+    100,
+    200,
+    500,
+    1000
+  ],
   "exactSamplesRequired": true,
   "acceptBelow1000": false,
   "acceptAbove1000": false,
@@ -18,14 +30,14 @@
   "directLightAlreadyIncluded": true,
   "addDirectLightAfterBakeLookup": false,
   "floorRoughnessPrimary": 0.1,
-  "floorRoughnessFallback": 1.0,
+  "floorRoughnessFallback": 1,
   "floorRoughnessFallbackMeaning": "iteration_usability_fallback",
   "truthModeMaterialParametersMutable": false,
   "renderingModes": {
     "quickPreviewMode": {
       "displayName": "快速預覽模式",
       "floorRoughnessPrimary": 0.1,
-      "floorRoughnessFallback": 1.0,
+      "floorRoughnessFallback": 1,
       "fallbackMeaning": "iteration_usability_fallback",
       "fallbackTrigger": "r7-3-10 架構 probe 無法降低快速預覽模式反射噪點"
     },
@@ -45,12 +57,34 @@
     "finalC1CoverageRequired": true,
     "finalMissingSurfaceNamesMustBeEmpty": true,
     "batches": [
-      ["floor"],
-      ["walls"],
-      ["ceiling"],
-      ["large_acoustic_panels", "door", "large_boxes", "large_static_furniture"],
-      ["speaker_diffuse_shells", "speaker_stand_diffuse_components", "fixture_housings", "small_static_surfaces", "edges_and_corners"],
-      ["reflective_surface_diffuse_components"]
+      [
+        "floor"
+      ],
+      [
+        "walls"
+      ],
+      [
+        "ceiling"
+      ],
+      [
+        "structural_beams_columns"
+      ],
+      [
+        "large_acoustic_panels",
+        "door",
+        "large_boxes",
+        "large_static_furniture"
+      ],
+      [
+        "speaker_diffuse_shells",
+        "speaker_stand_diffuse_components",
+        "fixture_housings",
+        "small_static_surfaces",
+        "edges_and_corners"
+      ],
+      [
+        "reflective_surface_diffuse_components"
+      ]
     ]
   },
   "c1FloorBatch": {
@@ -73,7 +107,7 @@
     "worldBounds": {
       "xMin": -2.11,
       "xMax": 2.11,
-      "yMin": 0.0,
+      "yMin": 0,
       "yMax": 2.905,
       "z": -1.874
     },
@@ -81,10 +115,21 @@
       "doorHole": {
         "xMin": -1.52,
         "xMax": -0.73,
-        "yMin": 0.0,
+        "yMin": 0,
         "yMax": 2.03
       }
-    }
+    },
+    "runtimeAtlasSlot": 1,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "runtimeArchitecture": "single_full_north_wall_first_hit_hybrid"
   },
   "c1EastWallBatch": {
     "targetId": 1003,
@@ -94,9 +139,55 @@
     "worldBounds": {
       "zMin": -1.874,
       "zMax": 3.056,
-      "yMin": 0.0,
+      "yMin": 0,
       "yMax": 2.905,
       "x": 1.91
+    },
+    "runtimeAtlasSlot": 2,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "runtimeArchitecture": "single_full_east_wall_first_hit_hybrid"
+  },
+  "c1EastWallBeamShadowBatch": {
+    "targetId": 1011,
+    "surfaceName": "c1_east_wall_beam_shadow",
+    "surfaceClass": "wall_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "zMin": -1.874,
+      "zMax": 3.056,
+      "yMin": 0,
+      "yMax": 2.905,
+      "x": 1.91
+    },
+    "runtimeAtlasSlot": 10,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "uniformContractAlias": "tR7310C1EastWallBeamShadowTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "intendedVisibleProblem": "east_beam_shadow_on_east_wall",
+    "runtimeOwnership": {
+      "owner": "c1_east_wall_beam_shadow",
+      "reason": "guard_east_wall_before_southeast_column_contact"
+    },
+    "seamGuard": {
+      "protectedContact": "east_wall_to_southeast_column_north_face",
+      "columnNorthZ": 2.49,
+      "hybridZMax": 2.49,
+      "fallbackRoute": "east_wall_beam_shadow_hybrid"
     }
   },
   "c1WestWallBatch": {
@@ -107,7 +198,7 @@
     "worldBounds": {
       "zMin": -1.874,
       "zMax": 3.056,
-      "yMin": 0.0,
+      "yMin": 0,
       "yMax": 2.905,
       "x": -1.91
     },
@@ -118,7 +209,51 @@
         "yMin": 0.09,
         "yMax": 2.04
       }
-    }
+    },
+    "runtimeAtlasSlot": 3,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "runtimeArchitecture": "single_full_west_wall_first_hit_hybrid"
+  },
+  "c1WestWallBeamShadowBatch": {
+    "targetId": 1013,
+    "surfaceName": "c1_west_wall_beam_shadow",
+    "surfaceClass": "wall_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "zMin": -1.874,
+      "zMax": 3.056,
+      "yMin": 0,
+      "yMax": 2.905,
+      "x": -1.91
+    },
+    "invalidTexelRegions": {
+      "ironDoorHole": {
+        "zMin": -1.874,
+        "zMax": -0.984,
+        "yMin": 0.09,
+        "yMax": 2.04
+      }
+    },
+    "runtimeAtlasSlot": 12,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "uniformContractAlias": "tR7310C1WestWallBeamShadowTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "intendedVisibleProblem": "west_beam_shadow_on_west_wall"
   },
   "c1SouthWallBatch": {
     "targetId": 1005,
@@ -128,7 +263,7 @@
     "worldBounds": {
       "xMin": -2.11,
       "xMax": 2.11,
-      "yMin": 0.0,
+      "yMin": 0,
       "yMax": 2.905,
       "z": 3.056
     },
@@ -144,24 +279,24 @@
       "leftReveal": {
         "xMin": -1.69,
         "xMax": -1.52,
-        "yMin": 1.10,
+        "yMin": 1.1,
         "yMax": 2.845
       },
       "rightReveal": {
         "xMin": 0.46,
         "xMax": 0.63,
-        "yMin": 1.10,
+        "yMin": 1.1,
         "yMax": 2.845
       },
       "bottomReveal": {
-        "xMin": -1.45,
-        "xMax": 0.39,
-        "yMin": 1.10,
+        "xMin": -1.52,
+        "xMax": 0.46,
+        "yMin": 1.1,
         "yMax": 1.27
       },
       "topReveal": {
-        "xMin": -1.45,
-        "xMax": 0.39,
+        "xMin": -1.52,
+        "xMax": 0.46,
         "yMin": 2.675,
         "yMax": 2.845
       }
@@ -179,6 +314,733 @@
       "zMax": 3.256,
       "y": 2.905
     }
+  },
+  "c1StructuralBeamColumnBatch": {
+    "targetId": 1007,
+    "surfaceName": "c1_structural_beams_columns",
+    "surfaceClass": "structural",
+    "mapping": "packed_rect_islands",
+    "runtimeAtlasSlot": 6,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "full_diffuse_radiance",
+    "directLightAlreadyIncluded": true,
+    "addDirectLightAfterBakeLookup": false,
+    "material": {
+      "albedo": [
+        1,
+        0.984,
+        0.949
+      ],
+      "roughness": 0.9,
+      "metalness": 0
+    },
+    "geometryGateReport": {
+      "status": "pass",
+      "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+      "unresolvedMixedFaces": [],
+      "sourceBoxes": [
+        {
+          "index": 28,
+          "name": "west_beam",
+          "bounds": {
+            "min": {
+              "x": -1.91,
+              "y": 2.525,
+              "z": -1.874
+            },
+            "max": {
+              "x": -1.75,
+              "y": 2.905,
+              "z": 2.848
+            }
+          }
+        },
+        {
+          "index": 29,
+          "name": "east_beam",
+          "bounds": {
+            "min": {
+              "x": 1.85,
+              "y": 2.515,
+              "z": -1.874
+            },
+            "max": {
+              "x": 2.11,
+              "y": 2.905,
+              "z": 3.056
+            }
+          }
+        },
+        {
+          "index": 30,
+          "name": "southwest_column",
+          "bounds": {
+            "min": {
+              "x": -1.91,
+              "y": 0,
+              "z": 2.846
+            },
+            "max": {
+              "x": -1.75,
+              "y": 2.905,
+              "z": 3.056
+            }
+          }
+        },
+        {
+          "index": 31,
+          "name": "southeast_column",
+          "bounds": {
+            "min": {
+              "x": 1.78,
+              "y": 0,
+              "z": 2.49
+            },
+            "max": {
+              "x": 1.91,
+              "y": 2.905,
+              "z": 3.056
+            }
+          }
+        }
+      ],
+      "checkedFaces": [
+        {
+          "name": "se_column_upper_inner_x",
+          "candidateFace": "x=1.78, y=2.515..2.905, z=2.49..3.056",
+          "normal": "-X",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "visible",
+          "ownerIsland": "se_column_inner_x",
+          "occludingFace": null,
+          "excludedInterval": null,
+          "visibleIntervals": [
+            "x=1.78, y=2.515..2.905, z=2.49..3.056"
+          ],
+          "excludedIntervals": []
+        },
+        {
+          "name": "se_column_inner_x_bookshelf_overlap",
+          "candidateFace": "x=1.78, y=0..2.515, z=2.49..3.056",
+          "normal": "-X",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "mixed",
+          "ownerIsland": "se_column_inner_x",
+          "occludingFace": "southeast_bookshelf x=1.02..1.78, y=0..2.04, z=2.73..3.056",
+          "excludedInterval": "x=1.78, y=0..2.04, z=2.73..3.056",
+          "visibleIntervals": [
+            "x=1.78, y=2.04..2.515, z=2.49..3.056",
+            "x=1.78, y=0..2.04, z=2.49..2.73"
+          ],
+          "excludedIntervals": [
+            "x=1.78, y=0..2.04, z=2.73..3.056"
+          ]
+        },
+        {
+          "name": "se_column_north_z_full_face",
+          "candidateFace": "z=2.49, x=1.78..1.91, y=0..2.905",
+          "normal": "-Z",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "mixed",
+          "ownerIsland": "se_column_north_z",
+          "occludingFace": "east_beam x=1.85..2.11, y=2.515..2.905, z=-1.874..3.056",
+          "excludedInterval": "z=2.49, x=1.85..1.91, y=2.515..2.905",
+          "visibleIntervals": [
+            "z=2.49, x=1.78..1.85, y=0..2.905",
+            "z=2.49, x=1.85..1.91, y=0..2.515"
+          ],
+          "excludedIntervals": [
+            "z=2.49, x=1.85..1.91, y=2.515..2.905"
+          ]
+        },
+        {
+          "name": "east_beam_under_y_wall_overlap",
+          "candidateFace": "y=2.515, x=1.91..2.11, z=-1.874..3.056",
+          "normal": "-Y",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "hidden",
+          "ownerIsland": null,
+          "occludingFace": "sceneBox_19 x=1.91..2.11, y=0..2.905, z=-1.874..3.056",
+          "excludedInterval": "y=2.515, x=1.91..2.11, z=-1.874..3.056",
+          "visibleIntervals": [],
+          "excludedIntervals": [
+            "y=2.515, x=1.91..2.11, z=-1.874..3.056"
+          ]
+        },
+        {
+          "name": "east_beam_se_column_overlap_x",
+          "candidateFace": "x=1.85, y=2.515..2.905, z=2.49..3.056",
+          "normal": "-X",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "hidden",
+          "ownerIsland": null,
+          "occludingFace": "southeast_column x=1.78..1.91, y=0..2.905, z=2.49..3.056",
+          "excludedInterval": "x=1.85, y=2.515..2.905, z=2.49..3.056",
+          "visibleIntervals": [],
+          "excludedIntervals": [
+            "x=1.85, y=2.515..2.905, z=2.49..3.056"
+          ]
+        },
+        {
+          "name": "east_beam_se_column_overlap_under_y",
+          "candidateFace": "y=2.515, x=1.85..1.91, z=2.49..3.056",
+          "normal": "-Y",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "hidden",
+          "ownerIsland": null,
+          "occludingFace": "southeast_column x=1.78..1.91, y=0..2.905, z=2.49..3.056",
+          "excludedInterval": "y=2.515, x=1.85..1.91, z=2.49..3.056",
+          "visibleIntervals": [],
+          "excludedIntervals": [
+            "y=2.515, x=1.85..1.91, z=2.49..3.056"
+          ]
+        },
+        {
+          "name": "sw_column_upper_north_z",
+          "candidateFace": "z=2.846, x=-1.91..-1.75, y=2.525..2.905",
+          "normal": "-Z",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "hidden",
+          "ownerIsland": null,
+          "occludingFace": "west_beam x=-1.91..-1.75, y=2.525..2.905, z=-1.874..2.848",
+          "excludedInterval": "z=2.846, x=-1.91..-1.75, y=2.525..2.905",
+          "visibleIntervals": [],
+          "excludedIntervals": [
+            "z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+          ]
+        },
+        {
+          "name": "sw_column_upper_inner_coplanar_x",
+          "candidateFace": "x=-1.75, y=2.525..2.905, z=2.846..3.056",
+          "normal": "+X",
+          "method": "source_box_aabb_exact_face_rect_subtraction_and_face_normal_room_side_test",
+          "decision": "visible",
+          "ownerIsland": "sw_column_inner_x",
+          "occludingFace": null,
+          "excludedInterval": null,
+          "visibleIntervals": [
+            "x=-1.75, y=2.525..2.905, z=2.846..3.056"
+          ],
+          "excludedIntervals": []
+        }
+      ],
+      "finalIslandRegistrySource": "geometry_gate",
+      "finalIslandCount": 8,
+      "finalIslandRegistry": [
+        {
+          "name": "west_beam_inner_x",
+          "atlasRect": {
+            "uMin": 0,
+            "vMin": 0,
+            "uMax": 0.5,
+            "vMax": 0.17
+          },
+          "worldFace": {
+            "axis": "x",
+            "value": -1.75,
+            "yMin": 2.525,
+            "yMax": 2.905,
+            "zMin": -1.874,
+            "zMax": 2.848
+          },
+          "normal": "+X",
+          "axes": {
+            "u": "z",
+            "v": "y"
+          }
+        },
+        {
+          "name": "west_beam_under_y",
+          "atlasRect": {
+            "uMin": 0,
+            "vMin": 0.18,
+            "uMax": 0.5,
+            "vMax": 0.26
+          },
+          "worldFace": {
+            "axis": "y",
+            "value": 2.525,
+            "xMin": -1.91,
+            "xMax": -1.75,
+            "zMin": -1.874,
+            "zMax": 2.846
+          },
+          "normal": "-Y",
+          "axes": {
+            "u": "z",
+            "v": "x"
+          }
+        },
+        {
+          "name": "east_beam_inner_x",
+          "atlasRect": {
+            "uMin": 0,
+            "vMin": 0.27,
+            "uMax": 0.5,
+            "vMax": 0.44
+          },
+          "worldFace": {
+            "axis": "x",
+            "value": 1.85,
+            "yMin": 2.515,
+            "yMax": 2.905,
+            "zMin": -1.874,
+            "zMax": 2.49
+          },
+          "normal": "-X",
+          "axes": {
+            "u": "z",
+            "v": "y"
+          }
+        },
+        {
+          "name": "east_beam_under_y",
+          "atlasRect": {
+            "uMin": 0,
+            "vMin": 0.45,
+            "uMax": 0.5,
+            "vMax": 0.53
+          },
+          "worldFace": {
+            "axis": "y",
+            "value": 2.515,
+            "xMin": 1.85,
+            "xMax": 1.91,
+            "zMin": -1.874,
+            "zMax": 2.49
+          },
+          "normal": "-Y",
+          "axes": {
+            "u": "z",
+            "v": "x"
+          }
+        },
+        {
+          "name": "sw_column_inner_x",
+          "atlasRect": {
+            "uMin": 0.52,
+            "vMin": 0,
+            "uMax": 0.74,
+            "vMax": 0.36
+          },
+          "worldFace": {
+            "axis": "x",
+            "value": -1.75,
+            "yMin": 0,
+            "yMax": 2.905,
+            "zMin": 2.846,
+            "zMax": 3.056
+          },
+          "normal": "+X",
+          "axes": {
+            "u": "z",
+            "v": "y"
+          }
+        },
+        {
+          "name": "sw_column_north_z",
+          "atlasRect": {
+            "uMin": 0.76,
+            "vMin": 0,
+            "uMax": 0.94,
+            "vMax": 0.36
+          },
+          "worldFace": {
+            "axis": "z",
+            "value": 2.846,
+            "xMin": -1.91,
+            "xMax": -1.75,
+            "yMin": 0,
+            "yMax": 2.525
+          },
+          "normal": "-Z",
+          "axes": {
+            "u": "x",
+            "v": "y"
+          }
+        },
+        {
+          "name": "se_column_inner_x",
+          "atlasRect": {
+            "uMin": 0.52,
+            "vMin": 0.38,
+            "uMax": 0.74,
+            "vMax": 0.76
+          },
+          "worldFace": {
+            "axis": "x",
+            "value": 1.78,
+            "yMin": 0,
+            "yMax": 2.905,
+            "zMin": 2.49,
+            "zMax": 3.056
+          },
+          "normal": "-X",
+          "axes": {
+            "u": "z",
+            "v": "y"
+          }
+        },
+        {
+          "name": "se_column_north_z",
+          "atlasRect": {
+            "uMin": 0,
+            "vMin": 0.88,
+            "uMax": 1,
+            "vMax": 1
+          },
+          "worldFace": {
+            "axis": "z",
+            "value": 2.49,
+            "xMin": 1.78,
+            "xMax": 1.91,
+            "yMin": 0,
+            "yMax": 2.905
+          },
+          "normal": "-Z",
+          "axes": {
+            "u": "y",
+            "v": "x"
+          }
+        }
+      ],
+      "excludedContactFaces": [
+        "east_beam_under_y wall-overlap y=2.515, x=1.91..MAX_X, z=-1.874..3.056",
+        "east_beam_inner_x southeast-column overlap x=1.85, y=2.515..2.905, z=2.49..3.056",
+        "east_beam_under_y southeast-column overlap y=2.515, x=1.85..1.91, z=2.49..3.056",
+        "se_column_north_z east-beam overlap z=2.49, x=1.85..1.91, y=2.515..2.905",
+        "se_column_inner_x southeast-bookshelf overlap x=1.78, y=0..2.04, z=2.73..3.056",
+        "west_beam_under_y southwest-column overlap y=2.525, x=-1.91..-1.75, z=2.846..2.848",
+        "sw_column_north_z west-beam internal contact z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+      ],
+      "notes": [
+        "se_column_upper_inner_x is visible and extends se_column_inner_x to y=0.0..2.905",
+        "se_column_inner_x subtracts the southeast bookshelf coplanar overlap before bake/runtime sampling",
+        "se_column_north_z is one continuous island; the east-beam overlap is excluded inside the same island owner",
+        "west_beam_inner_x ends at z=2.848 and sw_column_inner_x owns the L vertical leg to y=2.905",
+        "sw_column_upper_inner_coplanar_x is visible and assigned to sw_column_inner_x"
+      ]
+    },
+    "islands": [
+      {
+        "name": "west_beam_inner_x",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0,
+          "uMax": 0.5,
+          "vMax": 0.17
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": -1.75,
+          "yMin": 2.525,
+          "yMax": 2.905,
+          "zMin": -1.874,
+          "zMax": 2.848
+        },
+        "normal": "+X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "west_beam_under_y",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.18,
+          "uMax": 0.5,
+          "vMax": 0.26
+        },
+        "worldFace": {
+          "axis": "y",
+          "value": 2.525,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "zMin": -1.874,
+          "zMax": 2.846
+        },
+        "normal": "-Y",
+        "axes": {
+          "u": "z",
+          "v": "x"
+        }
+      },
+      {
+        "name": "east_beam_inner_x",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.27,
+          "uMax": 0.5,
+          "vMax": 0.44
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": 1.85,
+          "yMin": 2.515,
+          "yMax": 2.905,
+          "zMin": -1.874,
+          "zMax": 2.49
+        },
+        "normal": "-X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "east_beam_under_y",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.45,
+          "uMax": 0.5,
+          "vMax": 0.53
+        },
+        "worldFace": {
+          "axis": "y",
+          "value": 2.515,
+          "xMin": 1.85,
+          "xMax": 1.91,
+          "zMin": -1.874,
+          "zMax": 2.49
+        },
+        "normal": "-Y",
+        "axes": {
+          "u": "z",
+          "v": "x"
+        }
+      },
+      {
+        "name": "sw_column_inner_x",
+        "atlasRect": {
+          "uMin": 0.52,
+          "vMin": 0,
+          "uMax": 0.74,
+          "vMax": 0.36
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": -1.75,
+          "yMin": 0,
+          "yMax": 2.905,
+          "zMin": 2.846,
+          "zMax": 3.056
+        },
+        "normal": "+X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "sw_column_north_z",
+        "atlasRect": {
+          "uMin": 0.76,
+          "vMin": 0,
+          "uMax": 0.94,
+          "vMax": 0.36
+        },
+        "worldFace": {
+          "axis": "z",
+          "value": 2.846,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "yMin": 0,
+          "yMax": 2.525
+        },
+        "normal": "-Z",
+        "axes": {
+          "u": "x",
+          "v": "y"
+        }
+      },
+      {
+        "name": "se_column_inner_x",
+        "atlasRect": {
+          "uMin": 0.52,
+          "vMin": 0.38,
+          "uMax": 0.74,
+          "vMax": 0.76
+        },
+        "worldFace": {
+          "axis": "x",
+          "value": 1.78,
+          "yMin": 0,
+          "yMax": 2.905,
+          "zMin": 2.49,
+          "zMax": 3.056
+        },
+        "normal": "-X",
+        "axes": {
+          "u": "z",
+          "v": "y"
+        }
+      },
+      {
+        "name": "se_column_north_z",
+        "atlasRect": {
+          "uMin": 0,
+          "vMin": 0.88,
+          "uMax": 1,
+          "vMax": 1
+        },
+        "worldFace": {
+          "axis": "z",
+          "value": 2.49,
+          "xMin": 1.78,
+          "xMax": 1.91,
+          "yMin": 0,
+          "yMax": 2.905
+        },
+        "normal": "-Z",
+        "axes": {
+          "u": "y",
+          "v": "x"
+        }
+      }
+    ],
+    "excludedContactFaces": [
+      "east_beam_under_y wall-overlap y=2.515, x=1.91..MAX_X, z=-1.874..3.056",
+      "east_beam_inner_x southeast-column overlap x=1.85, y=2.515..2.905, z=2.49..3.056",
+      "east_beam_under_y southeast-column overlap y=2.515, x=1.85..1.91, z=2.49..3.056",
+      "se_column_north_z east-beam overlap z=2.49, x=1.85..1.91, y=2.515..2.905",
+      "se_column_inner_x southeast-bookshelf overlap x=1.78, y=0..2.04, z=2.73..3.056",
+      "west_beam_under_y southwest-column overlap y=2.525, x=-1.91..-1.75, z=2.846..2.848",
+      "sw_column_north_z west-beam internal contact z=2.846, x=-1.91..-1.75, y=2.525..2.905"
+    ]
+  },
+  "c1SeColumnNorthShadowBatch": {
+    "targetId": 1008,
+    "surfaceName": "c1_se_column_north_shadow",
+    "surfaceClass": "structural_column_face",
+    "mapping": "single_planar_xy_on_z_face",
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "worldBounds": {
+      "xMin": 1.78,
+      "xMax": 1.91,
+      "yMin": 0,
+      "yMax": 2.905,
+      "z": 2.49
+    },
+    "invalidTexelRegions": {
+      "eastBeamBack": {
+        "xMin": 1.85,
+        "xMax": 1.91,
+        "yMin": 2.515,
+        "yMax": 2.905
+      }
+    },
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "runtimeAtlasSlot": 7,
+    "uniformContractAlias": "tR7310C1SeColumnNorthShadowTexture",
+    "runtimePriority": "before_c1_structural_beams_columns"
+  },
+  "c1SeColumnWestShadowBatch": {
+    "targetId": 1009,
+    "surfaceName": "c1_se_column_west_shadow",
+    "surfaceClass": "structural_column_face",
+    "mapping": "single_planar_zy_on_x_face",
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "worldBounds": {
+      "zMin": 2.49,
+      "zMax": 3.056,
+      "yMin": 0,
+      "yMax": 2.905,
+      "x": 1.78
+    },
+    "invalidTexelRegions": {
+      "southeastBookshelfOverlap": {
+        "zMin": 2.73,
+        "zMax": 3.056,
+        "yMin": 0,
+        "yMax": 2.04
+      }
+    },
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "runtimeAtlasSlot": 8,
+    "uniformContractAlias": "tR7310C1SeColumnWestShadowTexture",
+    "runtimePriority": "before_c1_structural_beams_columns"
+  },
+  "c1SwColumnNorthShadowBatch": {
+    "targetId": 1012,
+    "surfaceName": "c1_sw_column_north_shadow",
+    "surfaceClass": "structural_column_face",
+    "mapping": "single_planar_xy_on_z_face",
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "worldBounds": {
+      "xMin": -1.91,
+      "xMax": -1.75,
+      "yMin": 0,
+      "yMax": 2.525,
+      "z": 2.846
+    },
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "runtimeAtlasSlot": 11,
+    "uniformContractAlias": "tR7310C1SwColumnNorthShadowTexture",
+    "runtimePriority": "before_c1_structural_beams_columns"
+  },
+  "c1SouthWallAcShadowBatch": {
+    "targetId": 1010,
+    "surfaceName": "c1_south_wall_ac_shadow",
+    "surfaceClass": "wall_shadow_patch",
+    "mapping": "single_planar_xy_on_z_face",
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "worldBounds": {
+      "xMin": -2.11,
+      "xMax": 2.11,
+      "yMin": 0,
+      "yMax": 2.905,
+      "z": 3.056
+    },
+    "invalidTexelRegions": {
+      "windowHole": {
+        "xMin": -1.75,
+        "xMax": 0.69,
+        "yMin": 1.04,
+        "yMax": 2.905
+      },
+      "seColumnBack": {
+        "xMin": 1.78,
+        "xMax": 1.91,
+        "yMin": 0,
+        "yMax": 2.905
+      }
+    },
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "runtimeAtlasSlot": 9,
+    "uniformContractAlias": "tR7310C1SouthWallAcShadowTexture",
+    "runtimePriority": "before_c1_south_wall"
   },
   "acceptedSproutBaseline": {
     "pointer": "docs/data/r7-3-8-c1-bake-accepted-package.json",
@@ -199,5 +1061,230 @@
       "full_room_diffuse_bake_does_not_reduce_noise_enough",
       "floor_reflection_remains_unusable_for_quick_preview_iteration"
     ]
+  },
+  "c1SwColumnInnerShadowBatch": {
+    "targetId": 1014,
+    "surfaceName": "c1_sw_column_inner_shadow",
+    "surfaceClass": "structural_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "zMin": 2.846,
+      "zMax": 3.256,
+      "yMin": 0,
+      "yMax": 2.905,
+      "x": -1.75
+    },
+    "runtimeAtlasSlot": 13,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1SwColumnInnerShadowTexture",
+    "intendedVisibleProblem": "west_beam_shadow_on_southwest_column_inner_face"
+  },
+  "c1WestBeamInnerShadowBatch": {
+    "targetId": 1015,
+    "surfaceName": "c1_west_beam_inner_shadow",
+    "surfaceClass": "structural_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "zMin": -1.874,
+      "zMax": 3.056,
+      "yMin": 2.525,
+      "yMax": 2.905,
+      "x": -1.75
+    },
+    "runtimeAtlasSlot": 14,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1WestBeamInnerShadowTexture",
+    "intendedVisibleProblem": "west_beam_inner_face_direct_shadow_noise_unification"
+  },
+  "c1WestBeamUnderShadowBatch": {
+    "targetId": 1016,
+    "surfaceName": "c1_west_beam_under_shadow",
+    "surfaceClass": "structural_shadow_patch",
+    "mapping": "single_planar_zx_on_y_face",
+    "worldBounds": {
+      "xMin": -1.91,
+      "xMax": -1.75,
+      "zMin": -1.874,
+      "zMax": 2.846,
+      "y": 2.525
+    },
+    "runtimeAtlasSlot": 15,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1WestBeamUnderShadowTexture",
+    "intendedVisibleProblem": "west_beam_under_face_direct_shadow_noise_unification"
+  },
+  "c1EastBeamInnerShadowBatch": {
+    "targetId": 1017,
+    "surfaceName": "c1_east_beam_inner_shadow",
+    "surfaceClass": "structural_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "zMin": -1.874,
+      "zMax": 2.49,
+      "yMin": 2.515,
+      "yMax": 2.905,
+      "x": 1.85
+    },
+    "runtimeAtlasSlot": 16,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1EastBeamInnerShadowTexture",
+    "intendedVisibleProblem": "east_beam_inner_face_direct_shadow_noise_unification"
+  },
+  "c1EastBeamUnderShadowBatch": {
+    "targetId": 1018,
+    "surfaceName": "c1_east_beam_under_shadow",
+    "surfaceClass": "structural_shadow_patch",
+    "mapping": "single_planar_zx_on_y_face",
+    "worldBounds": {
+      "xMin": 1.85,
+      "xMax": 1.91,
+      "zMin": -1.874,
+      "zMax": 2.49,
+      "y": 2.515
+    },
+    "runtimeAtlasSlot": 17,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1EastBeamUnderShadowTexture",
+    "intendedVisibleProblem": "east_beam_under_face_direct_shadow_noise_unification"
+  },
+  "c1SouthWindowLeftRevealShadowBatch": {
+    "targetId": 1019,
+    "surfaceName": "c1_south_window_left_reveal_shadow",
+    "surfaceClass": "south_window_reveal_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "yMin": 1.04,
+      "yMax": 2.905,
+      "zMin": 3.056,
+      "zMax": 3.256,
+      "x": -1.75
+    },
+    "runtimeAtlasSlot": 18,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1SouthWindowLeftRevealShadowTexture",
+    "intendedVisibleProblem": "south_window_left_reveal_direct_shadow_noise_unification"
+  },
+  "c1SouthWindowRightRevealShadowBatch": {
+    "targetId": 1020,
+    "surfaceName": "c1_south_window_right_reveal_shadow",
+    "surfaceClass": "south_window_reveal_shadow_patch",
+    "mapping": "single_planar_zy_on_x_face",
+    "worldBounds": {
+      "yMin": 1.04,
+      "yMax": 2.905,
+      "zMin": 3.056,
+      "zMax": 3.256,
+      "x": 0.69
+    },
+    "runtimeAtlasSlot": 19,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1SouthWindowRightRevealShadowTexture",
+    "intendedVisibleProblem": "south_window_right_reveal_direct_shadow_noise_unification"
+  },
+  "c1SouthWindowBottomRevealShadowBatch": {
+    "targetId": 1021,
+    "surfaceName": "c1_south_window_bottom_reveal_shadow",
+    "surfaceClass": "south_window_reveal_shadow_patch",
+    "mapping": "single_planar_xz_on_y_face",
+    "worldBounds": {
+      "xMin": -1.75,
+      "xMax": 0.69,
+      "zMin": 3.056,
+      "zMax": 3.256,
+      "y": 1.04
+    },
+    "runtimeAtlasSlot": 20,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1SouthWindowBottomRevealShadowTexture",
+    "intendedVisibleProblem": "south_window_bottom_reveal_direct_shadow_noise_unification"
+  },
+  "c1SouthWindowTopRevealShadowBatch": {
+    "targetId": 1022,
+    "surfaceName": "c1_south_window_top_reveal_shadow",
+    "surfaceClass": "south_window_reveal_shadow_patch",
+    "mapping": "single_planar_xz_on_y_face",
+    "worldBounds": {
+      "xMin": -1.75,
+      "xMax": 0.69,
+      "zMin": 3.056,
+      "zMax": 3.256,
+      "y": 2.905
+    },
+    "runtimeAtlasSlot": 21,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "uniformContractAlias": "tR7310C1SouthWindowTopRevealShadowTexture",
+    "intendedVisibleProblem": "south_window_top_reveal_direct_shadow_noise_unification"
   }
 }

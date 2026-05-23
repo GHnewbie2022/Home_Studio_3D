@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
 const contract = JSON.parse(fs.readFileSync('docs/data/r7-3-10-full-room-diffuse-bake-contract.json', 'utf8'));
@@ -18,6 +19,25 @@ assert.equal(fs.existsSync(r7310CeilingPointerPath), true);
 const r7310Ceiling = fs.existsSync(r7310CeilingPointerPath)
   ? JSON.parse(fs.readFileSync(r7310CeilingPointerPath, 'utf8'))
   : {};
+const r7310StructuralPointerPath = 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
+const r7310StructuralPointerExists = fs.existsSync(r7310StructuralPointerPath);
+const r7310Structural = r7310StructuralPointerExists
+  ? JSON.parse(fs.readFileSync(r7310StructuralPointerPath, 'utf8'))
+  : null;
+const structuralGateReport = JSON.parse(execFileSync('node', ['docs/tools/r7-3-10-structural-geometry-gate.mjs'], {
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'pipe']
+}));
+const expectedStructuralIslandNames = [
+  'west_beam_inner_x',
+  'west_beam_under_y',
+  'east_beam_inner_x',
+  'east_beam_under_y',
+  'sw_column_inner_x',
+  'sw_column_north_z',
+  'se_column_inner_x',
+  'se_column_north_z'
+];
 
 function summarizeAtlasLuma(pointer)
 {
@@ -52,6 +72,22 @@ function atlasLumaAt(pointer, col, row)
 	return (floats[i] + floats[i + 1] + floats[i + 2]) / 3;
 }
 
+function atlasAlphaAt(pointer, col, row)
+{
+	const atlasPath = `${pointer.packageDir}/${pointer.artifacts.atlasPatch0}`;
+	const resolution = pointer.targetAtlasResolution;
+	const bytes = fs.readFileSync(atlasPath);
+	const floats = new Float32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4);
+	const i = (row * resolution + col) * 4;
+	return floats[i + 3];
+}
+
+function assertMaskedAtlasTexel(pointer, col, row, message)
+{
+	assert.equal(atlasLumaAt(pointer, col, row), 0, `${message}: luma`);
+	assert.equal(atlasAlphaAt(pointer, col, row), 0, `${message}: alpha`);
+}
+
 function southWallAtlasColumn(x)
 {
 	return Math.round(((x + 2.11) / 4.22) * (r7310SouthWall.targetAtlasResolution - 1));
@@ -70,6 +106,36 @@ function floorAtlasColumn(x)
 function floorAtlasRow(z)
 {
 	return Math.round(((z + 2.074) / 5.33) * (r7310.targetAtlasResolution - 1));
+}
+
+function eastWallAtlasColumn(z)
+{
+	return Math.floor(((z + 1.874) / 4.93) * r7310EastWall.targetAtlasResolution);
+}
+
+function eastWallAtlasRow(y)
+{
+	return Math.floor((y / 2.905) * r7310EastWall.targetAtlasResolution);
+}
+
+function westWallAtlasColumn(z)
+{
+	return Math.floor(((z + 1.874) / 4.93) * r7310WestWall.targetAtlasResolution);
+}
+
+function westWallAtlasRow(y)
+{
+	return Math.floor((y / 2.905) * r7310WestWall.targetAtlasResolution);
+}
+
+function structuralSeColumnNorthAtlasColumnFromY(y)
+{
+	return Math.floor((y / 2.905) * r7310Structural.targetAtlasResolution);
+}
+
+function structuralSeColumnNorthAtlasRowFromX(x)
+{
+	return Math.floor((0.880 + 0.120 * ((x - 1.780) / 0.130)) * r7310Structural.targetAtlasResolution);
 }
 
 const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
@@ -126,7 +192,11 @@ assert.equal(contract.surfaceRolloutStrategy.finalMissingSurfaceNamesMustBeEmpty
 assert.deepEqual(contract.surfaceRolloutStrategy.batches[0], ['floor']);
 assert.deepEqual(contract.surfaceRolloutStrategy.batches[1], ['walls']);
 assert.deepEqual(contract.surfaceRolloutStrategy.batches[2], ['ceiling']);
-assert.equal(contract.surfaceRolloutStrategy.batches.length, 6);
+assert.deepEqual(contract.surfaceRolloutStrategy.batches[3], ['structural_beams_columns']);
+assert.deepEqual(contract.surfaceRolloutStrategy.batches[4], ['large_acoustic_panels', 'door', 'large_boxes', 'large_static_furniture']);
+assert.deepEqual(contract.surfaceRolloutStrategy.batches[5], ['speaker_diffuse_shells', 'speaker_stand_diffuse_components', 'fixture_housings', 'small_static_surfaces', 'edges_and_corners']);
+assert.deepEqual(contract.surfaceRolloutStrategy.batches[6], ['reflective_surface_diffuse_components']);
+assert.equal(contract.surfaceRolloutStrategy.batches.length, 7);
 assert.deepEqual(contract.c1FloorBatch.worldBounds, {
   xMin: -2.11,
   xMax: 2.11,
@@ -200,8 +270,8 @@ assert.deepEqual(contract.c1SouthWallBatch.invalidTexelRegions.windowHole, {
 assert.deepEqual(contract.c1SouthWallBatch.windowRevealAtlasRegions, {
   leftReveal: { xMin: -1.69, xMax: -1.52, yMin: 1.10, yMax: 2.845 },
   rightReveal: { xMin: 0.46, xMax: 0.63, yMin: 1.10, yMax: 2.845 },
-  bottomReveal: { xMin: -1.45, xMax: 0.39, yMin: 1.10, yMax: 1.27 },
-  topReveal: { xMin: -1.45, xMax: 0.39, yMin: 2.675, yMax: 2.845 }
+  bottomReveal: { xMin: -1.52, xMax: 0.46, yMin: 1.10, yMax: 1.27 },
+  topReveal: { xMin: -1.52, xMax: 0.46, yMin: 2.675, yMax: 2.845 }
 });
 assert.deepEqual(contract.c1CeilingBatch.worldBounds, {
   xMin: -2.11,
@@ -214,6 +284,79 @@ assert.equal(contract.c1CeilingBatch.surfaceName, 'c1_ceiling');
 assert.equal(contract.c1CeilingBatch.targetId, 1006);
 assert.equal(contract.c1CeilingBatch.mapping, 'planar_xz');
 assert.equal(contract.c1CeilingBatch.invalidTexelRegions, undefined);
+assert.equal(contract.c1StructuralBeamColumnBatch.targetId, 1007);
+assert.equal(contract.c1StructuralBeamColumnBatch.surfaceName, 'c1_structural_beams_columns');
+assert.equal(contract.c1StructuralBeamColumnBatch.surfaceClass, 'structural');
+assert.equal(contract.c1StructuralBeamColumnBatch.mapping, 'packed_rect_islands');
+assert.equal(contract.c1StructuralBeamColumnBatch.runtimeAtlasSlot, 6);
+assert.equal(contract.c1StructuralBeamColumnBatch.requestedSamples, 1000);
+assert.equal(contract.c1StructuralBeamColumnBatch.targetAtlasResolution, 1024);
+assert.equal(contract.c1StructuralBeamColumnBatch.diffuseOnly, true);
+assert.equal(contract.c1StructuralBeamColumnBatch.upscaled, false);
+assert.equal(contract.c1StructuralBeamColumnBatch.bakedRadianceKind, 'full_diffuse_radiance');
+assert.equal(contract.c1StructuralBeamColumnBatch.directLightAlreadyIncluded, true);
+assert.equal(contract.c1StructuralBeamColumnBatch.addDirectLightAfterBakeLookup, false);
+assert.deepEqual(
+  contract.c1StructuralBeamColumnBatch.islands.map((island) => island.name),
+  expectedStructuralIslandNames
+);
+assert.equal(contract.c1StructuralBeamColumnBatch.geometryGateReport.status, 'pass');
+assert.deepEqual(contract.c1StructuralBeamColumnBatch.geometryGateReport, structuralGateReport);
+assert.equal(contract.c1StructuralBeamColumnBatch.geometryGateReport.finalIslandCount, 8);
+for (const faceName of [
+  'se_column_upper_inner_x',
+  'east_beam_se_column_overlap_x',
+  'east_beam_se_column_overlap_under_y',
+  'sw_column_upper_north_z',
+  'sw_column_upper_inner_coplanar_x',
+  'se_column_north_z_full_face'
+])
+{
+  const face = contract.c1StructuralBeamColumnBatch.geometryGateReport.checkedFaces.find((item) => item.name === faceName);
+  assert.ok(face, `${faceName} must be recorded in geometryGateReport`);
+  assert.equal(Array.isArray(face.visibleIntervals), true);
+  assert.equal(Array.isArray(face.excludedIntervals), true);
+}
+{
+  const southeastNorthFace = contract.c1StructuralBeamColumnBatch.geometryGateReport.checkedFaces.find((item) => item.name === 'se_column_north_z_full_face');
+  assert.equal(southeastNorthFace.decision, 'mixed');
+  assert.equal(southeastNorthFace.ownerIsland, 'se_column_north_z');
+  assert.deepEqual(southeastNorthFace.visibleIntervals, [
+    'z=2.49, x=1.78..1.85, y=0..2.905',
+    'z=2.49, x=1.85..1.91, y=0..2.515'
+  ]);
+  assert.deepEqual(southeastNorthFace.excludedIntervals, ['z=2.49, x=1.85..1.91, y=2.515..2.905']);
+}
+{
+  const southeastNorthIsland = contract.c1StructuralBeamColumnBatch.islands.find((item) => item.name === 'se_column_north_z');
+  assert.ok(southeastNorthIsland);
+  assert.deepEqual(southeastNorthIsland.worldFace, { axis: 'z', value: 2.49, xMin: 1.78, xMax: 1.91, yMin: 0, yMax: 2.905 });
+  assert.deepEqual(southeastNorthIsland.atlasRect, { uMin: 0, vMin: 0.88, uMax: 1, vMax: 1 });
+}
+assert.ok(
+  atlasLumaAt(r7310Structural, structuralSeColumnNorthAtlasColumnFromY(2.70), structuralSeColumnNorthAtlasRowFromX(1.849)) > 0.01,
+  'structural se_column_north_z visible upper edge must stay baked'
+);
+assert.ok(
+  atlasLumaAt(r7310Structural, structuralSeColumnNorthAtlasColumnFromY(2.50), structuralSeColumnNorthAtlasRowFromX(1.88)) > 0.01,
+  'structural se_column_north_z lower visible interval must stay baked'
+);
+assert.ok(
+  atlasLumaAt(r7310Structural, structuralSeColumnNorthAtlasColumnFromY(2.70), structuralSeColumnNorthAtlasRowFromX(1.851)) > 0.01,
+  'structural se_column_north_z hidden east-beam overlap must be padded for runtime filtering'
+);
+assert.ok(
+  atlasLumaAt(r7310Structural, structuralSeColumnNorthAtlasColumnFromY(2.70), structuralSeColumnNorthAtlasRowFromX(1.88)) > 0.01,
+  'structural se_column_north_z deep hidden east-beam overlap must be padded for runtime filtering'
+);
+assert.equal(
+  contract.c1StructuralBeamColumnBatch.excludedContactFaces.some((face) => face.includes('east_beam_under_y wall-overlap')),
+  true
+);
+assert.equal(
+  contract.c1StructuralBeamColumnBatch.excludedContactFaces.some((face) => face.includes('sw_column_north_z west-beam internal contact')),
+  true
+);
 assert.equal(r7310.packageStatus, 'architecture_probe');
 assert.equal(r7310.runtimeScope, 'c1_floor_full_room_diffuse_short_circuit');
 assert.equal(r7310.runtimeEnabledDefault, true);
@@ -221,18 +364,30 @@ assert.equal(r7310.targetId, 1001);
 assert.equal(r7310.requestedSamples, 1000);
 assert.equal(r7310.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.equal(r7310NorthWall.packageStatus, 'architecture_probe');
-assert.equal(r7310NorthWall.runtimeScope, 'c1_north_wall_diffuse_short_circuit');
+assert.equal(r7310NorthWall.runtimeScope, 'c1_north_wall_first_hit_hybrid');
 assert.equal(r7310NorthWall.runtimeEnabledDefault, true);
 assert.equal(r7310NorthWall.targetId, 1002);
 assert.equal(r7310NorthWall.requestedSamples, 1000);
 assert.equal(r7310NorthWall.surfaceName, 'c1_north_wall');
+assert.equal(r7310NorthWall.runtimeAtlasSlot, 1);
+assert.equal(r7310NorthWall.bakedRadianceKind, 'indirect_diffuse_radiance');
+assert.equal(r7310NorthWall.directLightAlreadyIncluded, false);
+assert.equal(r7310NorthWall.addDirectLightAfterBakeLookup, true);
+assert.equal(r7310NorthWall.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
+assert.equal(r7310NorthWall.runtimeArchitecture, 'single_full_north_wall_first_hit_hybrid');
 assert.equal(r7310NorthWall.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.equal(r7310EastWall.packageStatus, 'architecture_probe');
-assert.equal(r7310EastWall.runtimeScope, 'c1_east_wall_diffuse_short_circuit');
+assert.equal(r7310EastWall.runtimeScope, 'c1_east_wall_first_hit_hybrid');
 assert.equal(r7310EastWall.runtimeEnabledDefault, true);
 assert.equal(r7310EastWall.targetId, 1003);
 assert.equal(r7310EastWall.requestedSamples, 1000);
 assert.equal(r7310EastWall.surfaceName, 'c1_east_wall');
+assert.equal(r7310EastWall.runtimeAtlasSlot, 2);
+assert.equal(r7310EastWall.bakedRadianceKind, 'indirect_diffuse_radiance');
+assert.equal(r7310EastWall.directLightAlreadyIncluded, false);
+assert.equal(r7310EastWall.addDirectLightAfterBakeLookup, true);
+assert.equal(r7310EastWall.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
+assert.equal(r7310EastWall.runtimeArchitecture, 'single_full_east_wall_first_hit_hybrid');
 assert.equal(r7310EastWall.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.equal(r7310WestWall.packageStatus, 'architecture_probe');
 assert.equal(r7310WestWall.runtimeScope, 'c1_west_wall_diffuse_short_circuit');
@@ -257,12 +412,29 @@ assert.equal(r7310Ceiling.targetId, 1006);
 assert.equal(r7310Ceiling.requestedSamples, 1000);
 assert.equal(r7310Ceiling.surfaceName, 'c1_ceiling');
 assert.equal(r7310Ceiling.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
+if (r7310StructuralPointerExists)
+{
+  assert.equal(r7310Structural.packageStatus, 'architecture_probe');
+  assert.equal(r7310Structural.runtimeScope, 'c1_structural_beams_columns_diffuse_short_circuit');
+  assert.equal(r7310Structural.runtimeEnabledDefault, true);
+  assert.equal(r7310Structural.targetId, 1007);
+  assert.equal(r7310Structural.requestedSamples, 1000);
+  assert.equal(r7310Structural.targetAtlasResolution, 1024);
+  assert.equal(r7310Structural.diffuseOnly, true);
+  assert.equal(r7310Structural.upscaled, false);
+  assert.equal(r7310Structural.surfaceName, 'c1_structural_beams_columns');
+  assert.equal(r7310Structural.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
+  assert.match(r7310Structural.packageDir, /assets\/bakes\/r7-3-10\/c1-static-diffuse\/structural-beams-columns-1024px-1000spp\/?$/);
+  assert.doesNotMatch(r7310Structural.packageDir, /^\.omc\//);
+  assert.deepEqual(r7310Structural.geometryGateReport, structuralGateReport);
+}
 const r7310FloorAtlasStats = summarizeAtlasLuma(r7310);
 const r7310NorthWallAtlasStats = summarizeAtlasLuma(r7310NorthWall);
 const r7310EastWallAtlasStats = summarizeAtlasLuma(r7310EastWall);
 const r7310WestWallAtlasStats = summarizeAtlasLuma(r7310WestWall);
 const r7310SouthWallAtlasStats = summarizeAtlasLuma(r7310SouthWall);
 const r7310CeilingAtlasStats = summarizeAtlasLuma(r7310Ceiling);
+const r7310StructuralAtlasStats = r7310StructuralPointerExists ? summarizeAtlasLuma(r7310Structural) : null;
 assert.ok(r7310FloorAtlasStats.nonzeroTexels > 0);
 assert.ok(r7310FloorAtlasStats.meanLuma > 0.001);
 assert.ok(
@@ -278,15 +450,71 @@ assert.ok(r7310NorthWallAtlasStats.meanLuma > 0.001);
 assert.ok(r7310EastWallAtlasStats.nonzeroTexels > 0);
 assert.ok(r7310EastWallAtlasStats.meanLuma > 0.001);
 assert.ok(r7310EastWallAtlasStats.maxLuma > 0.01);
+assert.ok(
+  atlasLumaAt(r7310EastWall, eastWallAtlasColumn(2.46), eastWallAtlasRow(1.5)) > 0.01,
+  'east wall visible side next to southeast column must stay baked'
+);
+assertMaskedAtlasTexel(
+  r7310EastWall,
+  eastWallAtlasColumn(2.50),
+  eastWallAtlasRow(2.46),
+  'east wall full atlas must leave southeast column handoff texels masked'
+);
+assertMaskedAtlasTexel(
+  r7310EastWall,
+  eastWallAtlasColumn(2.42),
+  eastWallAtlasRow(2.54),
+  'east wall full atlas must leave east beam handoff texels masked'
+);
 assert.ok(r7310WestWallAtlasStats.nonzeroTexels > 0);
 assert.ok(r7310WestWallAtlasStats.meanLuma > 0.001);
 assert.ok(r7310WestWallAtlasStats.maxLuma > 0.01);
+assertMaskedAtlasTexel(
+  r7310WestWall,
+  westWallAtlasColumn(2.72),
+  westWallAtlasRow(1.5),
+  'west wall full atlas must leave seam-guard column-edge texels masked'
+);
+assertMaskedAtlasTexel(
+  r7310WestWall,
+  westWallAtlasColumn(2.86),
+  westWallAtlasRow(2.46),
+  'west wall full atlas must leave southwest column handoff texels masked'
+);
+assertMaskedAtlasTexel(
+  r7310WestWall,
+  westWallAtlasColumn(2.80),
+  westWallAtlasRow(2.54),
+  'west wall full atlas must leave west beam handoff texels masked'
+);
+assertMaskedAtlasTexel(
+  r7310WestWall,
+  westWallAtlasColumn(2.799),
+  westWallAtlasRow(2.521),
+  'west wall full atlas must leave measured southwest beam-edge texels masked'
+);
 assert.ok(r7310SouthWallAtlasStats.nonzeroTexels > 0);
 assert.ok(r7310SouthWallAtlasStats.meanLuma > 0.001);
 assert.ok(r7310SouthWallAtlasStats.maxLuma > 0.01);
 assert.ok(r7310CeilingAtlasStats.nonzeroTexels > 0);
 assert.ok(r7310CeilingAtlasStats.meanLuma > 0.001);
 assert.ok(r7310CeilingAtlasStats.maxLuma > 0.01);
+if (r7310StructuralPointerExists)
+{
+  assert.ok(r7310StructuralAtlasStats.nonzeroTexels > 0);
+  assert.ok(r7310StructuralAtlasStats.meanLuma > 0.001);
+  assert.ok(r7310StructuralAtlasStats.maxLuma > 0.01);
+  for (const islandName of expectedStructuralIslandNames)
+  {
+    const coverage = r7310Structural.islandCoverageByName?.[islandName];
+    const luma = r7310Structural.islandLumaByName?.[islandName];
+    assert.ok(coverage, `${islandName} coverage missing`);
+    assert.ok(luma, `${islandName} luma missing`);
+    assert.ok(coverage.validTexels > 0, `${islandName} validTexels must be positive`);
+    assert.ok(luma.nonzeroTexels > 0, `${islandName} nonzeroTexels must be positive`);
+    assert.ok(luma.maxLuma > 0.01, `${islandName} maxLuma must be positive`);
+  }
+}
 
 assert.equal(r738.packageStatus, 'accepted');
 assert.equal(r738.diffuseOnly, true);
@@ -313,18 +541,39 @@ assert.match(shader, /r7310C1FloorHiddenByStaticContact/);
 assert.match(shader, /r7310C1NorthWallDiffuseUv/);
 assert.match(shader, /r7310C1RuntimeSurfaceIsNorthWall/);
 assert.match(shader, /r7310C1NorthWallHiddenByStaticContact/);
+assert.match(shader, /r7310C1NorthWallHybridActive/);
+assert.match(shader, /r7310C1NorthWallHybridRadiance/);
+assert.match(shader, /r7310NorthWallHybridFirstHit/);
 assert.match(shader, /r7310NorthWallBakedRadiance/);
 assert.match(shader, /r7310C1EastWallDiffuseUv/);
 assert.match(shader, /r7310C1RuntimeSurfaceIsEastWall/);
 assert.match(shader, /r7310C1EastWallHiddenByStaticContact/);
 assert.match(shader, /uR7310C1EastWallDiffuseMode/);
+assert.match(shader, /r7310C1EastWallHybridActive/);
+assert.match(shader, /r7310C1EastWallHybridRadiance/);
+assert.match(shader, /r7310EastWallHybridFirstHit/);
 assert.match(shader, /r7310EastWallBakedRadiance/);
-assert.match(shader, /r7310C1CombinedAtlasUv\(atlasUv, 2\.0\)/);
+assert.match(shader, /r7310C1EastWallAtlasRect/);
+assert.match(shader, /return vec4\(0\.0, 0\.0, 1\.0, 1\.0\)/);
+assert.doesNotMatch(shader, /contactU - \(0\.5 \/ resolution\)/);
+assert.doesNotMatch(shader, /beamV - \(0\.5 \/ resolution\)/);
+assert.match(shader, /r7310C1FullRoomDiffuseSampleRectTent3/);
+assert.match(shader, /r7310C1FullRoomDiffuseSampleRectTent3\(atlasUv, 2\.0, r7310C1EastWallAtlasRect\(\)\)/);
+assert.doesNotMatch(shader, /r7310C1EastWallBakeSafeZ/);
+assert.doesNotMatch(shader, /contactBand \* belowEastBeam/);
+assert.match(shader, /R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN/);
+assert.match(shader, /R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN/);
+assert.doesNotMatch(initCommon, /fillR7310C1EastWallSoutheastGuardTexels/);
+assert.doesNotMatch(initCommon, /southeastColumnContactBand/);
+assert.doesNotMatch(shader, /vec3 r7310EastWallBakedRadiance = r7310C1FullRoomDiffuseSample\(r7310C1CombinedAtlasUv\(atlasUv, 2\.0\)\)/);
 assert.match(shader, /r7310C1WestWallDiffuseUv/);
 assert.match(shader, /r7310C1RuntimeSurfaceIsWestWall/);
 assert.match(shader, /uR7310C1WestWallDiffuseMode/);
 assert.match(shader, /r7310WestWallBakedRadiance/);
 assert.match(shader, /r7310C1CombinedAtlasUv\(atlasUv, 3\.0\)/);
+assert.match(shader, /R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN/);
+assert.match(shader, /R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN/);
+assert.doesNotMatch(initCommon, /fillR7310C1WestWallSouthwestGuardTexels/);
 assert.match(shader, /r7310C1SouthWallDiffuseUv/);
 assert.match(shader, /r7310C1RuntimeSurfaceIsSouthWall/);
 assert.match(shader, /uR7310C1SouthWallDiffuseMode/);
@@ -335,10 +584,24 @@ assert.match(shader, /r7310C1RuntimeSurfaceIsCeiling/);
 assert.match(shader, /uR7310C1CeilingDiffuseMode/);
 assert.match(shader, /r7310CeilingBakedRadiance/);
 assert.match(shader, /r7310C1CombinedAtlasUv\(atlasUv, 5\.0\)/);
+assert.match(shader, /uniform float uR7310C1StructuralDiffuseMode;/);
+assert.match(shader, /patchId == 1007/);
+assert.match(shader, /r7310C1RuntimeSurfaceIsStructuralBeamColumn/);
+assert.match(shader, /r7310C1StructuralBeamColumnDiffuseUv/);
+assert.match(shader, /r7310C1StructuralBeamColumnIslandId/);
+assert.match(shader, /r7310StructuralBeamColumnBakedRadiance/);
+assert.match(shader, /r7310C1StructuralBeamColumnAtlasRectForPoint\(structuralIslandId, visiblePosition\)/);
+assert.match(shader, /r7310C1FullRoomDiffuseSampleRectLinear\(atlasUv, 6\.0, r7310C1StructuralBeamColumnAtlasRectForPoint\(structuralIslandId, visiblePosition\)\)/);
+assert.match(shader, /r7310C1StructuralSeColumnNorthHiddenByEastBeam/);
+assert.match(initCommon, /r7310StructuralSeColumnNorthHiddenByEastBeam/);
 assert.match(shader, /r7310C1CombinedAtlasUv/);
 assert.match(shader, /uR7310C1RuntimeAtlasPatchResolution/);
 assert.match(shader, /uR7310C1RuntimeAtlasPatchCount/);
-assert.match(shader, /\(safeUv\.x \+ patchSlot\) \/ patchCount/);
+assert.match(shader, /uR7310C1RuntimeAtlasGridColumns/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\s*=\s*6/);
+assert.match(shader, /ceil\s*\(\s*patchCount\s*\/\s*columns\s*\)/);
+assert.match(shader, /\(safeUv\.x \+ column\) \/ columns/);
+assert.match(shader, /\(safeUv\.y \+ row\) \/ rows/);
 assert.match(shader, /\+ 0\.5\) \/ resolution/);
 assert.match(shader, /accumCol \+= mask \* r7310BakedRadiance;/);
 assert.match(shader, /uR7310C1RuntimeProbeMode/);
@@ -349,6 +612,8 @@ assert.match(shader, /r7310C1RuntimeProbeMode < 3\.5/);
 assert.match(shader, /r7310C1RuntimeProbeMode < 4\.5/);
 assert.match(shader, /r7310C1RuntimeProbeMode < 5\.5/);
 assert.match(shader, /r7310C1RuntimeProbeMode < 6\.5/);
+assert.match(shader, /r7310C1RuntimeProbeMode < 8\.5/);
+assert.match(shader, /r7310C1RuntimeProbeMode < 9\.5/);
 assert.match(shader, /hitIsRayExiting == TRUE/);
 assert.match(shader, /r7310C1FullRoomDiffuseShortCircuit\([^)]*int visibleIsRayExiting/);
 assert.match(shader, /if \(visibleIsRayExiting == TRUE\)\s+return false;/);
@@ -376,11 +641,16 @@ assert.match(initCommon, /window\.reportR7310C1SouthWallDiffuseBakeAfterSamples/
 assert.match(initCommon, /captureR7310C1CeilingDiffuseAtlas/);
 assert.match(initCommon, /buildR7310C1CeilingTexelMetadata/);
 assert.match(initCommon, /window\.reportR7310C1CeilingDiffuseBakeAfterSamples/);
+assert.match(initCommon, /captureR7310C1StructuralDiffuseAtlas/);
+assert.match(initCommon, /buildR7310C1StructuralTexelMetadata/);
+assert.match(initCommon, /window\.captureR7310C1StructuralDiffuseAtlas/);
+assert.match(initCommon, /window\.reportR7310C1StructuralDiffuseBakeAfterSamples/);
 assert.match(shader, /patchId == 1002/);
 assert.match(shader, /x >= -1\.52 && x <= -0\.73 && y >= 0\.0 && y <= 2\.03/);
 assert.doesNotMatch(shader, /x >= 1\.35 && x <= 1\.91 && y >= 0\.0 && y <= 1\.955/);
 assert.match(shader, /patchId == 1003/);
 assert.match(shader, /position = vec3\(1\.91, y, z\)/);
+assert.match(shader, /normal = vec3\(-1\.0, 0\.0, 0\.0\)/);
 assert.doesNotMatch(shader, /z >= -1\.874 && z <= -0\.703 && y >= 0\.0 && y <= 1\.955/);
 assert.doesNotMatch(shader, /z >= 0\.198 && z <= 0\.798 && y >= 0\.655 && y <= 1\.855/);
 assert.match(shader, /patchId == 1004/);
@@ -393,10 +663,32 @@ assert.match(shader, /normal = vec3\(0\.0, 0\.0, -1\.0\)/);
 assert.match(shader, /patchId == 1006/);
 assert.match(shader, /position = vec3\(x, 2\.905, z\)/);
 assert.match(shader, /normal = vec3\(0\.0, -1\.0, 0\.0\)/);
+assert.match(shader, /patchId == 1007/);
+assert.match(shader, /west_beam_inner_x/);
+assert.match(shader, /se_column_inner_x/);
+assert.match(shader, /se_column_north_z/);
+assert.match(shader, /r7310C1StructuralSeColumnNorthHiddenByEastBeam\(rawX, rawY\)/);
+assert.match(shader, /r7310C1StructuralSeColumnNorthHiddenByEastBeam\(visiblePosition\.x, visiblePosition\.y\)/);
+assert.match(shader, /r7310C1StructuralSeColumnInnerHiddenByBookshelf\(rawZ, rawY\)/);
+assert.match(shader, /r7310C1StructuralSeColumnInnerHiddenByBookshelf\(visiblePosition\.z, visiblePosition\.y\)/);
+assert.match(initCommon, /r7310StructuralSeColumnInnerHiddenByBookshelf\(position\)/);
+assert.match(initCommon, /fillR7310C1StructuralSeColumnInnerBookshelfGuardTexels/);
+assert.match(initCommon, /fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels/);
+assert.match(shader, /visiblePosition\.x >= 1\.85/);
+assert.match(shader, /visiblePosition\.y >= 2\.515/);
+assert.doesNotMatch(shader, /rawX < 1\.85 \+ \(2\.0 \* insetX\)/);
+assert.doesNotMatch(shader, /1\.85 - \(0\.25 \* insetX\)/);
+assert.match(shader, /r7310C1FullRoomDiffuseSampleRectLinear/);
+assert.match(shader, /r7310C1StructuralBeamColumnAtlasRect/);
+assert.match(shader, /r7310C1StructuralBeamColumnAtlasRectForPoint\(structuralIslandId, visiblePosition\)/);
+assert.match(shader, /r7310C1FullRoomDiffuseSampleRectLinear\(atlasUv, 6\.0, r7310C1StructuralBeamColumnAtlasRectForPoint\(structuralIslandId, visiblePosition\)\)/);
+assert.doesNotMatch(shader, /return 9\.0;/);
+assert.doesNotMatch(shader, /se_column_upper_north_z_visible/);
+assert.doesNotMatch(initCommon, /se_column_upper_north_z_visible/);
 assert.match(initCommon, /const R7310_C1_SOUTH_WALL_WINDOW_HOLE = Object\.freeze\(\{\s*xMin: -1\.75,\s*xMax: 0\.69,\s*yMin: 1\.04,\s*yMax: 2\.905\s*\}\);/);
 assert.match(initCommon, /const R7310_C1_SOUTH_WALL_WINDOW_REVEAL = Object\.freeze/);
 assert.match(initCommon, /leftReveal:\s*Object\.freeze\(\{\s*xMin: -1\.69,\s*xMax: -1\.52,\s*yMin: 1\.10,\s*yMax: 2\.845\s*\}\)/);
-assert.match(initCommon, /bottomReveal:\s*Object\.freeze\(\{\s*xMin: -1\.45,\s*xMax: 0\.39,\s*yMin: 1\.10,\s*yMax: 1\.27\s*\}\)/);
+assert.match(initCommon, /bottomReveal:\s*Object\.freeze\(\{\s*xMin: -1\.52,\s*xMax: 0\.46,\s*yMin: 1\.10,\s*yMax: 1\.27\s*\}\)/);
 assert.match(initCommon, /let r7310C1FloorDiffuseRuntimeEnabled = true;/);
 assert.match(initCommon, /let r7310C1SouthWallDiffuseRuntimeEnabled = true;/);
 assert.match(shader, /x >= -1\.75 && x <= 0\.69 && y >= 1\.04 && y <= 2\.905/);
@@ -422,7 +714,24 @@ assert.ok(
   atlasLumaAt(r7310SouthWall, southWallAtlasColumn(0.0), southWallAtlasRow(2.675)) > 0.01,
   'south wall top reveal room edge must stay baked'
 );
+assert.ok(
+  atlasLumaAt(r7310SouthWall, southWallAtlasColumn(0.425), southWallAtlasRow(1.185)) > 0.01,
+  'south wall lower right reveal gap must be owned by bottom reveal'
+);
+assert.ok(
+  atlasLumaAt(r7310SouthWall, southWallAtlasColumn(-1.485), southWallAtlasRow(1.185)) > 0.01,
+  'south wall lower left reveal gap must be owned by bottom reveal'
+);
 assert.match(shader, /r7310C1SouthWallWindowRevealDiffuseUv/);
+assert.match(shader, /r7310C1SouthWallWindowFrontEdgeDiffuseUv/);
+assert.match(shader, /r7310C1SouthWallFrontHoleEdgeBand/);
+assert.match(shader, /r7310C1SouthWallClampPackedX/);
+assert.match(shader, /r7310C1SouthWallClampPackedY/);
+assert.match(shader, /r7310C1SouthWallClampPackedX\(mix\(-1\.69, -1\.52, revealT\), -1\.69, -1\.52\)/);
+assert.match(shader, /r7310C1SouthWallClampPackedY\(mix\(1\.10, 2\.845, \(visiblePosition\.y - 1\.04\) \/ \(2\.905 - 1\.04\)\), 1\.10, 2\.845\)/);
+assert.match(shader, /r7310C1SouthWallClampPackedX\(mix\(0\.46, 0\.63, revealT\), 0\.46, 0\.63\)/);
+assert.match(shader, /r7310C1SouthWallClampPackedX\(mix\(-1\.52, 0\.46, \(visiblePosition\.x \+ 1\.75\) \/ \(0\.69 \+ 1\.75\)\), -1\.52, 0\.46\)/);
+assert.match(shader, /r7310C1SouthWallClampPackedY\(mix\(1\.10, 1\.27, revealT\), 1\.10, 1\.27\)/);
 assert.match(shader, /position = vec3\(-1\.75, revealY, revealZ\)/);
 assert.match(shader, /position = vec3\(revealX, 1\.04, revealZ\)/);
 assert.match(shader, /vec2 r7310RuntimeProbeAtlasUv = vec2\(0\.0\)/);
@@ -445,6 +754,11 @@ assert.match(initCommon, /R7310_C1_SOUTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1SouthWallDiffuseRuntimePackage/);
 assert.match(initCommon, /R7310_C1_CEILING_DIFFUSE_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1CeilingDiffuseRuntimePackage/);
+assert.match(initCommon, /R7310_C1_STRUCTURAL_DIFFUSE_RUNTIME_PACKAGE_URL/);
+assert.match(initCommon, /R7310_C1_STRUCTURAL_TARGET_ID = 1007/);
+assert.match(initCommon, /R7310_C1_STRUCTURAL_SURFACE_NAME = 'c1_structural_beams_columns'/);
+assert.match(initCommon, /R7310_C1_STRUCTURAL_ISLANDS = Object\.freeze/);
+assert.match(initCommon, /loadR7310C1StructuralDiffuseRuntimePackage/);
 assert.match(initCommon, /buildR7310C1CombinedDiffuseRuntimeTexture/);
 assert.match(initCommon, /window\.setR7310C1FullRoomDiffuseRuntimeEnabled/);
 assert.match(initCommon, /window\.setR7310C1FloorDiffuseRuntimeEnabled/);
@@ -453,6 +767,7 @@ assert.match(initCommon, /window\.setR7310C1EastWallDiffuseRuntimeEnabled/);
 assert.match(initCommon, /window\.setR7310C1WestWallDiffuseRuntimeEnabled/);
 assert.match(initCommon, /window\.setR7310C1SouthWallDiffuseRuntimeEnabled/);
 assert.match(initCommon, /window\.setR7310C1CeilingDiffuseRuntimeEnabled/);
+assert.match(initCommon, /window\.setR7310C1StructuralDiffuseRuntimeEnabled/);
 assert.match(pasteUniformBlock, /r7310C1FloorToggleOwnsSproutPaste/);
 assert.match(pasteUniformBlock, /disabledByR7310FloorToggle/);
 assert.doesNotMatch(pasteUniformBlock, /!r7310FloorRuntimeApplied/);
@@ -464,12 +779,14 @@ assert.match(fullRuntimeUniformBlock, /eastWallApplied/);
 assert.match(fullRuntimeUniformBlock, /westWallApplied/);
 assert.match(fullRuntimeUniformBlock, /southWallApplied/);
 assert.match(fullRuntimeUniformBlock, /ceilingApplied/);
+assert.match(fullRuntimeUniformBlock, /structuralApplied/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1FloorDiffuseMode\.value = floorApplied \? 1\.0 : 0\.0/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1NorthWallDiffuseMode\.value = northWallApplied \? 1\.0 : 0\.0/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1EastWallDiffuseMode\.value = eastWallApplied \? 1\.0 : 0\.0/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1WestWallDiffuseMode\.value = westWallApplied \? 1\.0 : 0\.0/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1SouthWallDiffuseMode\.value = southWallApplied \? 1\.0 : 0\.0/);
 assert.match(fullRuntimeUniformBlock, /uR7310C1CeilingDiffuseMode\.value = ceilingApplied \? 1\.0 : 0\.0/);
+assert.match(fullRuntimeUniformBlock, /uR7310C1StructuralDiffuseMode\.value = structuralApplied \? 1\.0 : 0\.0/);
 assert.doesNotMatch(fullRuntimeUniformBlock, /r7310C1FullRoomDiffuseRuntimeReady &&\s*r7310C1NorthWallDiffuseRuntimeReady/);
 assert.match(initCommon, /window\.reportR7310C1FullRoomDiffuseRuntimeProbe/);
 assert.match(initCommon, /bakedSurfaceHitCount/);
@@ -483,12 +800,18 @@ assert.match(initCommon, /savedSouthWallRuntimeEnabled/);
 assert.match(initCommon, /decodeR7310C1RuntimeProbeSample/);
 assert.match(initCommon, /normalizeR7310C1RuntimeProbeSamplePoints/);
 assert.match(initCommon, /samplePoints: r7310ProbeSamples/);
+assert.match(initCommon, /structuralPending/);
+assert.match(initCommon, /structuralIslandHitByName/);
+assert.match(initCommon, /structuralIslandShortCircuitByName/);
+assert.match(initCommon, /structuralProbePasses/);
+assert.match(initCommon, /structuralIslandUv/);
+assert.match(initCommon, /structuralWorldPosition/);
 assert.match(runner, /r7310RuntimeProbeSampleTest/);
 assert.match(runner, /--r7310-runtime-probe-sample-test/);
 assert.match(runner, /probeLevel: level/);
 assert.match(runner, /samplePointSpace: 'canvasCssPixel'/);
 assert.match(initCommon, /uiMeaningOff:\s*'all_live_path_tracing'/);
-assert.match(initCommon, /uiMeaningOn:\s*'selected_floor_north_east_west_south_wall_or_ceiling_1024_baked_diffuse_plus_live_reflection'/);
+assert.match(initCommon, /uiMeaningOn:\s*'selected_floor_north_east_west_south_wall_ceiling_or_structural_1024_baked_diffuse_plus_live_reflection'/);
 assert.doesNotMatch(initCommon, /sprout_patch_plus_live_floor/);
 assert.match(initCommon, /sproutPasteApplied/);
 assert.match(initCommon, /sproutPasteUniformMode/);
@@ -500,11 +823,28 @@ assert.match(runner, /uniformEastWallMode === 1/);
 assert.match(runner, /uniformWestWallMode === 1/);
 assert.match(runner, /south-wall/);
 assert.match(runner, /uniformSouthWallMode === 1/);
+assert.match(runner, /--r7310-south-wall-runtime-test/);
+assert.match(runner, /southWallShortCircuitCount/);
+assert.match(runner, /southRevealShortCircuitCount/);
+assert.match(runner, /southRevealProbeSamples/);
 assert.match(runner, /uniformCeilingMode === 1/);
+assert.match(runner, /--r7310-ceiling-runtime-test/);
+assert.match(runner, /ceilingShortCircuitCount/);
+assert.match(runner, /--r7310-structural-runtime-test/);
+assert.match(runner, /--r7310-structural-pending-ok/);
+assert.match(runner, /--r7310-se-column-shadow-visual-test/);
+assert.match(runner, /--r7310-camera-pose-info-test/);
+assert.match(runner, /--r7310-east-wall-shadow-visual-test/);
+assert.match(runner, /--r7310-sw-column-north-shadow-visual-test/);
+assert.match(runner, /--r7310-west-wall-beam-shadow-visual-test/);
+assert.match(runner, /reportR7310CameraPoseInfo/);
+assert.match(runner, /structural-beams-columns/);
+assert.match(runner, /structuralIslandHitByName/);
+assert.match(runner, /structuralIslandShortCircuitByName/);
+assert.match(runner, /structuralProbeSamples/);
 assert.match(runner, /initial\.floorText === '地板烘焙：開'/);
 assert.match(runner, /initial\.report\.southWallEnabled === true/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 5\.0/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 6\.0/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
 assert.match(html, /id="r7310-full-floor-actions"/);
 assert.match(html, /id="btn-r7310-floor-diffuse"/);
 assert.match(html, /id="btn-r7310-north-wall-diffuse"/);
@@ -517,20 +857,29 @@ assert.match(html, /id="btn-r7310-east-wall-diffuse"[^>]*class="snapshot-action-
 assert.match(html, /id="btn-r7310-west-wall-diffuse"[^>]*class="snapshot-action-btn glow-white"[^>]*>西牆烘焙：開</);
 assert.match(html, /id="btn-r7310-south-wall-diffuse"[^>]*class="snapshot-action-btn glow-white"[^>]*>南牆烘焙：開</);
 assert.match(html, /id="btn-r7310-ceiling-diffuse"[^>]*class="snapshot-action-btn glow-white"[^>]*>天花板烘焙：開</);
+assert.match(html, /id="btn-r7310-structural-diffuse"[^>]*class="snapshot-action-btn glow-white"[^>]*>樑柱烘焙：開</);
+assert.match(html, /id="cameraPoseInfo"/);
+assert.match(html, /readonly/);
 assert.doesNotMatch(html, /btn-r739-ab-|data-r739-ab-mode|A 漫射|B 原V2|C 反射|D 粗1/);
 assert.match(homeStudio, /bindR7310FullFloorDiffuseControls/);
 assert.match(homeStudio, /refreshR7310FullFloorDiffuseButton/);
+assert.match(homeStudio, /function formatR7310CameraPoseInfo/);
+assert.match(homeStudio, /window\.reportR7310CameraPoseInfo/);
+assert.match(homeStudio, /cameraState/);
+assert.match(homeStudio, /forward/);
 assert.match(initCommon, /setR7310C1FullRoomDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /setR7310C1FloorDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /setR7310C1NorthWallDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /setR7310C1EastWallDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /setR7310C1WestWallDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /setR7310C1CeilingDiffuseRuntimeEnabled/);
+assert.match(homeStudio, /setR7310C1StructuralDiffuseRuntimeEnabled/);
 assert.match(homeStudio, /地板烘焙：開/);
 assert.match(homeStudio, /北牆烘焙：開/);
 assert.match(homeStudio, /東牆烘焙：開/);
 assert.match(homeStudio, /西牆烘焙：開/);
 assert.match(homeStudio, /天花板烘焙：開/);
+assert.match(homeStudio, /樑柱烘焙：開/);
 assert.doesNotMatch(homeStudio, /bindR739SproutABControls|refreshR739SproutABButtons|btn-r739-ab-|r739-sprout-ab-actions/);
 assert.match(homeStudio, /'snapshot-controls', 'floor-roughness-actions', 'r7310-full-floor-actions', 'snapshot-bar', 'snapshot-actions'/);
 assert.match(runner, /--r7310-full-room-diffuse-bake/);
@@ -539,12 +888,16 @@ assert.match(runner, /--r7310-runtime-short-circuit-test/);
 assert.match(runner, /--r7310-north-wall-runtime-test/);
 assert.match(runner, /--r7310-east-wall-runtime-test/);
 assert.match(runner, /--r7310-west-wall-runtime-test/);
+assert.match(runner, /--r7310-south-wall-runtime-test/);
+assert.match(runner, /--r7310-ceiling-runtime-test/);
+assert.match(runner, /--r7310-structural-runtime-test/);
 assert.match(runner, /--r7310-ui-toggle-test/);
 assert.match(runner, /btn-r7310-floor-diffuse/);
 assert.match(runner, /btn-r7310-north-wall-diffuse/);
 assert.match(runner, /btn-r7310-east-wall-diffuse/);
 assert.match(runner, /btn-r7310-west-wall-diffuse/);
 assert.match(runner, /btn-r7310-ceiling-diffuse/);
+assert.match(runner, /btn-r7310-structural-diffuse/);
 assert.match(runner, /--target-samples=/);
 const snapshotGlowRule = defaultCss.match(/\.snapshot-action-btn\.glow-white\s*\{[\s\S]*?\}/)?.[0] || '';
 assert.match(snapshotGlowRule, /background:\s*rgba\(28,\s*28,\s*26,\s*0\.95\)/);

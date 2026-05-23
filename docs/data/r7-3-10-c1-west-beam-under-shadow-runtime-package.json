@@ -1,0 +1,45 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_west_beam_under_shadow_diffuse_short_circuit",
+  "runtimeEnabledDefault": true,
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/west-beam-under-shadow-1024px-1000spp",
+  "batch": "west_beam_under_shadow",
+  "targetId": 1016,
+  "surfaceName": "c1_west_beam_under_shadow",
+  "requestedSamples": 1000,
+  "targetAtlasResolution": 1024,
+  "diffuseOnly": true,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "upscaled": false,
+  "worldBounds": {
+    "xMin": -1.91,
+    "xMax": -1.75,
+    "zMin": -1.874,
+    "zMax": 2.846,
+    "y": 2.525
+  },
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "coverageReport": "coverage-report.json",
+    "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "fe336c1ce9721c1f73d2f74541b3d0935a2e1f3bc4c0d7409d1c8862dd2f8275",
+    "texelMetadataPatch0Sha256": "00f1ca95a6ef5f3e64b491597516fdf16d35fde4f2d3a2f053997e0a5c75fcae"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 1
+  },
+  "mapping": "single_planar_zx_on_y_face",
+  "referenceForAcceptance": "live_path_tracing_same_camera",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+  "runtimeAtlasSlot": 15,
+  "uniformContractAlias": "tR7310C1WestBeamUnderShadowTexture"
+}

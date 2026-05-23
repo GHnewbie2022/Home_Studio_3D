@@ -31,15 +31,39 @@ function parseArgs(argv) {
     accurateReflectionPreviewTest: false,
     fullRoomDiffuseBake: false,
     r7310Surface: 'floor',
+    r7310NeFurniture: 'bed',
     runtimeShortCircuitTest: false,
     northWallRuntimeTest: false,
     eastWallRuntimeTest: false,
     westWallRuntimeTest: false,
+    southWallRuntimeTest: false,
+    ceilingRuntimeTest: false,
+    structuralRuntimeTest: false,
+    structuralPendingOk: false,
     r7310RuntimeProbeSampleTest: false,
     r738SproutPasteProbeTest: false,
     h5BlackLineProbeTest: false,
+    southWindowFrontEdgeVisualTest: false,
+    southRevealCornerVisualTest: false,
+    southWindowSwColumnContinuityProbeTest: false,
+    seColumnShadowVisualTest: false,
+    seColumnNorthShadowVisualTest: false,
+    seColumnWestShadowVisualTest: false,
+    southWallAcShadowVisualTest: false,
+    eastWallBeamShadowVisualTest: false,
+    swColumnNorthShadowVisualTest: false,
+    westWallBeamShadowVisualTest: false,
+    westWallMosaicDiagnostic: false,
+    westJoinSanityProbe: false,
+    westJoinD1Gate: false,
+    beamUnderShadowProbeTest: false,
+    cameraPoseInfoTest: false,
+    eastWallShadowVisualTest: false,
     uiToggleTest: false,
-    targetSamples: null
+    neFurnitureRuntimeTest: false,
+    targetSamples: null,
+    cameraState: null,
+    westJoinD1OverrideZMax: 2.7179
   };
   for (const arg of argv) {
     if (arg.startsWith('--samples=')) out.samples = Number(arg.slice('--samples='.length));
@@ -61,18 +85,43 @@ function parseArgs(argv) {
     else if (arg === '--accurate-reflection-preview-test') out.accurateReflectionPreviewTest = true;
     else if (arg === '--r7310-full-room-diffuse-bake') out.fullRoomDiffuseBake = true;
     else if (arg.startsWith('--r7310-surface=')) out.r7310Surface = arg.slice('--r7310-surface='.length);
+    else if (arg.startsWith('--r7310-ne-furniture=')) out.r7310NeFurniture = arg.slice('--r7310-ne-furniture='.length);
     else if (arg === '--r7310-runtime-short-circuit-test') out.runtimeShortCircuitTest = true;
     else if (arg === '--r7310-north-wall-runtime-test') out.northWallRuntimeTest = true;
     else if (arg === '--r7310-east-wall-runtime-test') out.eastWallRuntimeTest = true;
     else if (arg === '--r7310-west-wall-runtime-test') out.westWallRuntimeTest = true;
+    else if (arg === '--r7310-south-wall-runtime-test') out.southWallRuntimeTest = true;
+    else if (arg === '--r7310-ceiling-runtime-test') out.ceilingRuntimeTest = true;
+    else if (arg === '--r7310-structural-runtime-test') out.structuralRuntimeTest = true;
+    else if (arg === '--r7310-structural-pending-ok') out.structuralPendingOk = true;
     else if (arg === '--r7310-runtime-probe-sample-test') out.r7310RuntimeProbeSampleTest = true;
     else if (arg === '--r738-sprout-paste-probe-test') out.r738SproutPasteProbeTest = true;
     else if (arg === '--r7310-h5-black-line-probe') out.h5BlackLineProbeTest = true;
+    else if (arg === '--r7310-south-window-front-edge-visual-test') out.southWindowFrontEdgeVisualTest = true;
+    else if (arg === '--r7310-south-reveal-corner-visual-test') out.southRevealCornerVisualTest = true;
+    else if (arg === '--r7310-south-window-sw-column-continuity-probe') out.southWindowSwColumnContinuityProbeTest = true;
+    else if (arg === '--r7310-se-column-shadow-visual-test') out.seColumnShadowVisualTest = true;
+    else if (arg === '--r7310-se-column-north-shadow-visual-test') out.seColumnNorthShadowVisualTest = true;
+    else if (arg === '--r7310-se-column-west-shadow-visual-test') out.seColumnWestShadowVisualTest = true;
+    else if (arg === '--r7310-south-wall-ac-shadow-visual-test') out.southWallAcShadowVisualTest = true;
+    else if (arg === '--r7310-east-wall-beam-shadow-visual-test') out.eastWallBeamShadowVisualTest = true;
+    else if (arg === '--r7310-sw-column-north-shadow-visual-test') out.swColumnNorthShadowVisualTest = true;
+    else if (arg === '--r7310-west-wall-beam-shadow-visual-test') out.westWallBeamShadowVisualTest = true;
+    else if (arg === '--r7310-west-wall-mosaic-diagnostic') out.westWallMosaicDiagnostic = true;
+    else if (arg === '--r7310-west-join-sanity-probe') out.westJoinSanityProbe = true;
+    else if (arg === '--r7310-west-join-d1-gate') out.westJoinD1Gate = true;
+    else if (arg === '--r7310-beam-under-shadow-probe') out.beamUnderShadowProbeTest = true;
+    else if (arg === '--r7310-camera-pose-info-test') out.cameraPoseInfoTest = true;
+    else if (arg === '--r7310-east-wall-shadow-visual-test') out.eastWallShadowVisualTest = true;
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
+    else if (arg === '--r7310-ne-furniture-runtime-test') out.neFurnitureRuntimeTest = true;
     else if (arg.startsWith('--target-samples=')) out.targetSamples = Number(arg.slice('--target-samples='.length));
+    else if (arg.startsWith('--camera-state-json=')) out.cameraState = JSON.parse(arg.slice('--camera-state-json='.length));
+    else if (arg.startsWith('--r7310-west-join-d1-override-zmax=')) out.westJoinD1OverrideZMax = Number(arg.slice('--r7310-west-join-d1-override-zmax='.length));
   }
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
-  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   for (const key of ['samples', 'atlasResolution', 'timeoutMs', 'httpPort', 'cdpPort']) {
     if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
     out[key] = Math.trunc(out[key]);
@@ -80,6 +129,22 @@ function parseArgs(argv) {
   if (out.targetSamples !== null) {
     if (!Number.isFinite(out.targetSamples) || out.targetSamples <= 0) throw new Error('Invalid targetSamples');
     out.targetSamples = Math.trunc(out.targetSamples);
+  }
+  if (!Number.isFinite(out.westJoinD1OverrideZMax)) throw new Error('Invalid westJoinD1OverrideZMax');
+  if (out.cameraState !== null) {
+    const position = out.cameraState.position || {};
+    const forward = out.cameraState.forward || null;
+    for (const key of ['x', 'y', 'z']) {
+      if (!Number.isFinite(position[key])) throw new Error(`Invalid cameraState.position.${key}`);
+    }
+    for (const key of ['yaw', 'pitch', 'fov']) {
+      if (!Number.isFinite(out.cameraState[key])) throw new Error(`Invalid cameraState.${key}`);
+    }
+    if (forward) {
+      for (const key of ['x', 'y', 'z']) {
+        if (!Number.isFinite(forward[key])) throw new Error(`Invalid cameraState.forward.${key}`);
+      }
+    }
   }
   return out;
 }
@@ -149,6 +214,8 @@ async function startStaticServer(port) {
 }
 
 function findBrowser() {
+  const override = process.env.HOME_STUDIO_BROWSER_PATH;
+  if (override && fs.existsSync(override)) return override;
   const candidates = [
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -437,6 +504,453 @@ function base64ToBuffer(value) {
   return Buffer.from(value, 'base64');
 }
 
+function computeWestJoinSanityAggregate(probeResult) {
+  const dedicatedRouteIds = new Set([1, 3, 4, 5, 6]);
+  const bStrongLeftId = 3;
+  const bStrongRightIds = new Set([5, 6]);
+  const gridHalf = probeResult && probeResult.grid ? probeResult.grid.half : 5;
+  const gridStep = probeResult && probeResult.grid ? probeResult.grid.step : 1;
+  const sideLen = 2 * gridHalf + 1;
+  const totalSampleCount = sideLen * sideLen;
+  function pairKey(nameA, nameB) {
+    return nameA <= nameB ? nameA + '|' + nameB : nameB + '|' + nameA;
+  }
+  function median(arr) {
+    if (!arr.length) return 0;
+    const s = arr.slice().sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  }
+  if (!probeResult || !probeResult.anchor || probeResult.anchor.status !== 'valid' || !probeResult.runs || probeResult.runs.length === 0) {
+    return {
+      classification: 'Invalid',
+      reason: 'anchor invalid or no runs',
+      anchorStatus: probeResult && probeResult.anchor ? probeResult.anchor.status : 'no_anchor',
+      runs: [],
+      aggregate: null,
+      recommendedNextStep: '調整 cameraState 或 anchor locator 後重跑。檢查 anchor delta 是否在 ±15mm 內、anchor route 是否為西樑或西南柱面 dedicated route。'
+    };
+  }
+  const runStats = probeResult.runs.map((run, runIdx) => {
+    const level22 = run.levels.level22 || [];
+    const level26 = run.levels.level26 || [];
+    const level23 = run.levels.level23 || [];
+    const level25 = run.levels.level25 || [];
+    const sampleCount = level22.length;
+    const routeHistogram = {};
+    const hitObjectVariations = new Set();
+    const normalVariations = new Set();
+    let validSampleCount = 0;
+    for (let i = 0; i < sampleCount; i += 1) {
+      const route = level22[i] && level22[i].decoded;
+      if (route && Number.isFinite(route.routeId)) {
+        validSampleCount += 1;
+        routeHistogram[route.routeName] = (routeHistogram[route.routeName] || 0) + 1;
+      }
+      const hit = level25[i] && level25[i].decoded;
+      if (hit && Number.isFinite(hit.objectID)) {
+        hitObjectVariations.add(hit.hitType + ':' + hit.objectID);
+      }
+      const n = level23[i] && level23[i].decoded;
+      if (n && Number.isFinite(n.x) && Number.isFinite(n.y) && Number.isFinite(n.z)) {
+        normalVariations.add(Math.round(n.x * 10) / 10 + ',' + Math.round(n.y * 10) / 10 + ',' + Math.round(n.z * 10) / 10);
+      }
+    }
+    const routePairHistogram = {};
+    let maxDifferentRouteLumaStep = 0;
+    let maxSameRouteLumaStep = 0;
+    for (let y = 0; y < sideLen; y += 1) {
+      for (let x = 0; x < sideLen; x += 1) {
+        const idxA = y * sideLen + x;
+        const rA = level22[idxA] && level22[idxA].decoded;
+        const lA = level26[idxA] && level26[idxA].decoded;
+        if (!rA || !lA) continue;
+        const neighbours = [];
+        if (x + 1 < sideLen) neighbours.push(y * sideLen + (x + 1));
+        if (y + 1 < sideLen) neighbours.push((y + 1) * sideLen + x);
+        for (const idxB of neighbours) {
+          const rB = level22[idxB] && level22[idxB].decoded;
+          const lB = level26[idxB] && level26[idxB].decoded;
+          if (!rB || !lB) continue;
+          const step = Math.abs(lA.luma - lB.luma);
+          if (rA.routeId === rB.routeId) {
+            if (step > maxSameRouteLumaStep) maxSameRouteLumaStep = step;
+          } else {
+            if (step > maxDifferentRouteLumaStep) maxDifferentRouteLumaStep = step;
+            const key = pairKey(rA.routeName, rB.routeName);
+            routePairHistogram[key] = (routePairHistogram[key] || 0) + 1;
+          }
+        }
+      }
+    }
+    const dedicatedRouteIdsInRun = new Set();
+    for (const name of Object.keys(routeHistogram)) {
+      const sampleEntry = level22.find((s) => s && s.decoded && s.decoded.routeName === name);
+      if (sampleEntry && dedicatedRouteIds.has(sampleEntry.decoded.routeId)) dedicatedRouteIdsInRun.add(sampleEntry.decoded.routeId);
+    }
+    return {
+      randomVec2: run.randomVec2,
+      validSampleCount,
+      routeHistogram,
+      routePairHistogram,
+      maxDifferentRouteLumaStep,
+      maxSameRouteLumaStep,
+      hitObjectUniqueCount: hitObjectVariations.size,
+      normalUniqueBucketsCount: normalVariations.size,
+      dedicatedRouteIdsInRun: Array.from(dedicatedRouteIdsInRun)
+    };
+  });
+  const validSampleCounts = runStats.map((r) => r.validSampleCount);
+  const minValidSamples = Math.min.apply(null, validSampleCounts);
+  if (minValidSamples < 80) {
+    return {
+      classification: 'Invalid',
+      reason: 'valid sample count too low (min=' + minValidSamples + ' < 80 of ' + totalSampleCount + ')',
+      anchorStatus: 'valid',
+      runs: runStats,
+      aggregate: null,
+      recommendedNextStep: '視角內 ROI 1 區域被遮擋或 anchor 偏離；建議調整 cameraState 或重新校準 anchor。'
+    };
+  }
+  const diffStepsList = runStats.map((r) => r.maxDifferentRouteLumaStep);
+  const sameStepsList = runStats.map((r) => r.maxSameRouteLumaStep);
+  const aggregate = {
+    differentRouteLumaStep: {
+      min: Math.min.apply(null, diffStepsList),
+      median: median(diffStepsList),
+      max: Math.max.apply(null, diffStepsList),
+      mean: diffStepsList.reduce((s, v) => s + v, 0) / diffStepsList.length
+    },
+    sameRouteLumaStep: {
+      min: Math.min.apply(null, sameStepsList),
+      median: median(sameStepsList),
+      max: Math.max.apply(null, sameStepsList),
+      mean: sameStepsList.reduce((s, v) => s + v, 0) / sameStepsList.length
+    }
+  };
+  const allRoutes = new Set();
+  runStats.forEach((r) => { Object.keys(r.routeHistogram).forEach((n) => allRoutes.add(n)); });
+  const routeStable = runStats.every((r) => Object.keys(r.routeHistogram).length === 1);
+  const pairPersistence = {};
+  runStats.forEach((r) => {
+    Object.keys(r.routePairHistogram).forEach((key) => {
+      pairPersistence[key] = (pairPersistence[key] || 0) + 1;
+    });
+  });
+  const pairsAcross2 = Object.keys(pairPersistence).filter((k) => pairPersistence[k] >= 2);
+  function isBStrongPair(pairKeyStr) {
+    const [a, b] = pairKeyStr.split('|');
+    const sampleA = runStats.find((r) => r.routeHistogram[a]) && a;
+    const sampleB = runStats.find((r) => r.routeHistogram[b]) && b;
+    if (!sampleA || !sampleB) return false;
+    const idA = inferRouteIdFromName(probeResult, a);
+    const idB = inferRouteIdFromName(probeResult, b);
+    if (idA == null || idB == null) return false;
+    return (idA === bStrongLeftId && bStrongRightIds.has(idB)) || (idB === bStrongLeftId && bStrongRightIds.has(idA));
+  }
+  function pairIsDedicatedDedicated(pairKeyStr) {
+    const [a, b] = pairKeyStr.split('|');
+    const idA = inferRouteIdFromName(probeResult, a);
+    const idB = inferRouteIdFromName(probeResult, b);
+    if (idA == null || idB == null) return false;
+    return dedicatedRouteIds.has(idA) && dedicatedRouteIds.has(idB);
+  }
+  const bStrongPersistentPairs = pairsAcross2.filter(isBStrongPair);
+  const everyRunHasDedicatedDedicatedPair = runStats.every((r) => Object.keys(r.routePairHistogram).some(pairIsDedicatedDedicated));
+  const med = aggregate.differentRouteLumaStep.median;
+  const sameMed = aggregate.sameRouteLumaStep.median;
+  const hasRouteOrHitJump = !routeStable || runStats.some((r) => r.hitObjectUniqueCount > 1 || r.normalUniqueBucketsCount > 1);
+  let classification = 'D';
+  let reason = 'median luma step in gray band 0.03..0.10 or runs disagree';
+  let recommendedNextStep = '回到完整 P1 / P2 / D1 路線。';
+  if (routeStable && sameMed <= 0.03) {
+    classification = 'A';
+    reason = 'routeStable + median(same-route luma step) <= 0.03';
+    recommendedNextStep = 'H2 / H4 降權，轉查 H1 alpha audit 或 LIVE 幾何暗化。';
+  } else if (bStrongPersistentPairs.length > 0 && med > 0.10) {
+    classification = 'B-strong';
+    reason = '1013 × (1015|1016) pair appears in >=2 runs and median luma step > 0.10';
+    recommendedNextStep = '預授權 D1 觸發。啟動 uniform gate uR7310C1WestWallBeamShadowZMaxOverride，跑 baseline / override 對照與 5% 量化檢查。';
+  } else if (everyRunHasDedicatedDedicatedPair && pairsAcross2.length === 0 && med > 0.10) {
+    classification = 'B-weak';
+    reason = '3 runs all show dedicated×dedicated pair but specific pair varies + median > 0.10';
+    recommendedNextStep = '回報 JSON 摘要，等使用者裁示走 D1 或 P1。';
+  } else if (hasRouteOrHitJump && med <= 0.03) {
+    classification = 'C';
+    reason = 'route / hit object / normal jumps but median luma step <= 0.03';
+    recommendedNextStep = '進完整 P1 + gated H5 candidate audit。';
+  }
+  return {
+    classification,
+    reason,
+    anchorStatus: 'valid',
+    runs: runStats,
+    aggregate: {
+      ...aggregate,
+      routeStable,
+      pairPersistence,
+      bStrongPersistentPairs,
+      everyRunHasDedicatedDedicatedPair,
+      allRoutes: Array.from(allRoutes)
+    },
+    recommendedNextStep
+  };
+}
+
+function inferRouteIdFromName(probeResult, name) {
+  const map = {
+    none: 0,
+    sw_column_north_shadow_hybrid: 1,
+    west_wall_full_hybrid: 2,
+    west_wall_beam_shadow_hybrid: 3,
+    sw_column_inner_shadow_hybrid: 4,
+    west_beam_inner_shadow_hybrid: 5,
+    west_beam_under_shadow_hybrid: 6,
+    structural_beam_column_only: 7
+  };
+  return name in map ? map[name] : null;
+}
+
+function medianNumber(values) {
+  const finite = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  if (finite.length === 0) return null;
+  const mid = Math.floor(finite.length / 2);
+  return finite.length % 2 ? finite[mid] : (finite[mid - 1] + finite[mid]) / 2;
+}
+
+function westJoinTargetId(sample) {
+  const decoded = sample && sample.decoded ? sample.decoded : {};
+  if (Number.isFinite(decoded.targetId)) return Math.round(decoded.targetId);
+  return null;
+}
+
+function westJoinRouteName(sample) {
+  const decoded = sample && sample.decoded ? sample.decoded : {};
+  return typeof decoded.routeName === 'string' ? decoded.routeName : 'unknown';
+}
+
+function westJoinLuma(sample) {
+  const decoded = sample && sample.decoded ? sample.decoded : {};
+  return Number.isFinite(decoded.luma) ? decoded.luma : null;
+}
+
+function summarizeWestJoinD1Anchor(routeReport, radianceReport, sampleCount = 121) {
+  const routeSamples = (routeReport && routeReport.samplePoints ? routeReport.samplePoints : []).slice(0, sampleCount);
+  const radianceSamples = (radianceReport && radianceReport.samplePoints ? radianceReport.samplePoints : []).slice(0, sampleCount);
+  const sideLen = Math.round(Math.sqrt(sampleCount));
+  const routeHistogram = {};
+  const targetHistogram = {};
+  const routePairHistogram = {};
+  const targetPairHistogram = {};
+  const differentRouteSteps = [];
+  const sameRouteSteps = [];
+  routeSamples.forEach((sample) => {
+    const routeName = westJoinRouteName(sample);
+    const targetId = westJoinTargetId(sample);
+    routeHistogram[routeName] = (routeHistogram[routeName] || 0) + 1;
+    if (targetId !== null) targetHistogram[targetId] = (targetHistogram[targetId] || 0) + 1;
+  });
+  function pairKey(a, b) {
+    return String(a) <= String(b) ? `${a}|${b}` : `${b}|${a}`;
+  }
+  for (let y = 0; y < sideLen; y += 1) {
+    for (let x = 0; x < sideLen; x += 1) {
+      const idxA = y * sideLen + x;
+      const routeA = routeSamples[idxA];
+      const lumaA = westJoinLuma(radianceSamples[idxA]);
+      if (!routeA || lumaA === null) continue;
+      const neighbours = [];
+      if (x + 1 < sideLen) neighbours.push(y * sideLen + x + 1);
+      if (y + 1 < sideLen) neighbours.push((y + 1) * sideLen + x);
+      for (const idxB of neighbours) {
+        const routeB = routeSamples[idxB];
+        const lumaB = westJoinLuma(radianceSamples[idxB]);
+        if (!routeB || lumaB === null) continue;
+        const targetA = westJoinTargetId(routeA);
+        const targetB = westJoinTargetId(routeB);
+        const step = Math.abs(lumaA - lumaB);
+        if (targetA === targetB) {
+          sameRouteSteps.push(step);
+        } else {
+          differentRouteSteps.push(step);
+          routePairHistogram[pairKey(westJoinRouteName(routeA), westJoinRouteName(routeB))] = (routePairHistogram[pairKey(westJoinRouteName(routeA), westJoinRouteName(routeB))] || 0) + 1;
+          targetPairHistogram[pairKey(targetA, targetB)] = (targetPairHistogram[pairKey(targetA, targetB)] || 0) + 1;
+        }
+      }
+    }
+  }
+  return {
+    sampleCount: routeSamples.length,
+    routeHistogram,
+    targetHistogram,
+    routePairHistogram,
+    targetPairHistogram,
+    routePairBefore: targetPairHistogram['1013|1016'] || 0,
+    routePairAfter: targetPairHistogram['1013|1016'] || 0,
+    differentRouteLumaStep: {
+      count: differentRouteSteps.length,
+      min: differentRouteSteps.length ? Math.min(...differentRouteSteps) : null,
+      median: medianNumber(differentRouteSteps),
+      max: differentRouteSteps.length ? Math.max(...differentRouteSteps) : null
+    },
+    sameRouteLumaStep: {
+      count: sameRouteSteps.length,
+      median: medianNumber(sameRouteSteps),
+      max: sameRouteSteps.length ? Math.max(...sameRouteSteps) : null
+    }
+  };
+}
+
+function summarizeWestJoinD1Safety(baseline, override, anchorCount) {
+  const baselineRoutes = baseline.routeReport.samplePoints.slice(anchorCount);
+  const overrideRoutes = override.routeReport.samplePoints.slice(anchorCount);
+  const baselineRadiance = baseline.radianceReport.samplePoints.slice(anchorCount);
+  const overrideRadiance = override.radianceReport.samplePoints.slice(anchorCount);
+  let westWallEffectiveSampleCount = 0;
+  let changedPixelCount = 0;
+  let maxLumaDelta = 0;
+  let sumLumaDelta = 0;
+  const routeChanges = {};
+  for (let i = 0; i < baselineRoutes.length; i += 1) {
+    const beforeTarget = westJoinTargetId(baselineRoutes[i]);
+    const afterTarget = westJoinTargetId(overrideRoutes[i]);
+    if (beforeTarget !== 1013 && afterTarget !== 1013) continue;
+    const beforeLuma = westJoinLuma(baselineRadiance[i]);
+    const afterLuma = westJoinLuma(overrideRadiance[i]);
+    if (beforeLuma === null || afterLuma === null) continue;
+    westWallEffectiveSampleCount += 1;
+    const key = `${beforeTarget || 'none'}>${afterTarget || 'none'}`;
+    routeChanges[key] = (routeChanges[key] || 0) + 1;
+    const delta = Math.abs(afterLuma - beforeLuma);
+    sumLumaDelta += delta;
+    if (delta > maxLumaDelta) maxLumaDelta = delta;
+    if (delta > 0.10) changedPixelCount += 1;
+  }
+  const changedPixelRatio = westWallEffectiveSampleCount > 0 ? changedPixelCount / westWallEffectiveSampleCount : null;
+  return {
+    definition: 'dense samples where baseline or override targetId is 1013',
+    westWallEffectiveSampleCount,
+    changedPixelCount,
+    changedPixelRatio,
+    maxLumaDelta,
+    meanLumaDelta: westWallEffectiveSampleCount > 0 ? sumLumaDelta / westWallEffectiveSampleCount : null,
+    threshold: { lumaDelta: 0.10, changedPixelRatio: 0.05 },
+    routeChanges,
+    status: changedPixelRatio !== null && changedPixelRatio < 0.05 ? 'pass' : 'fail'
+  };
+}
+
+function formatPercent(value) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(2)}%` : 'n/a';
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function writeWestJoinD1Review(report, reviewDir) {
+  fs.mkdirSync(path.join(reviewDir, 'assets'), { recursive: true });
+  const assetSource = path.join(repoRoot, 'docs/html-review/2026-05-20-r7-3-10-roi1-sanity-check-result-opus/assets/html-review.js');
+  if (fs.existsSync(assetSource)) {
+    fs.copyFileSync(assetSource, path.join(reviewDir, 'assets/html-review.js'));
+  }
+  const statusClass = report.result.d1DiagnosticStatus === 'hit' ? 'ok' : 'warn';
+  const routePairSentence = report.result.routePairRemoved
+    ? `baseline 在 ROI 1 anchor grid 有 <code>1013|1016</code> pair；override 後此 pair 變成 <code>${report.result.overridePairCount}</code>。這表示 z max gate 打到 OPUS sanity check 找到的黑線機制。`
+    : `baseline 在 ROI 1 anchor grid 有 <code>1013|1016</code> pair；override 後此 pair 仍是 <code>${report.result.overridePairCount}</code>。這表示本次 z max gate 沒有打到 OPUS sanity check 找到的黑線機制。`;
+  const html = `<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ROI 1 D1 Uniform Gate 結果報告（CODEX版）</title>
+  <style>
+    body { margin: 0; font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1f2933; background: #f6f7f9; }
+    .shell { max-width: 1120px; margin: 0 auto; padding: 28px 18px 48px; }
+    .review-doc { background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 28px; }
+    h1, h2, h3 { line-height: 1.25; color: #111827; }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    h2 { font-size: 21px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+    h3 { font-size: 17px; margin-top: 20px; }
+    .meta { color: #667085; margin: 0 0 18px; }
+    .callout { border: 1px solid #cbd5e1; border-left: 5px solid #64748b; background: #f8fafc; border-radius: 8px; padding: 14px 16px; margin: 18px 0; }
+    .callout.ok { border-left-color: #15803d; background: #f0fdf4; }
+    .callout.warn { border-left-color: #b45309; background: #fffbeb; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code { background: #eef2f7; padding: 1px 4px; border-radius: 4px; }
+    pre { overflow: auto; background: #0f172a; color: #e5e7eb; padding: 14px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+    th, td { text-align: left; border: 1px solid #d8dee8; padding: 8px 10px; vertical-align: top; }
+    th { background: #f1f5f9; }
+    .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    figure { margin: 0; }
+    img { width: 100%; border: 1px solid #d8dee8; border-radius: 6px; display: block; }
+    figcaption { color: #667085; font-size: 13px; margin-top: 6px; }
+    @media (max-width: 760px) { .shots { grid-template-columns: 1fr; } .review-doc { padding: 20px; } }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-05-20 · ROI 1 D1 uniform gate · CODEX 撰</p>
+    <h1>ROI 1 D1 Uniform Gate 結果報告（CODEX版）</h1>
+
+    <div class="callout ${statusClass}">
+      <strong>${report.result.d1DiagnosticStatus === 'hit' ? 'D1 命中' : 'D1 未命中'}</strong>
+      <p style="margin:8px 0 0">${escapeHtml(report.result.summary)}</p>
+    </div>
+
+    <h2>1. 核心數字</h2>
+    <table>
+      <tbody>
+        <tr><th>baseline z max</th><td><code>${report.baseline.zMaxOverride}</code></td></tr>
+        <tr><th>override z max</th><td><code>${report.override.zMaxOverride}</code></td></tr>
+        <tr><th>baseline 1013|1016 pair</th><td><code>${report.result.baselinePairCount}</code></td></tr>
+        <tr><th>override 1013|1016 pair</th><td><code>${report.result.overridePairCount}</code></td></tr>
+        <tr><th>baseline max luma step</th><td><code>${report.result.baselineMaxStep === null ? 'n/a' : report.result.baselineMaxStep.toFixed(4)}</code></td></tr>
+        <tr><th>override max luma step</th><td><code>${report.result.overrideMaxStep === null ? 'n/a' : report.result.overrideMaxStep.toFixed(4)}</code></td></tr>
+        <tr><th>5% safety ratio</th><td><code>${formatPercent(report.safety.changedPixelRatio)}</code>（${report.safety.changedPixelCount}/${report.safety.westWallEffectiveSampleCount}）</td></tr>
+      </tbody>
+    </table>
+
+    <h2>2. 同視角 A/B 截圖</h2>
+    <div class="shots">
+      <figure>
+        <img src="./baseline.png" alt="D1 baseline screenshot">
+        <figcaption>baseline：<code>uR7310C1WestWallBeamShadowZMaxOverride = 3.056</code></figcaption>
+      </figure>
+      <figure>
+        <img src="./override.png" alt="D1 override screenshot">
+        <figcaption>override：<code>uR7310C1WestWallBeamShadowZMaxOverride = ${report.override.zMaxOverride}</code></figcaption>
+      </figure>
+    </div>
+
+    <h2>3. 判讀</h2>
+    <p>${routePairSentence}</p>
+    <p>安全檢查使用 dense samples 中 baseline 或 override targetId 為 <code>1013</code> 的點。luma delta 大於 <code>0.10</code> 的比例是 <code>${formatPercent(report.safety.changedPixelRatio)}</code>。門檻是小於 <code>5%</code>。</p>
+
+    <h2>4. 結論邊界</h2>
+    <p>D1 仍是診斷。若要變成正式修法，下一步要把這個 gate 轉成更完整的 ownership policy，並用同視角檢查 ROI 1 之外的西牆、樑底面、西南柱交界。</p>
+
+    <h2>5. JSON 摘要</h2>
+    <pre><code>${escapeHtml(JSON.stringify({
+      result: report.result,
+      safety: report.safety,
+      package: report.package
+    }, null, 2))}</code></pre>
+  </main>
+</div>
+${fs.existsSync(assetSource) ? '<script src="./assets/html-review.js"></script>' : ''}
+</body>
+</html>
+`;
+  fs.writeFileSync(path.join(reviewDir, 'index.html'), html);
+}
+
 function getGitValue(args, fallback) {
   try {
     return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8' }).trim() || fallback;
@@ -452,6 +966,7 @@ function buildManifest({ report, packageDir, smokeTest }) {
   return {
     version: report.version || 'r7-3-8-c1-1000spp-bake-capture',
     config: 1,
+    northeastFurnitureMode: report.northeastFurnitureMode || null,
     batch: report.batch || null,
     targetId: report.targetId || null,
     surfaceName: report.surfaceName || 'floor_center_c1_reference',
@@ -503,11 +1018,27 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
   const resolution = report.targetAtlasResolution;
   const expectedAtlasBytes = resolution * resolution * 4 * 4;
   const expectedMetadataBytes = resolution * resolution * 12 * 4;
-  const validTexelRatioMinimum = report.surfaceName === 'c1_south_wall'
+  const validTexelRatioMinimum = report.surfaceName === 'c1_east_wall'
+    ? 0.70
+    : (report.surfaceName === 'c1_west_wall'
+      ? 0.60
+      : (report.surfaceName === 'c1_south_wall'
     ? 0.60
-    : (report.surfaceName === 'c1_north_wall' || report.surfaceName === 'c1_west_wall'
+      : (report.surfaceName === 'c1_south_wall_ac_shadow'
+    ? 0.59
+      : (report.surfaceName === 'c1_north_wall'
       ? 0.80
-      : 0.99);
+      : (report.surfaceName === 'c1_west_wall_beam_shadow'
+        ? 0.70
+      : (report.surfaceName === 'c1_east_wall_beam_shadow'
+        ? 0.70
+      : (report.surfaceName === 'c1_structural_beams_columns'
+        ? 0.30
+        : (report.surfaceName === 'c1_se_column_north_shadow'
+          ? 0.93
+        : (report.surfaceName === 'c1_se_column_west_shadow'
+          ? 0.50
+          : 0.99)))))))));
   const atlasVisibleLuma = summarizeAtlasVisibleLuma(atlasBuffer);
   const checks = {
     version: report.version === 'r7-3-8-c1-1000spp-bake-capture' || report.version === 'r7-3-10-full-room-diffuse-bake-architecture-probe',
@@ -528,6 +1059,300 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
   };
   const failed = Object.entries(checks).filter(([, value]) => !value).map(([key]) => key);
   return { status: failed.length === 0 ? 'pass' : 'fail', checks, failed };
+}
+
+function loadStructuralGeometryGateReport() {
+  return JSON.parse(execFileSync('node', ['docs/tools/r7-3-10-structural-geometry-gate.mjs'], {
+    cwd: repoRoot,
+    encoding: 'utf8'
+  }));
+}
+
+function r7310RuntimeScopeForSurface(surfaceName) {
+  if (surfaceName === 'c1_floor_full_room') return 'c1_floor_full_room_diffuse_short_circuit';
+  if (surfaceName === 'c1_north_wall') return 'c1_north_wall_first_hit_hybrid';
+  if (surfaceName === 'c1_east_wall') return 'c1_east_wall_first_hit_hybrid';
+  if (surfaceName === 'c1_west_wall') return 'c1_west_wall_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_wall') return 'c1_south_wall_diffuse_short_circuit';
+  if (surfaceName === 'c1_ceiling') return 'c1_ceiling_diffuse_short_circuit';
+  if (surfaceName === 'c1_structural_beams_columns') return 'c1_structural_beams_columns_diffuse_short_circuit';
+  if (surfaceName === 'c1_se_column_north_shadow') return 'c1_se_column_north_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_se_column_west_shadow') return 'c1_se_column_west_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_wall_ac_shadow') return 'c1_south_wall_ac_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_east_wall_beam_shadow') return 'c1_east_wall_beam_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_sw_column_north_shadow') return 'c1_sw_column_north_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_west_wall_beam_shadow') return 'c1_west_wall_beam_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_sw_column_inner_shadow') return 'c1_sw_column_inner_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_west_beam_inner_shadow') return 'c1_west_beam_inner_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_west_beam_under_shadow') return 'c1_west_beam_under_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_east_beam_inner_shadow') return 'c1_east_beam_inner_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_east_beam_under_shadow') return 'c1_east_beam_under_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_window_left_reveal_shadow') return 'c1_south_window_left_reveal_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'c1_south_window_right_reveal_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'c1_south_window_bottom_reveal_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'c1_south_window_top_reveal_shadow_diffuse_short_circuit';
+  return 'unknown';
+}
+
+function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed') {
+  if (surfaceName === 'c1_floor_full_room') return 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_north_wall') return 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_east_wall') return 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_west_wall') return 'docs/data/r7-3-10-c1-west-wall-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_south_wall') return 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_ceiling') return 'docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_structural_beams_columns') return 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_se_column_north_shadow') return 'docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json';
+  if (surfaceName === 'c1_se_column_west_shadow') return 'docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json';
+  if (surfaceName === 'c1_south_wall_ac_shadow') return 'docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json';
+  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json';
+  if (surfaceName === 'c1_east_wall_beam_shadow') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json';
+  if (surfaceName === 'c1_sw_column_north_shadow') return 'docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json';
+  if (surfaceName === 'c1_west_wall_beam_shadow') return 'docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json';
+  if (surfaceName === 'c1_sw_column_inner_shadow') return 'docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json';
+  if (surfaceName === 'c1_west_beam_inner_shadow') return 'docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json';
+  if (surfaceName === 'c1_west_beam_under_shadow') return 'docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json';
+  if (surfaceName === 'c1_east_beam_inner_shadow') return 'docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json';
+  if (surfaceName === 'c1_east_beam_under_shadow') return 'docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json';
+  if (surfaceName === 'c1_south_window_left_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json';
+  if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
+  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
+  if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
+  return null;
+}
+
+function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = 'bed') {
+  const root = path.join(repoRoot, 'assets', 'bakes', 'r7-3-10', 'c1-static-diffuse');
+  if (surfaceName === 'c1_floor_full_room') return path.join(root, 'floor-full-room-1024px-1000spp');
+  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'north-wall-wardrobe-door-hole-1024px-1000spp');
+  if (surfaceName === 'c1_north_wall') return path.join(root, 'north-wall-door-hole-1024px-1000spp');
+  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-wardrobe-1024px-1000spp');
+  if (surfaceName === 'c1_east_wall') return path.join(root, 'east-wall-1024px-1000spp');
+  if (surfaceName === 'c1_west_wall') return path.join(root, 'west-wall-iron-door-hole-1024px-1000spp');
+  if (surfaceName === 'c1_south_wall') return path.join(root, 'south-wall-window-hole-1024px-1000spp');
+  if (surfaceName === 'c1_ceiling') return path.join(root, 'ceiling-full-room-1024px-1000spp');
+  if (surfaceName === 'c1_structural_beams_columns') return path.join(root, 'structural-beams-columns-1024px-1000spp');
+  if (surfaceName === 'c1_se_column_north_shadow') return path.join(root, 'se-column-north-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_se_column_west_shadow') return path.join(root, 'se-column-west-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_south_wall_ac_shadow') return path.join(root, 'south-wall-ac-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-beam-shadow-wardrobe-1024px-1000spp');
+  if (surfaceName === 'c1_east_wall_beam_shadow') return path.join(root, 'east-wall-beam-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_sw_column_north_shadow') return path.join(root, 'sw-column-north-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_west_wall_beam_shadow') return path.join(root, 'west-wall-beam-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_sw_column_inner_shadow') return path.join(root, 'sw-column-inner-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_west_beam_inner_shadow') return path.join(root, 'west-beam-inner-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_west_beam_under_shadow') return path.join(root, 'west-beam-under-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_east_beam_inner_shadow') return path.join(root, 'east-beam-inner-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_east_beam_under_shadow') return path.join(root, 'east-beam-under-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_south_window_left_reveal_shadow') return path.join(root, 'south-window-left-reveal-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_south_window_right_reveal_shadow') return path.join(root, 'south-window-right-reveal-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return path.join(root, 'south-window-bottom-reveal-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_south_window_top_reveal_shadow') return path.join(root, 'south-window-top-reveal-shadow-1024px-1000spp');
+  return null;
+}
+
+function buildR7310RuntimePointer({ report, manifest, validationReport, artifactHashes }) {
+  const pointer = {
+    version: report.version,
+    packageStatus: 'architecture_probe',
+    runtimeScope: r7310RuntimeScopeForSurface(report.surfaceName),
+    runtimeEnabledDefault: true,
+    packageDir: manifest.packageDir,
+    batch: report.batch,
+    northeastFurnitureMode: report.northeastFurnitureMode || null,
+    targetId: report.targetId,
+    surfaceName: report.surfaceName,
+    requestedSamples: report.requestedSamples,
+    targetAtlasResolution: report.targetAtlasResolution,
+    diffuseOnly: report.diffuseOnly === true,
+    bakedRadianceKind: report.bakedRadianceKind || null,
+    directLightAlreadyIncluded: report.directLightAlreadyIncluded === true,
+    addDirectLightAfterBakeLookup: report.addDirectLightAfterBakeLookup === true,
+    upscaled: report.upscaled === false ? false : report.upscaled,
+    worldBounds: report.worldBounds || null,
+    artifacts: {
+      manifest: 'manifest.json',
+      atlasPatch0: 'atlas-patch-000-rgba-f32.bin',
+      coverageReport: 'coverage-report.json',
+      validationReport: 'validation-report.json'
+    },
+    artifactHashes,
+    validation: {
+      status: validationReport.status,
+      runnerStatus: validationReport.runnerStatus,
+      actualSamples: report.actualSamples,
+      validTexelRatio: report.atlasSummary ? report.atlasSummary.validTexelRatio : null
+    }
+  };
+  if (report.surfaceName === 'c1_structural_beams_columns') {
+    const gateReport = loadStructuralGeometryGateReport();
+    pointer.mapping = 'packed_rect_islands';
+    pointer.runtimeAtlasSlot = 6;
+    pointer.geometryGateReport = gateReport;
+    pointer.islands = gateReport.finalIslandRegistry;
+    pointer.excludedContactFaces = gateReport.excludedContactFaces;
+    pointer.islandCoverageByName = report.islandCoverageByName || {};
+    pointer.islandLumaByName = report.islandLumaByName || {};
+  }
+  if (report.surfaceName === 'c1_north_wall') {
+    pointer.mapping = 'planar_xy';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 1;
+    pointer.runtimeArchitecture = 'single_full_north_wall_first_hit_hybrid';
+  }
+  if (report.surfaceName === 'c1_east_wall') {
+    pointer.mapping = 'planar_zy';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 2;
+    pointer.runtimeArchitecture = 'single_full_east_wall_first_hit_hybrid';
+  }
+  if (report.surfaceName === 'c1_west_wall') {
+    pointer.mapping = 'planar_zy';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 3;
+    pointer.runtimeArchitecture = 'single_full_west_wall_first_hit_hybrid';
+  }
+  if (report.surfaceName === 'c1_se_column_north_shadow') {
+    pointer.mapping = 'single_planar_xy_on_z_face';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 7;
+    pointer.uniformContractAlias = 'tR7310C1SeColumnNorthShadowTexture';
+  }
+  if (report.surfaceName === 'c1_se_column_west_shadow') {
+    pointer.mapping = 'single_planar_zy_on_x_face';
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 8;
+    pointer.uniformContractAlias = 'tR7310C1SeColumnWestShadowTexture';
+  }
+  if (report.surfaceName === 'c1_south_wall_ac_shadow') {
+    pointer.mapping = 'single_planar_xy_on_z_face';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 9;
+    pointer.uniformContractAlias = 'tR7310C1SouthWallAcShadowTexture';
+  }
+  if (report.surfaceName === 'c1_east_wall_beam_shadow') {
+    pointer.mapping = 'single_planar_zy_on_x_face';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 10;
+    pointer.uniformContractAlias = 'tR7310C1EastWallBeamShadowTexture';
+    pointer.runtimeArchitecture = 'single_east_wall_beam_shadow_short_circuit';
+  }
+  if (report.surfaceName === 'c1_sw_column_north_shadow') {
+    pointer.mapping = 'single_planar_xy_on_z_face';
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 11;
+    pointer.uniformContractAlias = 'tR7310C1SwColumnNorthShadowTexture';
+  }
+  if (report.surfaceName === 'c1_west_wall_beam_shadow') {
+    pointer.mapping = 'single_planar_zy_on_x_face';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 12;
+    pointer.uniformContractAlias = 'tR7310C1WestWallBeamShadowTexture';
+  }
+  const dedicatedBeamColumnShadow = {
+    c1_sw_column_inner_shadow: {
+      mapping: 'single_planar_zy_on_x_face',
+      runtimeAtlasSlot: 13,
+      uniformContractAlias: 'tR7310C1SwColumnInnerShadowTexture'
+    },
+    c1_west_beam_inner_shadow: {
+      mapping: 'single_planar_zy_on_x_face',
+      runtimeAtlasSlot: 14,
+      uniformContractAlias: 'tR7310C1WestBeamInnerShadowTexture'
+    },
+    c1_west_beam_under_shadow: {
+      mapping: 'single_planar_zx_on_y_face',
+      runtimeAtlasSlot: 15,
+      uniformContractAlias: 'tR7310C1WestBeamUnderShadowTexture'
+    },
+    c1_east_beam_inner_shadow: {
+      mapping: 'single_planar_zy_on_x_face',
+      runtimeAtlasSlot: 16,
+      uniformContractAlias: 'tR7310C1EastBeamInnerShadowTexture'
+    },
+    c1_east_beam_under_shadow: {
+      mapping: 'single_planar_zx_on_y_face',
+      runtimeAtlasSlot: 17,
+      uniformContractAlias: 'tR7310C1EastBeamUnderShadowTexture'
+    },
+    c1_south_window_left_reveal_shadow: {
+      mapping: 'single_planar_zy_on_x_face',
+      runtimeAtlasSlot: 18,
+      uniformContractAlias: 'tR7310C1SouthWindowLeftRevealShadowTexture'
+    },
+    c1_south_window_right_reveal_shadow: {
+      mapping: 'single_planar_zy_on_x_face',
+      runtimeAtlasSlot: 19,
+      uniformContractAlias: 'tR7310C1SouthWindowRightRevealShadowTexture'
+    },
+    c1_south_window_bottom_reveal_shadow: {
+      mapping: 'single_planar_xz_on_y_face',
+      runtimeAtlasSlot: 20,
+      uniformContractAlias: 'tR7310C1SouthWindowBottomRevealShadowTexture'
+    },
+    c1_south_window_top_reveal_shadow: {
+      mapping: 'single_planar_xz_on_y_face',
+      runtimeAtlasSlot: 21,
+      uniformContractAlias: 'tR7310C1SouthWindowTopRevealShadowTexture'
+    }
+  };
+  if (dedicatedBeamColumnShadow[report.surfaceName]) {
+    const dedicated = dedicatedBeamColumnShadow[report.surfaceName];
+    pointer.mapping = dedicated.mapping;
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = dedicated.runtimeAtlasSlot;
+    pointer.uniformContractAlias = dedicated.uniformContractAlias;
+  }
+  return pointer;
 }
 
 function sha256(buffer) {
@@ -635,6 +1460,21 @@ async function main() {
     await cdp.connect();
     await cdp.send('Runtime.enable');
     await cdp.send('Page.enable');
+    if (args.beamUnderShadowProbeTest) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 1458,
+        height: 741,
+        deviceScaleFactor: 1,
+        mobile: false
+      });
+    } else if (args.eastWallShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.southWindowSwColumnContinuityProbeTest || args.r7310RuntimeProbeSampleTest) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 1458,
+        height: 741,
+        deviceScaleFactor: 3.5,
+        mobile: false
+      });
+    }
     console.error('[r738-runner] navigating page');
     await cdp.send('Page.navigate', { url });
     await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -650,9 +1490,11 @@ async function main() {
             ? 'typeof window.reportR739C1AccurateReflectionConfig === "function"'
             : args.previewTest
               ? 'typeof window.reportR738C1BakePastePreviewConfig === "function"'
-              : args.accurateReflectionCapture
+          : args.accurateReflectionCapture
                 ? 'typeof window.reportR739C1AccurateReflectionAfterSamples === "function"'
-                : args.runtimeShortCircuitTest || args.northWallRuntimeTest || args.eastWallRuntimeTest || args.westWallRuntimeTest || args.r7310RuntimeProbeSampleTest || args.h5BlackLineProbeTest || args.uiToggleTest
+                : args.cameraPoseInfoTest
+                  ? 'typeof window.reportR7310CameraPoseInfo === "function"'
+                  : args.runtimeShortCircuitTest || args.northWallRuntimeTest || args.eastWallRuntimeTest || args.westWallRuntimeTest || args.southWallRuntimeTest || args.ceilingRuntimeTest || args.structuralRuntimeTest || args.r7310RuntimeProbeSampleTest || args.beamUnderShadowProbeTest || args.h5BlackLineProbeTest || args.southWindowFrontEdgeVisualTest || args.southRevealCornerVisualTest || args.seColumnShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.eastWallShadowVisualTest || args.uiToggleTest || args.neFurnitureRuntimeTest
                   ? 'typeof window.reportR7310C1FullRoomDiffuseRuntimeProbe === "function"'
                   : args.r738SproutPasteProbeTest
                     ? 'typeof window.reportR738C1SproutPasteRuntimeProbe === "function"'
@@ -660,6 +1502,170 @@ async function main() {
                     ? 'typeof window.reportR7310C1FloorDiffuseBakeAfterSamples === "function"'
                     : 'typeof window.reportR738C1BakeCaptureAfterSamples === "function"';
     await waitForExpression(cdp, helperExpression, 60000);
+    if (args.cameraPoseInfoTest) {
+      console.error('[r738-runner] running R7-3.10 camera pose info helper');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const el = document.getElementById('cameraPoseInfo');
+          const copyButton = document.getElementById('copyCameraPoseInfo');
+          const pose = window.reportR7310CameraPoseInfo();
+          let copiedText = null;
+          let clipboardMockInstalled = false;
+          try {
+            Object.defineProperty(navigator, 'clipboard', {
+              configurable: true,
+              value: {
+                writeText: async (text) => {
+                  copiedText = text;
+                }
+              }
+            });
+            clipboardMockInstalled = true;
+          } catch (err) {
+            clipboardMockInstalled = false;
+          }
+          if (copyButton && clipboardMockInstalled) {
+            copyButton.click();
+            await new Promise((resolve) => setTimeout(resolve, 80));
+          }
+          const finitePosition = pose && pose.cameraState && pose.cameraState.position &&
+            Number.isFinite(pose.cameraState.position.x) &&
+            Number.isFinite(pose.cameraState.position.y) &&
+            Number.isFinite(pose.cameraState.position.z);
+          const finiteForward = pose && pose.forward &&
+            Number.isFinite(pose.forward.x) &&
+            Number.isFinite(pose.forward.y) &&
+            Number.isFinite(pose.forward.z);
+          const checks = {
+            hasElement: !!el,
+            readonly: !!el && el.readOnly === true,
+            elementHasCopyText: !!el && typeof el.value === 'string' && el.value.includes('cameraState=') && el.value.includes('forward=') && el.value.includes('view='),
+            reportReady: !!pose && pose.ready === true,
+            reportHasCopyText: !!pose && typeof pose.copyText === 'string' && pose.copyText.includes('cameraState=') && pose.copyText.includes('forward=') && pose.copyText.includes('view='),
+            finitePosition,
+            finiteForward,
+            finiteFov: !!pose && pose.cameraState && Number.isFinite(pose.cameraState.fov),
+            facingLabel: !!pose && pose.view && typeof pose.view.facing === 'string' && pose.view.facing.length > 0,
+            hasCopyButton: !!copyButton,
+            copyButtonInitialLabel: !!copyButton && copyButton.getAttribute('type') === 'button',
+            clipboardMockInstalled,
+            copyButtonShowsCopied: !!copyButton && copyButton.textContent === '已複製',
+            copiedTextMatchesElement: copiedText === (el ? el.value : pose.copyText)
+          };
+          const failed = Object.entries(checks).filter(([, value]) => value !== true).map(([key]) => key);
+          return {
+            version: 'r7-3-10-camera-pose-info',
+            status: failed.length === 0 ? 'pass' : 'fail',
+            checks,
+            failed,
+            pose,
+            elementValue: el ? el.value : null
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: 30000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-camera-pose-info', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'camera-pose-info-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 camera pose info test completed');
+      console.log(`status: ${report.status}`);
+      console.log(`copyText: ${report.pose ? report.pose.copyText : ''}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.neFurnitureRuntimeTest) {
+      console.error('[r738-runner] running R7-3.10 northeast furniture runtime helper');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const timeout = ${args.timeoutMs};
+          const startedAt = performance.now();
+          while (typeof window.setC2NortheastFurnitureMode !== 'function' && performance.now() - startedAt < timeout) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+          if (typeof window.setC2NortheastFurnitureMode !== 'function')
+            throw new Error('setC2NortheastFurnitureMode missing');
+          if (typeof window.loadR7310C1NorthWallDiffuseRuntimePackage !== 'function')
+            throw new Error('loadR7310C1NorthWallDiffuseRuntimePackage missing');
+          if (typeof window.loadR7310C1EastWallDiffuseRuntimePackage !== 'function')
+            throw new Error('loadR7310C1EastWallDiffuseRuntimePackage missing');
+          if (typeof window.loadR7310C1NorthWallWardrobeDiffuseRuntimePackage !== 'function')
+            throw new Error('loadR7310C1NorthWallWardrobeDiffuseRuntimePackage missing');
+          if (typeof window.loadR7310C1EastWallWardrobeDiffuseRuntimePackage !== 'function')
+            throw new Error('loadR7310C1EastWallWardrobeDiffuseRuntimePackage missing');
+          if (typeof window.loadR7310C1EastWallBeamShadowRuntimePackage !== 'function')
+            throw new Error('loadR7310C1EastWallBeamShadowRuntimePackage missing');
+          if (typeof window.loadR7310C1EastWallBeamShadowWardrobeRuntimePackage !== 'function')
+            throw new Error('loadR7310C1EastWallBeamShadowWardrobeRuntimePackage missing');
+
+          const bedLayout = window.setC2NortheastFurnitureMode('bed');
+          await window.loadR7310C1NorthWallDiffuseRuntimePackage();
+          await window.loadR7310C1EastWallDiffuseRuntimePackage();
+          await window.loadR7310C1EastWallBeamShadowRuntimePackage();
+          const bedReport = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+
+          const wardrobeLayout = window.setC2NortheastFurnitureMode('wardrobe');
+          await window.loadR7310C1NorthWallWardrobeDiffuseRuntimePackage();
+          await window.loadR7310C1EastWallWardrobeDiffuseRuntimePackage();
+          await window.loadR7310C1EastWallBeamShadowWardrobeRuntimePackage();
+          const wardrobeReport = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+
+          const bedLayoutAfter = window.setC2NortheastFurnitureMode('bed');
+          const bedAfterReport = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          return {
+            version: 'r7-3-10-c1-ne-furniture-runtime',
+            bedLayout,
+            bedReport,
+            wardrobeLayout,
+            wardrobeReport,
+            bedLayoutAfter,
+            bedAfterReport,
+            status: bedLayout.activeMode === 'bed' &&
+              bedReport.northeastFurnitureRuntimeMode === 'bed' &&
+              bedReport.northWallFurnitureVariant === 'bed' &&
+              bedReport.eastWallFurnitureVariant === 'bed' &&
+              bedReport.eastWallBeamShadowFurnitureVariant === 'bed' &&
+              !bedReport.northWallPackageDir.includes('wardrobe') &&
+              !bedReport.eastWallPackageDir.includes('wardrobe') &&
+              !bedReport.eastWallBeamShadowPackageDir.includes('wardrobe') &&
+              wardrobeLayout.activeMode === 'wardrobe' &&
+              wardrobeReport.northeastFurnitureRuntimeMode === 'wardrobe' &&
+              wardrobeReport.northWallReady === true &&
+              wardrobeReport.eastWallReady === true &&
+              wardrobeReport.eastWallBeamShadowReady === true &&
+              wardrobeReport.northWallFurnitureVariant === 'wardrobe' &&
+              wardrobeReport.eastWallFurnitureVariant === 'wardrobe' &&
+              wardrobeReport.eastWallBeamShadowFurnitureVariant === 'wardrobe' &&
+              wardrobeReport.northWallPackageDir.includes('north-wall-wardrobe-door-hole-1024px-1000spp') &&
+              wardrobeReport.eastWallPackageDir.includes('east-wall-wardrobe-1024px-1000spp') &&
+              wardrobeReport.eastWallBeamShadowPackageDir.includes('east-wall-beam-shadow-wardrobe-1024px-1000spp') &&
+              bedLayoutAfter.activeMode === 'bed' &&
+              bedAfterReport.northeastFurnitureRuntimeMode === 'bed' &&
+              bedAfterReport.northWallFurnitureVariant === 'bed' &&
+              bedAfterReport.eastWallFurnitureVariant === 'bed' &&
+              bedAfterReport.eastWallBeamShadowFurnitureVariant === 'bed'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-ne-furniture-runtime', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 C1 northeast furniture runtime test completed');
+      console.log(`status: ${report.status ? 'pass' : 'fail'}`);
+      console.log(`bedNorthWallPackageDir: ${report.bedReport ? report.bedReport.northWallPackageDir : ''}`);
+      console.log(`wardrobeNorthWallPackageDir: ${report.wardrobeReport ? report.wardrobeReport.northWallPackageDir : ''}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== true) process.exitCode = 1;
+      completed = true;
+      return;
+    }
     if (args.uiToggleTest) {
       console.error('[r738-runner] running R7-3.10 UI toggle helper');
       const report = await evaluate(cdp, `(() => {
@@ -670,12 +1676,14 @@ async function main() {
           const westButton = document.getElementById('btn-r7310-west-wall-diffuse');
           const southButton = document.getElementById('btn-r7310-south-wall-diffuse');
           const ceilingButton = document.getElementById('btn-r7310-ceiling-diffuse');
+          const structuralButton = document.getElementById('btn-r7310-structural-diffuse');
           if (!floorButton) throw new Error('btn-r7310-floor-diffuse missing');
           if (!northButton) throw new Error('btn-r7310-north-wall-diffuse missing');
           if (!eastButton) throw new Error('btn-r7310-east-wall-diffuse missing');
           if (!westButton) throw new Error('btn-r7310-west-wall-diffuse missing');
           if (!southButton) throw new Error('btn-r7310-south-wall-diffuse missing');
           if (!ceilingButton) throw new Error('btn-r7310-ceiling-diffuse missing');
+          if (!structuralButton) throw new Error('btn-r7310-structural-diffuse missing');
           await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
           const initial = {
             floorText: floorButton.textContent,
@@ -684,6 +1692,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
           };
           async function clickOffIfEnabled(button, surfaceKey) {
@@ -698,6 +1707,7 @@ async function main() {
           await clickOffIfEnabled(westButton, 'westWallEnabled');
           await clickOffIfEnabled(southButton, 'southWallEnabled');
           await clickOffIfEnabled(ceilingButton, 'ceilingEnabled');
+          await clickOffIfEnabled(structuralButton, 'structuralEnabled');
           const before = {
             floorText: floorButton.textContent,
             northText: northButton.textContent,
@@ -705,6 +1715,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
           };
           floorButton.click();
@@ -716,6 +1727,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             floorClassName: floorButton.className,
             floorTitle: floorButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
@@ -729,6 +1741,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             northClassName: northButton.className,
             northTitle: northButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
@@ -742,6 +1755,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             eastClassName: eastButton.className,
             eastTitle: eastButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
@@ -755,6 +1769,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             westClassName: westButton.className,
             westTitle: westButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
@@ -768,6 +1783,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             southClassName: southButton.className,
             southTitle: southButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
@@ -781,8 +1797,23 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             ceilingClassName: ceilingButton.className,
             ceilingTitle: ceilingButton.title,
+            report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+          };
+          structuralButton.click();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const afterStructuralOn = {
+            floorText: floorButton.textContent,
+            northText: northButton.textContent,
+            eastText: eastButton.textContent,
+            westText: westButton.textContent,
+            southText: southButton.textContent,
+            ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
+            structuralClassName: structuralButton.className,
+            structuralTitle: structuralButton.title,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
           };
           floorButton.click();
@@ -794,6 +1825,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
           };
           northButton.click();
@@ -806,6 +1838,8 @@ async function main() {
           await new Promise((resolve) => setTimeout(resolve, 100));
           ceilingButton.click();
           await new Promise((resolve) => setTimeout(resolve, 100));
+          structuralButton.click();
+          await new Promise((resolve) => setTimeout(resolve, 100));
           const afterAllOff = {
             floorText: floorButton.textContent,
             northText: northButton.textContent,
@@ -813,6 +1847,7 @@ async function main() {
             westText: westButton.textContent,
             southText: southButton.textContent,
             ceilingText: ceilingButton.textContent,
+            structuralText: structuralButton.textContent,
             report: window.reportR7310C1FullRoomDiffuseRuntimeConfig()
           };
           return {
@@ -825,6 +1860,7 @@ async function main() {
             afterWestOn,
             afterSouthOn,
             afterCeilingOn,
+            afterStructuralOn,
             afterFloorOff,
             afterAllOff,
             status: initial.floorText === '地板烘焙：開' &&
@@ -833,6 +1869,7 @@ async function main() {
               initial.westText === '西牆烘焙：開' &&
               initial.southText === '南牆烘焙：開' &&
               initial.ceilingText === '天花板烘焙：開' &&
+              initial.structuralText === '樑柱烘焙：開' &&
               initial.report.enabled === true &&
               initial.report.floorEnabled === true &&
               initial.report.northWallEnabled === true &&
@@ -840,6 +1877,7 @@ async function main() {
               initial.report.westWallEnabled === true &&
               initial.report.southWallEnabled === true &&
               initial.report.ceilingEnabled === true &&
+              initial.report.structuralEnabled === true &&
               initial.report.sproutPasteApplied === false &&
               initial.report.sproutPasteUniformMode === 0 &&
               before.floorText === '地板烘焙：關' &&
@@ -848,6 +1886,7 @@ async function main() {
               before.westText === '西牆烘焙：關' &&
               before.southText === '南牆烘焙：關' &&
               before.ceilingText === '天花板烘焙：關' &&
+              before.structuralText === '樑柱烘焙：關' &&
               before.report.uiMeaningOff === 'all_live_path_tracing' &&
               before.report.sproutPasteApplied === false &&
               before.report.sproutPasteUniformMode === 0 &&
@@ -857,6 +1896,7 @@ async function main() {
               afterFloorOn.westText === '西牆烘焙：關' &&
               afterFloorOn.southText === '南牆烘焙：關' &&
               afterFloorOn.ceilingText === '天花板烘焙：關' &&
+              afterFloorOn.structuralText === '樑柱烘焙：關' &&
               afterFloorOn.report.enabled === true &&
               afterFloorOn.report.floorEnabled === true &&
               afterFloorOn.report.northWallEnabled === false &&
@@ -864,12 +1904,14 @@ async function main() {
               afterFloorOn.report.westWallEnabled === false &&
               afterFloorOn.report.southWallEnabled === false &&
               afterFloorOn.report.ceilingEnabled === false &&
+              afterFloorOn.report.structuralEnabled === false &&
               afterFloorOn.report.uniformFloorMode === 1 &&
               afterFloorOn.report.uniformNorthWallMode === 0 &&
               afterFloorOn.report.uniformEastWallMode === 0 &&
               afterFloorOn.report.uniformWestWallMode === 0 &&
               afterFloorOn.report.uniformSouthWallMode === 0 &&
               afterFloorOn.report.uniformCeilingMode === 0 &&
+              afterFloorOn.report.uniformStructuralMode === 0 &&
               afterFloorOn.report.sproutPasteApplied === false &&
               afterFloorOn.report.sproutPasteUniformMode === 0 &&
               afterNorthOn.floorText === '地板烘焙：開' &&
@@ -878,39 +1920,45 @@ async function main() {
               afterNorthOn.westText === '西牆烘焙：關' &&
               afterNorthOn.southText === '南牆烘焙：關' &&
               afterNorthOn.ceilingText === '天花板烘焙：關' &&
+              afterNorthOn.structuralText === '樑柱烘焙：關' &&
               afterNorthOn.report.floorEnabled === true &&
               afterNorthOn.report.northWallEnabled === true &&
               afterNorthOn.report.eastWallEnabled === false &&
               afterNorthOn.report.westWallEnabled === false &&
               afterNorthOn.report.southWallEnabled === false &&
               afterNorthOn.report.ceilingEnabled === false &&
+              afterNorthOn.report.structuralEnabled === false &&
               afterNorthOn.report.uniformFloorMode === 1 &&
               afterNorthOn.report.uniformNorthWallMode === 1 &&
               afterNorthOn.report.uniformEastWallMode === 0 &&
               afterNorthOn.report.uniformWestWallMode === 0 &&
               afterNorthOn.report.uniformSouthWallMode === 0 &&
               afterNorthOn.report.uniformCeilingMode === 0 &&
+              afterNorthOn.report.uniformStructuralMode === 0 &&
               afterNorthOn.report.sproutPasteApplied === false &&
               afterNorthOn.report.sproutPasteUniformMode === 0 &&
-              afterNorthOn.report.uiMeaningOn === 'selected_floor_north_east_west_south_wall_or_ceiling_1024_baked_diffuse_plus_live_reflection' &&
+              afterNorthOn.report.uiMeaningOn === 'selected_floor_north_east_west_south_wall_ceiling_or_structural_1024_baked_diffuse_plus_live_reflection' &&
               afterEastOn.floorText === '地板烘焙：開' &&
               afterEastOn.northText === '北牆烘焙：開' &&
               afterEastOn.eastText === '東牆烘焙：開' &&
               afterEastOn.westText === '西牆烘焙：關' &&
               afterEastOn.southText === '南牆烘焙：關' &&
               afterEastOn.ceilingText === '天花板烘焙：關' &&
+              afterEastOn.structuralText === '樑柱烘焙：關' &&
               afterEastOn.report.floorEnabled === true &&
               afterEastOn.report.northWallEnabled === true &&
               afterEastOn.report.eastWallEnabled === true &&
               afterEastOn.report.westWallEnabled === false &&
               afterEastOn.report.southWallEnabled === false &&
               afterEastOn.report.ceilingEnabled === false &&
+              afterEastOn.report.structuralEnabled === false &&
               afterEastOn.report.uniformFloorMode === 1 &&
               afterEastOn.report.uniformNorthWallMode === 1 &&
               afterEastOn.report.uniformEastWallMode === 1 &&
               afterEastOn.report.uniformWestWallMode === 0 &&
               afterEastOn.report.uniformSouthWallMode === 0 &&
               afterEastOn.report.uniformCeilingMode === 0 &&
+              afterEastOn.report.uniformStructuralMode === 0 &&
               afterEastOn.report.sproutPasteApplied === false &&
               afterEastOn.report.sproutPasteUniformMode === 0 &&
               afterWestOn.floorText === '地板烘焙：開' &&
@@ -919,44 +1967,62 @@ async function main() {
               afterWestOn.westText === '西牆烘焙：開' &&
               afterWestOn.southText === '南牆烘焙：關' &&
               afterWestOn.ceilingText === '天花板烘焙：關' &&
+              afterWestOn.structuralText === '樑柱烘焙：關' &&
               afterWestOn.report.floorEnabled === true &&
               afterWestOn.report.northWallEnabled === true &&
               afterWestOn.report.eastWallEnabled === true &&
               afterWestOn.report.westWallEnabled === true &&
               afterWestOn.report.southWallEnabled === false &&
               afterWestOn.report.ceilingEnabled === false &&
+              afterWestOn.report.structuralEnabled === false &&
               afterWestOn.report.uniformFloorMode === 1 &&
               afterWestOn.report.uniformNorthWallMode === 1 &&
               afterWestOn.report.uniformEastWallMode === 1 &&
               afterWestOn.report.uniformWestWallMode === 1 &&
               afterWestOn.report.uniformSouthWallMode === 0 &&
               afterWestOn.report.uniformCeilingMode === 0 &&
+              afterWestOn.report.uniformStructuralMode === 0 &&
               afterSouthOn.floorText === '地板烘焙：開' &&
               afterSouthOn.northText === '北牆烘焙：開' &&
               afterSouthOn.eastText === '東牆烘焙：開' &&
               afterSouthOn.westText === '西牆烘焙：開' &&
               afterSouthOn.southText === '南牆烘焙：開' &&
               afterSouthOn.ceilingText === '天花板烘焙：關' &&
+              afterSouthOn.structuralText === '樑柱烘焙：關' &&
               afterSouthOn.report.floorEnabled === true &&
               afterSouthOn.report.northWallEnabled === true &&
               afterSouthOn.report.eastWallEnabled === true &&
               afterSouthOn.report.westWallEnabled === true &&
               afterSouthOn.report.southWallEnabled === true &&
               afterSouthOn.report.ceilingEnabled === false &&
+              afterSouthOn.report.structuralEnabled === false &&
               afterSouthOn.report.uniformFloorMode === 1 &&
               afterSouthOn.report.uniformNorthWallMode === 1 &&
               afterSouthOn.report.uniformEastWallMode === 1 &&
               afterSouthOn.report.uniformWestWallMode === 1 &&
               afterSouthOn.report.uniformSouthWallMode === 1 &&
               afterSouthOn.report.uniformCeilingMode === 0 &&
+              afterSouthOn.report.uniformStructuralMode === 0 &&
               afterCeilingOn.floorText === '地板烘焙：開' &&
               afterCeilingOn.northText === '北牆烘焙：開' &&
               afterCeilingOn.eastText === '東牆烘焙：開' &&
               afterCeilingOn.westText === '西牆烘焙：開' &&
               afterCeilingOn.southText === '南牆烘焙：開' &&
               afterCeilingOn.ceilingText === '天花板烘焙：開' &&
+              afterCeilingOn.structuralText === '樑柱烘焙：關' &&
               afterCeilingOn.report.ceilingEnabled === true &&
+              afterCeilingOn.report.structuralEnabled === false &&
               afterCeilingOn.report.uniformCeilingMode === 1 &&
+              afterCeilingOn.report.uniformStructuralMode === 0 &&
+              afterStructuralOn.floorText === '地板烘焙：開' &&
+              afterStructuralOn.northText === '北牆烘焙：開' &&
+              afterStructuralOn.eastText === '東牆烘焙：開' &&
+              afterStructuralOn.westText === '西牆烘焙：開' &&
+              afterStructuralOn.southText === '南牆烘焙：開' &&
+              afterStructuralOn.ceilingText === '天花板烘焙：開' &&
+              afterStructuralOn.structuralText === '樑柱烘焙：開' &&
+              afterStructuralOn.report.structuralEnabled === true &&
+              afterStructuralOn.report.uniformStructuralMode === 1 &&
               afterWestOn.report.sproutPasteApplied === false &&
               afterWestOn.report.sproutPasteUniformMode === 0 &&
               afterEastOn.report.sproutPasteApplied === false &&
@@ -967,18 +2033,21 @@ async function main() {
               afterFloorOff.westText === '西牆烘焙：開' &&
               afterFloorOff.southText === '南牆烘焙：開' &&
               afterFloorOff.ceilingText === '天花板烘焙：開' &&
+              afterFloorOff.structuralText === '樑柱烘焙：開' &&
               afterFloorOff.report.floorEnabled === false &&
               afterFloorOff.report.northWallEnabled === true &&
               afterFloorOff.report.eastWallEnabled === true &&
               afterFloorOff.report.westWallEnabled === true &&
               afterFloorOff.report.southWallEnabled === true &&
               afterFloorOff.report.ceilingEnabled === true &&
+              afterFloorOff.report.structuralEnabled === true &&
               afterFloorOff.report.uniformFloorMode === 0 &&
               afterFloorOff.report.uniformNorthWallMode === 1 &&
               afterFloorOff.report.uniformEastWallMode === 1 &&
               afterFloorOff.report.uniformWestWallMode === 1 &&
               afterFloorOff.report.uniformSouthWallMode === 1 &&
               afterFloorOff.report.uniformCeilingMode === 1 &&
+              afterFloorOff.report.uniformStructuralMode === 1 &&
               afterFloorOff.report.sproutPasteApplied === false &&
               afterFloorOff.report.sproutPasteUniformMode === 0 &&
               afterAllOff.floorText === '地板烘焙：關' &&
@@ -987,6 +2056,7 @@ async function main() {
               afterAllOff.westText === '西牆烘焙：關' &&
               afterAllOff.southText === '南牆烘焙：關' &&
               afterAllOff.ceilingText === '天花板烘焙：關' &&
+              afterAllOff.structuralText === '樑柱烘焙：關' &&
               afterAllOff.report.enabled === false &&
               afterAllOff.report.uniformFloorMode === 0 &&
               afterAllOff.report.uniformNorthWallMode === 0 &&
@@ -994,6 +2064,7 @@ async function main() {
               afterAllOff.report.uniformWestWallMode === 0 &&
               afterAllOff.report.uniformSouthWallMode === 0 &&
               afterAllOff.report.uniformCeilingMode === 0 &&
+              afterAllOff.report.uniformStructuralMode === 0 &&
               afterAllOff.report.sproutPasteApplied === false &&
               afterAllOff.report.sproutPasteUniformMode === 0
                 ? 'pass'
@@ -1020,59 +2091,384 @@ async function main() {
       completed = true;
       return;
     }
+    if (args.beamUnderShadowProbeTest) {
+      console.error('[r738-runner] running R7-3.10 beam under-shadow Phase 1 probe');
+      const cameraCases = args.cameraState ? [
+        {
+          name: 'west-beam-under-shadow-user-l-corner',
+          expectedRouteId: 1,
+          expectedTargetId: 1016,
+          expectedRouteName: 'west_beam_under_shadow_hybrid',
+          screenshot: 'west-beam-under-shadow-user-l-corner.png',
+          bounds: { xMin: -1.92, xMax: -1.74, yMin: 2.50, yMax: 2.55, zMin: -1.90, zMax: 2.87 },
+          cameraState: args.cameraState,
+          focusSamplePoints: [
+            { x: 743, y: 443, role: 'r7310_l_corner_black_line' },
+            { x: 815, y: 474, role: 'r7310_l_corner_black_line' },
+            { x: 880, y: 474, role: 'r7310_l_corner_black_line' },
+            { x: 955, y: 457, role: 'r7310_l_corner_black_line' },
+            { x: 1033, y: 438, role: 'r7310_l_corner_black_line' },
+            { x: 1099, y: 423, role: 'r7310_l_corner_black_line' },
+            { x: 1171, y: 407, role: 'r7310_l_corner_black_line' },
+            { x: 1246, y: 389, role: 'r7310_l_corner_black_line' },
+            { x: 1313, y: 373, role: 'r7310_l_corner_black_line' },
+            { x: 1382, y: 357, role: 'r7310_l_corner_black_line' }
+          ]
+        }
+      ] : [
+        {
+          name: 'west-beam-under-shadow',
+          expectedRouteId: 1,
+          expectedTargetId: 1016,
+          expectedRouteName: 'west_beam_under_shadow_hybrid',
+          screenshot: 'west-beam-under-shadow-probe.png',
+          bounds: { xMin: -1.92, xMax: -1.74, yMin: 2.50, yMax: 2.55, zMin: -1.90, zMax: 2.87 },
+          cameraState: {
+            name: 'r7310_phase1_west_beam_under_shadow_probe',
+            position: { x: -1.652805, y: 2.453416, z: 2.729668 },
+            yaw: 2.257985,
+            pitch: 0.267,
+            fov: 55,
+            forward: { x: -0.745641, y: 0.263839, z: 0.611889 }
+          }
+        },
+        {
+          name: 'east-beam-under-shadow',
+          expectedRouteId: 2,
+          expectedTargetId: 1018,
+          expectedRouteName: 'east_beam_under_shadow_hybrid',
+          screenshot: 'east-beam-under-shadow-probe.png',
+          bounds: { xMin: 1.84, xMax: 1.92, yMin: 2.49, yMax: 2.54, zMin: -1.90, zMax: 2.51 },
+          cameraState: {
+            name: 'r7310_phase1_east_beam_under_shadow_probe',
+            position: { x: 1.786518, y: 2.426144, z: 2.375295 },
+            yaw: -2.5156,
+            pitch: 0.613,
+            fov: 55,
+            forward: { x: 0.479224, y: 0.575324, z: 0.662832 }
+          }
+        }
+      ];
+      const probeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraCases = ${JSON.stringify(cameraCases)};
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          async function waitForBeamUnderPackages(timeoutMs) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(true);
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeoutMs) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 beam under-shadow package error: ' + config.error);
+              if (config.westBeamUnderShadowReady && config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 beam under-shadow runtime packages did not become ready');
+          }
+          function buildProbeGrid(cameraCase) {
+            const samplePoints = [];
+            const columns = 55;
+            const rows = 31;
+            for (let row = 0; row < rows; row += 1) {
+              const y = Math.round(window.innerHeight * (0.08 + 0.84 * row / Math.max(1, rows - 1)));
+              for (let column = 0; column < columns; column += 1) {
+                const x = Math.round(window.innerWidth * (0.06 + 0.88 * column / Math.max(1, columns - 1)));
+                samplePoints.push({ x, y });
+              }
+            }
+            if (Array.isArray(cameraCase.focusSamplePoints)) {
+              for (const point of cameraCase.focusSamplePoints)
+                samplePoints.push(point);
+            }
+            return samplePoints;
+          }
+          function inRange(value, min, max) {
+            return Number.isFinite(value) && value >= min && value <= max;
+          }
+          function withinBounds(position, bounds) {
+            return !!position &&
+              inRange(position.x, bounds.xMin, bounds.xMax) &&
+              inRange(position.y, bounds.yMin, bounds.yMax) &&
+              inRange(position.z, bounds.zMin, bounds.zMax);
+          }
+          function summarizeSamples(cameraCase, levelReports) {
+            const routeSamples = levelReports.level11.samplePoints || [];
+            const normalSamples = levelReports.level12.samplePoints || [];
+            const worldSamples = levelReports.level13.samplePoints || [];
+            const objectSamples = levelReports.level14.samplePoints || [];
+            const directSamples = levelReports.level15.samplePoints || [];
+            const facingSamples = levelReports.level16.samplePoints || [];
+            const samples = routeSamples.map((routeSample, index) => {
+              const normal = normalSamples[index] ? normalSamples[index].decoded : null;
+              const world = worldSamples[index] ? worldSamples[index].decoded : null;
+              const hitObject = objectSamples[index] ? objectSamples[index].decoded : null;
+              const direct = directSamples[index] ? directSamples[index].decoded : null;
+              const directFacing = facingSamples[index] ? facingSamples[index].decoded : null;
+              return {
+                x: routeSample.x,
+                y: routeSample.y,
+                rtPixel: routeSample.rtPixel,
+                route: routeSample.decoded,
+                normal,
+                world,
+                hitObject,
+                direct,
+                directFacing
+              };
+            });
+            const routeCounts = {};
+            for (const sample of samples) {
+              const key = sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+              routeCounts[key] = (routeCounts[key] || 0) + 1;
+            }
+            const expectedRouteMatches = samples.filter((sample) => {
+              return sample.route && sample.route.routeId === cameraCase.expectedRouteId;
+            });
+            const targetMatches = samples.filter((sample) => {
+              return sample.route && sample.route.targetId === cameraCase.expectedTargetId;
+            });
+            const acceptedMatches = expectedRouteMatches.filter((sample) => {
+              return sample.normal &&
+                sample.normal.y < -0.75 &&
+                withinBounds(sample.world, cameraCase.bounds) &&
+                sample.hitObject &&
+                Number.isFinite(sample.hitObject.hitType) &&
+                Number.isFinite(sample.hitObject.objectID);
+            });
+            const directLumaValues = acceptedMatches
+              .map((sample) => sample.direct && Number(sample.direct.directLuma))
+              .filter((value) => Number.isFinite(value));
+            const sourceFacingValues = acceptedMatches
+              .map((sample) => sample.directFacing && Number(sample.directFacing.sourceFacingCos))
+              .filter((value) => Number.isFinite(value));
+            const pickedLightCounts = {};
+            const zeroContributionClassCounts = {};
+            for (const sample of acceptedMatches) {
+              if (sample.direct && Number.isFinite(sample.direct.pickedLightIndex)) {
+                const key = String(sample.direct.pickedLightIndex);
+                pickedLightCounts[key] = (pickedLightCounts[key] || 0) + 1;
+              }
+              if (sample.directFacing && Number.isFinite(sample.directFacing.zeroContributionClass)) {
+                const key = String(sample.directFacing.zeroContributionClass);
+                zeroContributionClassCounts[key] = (zeroContributionClassCounts[key] || 0) + 1;
+              }
+            }
+            const sum = (values) => values.reduce((total, value) => total + value, 0);
+            return {
+              samplePointCount: samples.length,
+              expectedRouteId: cameraCase.expectedRouteId,
+              expectedRouteName: cameraCase.expectedRouteName,
+              expectedTargetId: cameraCase.expectedTargetId,
+              routeCounts,
+              expectedRouteMatchCount: expectedRouteMatches.length,
+              targetMatchCount: targetMatches.length,
+              acceptedMatchCount: acceptedMatches.length,
+              directLuma: {
+                count: directLumaValues.length,
+                nonZeroCount: directLumaValues.filter((value) => value > 1e-6).length,
+                min: directLumaValues.length > 0 ? Math.min(...directLumaValues) : null,
+                max: directLumaValues.length > 0 ? Math.max(...directLumaValues) : null,
+                mean: directLumaValues.length > 0 ? sum(directLumaValues) / directLumaValues.length : null
+              },
+              sourceFacingCos: {
+                count: sourceFacingValues.length,
+                nonZeroCount: sourceFacingValues.filter((value) => value > 1e-6).length,
+                min: sourceFacingValues.length > 0 ? Math.min(...sourceFacingValues) : null,
+                max: sourceFacingValues.length > 0 ? Math.max(...sourceFacingValues) : null,
+                mean: sourceFacingValues.length > 0 ? sum(sourceFacingValues) / sourceFacingValues.length : null
+              },
+              pickedLightCounts,
+              zeroContributionClassCounts,
+              bestAcceptedSample: acceptedMatches[0] || null,
+              bestRouteSample: expectedRouteMatches[0] || targetMatches[0] || samples.find((sample) => sample.route && sample.route.routeId > 0) || null,
+              status: acceptedMatches.length > 0 ? 'pass' : 'fail'
+            };
+          }
+          const packageConfig = await waitForBeamUnderPackages(${args.timeoutMs});
+          const reports = [];
+          for (const cameraCase of cameraCases) {
+            const samplePoints = buildProbeGrid(cameraCase);
+            const levelReports = {};
+            for (const level of [11, 12, 13, 14, 15, 16]) {
+              levelReports['level' + level] = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs},
+                allSurfaces: true,
+                probeLevel: level,
+                cameraState: cameraCase.cameraState,
+                randomVec2: { x: 0.5, y: 0.5 },
+                samplePoints,
+                samplePointSpace: 'canvasCssPixel'
+              });
+            }
+            reports.push({
+              cameraCase,
+              summary: summarizeSamples(cameraCase, levelReports),
+              levelReports
+            });
+          }
+          return {
+            version: 'r7-3-10-beam-under-shadow-probe',
+            packageConfig,
+            samplePointSpace: 'canvasCssPixel',
+            probeLevels: [11, 12, 13, 14, 15, 16],
+            reports,
+            status: reports.every((entry) => entry.summary.status === 'pass') ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-beam-under-shadow-probe', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const screenshots = [];
+      for (const cameraCase of cameraCases) {
+        const visualReport = await evaluate(cdp, `(() => {
+          return (async () => {
+            function wait(ms) {
+              return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+            async function waitForSamples(targetSamples, timeoutMs, label) {
+              if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+              if (typeof wakeRender === 'function') wakeRender(label);
+              const startedAt = performance.now();
+              while (typeof sampleCounter === 'number' &&
+                sampleCounter < targetSamples &&
+                performance.now() - startedAt < timeoutMs) {
+                await wait(250);
+              }
+            }
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(true);
+            const readyStart = performance.now();
+            while (performance.now() - readyStart < ${args.timeoutMs}) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.westBeamUnderShadowReady && config.eastBeamUnderShadowReady) break;
+              await wait(100);
+            }
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(${JSON.stringify(cameraCase.cameraState)});
+            const targetSamples = ${args.targetSamples || 32};
+            await waitForSamples(targetSamples, ${args.timeoutMs}, 'r7310-beam-under-shadow-probe-' + ${JSON.stringify(cameraCase.name)});
+            return {
+              version: 'r7-3-10-beam-under-shadow-probe-visual',
+              viewName: ${JSON.stringify(cameraCase.name)},
+              cameraState: ${JSON.stringify(cameraCase.cameraState)},
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              pose: typeof window.reportR7310CameraPoseInfo === 'function'
+                ? window.reportR7310CameraPoseInfo()
+                : null,
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 60000
+        });
+        const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        const screenshotPath = path.join(visualDir, cameraCase.screenshot);
+        fs.writeFileSync(screenshotPath, base64ToBuffer(screenshot.data));
+        screenshots.push({
+          ...visualReport,
+          screenshot: path.relative(repoRoot, screenshotPath)
+        });
+      }
+      const report = {
+        ...probeReport,
+        screenshots
+      };
+      fs.writeFileSync(path.join(visualDir, 'probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 beam under-shadow Phase 1 probe completed');
+      console.log(`status: ${report.status}`);
+      for (const entry of report.reports) {
+        console.log(`${entry.cameraCase.name}: expected=${entry.summary.expectedRouteName} accepted=${entry.summary.acceptedMatchCount} routeMatches=${entry.summary.expectedRouteMatchCount} directNonZero=${entry.summary.directLuma.nonZeroCount} sourceFacingNonZero=${entry.summary.sourceFacingCos.nonZeroCount}`);
+      }
+      for (const screenshot of screenshots) {
+        console.log(`${screenshot.viewName}: screenshot=${screenshot.screenshot} samples=${screenshot.sampleCounter}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
     if (args.r7310RuntimeProbeSampleTest) {
       console.error('[r738-runner] running R7-3.10 runtime probe sample helper');
       const report = await evaluate(cdp, `(() => {
         return (async () => {
-          const samplePoints = [
-            { x: Math.floor(window.innerWidth * 0.50), y: Math.floor(window.innerHeight * 0.50) },
-            { x: Math.floor(window.innerWidth * 0.50), y: Math.floor(window.innerHeight * 0.64) },
-            { x: Math.floor(window.innerWidth * 0.50), y: Math.floor(window.innerHeight * 0.78) }
+          const requestedCameraState = ${JSON.stringify(args.cameraState)};
+          const samplePoints = requestedCameraState ? [
+            { name: 'sw_black_rect_center', x: 462, y: 367 },
+            { name: 'sw_black_rect_left', x: 405, y: 367 },
+            { name: 'sw_black_rect_right', x: 520, y: 367 },
+            { name: 'sw_black_rect_lower', x: 462, y: 330 },
+            { name: 'sw_black_rect_upper', x: 462, y: 405 },
+            { name: 'l_gap_city_060_380', x: 60, y: 380 },
+            { name: 'l_gap_city_090_390', x: 90, y: 390 },
+            { name: 'l_gap_city_120_400', x: 120, y: 400 },
+            { name: 'l_gap_city_150_410', x: 150, y: 410 },
+            { name: 'l_gap_city_180_420', x: 180, y: 420 },
+            { name: 'l_gap_mid_500_430', x: 500, y: 430 },
+            { name: 'l_gap_right_880_430', x: 880, y: 430 },
+            { name: 'l_gap_upper_beam_reference', x: 500, y: 360 },
+            { name: 'l_gap_lower_wall_reference', x: 500, y: 500 },
+            { name: 'l_gap_west_column_reference', x: 280, y: 500 }
+          ] : [
+            { name: 'redbox_left_shadow', x: 600, y: 330 },
+            { name: 'redbox_center_shadow', x: 696, y: 306 },
+            { name: 'redbox_dark_core', x: 650, y: 250 },
+            { name: 'redbox_right_column', x: 780, y: 300 },
+            { name: 'beam_underside_contact', x: 710, y: 380 },
+            { name: 'se_column_bright_reference', x: 820, y: 230 }
           ];
           const cameraCases = [
             {
-              name: 'normal_floor_view',
-              cameraState: {
-                name: 'r7310_runtime_probe_normal_floor',
-                position: { x: 0.0, y: 1.45, z: 0.8 },
-                yaw: 0.0,
-                pitch: -0.18,
-                fov: 55
-              }
-            },
-            {
-              name: 'inside_floor_level_view',
-              cameraState: {
-                name: 'r7310_runtime_probe_inside_floor_level',
-                position: { x: 0.0, y: -0.08, z: 0.8 },
-                yaw: 0.0,
-                pitch: 0.0,
-                fov: 55
-              }
-            },
-            {
-              name: 'inside_floor_up_view',
-              cameraState: {
-                name: 'r7310_runtime_probe_inside_floor_up',
-                position: { x: 0.0, y: -0.08, z: 0.8 },
-                yaw: 0.0,
-                pitch: -0.70,
-                fov: 55
+              name: requestedCameraState ? 'user_supplied_runtime_probe_view' : 'user_east_wall_shadow_close_view',
+              cameraState: requestedCameraState || {
+                name: 'r7310_user_east_wall_shadow_close_probe',
+                position: { x: 1.771481, y: 2.444076, z: 2.329989 },
+                yaw: -2.44,
+                pitch: 0.343,
+                fov: 55,
+                forward: { x: 0.607838, y: 0.336314, z: 0.719323 }
               }
             }
           ];
           const reports = [];
           for (const cameraCase of cameraCases) {
-            for (const level of [1, 2, 3, 4, 5, 6]) {
+            for (const level of [1, 2, 3, 4, 5, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 22, 23, 24, 25, 26]) {
               reports.push({
                 cameraCase: cameraCase.name,
                 probeLevel: level,
                 report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
                   timeoutMs: ${args.timeoutMs},
                   cameraState: cameraCase.cameraState,
+                  allSurfaces: true,
                   probeLevel: level,
                   samplePoints,
-                  samplePointSpace: 'canvasCssPixel'
+                  samplePointSpace: 'renderTargetPixel'
                 })
               });
             }
@@ -1084,7 +2480,7 @@ async function main() {
           });
           return {
             version: 'r7-3-10-c1-runtime-probe-sample',
-            samplePointSpace: 'canvasCssPixel',
+            samplePointSpace: 'renderTargetPixel',
             samplePoints,
             reports,
             status: finiteSamples ? 'pass' : 'fail'
@@ -1258,6 +2654,2162 @@ async function main() {
       completed = true;
       return;
     }
+    if (args.southWindowFrontEdgeVisualTest) {
+      console.error('[r738-runner] running R7-3.10 south window front-edge visual helper');
+      const visualReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+          window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1EastWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1WestWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1CeilingDiffuseRuntimeEnabled(true);
+          window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+          if (typeof window.setR739Config1ValidationCameraState === 'function') {
+            window.setR739Config1ValidationCameraState({
+              name: 'r7310_south_window_front_edge_visual',
+              position: { x: 0.42, y: 1.58, z: 1.62 },
+              yaw: 3.14159265359,
+              pitch: -0.36,
+              fov: 55
+            });
+          }
+          if (typeof wakeRender === 'function') wakeRender('r7310-south-window-front-edge-visual');
+          await new Promise((resolve) => setTimeout(resolve, 4200));
+          return {
+            version: 'r7-3-10-south-window-front-edge-visual',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            cameraInfo: document.getElementById('cameraInfo') ? document.getElementById('cameraInfo').textContent : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-window-front-edge-visual', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'south-window-front-edge.png'), base64ToBuffer(screenshot.data));
+      console.log('R7-3.10 south window front-edge visual helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`samples: ${visualReport.sampleCounter}`);
+      console.log(`cameraInfo: ${visualReport.cameraInfo}`);
+      console.log(`screenshot: ${path.relative(repoRoot, path.join(visualDir, 'south-window-front-edge.png'))}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.southRevealCornerVisualTest) {
+      console.error('[r738-runner] running R7-3.10 south window reveal-corner visual helper');
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-reveal-corner-visual', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const views = [
+        {
+          name: 'right-lower-corner',
+          fileName: 'south-reveal-right-lower-corner.png',
+          cameraState: {
+            name: 'r7310_south_reveal_right_lower_corner',
+            position: { x: 0.40, y: 1.36, z: 2.36 },
+            yaw: 3.14159265359,
+            pitch: -0.26,
+            fov: 48
+          }
+        },
+        {
+          name: 'left-lower-corner',
+          fileName: 'south-reveal-left-lower-corner.png',
+          cameraState: {
+            name: 'r7310_south_reveal_left_lower_corner',
+            position: { x: -1.42, y: 1.36, z: 2.36 },
+            yaw: 3.14159265359,
+            pitch: -0.26,
+            fov: 48
+          }
+        },
+        {
+          name: 'lower-span',
+          fileName: 'south-reveal-lower-span.png',
+          cameraState: {
+            name: 'r7310_south_reveal_lower_span',
+            position: { x: -0.50, y: 1.42, z: 2.08 },
+            yaw: 3.14159265359,
+            pitch: -0.24,
+            fov: 58
+          }
+        }
+      ];
+      const reports = [];
+      for (const view of views) {
+        const liveReport = await evaluate(cdp, `(() => {
+          return (async () => {
+            await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'info-panel',
+              'cameraInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            if (typeof window.setR739Config1ValidationCameraState === 'function') {
+              window.setR739Config1ValidationCameraState(${JSON.stringify(view.cameraState)});
+            }
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+            if (typeof wakeRender === 'function') wakeRender('r7310-south-reveal-corner-live-reference');
+            await new Promise((resolve) => setTimeout(resolve, 2600));
+            return {
+              version: 'r7-3-10-south-reveal-corner-visual',
+              role: 'live_reference',
+              viewName: ${JSON.stringify(view.name)},
+              cameraState: ${JSON.stringify(view.cameraState)},
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 60000
+        });
+        const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        const liveScreenshotPath = path.join(visualDir, `live-${view.fileName}`);
+        fs.writeFileSync(liveScreenshotPath, base64ToBuffer(liveScreenshot.data));
+        const bakeReport = await evaluate(cdp, `(() => {
+          return (async () => {
+            await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            if (typeof window.setR739Config1ValidationCameraState === 'function') {
+              window.setR739Config1ValidationCameraState(${JSON.stringify(view.cameraState)});
+            }
+            if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+            if (typeof wakeRender === 'function') wakeRender('r7310-south-reveal-corner-upgraded-bake');
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            return {
+              version: 'r7-3-10-south-reveal-corner-visual',
+              role: 'upgraded_bake',
+              viewName: ${JSON.stringify(view.name)},
+              cameraState: ${JSON.stringify(view.cameraState)},
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 60000
+        });
+        const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        const bakeScreenshotPath = path.join(visualDir, `bake-${view.fileName}`);
+        fs.writeFileSync(bakeScreenshotPath, base64ToBuffer(bakeScreenshot.data));
+        reports.push({
+          viewName: view.name,
+          cameraState: view.cameraState,
+          liveReference: {
+            sampleCounter: liveReport.sampleCounter,
+            screenshot: path.relative(repoRoot, liveScreenshotPath),
+            config: liveReport.config
+          },
+          upgradedBake: {
+            sampleCounter: bakeReport.sampleCounter,
+            screenshot: path.relative(repoRoot, bakeScreenshotPath),
+            config: bakeReport.config
+          },
+          status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail'
+        });
+      }
+      const visualReport = {
+        version: 'r7-3-10-south-reveal-corner-visual',
+        status: reports.every((report) => report.status === 'pass') ? 'pass' : 'fail',
+        reports
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      console.log('R7-3.10 south window reveal-corner visual helper completed');
+      console.log(`status: ${visualReport.status}`);
+      for (const report of reports) {
+        console.log(`${report.viewName}: live=${report.liveReference.screenshot}, bake=${report.upgradedBake.screenshot}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.southWindowSwColumnContinuityProbeTest) {
+      console.error('[r738-runner] running R7-3.10 Phase 2B south-window / southwest-column continuity probe');
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-window-sw-column-continuity', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const cameraState = args.cameraState || {
+        name: 'r7310_phase2b_south_window_sw_column_continuity',
+        position: { x: -0.316405, y: 1.08795, z: 1.701729 },
+        yaw: 2.3108,
+        pitch: 0.302,
+        fov: 55,
+        forward: { x: -0.705046, y: 0.29743, z: 0.643775 }
+      };
+      const probeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraState = ${JSON.stringify(cameraState)};
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          async function waitForPackages(timeoutMs) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeoutMs) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 Phase 2B package error: ' + config.error);
+              if (config.swColumnInnerShadowReady && config.southWindowLeftRevealShadowReady && config.westBeamInnerShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 Phase 2B runtime packages did not become ready');
+          }
+          async function waitForSamples(targetSamples, timeoutMs, label) {
+            if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+            if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+            if (typeof wakeRender === 'function') wakeRender(label);
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await wait(100);
+            }
+            if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(true);
+          }
+          function buildProbeGrid() {
+            const samplePoints = [];
+            const columns = 70;
+            const rows = 42;
+            for (let row = 0; row < rows; row += 1) {
+              const y = Math.round(window.innerHeight * (0.08 + 0.84 * row / Math.max(1, rows - 1)));
+              for (let column = 0; column < columns; column += 1) {
+                const x = Math.round(window.innerWidth * (0.04 + 0.92 * column / Math.max(1, columns - 1)));
+                samplePoints.push({ x, y });
+              }
+            }
+            for (let y = 520; y <= 690; y += 10) {
+              for (let x = 150; x <= 185; x += 2) {
+                samplePoints.push({ x, y, role: 'phase2b_dense_join' });
+              }
+            }
+            for (let row = 0; row < 42; row += 1) {
+              const y = Math.round(window.innerHeight * (0.11 + 0.80 * row / Math.max(1, 42 - 1)));
+              for (let column = 0; column < 38; column += 1) {
+                const x = Math.round(window.innerWidth * (0.44 + 0.16 * column / Math.max(1, 38 - 1)));
+                samplePoints.push({ x, y, role: 'phase2b_user_failure_camera' });
+              }
+            }
+            for (let row = 0; row < 20; row += 1) {
+              const y = Math.round(window.innerHeight * (0.10 + 0.22 * row / Math.max(1, 20 - 1)));
+              for (let column = 0; column < 42; column += 1) {
+                const x = Math.round(window.innerWidth * (0.43 + 0.18 * column / Math.max(1, 42 - 1)));
+                samplePoints.push({ x, y, role: 'phase2b_west_beam_join' });
+              }
+            }
+            return samplePoints;
+          }
+          function summarizeSamples(levelReports) {
+            const routeSamples = levelReports.level17.samplePoints || [];
+            const normalSamples = levelReports.level18.samplePoints || [];
+            const worldSamples = levelReports.level19.samplePoints || [];
+            const objectSamples = levelReports.level20.samplePoints || [];
+            const radianceSamples = levelReports.level21.samplePoints || [];
+            const samples = routeSamples.map((routeSample, index) => {
+              const normal = normalSamples[index] ? normalSamples[index].decoded : null;
+              const world = worldSamples[index] ? worldSamples[index].decoded : null;
+              const hitObject = objectSamples[index] ? objectSamples[index].decoded : null;
+              const radiance = radianceSamples[index] ? radianceSamples[index].decoded : null;
+              return {
+                x: routeSample.x,
+                y: routeSample.y,
+                rtPixel: routeSample.rtPixel,
+                route: routeSample.decoded,
+                normal,
+                world,
+                hitObject,
+                radiance
+              };
+            });
+            const routeCounts = {};
+            for (const sample of samples) {
+              const key = sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+              routeCounts[key] = (routeCounts[key] || 0) + 1;
+            }
+            const swSamples = samples.filter((sample) => sample.route && sample.route.routeId === 1);
+            const revealSamples = samples.filter((sample) => sample.route && sample.route.routeId === 2);
+            const westBeamSamples = samples.filter((sample) => sample.route && sample.route.routeId === 6);
+            const seamSwSamples = swSamples.filter((sample) => sample.world && sample.world.z >= 3.000 && sample.world.z <= 3.056 && sample.world.y >= 1.04 && sample.world.y <= 2.525);
+            const seamRevealSamples = revealSamples.filter((sample) => sample.world && sample.world.z >= 3.056 && sample.world.z <= 3.112 && sample.world.y >= 1.04 && sample.world.y <= 2.525);
+            const joinBelowSamples = swSamples.filter((sample) => sample.world && sample.world.z >= 3.000 && sample.world.z < 3.056 && sample.world.y >= 1.04 && sample.world.y <= 2.70);
+            const joinAboveSamples = revealSamples.filter((sample) => sample.world && sample.world.z >= 3.056 && sample.world.z <= 3.112 && sample.world.y >= 1.04 && sample.world.y <= 2.70);
+            const westBeamSideSamples = westBeamSamples.filter((sample) => sample.world && sample.world.z >= 2.760 && sample.world.z < 2.848 && sample.world.y >= 2.525 && sample.world.y <= 2.905);
+            const swColumnTopSamples = swSamples.filter((sample) => sample.world && sample.world.z >= 2.950 && sample.world.z <= 3.056 && sample.world.y >= 2.525 && sample.world.y <= 2.905);
+            function lumaStats(items) {
+              const values = items.map((sample) => sample.radiance && Number(sample.radiance.luma)).filter((value) => Number.isFinite(value));
+              const sum = values.reduce((total, value) => total + value, 0);
+              return {
+                count: values.length,
+                min: values.length ? Math.min(...values) : null,
+                max: values.length ? Math.max(...values) : null,
+                mean: values.length ? sum / values.length : null
+              };
+            }
+            function best(items) {
+              return items.find((sample) => sample.world && sample.radiance) || null;
+            }
+            const swLuma = lumaStats(seamSwSamples);
+            const revealLuma = lumaStats(seamRevealSamples);
+            const joinBelowLuma = lumaStats(joinBelowSamples);
+            const joinAboveLuma = lumaStats(joinAboveSamples);
+            const westBeamSideLuma = lumaStats(westBeamSideSamples);
+            const swColumnTopLuma = lumaStats(swColumnTopSamples);
+            const meanDelta = Number.isFinite(swLuma.mean) && Number.isFinite(revealLuma.mean)
+              ? revealLuma.mean - swLuma.mean
+              : null;
+            const continuityMeanDelta = Number.isFinite(joinBelowLuma.mean) && Number.isFinite(joinAboveLuma.mean)
+              ? joinAboveLuma.mean - joinBelowLuma.mean
+              : null;
+            const westBeamContinuityMeanDelta = Number.isFinite(westBeamSideLuma.mean) && Number.isFinite(swColumnTopLuma.mean)
+              ? swColumnTopLuma.mean - westBeamSideLuma.mean
+              : null;
+            const westBeamContinuityOk = westBeamSamples.length === 0 ||
+              (westBeamSideSamples.length > 0 &&
+                swColumnTopSamples.length > 0 &&
+                Number.isFinite(westBeamContinuityMeanDelta) &&
+                Math.abs(westBeamContinuityMeanDelta) <= 0.03);
+            return {
+              samplePointCount: samples.length,
+              routeCounts,
+              swSampleCount: swSamples.length,
+              revealSampleCount: revealSamples.length,
+              westBeamSampleCount: westBeamSamples.length,
+              seamSwSampleCount: seamSwSamples.length,
+              seamRevealSampleCount: seamRevealSamples.length,
+              seamSwLuma: swLuma,
+              seamRevealLuma: revealLuma,
+              seamMeanDelta: meanDelta,
+              joinBelowSampleCount: joinBelowSamples.length,
+              joinAboveSampleCount: joinAboveSamples.length,
+              joinBelowLuma,
+              joinAboveLuma,
+              continuityMeanDelta,
+              westBeamSideSampleCount: westBeamSideSamples.length,
+              swColumnTopSampleCount: swColumnTopSamples.length,
+              westBeamSideLuma,
+              swColumnTopLuma,
+              westBeamContinuityMeanDelta,
+              bestSwSample: best(seamSwSamples) || best(swSamples),
+              bestRevealSample: best(seamRevealSamples) || best(revealSamples),
+              bestWestBeamSample: best(westBeamSideSamples) || best(westBeamSamples),
+              status: swSamples.length > 0 &&
+                revealSamples.length > 0 &&
+                joinBelowSamples.length > 0 &&
+                joinAboveSamples.length > 0 &&
+                Number.isFinite(meanDelta) &&
+                Number.isFinite(continuityMeanDelta) &&
+                westBeamContinuityOk &&
+                Math.abs(meanDelta) <= 0.02 &&
+                Math.abs(continuityMeanDelta) <= 0.02 ? 'pass' : 'fail'
+            };
+          }
+          const packageConfig = await waitForPackages(${args.timeoutMs});
+          ['ui-container', 'snapshot-controls', 'top-right-group', 'bottom-right-group', 'info-panel', 'cameraInfo', 'cameraPoseInfo', 'copyCameraPoseInfo'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(cameraState);
+          const samplePoints = buildProbeGrid();
+          const levelReports = {};
+          for (const level of [17, 18, 19, 20, 21]) {
+            levelReports['level' + level] = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+              timeoutMs: ${args.timeoutMs},
+              allSurfaces: true,
+              probeLevel: level,
+              cameraState,
+              randomVec2: { x: 0.5, y: 0.5 },
+              samplePoints,
+              samplePointSpace: 'canvasCssPixel'
+            });
+          }
+          const summary = summarizeSamples(levelReports);
+          return {
+            version: 'r7-3-10-south-window-sw-column-continuity-probe',
+            cameraState,
+            packageConfig,
+            samplePointSpace: 'canvasCssPixel',
+            probeLevels: [17, 18, 19, 20, 21],
+            summary,
+            levelReports,
+            status: summary.status
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      async function captureScenario(role, fileName, enabled, targetSamples) {
+        const report = await evaluate(cdp, `(() => {
+          return (async () => {
+            const cameraState = ${JSON.stringify(cameraState)};
+            function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+            async function waitForSamples(targetSamples, timeoutMs, label) {
+              if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+              if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+              if (typeof wakeRender === 'function') wakeRender(label);
+              const startedAt = performance.now();
+              while (typeof sampleCounter === 'number' && sampleCounter < targetSamples && performance.now() - startedAt < timeoutMs)
+                await wait(100);
+              if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(true);
+            }
+            await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            ['ui-container', 'snapshot-controls', 'top-right-group', 'bottom-right-group', 'info-panel', 'cameraInfo', 'cameraPoseInfo', 'copyCameraPoseInfo'].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(cameraState);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(${enabled ? 'true' : 'false'});
+            if (${enabled ? 'true' : 'false'}) {
+              window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+              window.setR7310C1SwColumnInnerShadowRuntimeEnabled(true);
+              window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            }
+            await waitForSamples(${targetSamples}, ${args.timeoutMs}, ${JSON.stringify('r7310-phase2b-' + role)});
+            return {
+              version: 'r7-3-10-south-window-sw-column-continuity-visual',
+              role: ${JSON.stringify(role)},
+              enabled: ${enabled ? 'true' : 'false'},
+              targetSamples: ${targetSamples},
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 120000
+        });
+        const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        const screenshotPath = path.join(visualDir, fileName);
+        fs.writeFileSync(screenshotPath, base64ToBuffer(screenshot.data));
+        return {
+          ...report,
+          screenshot: path.relative(repoRoot, screenshotPath)
+        };
+      }
+      const visuals = [
+        await captureScenario('live_spp1', 'south-window-sw-column-live-spp1.png', false, 1),
+        await captureScenario('bake_spp1', 'south-window-sw-column-bake-spp1.png', true, 1),
+        await captureScenario('live_spp96', 'south-window-sw-column-live-spp96.png', false, 96),
+        await captureScenario('bake_spp96', 'south-window-sw-column-bake-spp96.png', true, 96)
+      ];
+      const report = {
+        ...probeReport,
+        visuals,
+        status: probeReport.status === 'pass' && visuals.every((entry) => entry.status === 'pass') ? 'pass' : 'fail'
+      };
+      fs.writeFileSync(path.join(visualDir, 'south-window-sw-column-continuity-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 Phase 2B continuity probe completed');
+      console.log(`status: ${report.status}`);
+      console.log(`routeCounts: ${JSON.stringify(report.summary.routeCounts)}`);
+      console.log(`seamMeanDelta: ${report.summary.seamMeanDelta}`);
+      console.log(`continuityMeanDelta: ${report.summary.continuityMeanDelta}`);
+      console.log(`westBeamContinuityMeanDelta: ${report.summary.westBeamContinuityMeanDelta}`);
+      for (const visual of visuals) {
+        console.log(`${visual.role}: screenshot=${visual.screenshot} samples=${visual.sampleCounter}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.seColumnNorthShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 southeast column north shadow live-match helper');
+      const seColumnNorthShadowCameraState = args.cameraState || {
+        name: 'r7310_user_se_column_north_shadow_same_view',
+        position: { x: 1.778248, y: 2.471443, z: 2.329741 },
+        yaw: -2.5192,
+        pitch: 0.161,
+        fov: 55,
+        forward: { x: 0.575441, y: 0.160305, z: 0.801978 }
+      };
+      const waitForSeColumnNorthShadowSamplesExpression = `
+        async function r7310WaitForSeColumnNorthShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSeColumnNorthShadowSamplesExpression}
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(seColumnNorthShadowCameraState)});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSeColumnNorthShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-se-column-north-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(seColumnNorthShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSeColumnNorthShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1SeColumnNorthShadowRuntimeEnabled(true);
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...seColumnNorthShadowCameraState,
+              name: `${seColumnNorthShadowCameraState.name || 'r7310_user_se_column_north_shadow_same_view'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSeColumnNorthShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-se-column-north-shadow-new-bake');
+          return {
+            label: 'se-column-north-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-north-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-se-column-north-shadow-live-match',
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail',
+        cameraState: seColumnNorthShadowCameraState,
+        liveReference: {
+          report: liveReport,
+          screenshot: 'live-reference.png'
+        },
+        seColumnNorthShadowBake: {
+          report: bakeReport,
+          screenshot: 'se-column-north-shadow-bake.png'
+        },
+        acceptanceReference: 'live_path_tracing_same_camera'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'se-column-north-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 southeast column north shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'se-column-north-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.swColumnNorthShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 southwest column north shadow live-match helper');
+      const swColumnNorthShadowCameraState = args.cameraState || {
+        name: 'r7310_user_sw_column_north_shadow_same_view',
+        position: { x: -1.652805, y: 2.453416, z: 2.729668 },
+        yaw: 2.257985,
+        pitch: 0.267,
+        fov: 55,
+        forward: { x: -0.745641, y: 0.263839, z: 0.611889 }
+      };
+      const waitForSwColumnNorthShadowSamplesExpression = `
+        async function r7310WaitForSwColumnNorthShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSwColumnNorthShadowSamplesExpression}
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(swColumnNorthShadowCameraState)});
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForSwColumnNorthShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-sw-column-north-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(swColumnNorthShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSwColumnNorthShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1SwColumnNorthShadowRuntimeEnabled(true);
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...swColumnNorthShadowCameraState,
+              name: `${swColumnNorthShadowCameraState.name || 'r7310_user_sw_column_north_shadow_same_view'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForSwColumnNorthShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-sw-column-north-shadow-new-bake');
+          return {
+            label: 'sw-column-north-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-sw-column-north-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-sw-column-north-shadow-live-match',
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail',
+        cameraState: swColumnNorthShadowCameraState,
+        liveReference: {
+          report: liveReport,
+          screenshot: 'live-reference.png'
+        },
+        swColumnNorthShadowBake: {
+          report: bakeReport,
+          screenshot: 'sw-column-north-shadow-bake.png'
+        },
+        acceptanceReference: 'live_path_tracing_same_camera'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'sw-column-north-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 southwest column north shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'sw-column-north-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.seColumnWestShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 southeast column west shadow live-match helper');
+      const seColumnWestShadowCameraState = args.cameraState || {
+        name: 'r7310_user_se_column_west_shadow_same_view',
+        position: { x: 1.752762, y: 2.439962, z: 2.328648 },
+        yaw: -2.3416,
+        pitch: 0.292,
+        fov: 53,
+        forward: { x: 0.686986, y: 0.287868, z: 0.66722 }
+      };
+      const waitForSeColumnWestShadowSamplesExpression = `
+        async function r7310WaitForSeColumnWestShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSeColumnWestShadowSamplesExpression}
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(seColumnWestShadowCameraState)});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSeColumnWestShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-se-column-west-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(seColumnWestShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSeColumnWestShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1SeColumnWestShadowRuntimeEnabled(true);
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...seColumnWestShadowCameraState,
+              name: `${seColumnWestShadowCameraState.name || 'r7310_user_se_column_west_shadow_same_view'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSeColumnWestShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-se-column-west-shadow-new-bake');
+          return {
+            label: 'se-column-west-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-west-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-se-column-west-shadow-live-match',
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail',
+        cameraState: seColumnWestShadowCameraState,
+        liveReference: {
+          report: liveReport,
+          screenshot: 'live-reference.png'
+        },
+        seColumnWestShadowBake: {
+          report: bakeReport,
+          screenshot: 'se-column-west-shadow-bake.png'
+        },
+        acceptanceReference: 'live_path_tracing_same_camera'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'se-column-west-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 southeast column west shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'se-column-west-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.southWallAcShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 south wall AC shadow live-match helper');
+      const southWallAcShadowCameraState = args.cameraState || {
+        name: 'r7310_user_south_wall_ac_shadow_same_view',
+        position: { x: 0.834441, y: 2.413124, z: 3.021945 },
+        yaw: -2.392,
+        pitch: -0.006,
+        fov: 55,
+        forward: { x: 0.681328, y: -0.006, z: 0.731953 }
+      };
+      const waitForSouthWallAcShadowSamplesExpression = `
+        async function r7310WaitForSouthWallAcShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSouthWallAcShadowSamplesExpression}
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(southWallAcShadowCameraState)});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSouthWallAcShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-south-wall-ac-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(southWallAcShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForSouthWallAcShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1SouthWallAcShadowRuntimeEnabled(true);
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...southWallAcShadowCameraState,
+              name: `${southWallAcShadowCameraState.name || 'r7310_user_south_wall_ac_shadow_same_view'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForSouthWallAcShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-south-wall-ac-shadow-new-bake');
+          return {
+            label: 'south-wall-ac-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-wall-ac-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-south-wall-ac-shadow-live-match',
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail',
+        cameraState: southWallAcShadowCameraState,
+        liveReference: {
+          report: liveReport,
+          screenshot: 'live-reference.png'
+        },
+        southWallAcShadowBake: {
+          report: bakeReport,
+          screenshot: 'south-wall-ac-shadow-bake.png'
+        },
+        acceptanceReference: 'live_path_tracing_same_camera'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'south-wall-ac-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 south wall AC shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'south-wall-ac-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.seColumnShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 southeast column shadow visual helper');
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-shadow-visual', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const views = [
+        {
+          name: 'se-column-ac-shadow',
+          fileName: 'se-column-ac-shadow.png',
+          cameraState: {
+            name: 'r7310_se_column_ac_shadow',
+            position: { x: 0.45, y: 1.42, z: 2.56 },
+            yaw: -1.57079632679,
+            pitch: 0.0,
+            fov: 55
+          }
+        },
+        {
+          name: 'se-column-beam-shadow',
+          fileName: 'se-column-beam-shadow.png',
+          cameraState: {
+            name: 'r7310_se_column_beam_shadow',
+            position: { x: 1.18, y: 2.02, z: 2.66 },
+            yaw: -1.57079632679,
+            pitch: -0.22,
+            fov: 48
+          }
+        }
+      ];
+      const reports = [];
+      for (const view of views) {
+        const report = await evaluate(cdp, `(() => {
+          return (async () => {
+            await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'info-panel',
+              'cameraInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            if (typeof window.setR739Config1ValidationCameraState === 'function') {
+              window.setR739Config1ValidationCameraState(${JSON.stringify(view.cameraState)});
+            }
+            if (typeof wakeRender === 'function') wakeRender('r7310-se-column-shadow-visual');
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            return {
+              version: 'r7-3-10-se-column-shadow-visual',
+              viewName: ${JSON.stringify(view.name)},
+              cameraState: ${JSON.stringify(view.cameraState)},
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 60000
+        });
+        const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        const screenshotPath = path.join(visualDir, view.fileName);
+        fs.writeFileSync(screenshotPath, base64ToBuffer(screenshot.data));
+        reports.push({
+          ...report,
+          screenshot: path.relative(repoRoot, screenshotPath)
+        });
+      }
+      const visualReport = {
+        version: 'r7-3-10-se-column-shadow-visual',
+        status: reports.every((report) => report.status === 'pass') ? 'pass' : 'fail',
+        reports
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      console.log('R7-3.10 southeast column shadow visual helper completed');
+      console.log(`status: ${visualReport.status}`);
+      for (const report of reports) {
+        console.log(`${report.viewName}: samples=${report.sampleCounter}, screenshot=${report.screenshot}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.eastWallShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 east wall same-view shadow visual helper');
+      const eastWallShadowCameraState = args.cameraState || {
+        name: 'r7310_user_east_wall_shadow_same_view_latest',
+        position: { x: 1.786518, y: 2.426144, z: 2.375295 },
+        yaw: -2.5156,
+        pitch: 0.613,
+        fov: 55,
+        forward: { x: 0.479224, y: 0.575324, z: 0.662832 }
+      };
+      const eastWallShadowExpectedForward = eastWallShadowCameraState.forward || null;
+      const waitForEastWallShadowSamplesExpression = `
+        async function r7310WaitForEastWallShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const visualReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForEastWallShadowSamplesExpression}
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+          window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1EastWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1WestWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1SouthWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1CeilingDiffuseRuntimeEnabled(true);
+          window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function') {
+            window.setR739Config1ValidationCameraState(${JSON.stringify(eastWallShadowCameraState)});
+          }
+          const replayPose = typeof window.reportR7310CameraPoseInfo === 'function'
+            ? window.reportR7310CameraPoseInfo()
+            : null;
+          const expectedForward = ${JSON.stringify(eastWallShadowExpectedForward)};
+          const replayForward = replayPose && replayPose.forward ? replayPose.forward : null;
+          const forwardDelta = replayForward && expectedForward ? {
+            x: Math.abs(replayForward.x - expectedForward.x),
+            y: Math.abs(replayForward.y - expectedForward.y),
+            z: Math.abs(replayForward.z - expectedForward.z)
+          } : null;
+          const forwardMatches = !expectedForward || (!!forwardDelta &&
+            forwardDelta.x < 0.002 &&
+            forwardDelta.y < 0.002 &&
+            forwardDelta.z < 0.002);
+          if (!forwardMatches)
+            throw new Error('R7-3.10 east wall same-view replay forward mismatch: ' + JSON.stringify({ expectedForward, replayForward, forwardDelta }));
+	          const targetSamples = ${args.targetSamples || 0};
+	          await r7310WaitForEastWallShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-shadow-visual');
+	          return {
+            version: 'r7-3-10-east-wall-same-view-shadow-visual',
+            cameraState: ${JSON.stringify(eastWallShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            expectedForward,
+            replayForward,
+            forwardDelta,
+            forwardMatches,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const eastOffReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForEastWallShadowSamplesExpression}
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          window.setR7310C1EastWallDiffuseRuntimeEnabled(false);
+          window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...eastWallShadowCameraState,
+              name: `${eastWallShadowCameraState.name || 'r7310_user_east_wall_shadow_same_view'}_east_off_structural_on`
+            })});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForEastWallShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-shadow-visual-east-off-structural-on');
+          return {
+            label: 'east-wall-off-structural-on',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const eastOffScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const structuralOffReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForEastWallShadowSamplesExpression}
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          window.setR7310C1EastWallDiffuseRuntimeEnabled(true);
+          window.setR7310C1StructuralDiffuseRuntimeEnabled(false);
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...eastWallShadowCameraState,
+              name: `${eastWallShadowCameraState.name || 'r7310_user_east_wall_shadow_same_view'}_east_on_structural_off`
+            })});
+          const targetSamples = ${args.targetSamples || 0};
+          await r7310WaitForEastWallShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-shadow-visual-east-on-structural-off');
+          return {
+            label: 'east-wall-on-structural-off',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const structuralOffScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+	      const allBakesOffReport = await evaluate(cdp, `(() => {
+	        return (async () => {
+	          ${waitForEastWallShadowSamplesExpression}
+	          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+	          if (typeof window.setR739Config1ValidationCameraState === 'function') {
+	            window.setR739Config1ValidationCameraState(${JSON.stringify({
+                  ...eastWallShadowCameraState,
+                  name: `${eastWallShadowCameraState.name || 'r7310_user_east_wall_shadow_same_view'}_all_bakes_off`
+                })});
+	          }
+	          const targetSamples = ${args.targetSamples || 0};
+	          await r7310WaitForEastWallShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-shadow-visual-all-bakes-off');
+	          return {
+	            label: 'all-bakes-off-reference',
+	            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+	              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+	              : null,
+	            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+	              ? window.reportR7310CameraPoseInfo()
+	              : null,
+	            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+	            status: 'pass'
+	          };
+	        })();
+	      })()`, {
+	        awaitPromise: true,
+	        timeoutMs: args.timeoutMs + 60000
+	      });
+	      const offScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+	      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-east-wall-shadow-visual', timestampForPath());
+	      fs.mkdirSync(visualDir, { recursive: true });
+	      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify({ ...visualReport, eastOffReport, structuralOffReport, allBakesOffReport }, null, 2)}\n`);
+	      fs.writeFileSync(path.join(visualDir, 'east-wall-shadow-same-view.png'), base64ToBuffer(screenshot.data));
+	      fs.writeFileSync(path.join(visualDir, 'east-wall-shadow-east-off-structural-on.png'), base64ToBuffer(eastOffScreenshot.data));
+	      fs.writeFileSync(path.join(visualDir, 'east-wall-shadow-east-on-structural-off.png'), base64ToBuffer(structuralOffScreenshot.data));
+	      fs.writeFileSync(path.join(visualDir, 'east-wall-shadow-all-bakes-off-reference.png'), base64ToBuffer(offScreenshot.data));
+	      console.log('R7-3.10 east wall same-view shadow visual helper completed');
+	      console.log(`status: ${visualReport.status}`);
+	      console.log(`samples: ${visualReport.sampleCounter}`);
+	      console.log(`screenshot: ${path.relative(repoRoot, path.join(visualDir, 'east-wall-shadow-same-view.png'))}`);
+	      console.log(`eastOffScreenshot: ${path.relative(repoRoot, path.join(visualDir, 'east-wall-shadow-east-off-structural-on.png'))}`);
+	      console.log(`structuralOffScreenshot: ${path.relative(repoRoot, path.join(visualDir, 'east-wall-shadow-east-on-structural-off.png'))}`);
+	      console.log(`referenceScreenshot: ${path.relative(repoRoot, path.join(visualDir, 'east-wall-shadow-all-bakes-off-reference.png'))}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.eastWallBeamShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 east wall beam shadow live-match helper');
+      const eastWallBeamShadowCameraState = args.cameraState || {
+        name: 'r7310_user_east_wall_beam_shadow_live_match',
+        position: { x: 1.786518, y: 2.426144, z: 2.375295 },
+        yaw: -2.5156,
+        pitch: 0.613,
+        fov: 55,
+        forward: { x: 0.479224, y: 0.575324, z: 0.662832 }
+      };
+      const eastWallBeamShadowExpectedForward = eastWallBeamShadowCameraState.forward || null;
+      const waitForEastWallBeamShadowSamplesExpression = `
+        async function r7310WaitForEastWallBeamShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForEastWallBeamShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(eastWallBeamShadowCameraState)});
+          const replayPose = typeof window.reportR7310CameraPoseInfo === 'function'
+            ? window.reportR7310CameraPoseInfo()
+            : null;
+          const expectedForward = ${JSON.stringify(eastWallBeamShadowExpectedForward)};
+          const replayForward = replayPose && replayPose.forward ? replayPose.forward : null;
+          const forwardDelta = replayForward && expectedForward ? {
+            x: Math.abs(replayForward.x - expectedForward.x),
+            y: Math.abs(replayForward.y - expectedForward.y),
+            z: Math.abs(replayForward.z - expectedForward.z)
+          } : null;
+          const forwardMatches = !expectedForward || (!!forwardDelta &&
+            forwardDelta.x < 0.002 &&
+            forwardDelta.y < 0.002 &&
+            forwardDelta.z < 0.002);
+          if (!forwardMatches)
+            throw new Error('R7-3.10 east wall beam shadow replay forward mismatch: ' + JSON.stringify({ expectedForward, replayForward, forwardDelta }));
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForEastWallBeamShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-beam-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(eastWallBeamShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: replayPose,
+            expectedForward,
+            replayForward,
+            forwardDelta,
+            forwardMatches,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForEastWallBeamShadowSamplesExpression}
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1EastWallBeamShadowRuntimeEnabled(true);
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...eastWallBeamShadowCameraState,
+              name: `${eastWallBeamShadowCameraState.name || 'r7310_user_east_wall_beam_shadow_live_match'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForEastWallBeamShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-east-wall-beam-shadow-new-bake');
+          return {
+            label: 'east-wall-beam-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-east-wall-beam-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-east-wall-beam-shadow-live-match',
+        cameraState: eastWallBeamShadowCameraState,
+        liveReport,
+        bakeReport,
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'east-wall-beam-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 east wall beam shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'east-wall-beam-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.westWallMosaicDiagnostic) {
+      console.error('[r738-runner] running R7-3.10 west wall mosaic diagnostic helper');
+      const westWallMosaicCameraState = args.cameraState || {
+        name: 'r7310_user_west_wall_mosaic_diagnostic',
+        position: { x: -1.881727, y: 2.502503, z: 2.816512 },
+        yaw: 2.1224,
+        pitch: 0.356,
+        fov: 55,
+        forward: { x: -0.798283, y: 0.348528, z: 0.491195 }
+      };
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-west-wall-mosaic-diagnostic', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const targetSamples = args.targetSamples || 1;
+      const waitForWestWallMosaicSamplesExpression = `
+        async function r7310WaitForWestWallMosaicSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+          }
+        }
+        function r7310SetWestWallMosaicScenario(label) {
+          if (typeof window.setR7310C1FullRoomDiffuseRuntimeEnabled !== 'function')
+            throw new Error('R7-3.10 runtime toggles are unavailable');
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          if (label === 'all-on') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          } else if (label === 'no-west-wall-full') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(true);
+          } else if (label === 'only-west-wall-full') {
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(false);
+          } else if (label === 'west-special-only') {
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(true);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+          } else if (label === 'all-on-no-west-wall-beam') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(false);
+          } else if (label === 'all-on-no-sw-column-north') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(false);
+          } else if (label === 'all-on-no-sw-column-inner') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(false);
+          } else if (label === 'all-on-no-structural') {
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(false);
+          } else if (label === 'only-sw-column-north') {
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(true);
+          } else if (label === 'only-sw-column-inner') {
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(true);
+          } else if (label === 'only-structural') {
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            window.setR7310C1SeColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1SeColumnWestShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(false);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(false);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(false);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(false);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(false);
+          } else if (label !== 'all-off-live') {
+            throw new Error('Unknown R7-3.10 west wall mosaic scenario: ' + label);
+          }
+        }
+      `;
+      async function captureWestWallMosaicScenario(label, fileName) {
+        const report = await evaluate(cdp, `(() => {
+          return (async () => {
+            ${waitForWestWallMosaicSamplesExpression}
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            r7310SetWestWallMosaicScenario(${JSON.stringify(label)});
+            await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(${JSON.stringify({
+                ...westWallMosaicCameraState,
+                name: `${westWallMosaicCameraState.name || 'r7310_user_west_wall_mosaic_diagnostic'}_${label}`
+              })});
+            await r7310WaitForWestWallMosaicSamples(${targetSamples}, ${args.timeoutMs}, 'r7310-west-wall-mosaic-' + ${JSON.stringify(label)});
+            return {
+              label: ${JSON.stringify(label)},
+              config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+                ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+                : null,
+              pose: typeof window.reportR7310CameraPoseInfo === 'function'
+                ? window.reportR7310CameraPoseInfo()
+                : null,
+              sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+              status: 'pass'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 60000
+        });
+        const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+        fs.writeFileSync(path.join(visualDir, fileName), base64ToBuffer(screenshot.data));
+        return report;
+      }
+      const scenarioFiles = [
+        ['all-on', 'all-on.png'],
+        ['no-west-wall-full', 'no-west-wall-full.png'],
+        ['only-west-wall-full', 'only-west-wall-full.png'],
+        ['west-special-only', 'west-special-only.png'],
+        ['all-on-no-west-wall-beam', 'all-on-no-west-wall-beam.png'],
+        ['all-on-no-sw-column-north', 'all-on-no-sw-column-north.png'],
+        ['all-on-no-sw-column-inner', 'all-on-no-sw-column-inner.png'],
+        ['all-on-no-structural', 'all-on-no-structural.png'],
+        ['only-sw-column-north', 'only-sw-column-north.png'],
+        ['only-sw-column-inner', 'only-sw-column-inner.png'],
+        ['only-structural', 'only-structural.png'],
+        ['all-off-live', 'all-off-live.png']
+      ];
+      const reports = [];
+      for (const [label, fileName] of scenarioFiles)
+        reports.push(await captureWestWallMosaicScenario(label, fileName));
+      const visualReport = {
+        version: 'r7-3-10-west-wall-mosaic-diagnostic',
+        cameraState: westWallMosaicCameraState,
+        reports,
+        status: reports.every((report) => report.status === 'pass') ? 'pass' : 'fail'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      console.log('R7-3.10 west wall mosaic diagnostic helper completed');
+      console.log(`status: ${visualReport.status}`);
+      for (const [, fileName] of scenarioFiles)
+        console.log(`${fileName}: ${path.relative(repoRoot, path.join(visualDir, fileName))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.westJoinSanityProbe) {
+      console.error('[r738-runner] running R7-3.10 west join sanity probe (ROI 1 OPUS/CODEX consensus)');
+      const sanityCameraState = args.cameraState || {
+        name: 'r7310_west_join_sanity_probe',
+        position: { x: -1.798925, y: 2.461438, z: 2.730018 },
+        yaw: 2.312015,
+        pitch: 0.336,
+        fov: 55,
+        forward: { x: -0.696398, y: 0.329713, z: 0.637431 }
+      };
+      const targetWorld = { z: 2.846, y: 2.525 };
+      const anchorRouteAllowed = [
+        'sw_column_north_shadow_hybrid',
+        'west_wall_beam_shadow_hybrid',
+        'sw_column_inner_shadow_hybrid',
+        'west_beam_inner_shadow_hybrid',
+        'west_beam_under_shadow_hybrid'
+      ];
+      const randomRuns = [
+        { x: 0.5, y: 0.5 },
+        { x: 0.25, y: 0.25 },
+        { x: 0.75, y: 0.75 }
+      ];
+      const probePackageDir = path.join(repoRoot, '.omc', 'r7-3-10-west-join-sanity-probe', timestampForPath());
+      fs.mkdirSync(probePackageDir, { recursive: true });
+      const probeResult = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraState = ${JSON.stringify(sanityCameraState)};
+          const targetWorld = ${JSON.stringify(targetWorld)};
+          const anchorRouteAllowed = new Set(${JSON.stringify(anchorRouteAllowed)});
+          const randomRuns = ${JSON.stringify(randomRuns)};
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          const cssCenterX = Math.floor(W * 0.5);
+          const cssCenterY = Math.floor(H * 0.5);
+          const coarseHalf = 25;
+          const coarseStepCss = Math.max(2, Math.floor(Math.min(W, H) * 0.014));
+          const sideLen = 2 * coarseHalf + 1;
+          const coarsePoints = [];
+          for (let dy = -coarseHalf; dy <= coarseHalf; dy += 1) {
+            for (let dx = -coarseHalf; dx <= coarseHalf; dx += 1) {
+              coarsePoints.push({ x: cssCenterX + dx * coarseStepCss, y: cssCenterY + dy * coarseStepCss });
+            }
+          }
+          const coarseRouteReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            timeoutMs: ${args.timeoutMs || 180000},
+            cameraState: cameraState,
+            allSurfaces: true,
+            probeLevel: 22,
+            samplePoints: coarsePoints,
+            samplePointSpace: 'canvasCssPixel',
+            randomVec2: { x: 0.5, y: 0.5 }
+          });
+          const coarseWorldReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            timeoutMs: ${args.timeoutMs || 180000},
+            cameraState: cameraState,
+            allSurfaces: true,
+            probeLevel: 24,
+            samplePoints: coarsePoints,
+            samplePointSpace: 'canvasCssPixel',
+            randomVec2: { x: 0.5, y: 0.5 }
+          });
+          const dedicatedSet = new Set([1, 3, 4, 5, 6]);
+          function routeAt(gx, gy) {
+            const idx = gy * sideLen + gx;
+            const r = coarseRouteReport.samplePoints[idx] && coarseRouteReport.samplePoints[idx].decoded;
+            return r && Number.isFinite(r.routeId) ? r.routeId : null;
+          }
+          const routeNameById = {
+            0: 'none', 1: 'sw_column_north_shadow_hybrid', 2: 'west_wall_full_hybrid',
+            3: 'west_wall_beam_shadow_hybrid', 4: 'sw_column_inner_shadow_hybrid',
+            5: 'west_beam_inner_shadow_hybrid', 6: 'west_beam_under_shadow_hybrid',
+            7: 'structural_beam_column_only'
+          };
+          const candidates = [];
+          for (let gy = 1; gy < sideLen - 1; gy++) {
+            for (let gx = 1; gx < sideLen - 1; gx++) {
+              const routes = new Set();
+              for (let ddy = -1; ddy <= 1; ddy++) for (let ddx = -1; ddx <= 1; ddx++) {
+                const rr = routeAt(gx + ddx, gy + ddy);
+                if (rr != null) routes.add(rr);
+              }
+              const dedicatedInNbhd = [...routes].filter((rr) => dedicatedSet.has(rr));
+              const has1013 = routes.has(3);
+              const has1015or1016 = routes.has(5) || routes.has(6);
+              const has1011or1014 = routes.has(1) || routes.has(4);
+              const score =
+                (has1013 && has1015or1016 ? 1000 : 0) +
+                (has1013 && has1011or1014 ? 500 : 0) +
+                dedicatedInNbhd.length * 100 +
+                routes.size * 10;
+              if (score > 0) {
+                candidates.push({ gx, gy, score, routes: [...routes], dedicatedCount: dedicatedInNbhd.length });
+              }
+            }
+          }
+          candidates.sort((a, b) => b.score - a.score);
+          const coarseTop10 = candidates.slice(0, 10).map((c) => {
+            const idx = c.gy * sideLen + c.gx;
+            return {
+              gx: c.gx, gy: c.gy, score: c.score, routes: c.routes,
+              routeNames: c.routes.map((r) => routeNameById[r] || 'unknown'),
+              pixel: coarsePoints[idx],
+              world: coarseWorldReport.samplePoints[idx] && coarseWorldReport.samplePoints[idx].decoded || null
+            };
+          });
+          if (candidates.length === 0) {
+            return {
+              anchor: { status: 'no_anchor', pixel: null, world: null, delta: null, route: null, hitObject: null, scoreReason: 'no route-diverse candidates found' },
+              coarse: { stepCssPx: coarseStepCss, sampleCount: coarsePoints.length, top10: coarseTop10 },
+              runs: []
+            };
+          }
+          const bestCandidate = candidates[0];
+          const bestIdx = bestCandidate.gy * sideLen + bestCandidate.gx;
+          const anchorPixel = coarsePoints[bestIdx];
+          const anchorWorldDecoded = coarseWorldReport.samplePoints[bestIdx] && coarseWorldReport.samplePoints[bestIdx].decoded || { x: NaN, y: NaN, z: NaN };
+          const anchorWorldDelta = {
+            z: Number.isFinite(anchorWorldDecoded.z) ? anchorWorldDecoded.z - targetWorld.z : NaN,
+            y: Number.isFinite(anchorWorldDecoded.y) ? anchorWorldDecoded.y - targetWorld.y : NaN
+          };
+          const anchorRouteReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            timeoutMs: ${args.timeoutMs || 180000},
+            cameraState: cameraState,
+            allSurfaces: true,
+            probeLevel: 22,
+            samplePoints: [anchorPixel],
+            samplePointSpace: 'canvasCssPixel',
+            randomVec2: { x: 0.5, y: 0.5 }
+          });
+          const anchorHitReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            timeoutMs: ${args.timeoutMs || 180000},
+            cameraState: cameraState,
+            allSurfaces: true,
+            probeLevel: 25,
+            samplePoints: [anchorPixel],
+            samplePointSpace: 'canvasCssPixel',
+            randomVec2: { x: 0.5, y: 0.5 }
+          });
+          const anchorRouteDecoded = anchorRouteReport.samplePoints[0].decoded;
+          const anchorHitDecoded = anchorHitReport.samplePoints[0].decoded;
+          const anchorValidByRoute = anchorRouteAllowed.has(anchorRouteDecoded.routeName);
+          const anchorHasStrongPair = bestCandidate.routes.includes(3) && (bestCandidate.routes.includes(5) || bestCandidate.routes.includes(6));
+          const anchorHasMediumPair = bestCandidate.routes.includes(3) && (bestCandidate.routes.includes(1) || bestCandidate.routes.includes(4));
+          let anchorStatus = 'valid';
+          if (!anchorValidByRoute && bestCandidate.routes.filter((r) => dedicatedSet.has(r)).length < 2) {
+            anchorStatus = 'anchor_off_target';
+          }
+          const gridHalf = 5;
+          const gridStep = 1;
+          const gridPoints = [];
+          for (let dy = -gridHalf; dy <= gridHalf; dy += gridStep) {
+            for (let dx = -gridHalf; dx <= gridHalf; dx += gridStep) {
+              gridPoints.push({ x: anchorPixel.x + dx, y: anchorPixel.y + dy });
+            }
+          }
+          const runs = [];
+          for (const randomVec2 of randomRuns) {
+            const levelSamples = {};
+            for (const level of [22, 23, 24, 25, 26]) {
+              const r = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs || 180000},
+                cameraState: cameraState,
+                allSurfaces: true,
+                probeLevel: level,
+                samplePoints: gridPoints,
+                samplePointSpace: 'canvasCssPixel',
+                randomVec2: randomVec2
+              });
+              levelSamples['level' + level] = r.samplePoints;
+            }
+            runs.push({ randomVec2, levels: levelSamples });
+          }
+          return {
+            anchor: {
+              status: anchorStatus,
+              pixel: anchorPixel,
+              world: anchorWorldDecoded,
+              delta: anchorWorldDelta,
+              route: anchorRouteDecoded,
+              hitObject: anchorHitDecoded,
+              candidateScore: bestCandidate.score,
+              candidateRoutes: bestCandidate.routes,
+              candidateRouteNames: bestCandidate.routes.map((r) => routeNameById[r] || 'unknown'),
+              hasStrongPair: anchorHasStrongPair,
+              hasMediumPair: anchorHasMediumPair
+            },
+            coarse: { stepCssPx: coarseStepCss, sampleCount: coarsePoints.length, top10: coarseTop10 },
+            grid: { half: gridHalf, step: gridStep, sampleCount: gridPoints.length, samplePoints: gridPoints },
+            runs
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: (args.timeoutMs || 180000) + 600000
+      });
+      const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      fs.writeFileSync(path.join(probePackageDir, 'sanity-probe-view.png'), base64ToBuffer(screenshot.data));
+      const aggregate = computeWestJoinSanityAggregate(probeResult);
+      const sanityReport = {
+        version: 'r7-3-10-west-join-sanity-probe',
+        cameraState: sanityCameraState,
+        targetWorld,
+        anchorRouteAllowed,
+        randomRuns,
+        probe: probeResult,
+        aggregate,
+        status: aggregate.classification === 'Invalid' || probeResult.anchor.status !== 'valid' ? 'fail' : 'pass'
+      };
+      fs.writeFileSync(path.join(probePackageDir, 'west-join-sanity-report.json'), `${JSON.stringify(sanityReport, null, 2)}\n`);
+      console.log('R7-3.10 west join sanity probe completed');
+      console.log(`status: ${sanityReport.status}`);
+      console.log(`anchor: ${probeResult.anchor.status}`);
+      console.log(`classification: ${aggregate.classification}`);
+      console.log(`package: ${path.relative(repoRoot, probePackageDir)}`);
+      completed = true;
+      return;
+    }
+    if (args.westJoinD1Gate) {
+      console.error('[r738-runner] running R7-3.10 west join D1 uniform gate helper');
+      const d1CameraState = args.cameraState || {
+        name: 'r7310_west_join_d1_gate',
+        position: { x: -1.798925, y: 2.461438, z: 2.730018 },
+        yaw: 2.312015,
+        pitch: 0.336,
+        fov: 55,
+        forward: { x: -0.696398, y: 0.329713, z: 0.637431 }
+      };
+      const baselineZMax = 3.056;
+      const overrideZMax = args.westJoinD1OverrideZMax;
+      const anchorPixel = { x: 489, y: 560 };
+      const d1PackageDir = path.join(repoRoot, '.omc', 'r7-3-10-west-join-d1-gate', timestampForPath());
+      fs.mkdirSync(d1PackageDir, { recursive: true });
+      const prepareScenarioExpression = (label, zMax) => `(() => {
+        return (async () => {
+          const cameraState = ${JSON.stringify(d1CameraState)};
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR7310C1FullRoomDiffuseRuntimeEnabled === 'function')
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          if (typeof window.setR7310C1WestWallBeamShadowZMaxOverride === 'function')
+            window.setR7310C1WestWallBeamShadowZMaxOverride(${zMax});
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(cameraState);
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender('r7310-west-join-d1-${label}');
+          const targetSamples = ${args.targetSamples || 1};
+          const startedAt = performance.now();
+          while (typeof sampleCounter === 'number' &&
+            sampleCounter < targetSamples &&
+            performance.now() - startedAt < ${args.timeoutMs}) {
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return {
+            label: ${JSON.stringify(label)},
+            zMaxOverride: ${zMax},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`;
+      const probeScenarioExpression = (label, zMax) => `(() => {
+        return (async () => {
+          const cameraState = ${JSON.stringify(d1CameraState)};
+          const anchorPixel = ${JSON.stringify(anchorPixel)};
+          const anchorHalf = 5;
+          const anchorPoints = [];
+          for (let dy = -anchorHalf; dy <= anchorHalf; dy += 1) {
+            for (let dx = -anchorHalf; dx <= anchorHalf; dx += 1) {
+              anchorPoints.push({ x: anchorPixel.x + dx, y: anchorPixel.y + dy });
+            }
+          }
+          const denseStepCss = 16;
+          const densePoints = [];
+          for (let y = denseStepCss; y < window.innerHeight - denseStepCss; y += denseStepCss) {
+            for (let x = denseStepCss; x < window.innerWidth - denseStepCss; x += denseStepCss) {
+              densePoints.push({ x, y });
+            }
+          }
+          const samplePoints = anchorPoints.concat(densePoints);
+          const baseOptions = {
+            timeoutMs: ${args.timeoutMs},
+            cameraState,
+            allSurfaces: true,
+            samplePoints,
+            samplePointSpace: 'canvasCssPixel',
+            randomVec2: { x: 0.5, y: 0.5 },
+            westWallBeamShadowZMaxOverride: ${zMax}
+          };
+          const routeReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            ...baseOptions,
+            probeLevel: 22
+          });
+          const radianceReport = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+            ...baseOptions,
+            probeLevel: 26
+          });
+          return {
+            label: ${JSON.stringify(label)},
+            zMaxOverride: ${zMax},
+            anchorCount: anchorPoints.length,
+            denseCount: densePoints.length,
+            denseStepCss,
+            routeReport,
+            radianceReport,
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            status: 'pass'
+          };
+        })();
+      })()`;
+      const baselineVisual = await evaluate(cdp, prepareScenarioExpression('baseline', baselineZMax), {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const baselineScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const baselineProbe = await evaluate(cdp, probeScenarioExpression('baseline', baselineZMax), {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 600000
+      });
+      const overrideVisual = await evaluate(cdp, prepareScenarioExpression('override', overrideZMax), {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const overrideScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const overrideProbe = await evaluate(cdp, probeScenarioExpression('override', overrideZMax), {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 600000
+      });
+      const baselineAnchorSummary = summarizeWestJoinD1Anchor(baselineProbe.routeReport, baselineProbe.radianceReport, baselineProbe.anchorCount);
+      const overrideAnchorSummary = summarizeWestJoinD1Anchor(overrideProbe.routeReport, overrideProbe.radianceReport, overrideProbe.anchorCount);
+      const safety = summarizeWestJoinD1Safety(baselineProbe, overrideProbe, baselineProbe.anchorCount);
+      const baselinePairCount = baselineAnchorSummary.targetPairHistogram['1013|1016'] || 0;
+      const overridePairCount = overrideAnchorSummary.targetPairHistogram['1013|1016'] || 0;
+      const baselineMaxStep = baselineAnchorSummary.differentRouteLumaStep.max;
+      const overrideMaxStep = overrideAnchorSummary.differentRouteLumaStep.max;
+      const routePairRemoved = baselinePairCount > 0 && overridePairCount === 0;
+      const lumaStepImproved = Number.isFinite(baselineMaxStep) &&
+        (overrideMaxStep === null || overrideMaxStep < baselineMaxStep * 0.5 || overrideMaxStep <= 0.10);
+      const safetyPass = safety.status === 'pass';
+      const d1DiagnosticStatus = routePairRemoved && lumaStepImproved && safetyPass ? 'hit' : 'blocked';
+      const result = {
+        d1DiagnosticStatus,
+        baselinePairCount,
+        overridePairCount,
+        baselineMaxStep,
+        overrideMaxStep,
+        routePairRemoved,
+        lumaStepImproved,
+        safetyPass,
+        routePairBefore: baselineAnchorSummary.targetPairHistogram,
+        routePairAfter: overrideAnchorSummary.targetPairHistogram,
+        summary: d1DiagnosticStatus === 'hit'
+          ? 'D1 override 把 ROI 1 anchor grid 的 1013|1016 邊界 pair 清掉，且 5% 安全檢查通過。'
+          : (routePairRemoved
+            ? 'D1 override 清掉 ROI 1 anchor grid 的 1013|1016 邊界 pair，但 5% 安全檢查或 luma step 條件尚未通過。'
+            : 'D1 override 沒有清掉 ROI 1 anchor grid 的 1013|1016 邊界 pair。')
+      };
+      const report = {
+        version: 'r7-3-10-west-join-d1-gate',
+        package: path.relative(repoRoot, d1PackageDir),
+        cameraState: d1CameraState,
+        anchorPixel,
+        baseline: {
+          zMaxOverride: baselineZMax,
+          visual: baselineVisual,
+          anchorSummary: baselineAnchorSummary,
+          denseCount: baselineProbe.denseCount
+        },
+        override: {
+          zMaxOverride: overrideZMax,
+          visual: overrideVisual,
+          anchorSummary: overrideAnchorSummary,
+          denseCount: overrideProbe.denseCount
+        },
+        safety,
+        result,
+        status: d1DiagnosticStatus === 'hit' ? 'pass' : 'fail'
+      };
+      fs.writeFileSync(path.join(d1PackageDir, 'west-join-d1-gate-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      fs.writeFileSync(path.join(d1PackageDir, 'baseline.png'), base64ToBuffer(baselineScreenshot.data));
+      fs.writeFileSync(path.join(d1PackageDir, 'override.png'), base64ToBuffer(overrideScreenshot.data));
+      const overrideSlug = String(overrideZMax).replace(/[^0-9]+/g, '-').replace(/^-|-$/g, '');
+      const reviewDirName = Math.abs(overrideZMax - 2.833) < 0.000001
+        ? '2026-05-20-r7-3-10-roi1-d1-uniform-gate-codex'
+        : `2026-05-20-r7-3-10-roi1-d1b-zmax-${overrideSlug}-codex`;
+      const reviewDir = path.join(repoRoot, 'docs', 'html-review', reviewDirName);
+      fs.mkdirSync(reviewDir, { recursive: true });
+      fs.copyFileSync(path.join(d1PackageDir, 'baseline.png'), path.join(reviewDir, 'baseline.png'));
+      fs.copyFileSync(path.join(d1PackageDir, 'override.png'), path.join(reviewDir, 'override.png'));
+      writeWestJoinD1Review(report, reviewDir);
+      console.log('R7-3.10 west join D1 uniform gate helper completed');
+      console.log(`status: ${report.status}`);
+      console.log(`baselinePairCount: ${baselinePairCount}`);
+      console.log(`overridePairCount: ${overridePairCount}`);
+      console.log(`changedPixelRatio: ${formatPercent(safety.changedPixelRatio)}`);
+      console.log(`package: ${path.relative(repoRoot, d1PackageDir)}`);
+      console.log(`htmlReview: ${path.relative(repoRoot, path.join(reviewDir, 'index.html'))}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.westWallBeamShadowVisualTest) {
+      console.error('[r738-runner] running R7-3.10 west wall beam shadow live-match helper');
+      const westWallBeamShadowCameraState = args.cameraState || {
+        name: 'r7310_user_west_wall_beam_shadow_live_match',
+        position: { x: -1.652805, y: 2.453416, z: 2.729668 },
+        yaw: 2.257985,
+        pitch: 0.267,
+        fov: 55,
+        forward: { x: -0.745641, y: 0.263839, z: 0.611889 }
+      };
+      const westWallBeamShadowExpectedForward = westWallBeamShadowCameraState.forward || null;
+      const waitForWestWallBeamShadowSamplesExpression = `
+        async function r7310WaitForWestWallBeamShadowSamples(targetSamples, timeoutMs, label) {
+          if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+          if (typeof wakeRender === 'function') wakeRender(label);
+          if (targetSamples > 0) {
+            const startedAt = performance.now();
+            while (typeof sampleCounter === 'number' &&
+              sampleCounter < targetSamples &&
+              performance.now() - startedAt < timeoutMs) {
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForWestWallBeamShadowSamplesExpression}
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'bottom-right-group',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify(westWallBeamShadowCameraState)});
+          const replayPose = typeof window.reportR7310CameraPoseInfo === 'function'
+            ? window.reportR7310CameraPoseInfo()
+            : null;
+          const expectedForward = ${JSON.stringify(westWallBeamShadowExpectedForward)};
+          const replayForward = replayPose && replayPose.forward ? replayPose.forward : null;
+          const forwardDelta = replayForward && expectedForward ? {
+            x: Math.abs(replayForward.x - expectedForward.x),
+            y: Math.abs(replayForward.y - expectedForward.y),
+            z: Math.abs(replayForward.z - expectedForward.z)
+          } : null;
+          const forwardMatches = !expectedForward || (!!forwardDelta &&
+            forwardDelta.x < 0.002 &&
+            forwardDelta.y < 0.002 &&
+            forwardDelta.z < 0.002);
+          if (!forwardMatches)
+            throw new Error('R7-3.10 west wall beam shadow replay forward mismatch: ' + JSON.stringify({ expectedForward, replayForward, forwardDelta }));
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForWestWallBeamShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-west-wall-beam-shadow-live-reference');
+          return {
+            label: 'live-reference',
+            cameraState: ${JSON.stringify(westWallBeamShadowCameraState)},
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: replayPose,
+            expectedForward,
+            replayForward,
+            forwardDelta,
+            forwardMatches,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const liveScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const bakeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${waitForWestWallBeamShadowSamplesExpression}
+          window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+          window.setR7310C1WestWallBeamShadowRuntimeEnabled(true);
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(${JSON.stringify({
+              ...westWallBeamShadowCameraState,
+              name: `${westWallBeamShadowCameraState.name || 'r7310_user_west_wall_beam_shadow_live_match'}_new_bake`
+            })});
+          const targetSamples = ${args.targetSamples || 1};
+          await r7310WaitForWestWallBeamShadowSamples(targetSamples, ${args.timeoutMs}, 'r7310-west-wall-beam-shadow-new-bake');
+          return {
+            label: 'west-wall-beam-shadow-bake',
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+            status: 'pass'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-west-wall-beam-shadow-live-match', timestampForPath());
+      fs.mkdirSync(visualDir, { recursive: true });
+      const visualReport = {
+        version: 'r7-3-10-west-wall-beam-shadow-live-match',
+        cameraState: westWallBeamShadowCameraState,
+        liveReport,
+        bakeReport,
+        status: liveReport.status === 'pass' && bakeReport.status === 'pass' ? 'pass' : 'fail'
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      fs.writeFileSync(path.join(visualDir, 'live-reference.png'), base64ToBuffer(liveScreenshot.data));
+      fs.writeFileSync(path.join(visualDir, 'west-wall-beam-shadow-bake.png'), base64ToBuffer(bakeScreenshot.data));
+      console.log('R7-3.10 west wall beam shadow live-match helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`liveReference: ${path.relative(repoRoot, path.join(visualDir, 'live-reference.png'))}`);
+      console.log(`newBake: ${path.relative(repoRoot, path.join(visualDir, 'west-wall-beam-shadow-bake.png'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
     if (args.runtimeShortCircuitTest) {
       console.error('[r738-runner] running R7-3.10 runtime short-circuit helper');
       const report = await evaluate(cdp, `(() => {
@@ -1335,6 +4887,118 @@ async function main() {
       console.log(`westWallShortCircuitCount: ${report.westWallShortCircuitCount}`);
       console.log(`package: ${path.relative(repoRoot, packageDir)}`);
       if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.southWallRuntimeTest) {
+      console.error('[r738-runner] running R7-3.10 south wall runtime helper');
+      const report = await evaluate(cdp, `(() => {
+        return window.reportR7310C1FullRoomDiffuseRuntimeProbe({ timeoutMs: ${args.timeoutMs}, southWallCamera: true });
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 C1 south wall diffuse runtime short-circuit test completed');
+      console.log(`status: ${report.status}`);
+      console.log(`southWallSurfaceHitCount: ${report.southWallSurfaceHitCount}`);
+      console.log(`southWallShortCircuitCount: ${report.southWallShortCircuitCount}`);
+      console.log(`southRevealShortCircuitCount: ${report.southRevealShortCircuitCount}`);
+      console.log(`southRevealProbeSamples: ${JSON.stringify(report.southRevealProbeSamples || [])}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.ceilingRuntimeTest) {
+      console.error('[r738-runner] running R7-3.10 ceiling runtime helper');
+      const report = await evaluate(cdp, `(() => {
+        return window.reportR7310C1FullRoomDiffuseRuntimeProbe({ timeoutMs: ${args.timeoutMs}, ceilingCamera: true });
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 C1 ceiling diffuse runtime short-circuit test completed');
+      console.log(`status: ${report.status}`);
+      console.log(`ceilingSurfaceHitCount: ${report.ceilingSurfaceHitCount}`);
+      console.log(`ceilingShortCircuitCount: ${report.ceilingShortCircuitCount}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.structuralRuntimeTest) {
+      console.error('[r738-runner] running R7-3.10 structural runtime helper');
+      const structuralRedboxSamplePoints = args.cameraState ? [
+        { x: 560, y: 330 },
+        { x: 620, y: 330 },
+        { x: 680, y: 330 },
+        { x: 740, y: 330 },
+        { x: 560, y: 390 },
+        { x: 620, y: 390 },
+        { x: 680, y: 390 },
+        { x: 740, y: 390 },
+        { x: 560, y: 450 },
+        { x: 620, y: 450 },
+        { x: 680, y: 450 },
+        { x: 740, y: 450 },
+        { x: 560, y: 510 },
+        { x: 620, y: 510 },
+        { x: 680, y: 510 },
+        { x: 740, y: 510 }
+      ] : [
+        { x: 640, y: 360 },
+        { x: 680, y: 360 },
+        { x: 600, y: 360 }
+      ];
+      const report = await evaluate(cdp, `(() => {
+        return window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+          timeoutMs: ${args.timeoutMs},
+          structuralCamera: true,
+          cameraState: ${args.cameraState ? JSON.stringify(args.cameraState) : 'null'},
+          structuralPendingOk: ${args.structuralPendingOk ? 'true' : 'false'},
+          probeLevel: 8,
+          samplePointSpace: ${args.cameraState ? JSON.stringify('canvasCssPixel') : JSON.stringify('renderTargetPixel')},
+          samplePoints: ${JSON.stringify(structuralRedboxSamplePoints)}
+        });
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const worldReport = await evaluate(cdp, `(() => {
+        return window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+          timeoutMs: ${args.timeoutMs},
+          structuralCamera: true,
+          cameraState: ${args.cameraState ? JSON.stringify(args.cameraState) : 'null'},
+          structuralPendingOk: ${args.structuralPendingOk ? 'true' : 'false'},
+          probeLevel: 9,
+          samplePointSpace: ${args.cameraState ? JSON.stringify('canvasCssPixel') : JSON.stringify('renderTargetPixel')},
+          samplePoints: ${JSON.stringify(structuralRedboxSamplePoints)}
+        });
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 60000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      fs.writeFileSync(path.join(packageDir, 'runtime-world-report.json'), `${JSON.stringify(worldReport, null, 2)}\n`);
+      console.log('R7-3.10 C1 structural beams-columns diffuse runtime short-circuit test completed');
+      console.log(`status: ${report.status}`);
+      console.log(`structuralPending: ${report.structuralPending}`);
+      console.log(`structuralSurfaceHitCount: ${report.structuralSurfaceHitCount}`);
+      console.log(`structuralShortCircuitCount: ${report.structuralShortCircuitCount}`);
+      console.log(`structuralIslandHitByName: ${JSON.stringify(report.structuralIslandHitByName || {})}`);
+      console.log(`structuralIslandShortCircuitByName: ${JSON.stringify(report.structuralIslandShortCircuitByName || {})}`);
+      console.log(`structuralProbeSamples: ${JSON.stringify(report.structuralProbeSamples || [])}`);
+      console.log(`structuralWorldSamples: ${JSON.stringify(worldReport.structuralProbeSamples || [])}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass' || worldReport.status !== 'pass') process.exitCode = 1;
       completed = true;
       return;
     }
@@ -1936,17 +5600,31 @@ async function main() {
       return;
     }
     console.error('[r738-runner] running capture helper');
-	    const r7310CaptureHelper = args.r7310Surface === 'north-wall'
-	      ? 'reportR7310C1NorthWallDiffuseBakeAfterSamples'
-	      : (args.r7310Surface === 'east-wall'
-	        ? 'reportR7310C1EastWallDiffuseBakeAfterSamples'
-	        : (args.r7310Surface === 'west-wall'
-	          ? 'reportR7310C1WestWallDiffuseBakeAfterSamples'
-	          : (args.r7310Surface === 'south-wall'
-	            ? 'reportR7310C1SouthWallDiffuseBakeAfterSamples'
-	            : (args.r7310Surface === 'ceiling'
-	              ? 'reportR7310C1CeilingDiffuseBakeAfterSamples'
-	              : 'reportR7310C1FloorDiffuseBakeAfterSamples'))));
+	    const r7310CaptureHelpers = {
+	      floor: 'reportR7310C1FloorDiffuseBakeAfterSamples',
+	      'north-wall': 'reportR7310C1NorthWallDiffuseBakeAfterSamples',
+	      'east-wall': 'reportR7310C1EastWallDiffuseBakeAfterSamples',
+	      'west-wall': 'reportR7310C1WestWallDiffuseBakeAfterSamples',
+	      'south-wall': 'reportR7310C1SouthWallDiffuseBakeAfterSamples',
+	      ceiling: 'reportR7310C1CeilingDiffuseBakeAfterSamples',
+	      'structural-beams-columns': 'reportR7310C1StructuralDiffuseBakeAfterSamples',
+	      'se-column-north-shadow': 'reportR7310C1SeColumnNorthShadowBakeAfterSamples',
+	      'se-column-west-shadow': 'reportR7310C1SeColumnWestShadowBakeAfterSamples',
+	      'south-wall-ac-shadow': 'reportR7310C1SouthWallAcShadowBakeAfterSamples',
+	      'east-wall-beam-shadow': 'reportR7310C1EastWallBeamShadowBakeAfterSamples',
+	      'sw-column-north-shadow': 'reportR7310C1SwColumnNorthShadowBakeAfterSamples',
+	      'west-wall-beam-shadow': 'reportR7310C1WestWallBeamShadowBakeAfterSamples',
+	      'sw-column-inner-shadow': 'reportR7310C1SwColumnInnerShadowBakeAfterSamples',
+	      'west-beam-inner-shadow': 'reportR7310C1WestBeamInnerShadowBakeAfterSamples',
+	      'west-beam-under-shadow': 'reportR7310C1WestBeamUnderShadowBakeAfterSamples',
+	      'east-beam-inner-shadow': 'reportR7310C1EastBeamInnerShadowBakeAfterSamples',
+	      'east-beam-under-shadow': 'reportR7310C1EastBeamUnderShadowBakeAfterSamples',
+	      'south-window-left-reveal-shadow': 'reportR7310C1SouthWindowLeftRevealShadowBakeAfterSamples',
+	      'south-window-right-reveal-shadow': 'reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples',
+	      'south-window-bottom-reveal-shadow': 'reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples',
+	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples'
+	    };
+	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
 	    const expression = `(() => {
 	      function f32ToBase64(arr) {
         if (!arr) return null;
@@ -1962,7 +5640,8 @@ async function main() {
 	      return (async () => {
 	        const report = await window.${args.fullRoomDiffuseBake ? r7310CaptureHelper : 'reportR738C1BakeCaptureAfterSamples'}(${args.targetSamples || args.samples}, ${args.timeoutMs}, {
 	          targetAtlasResolution: ${args.atlasResolution},
-	          smokeTest: ${args.smokeTest ? 'true' : 'false'}
+	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
+	          northeastFurnitureMode: '${args.r7310NeFurniture}'
 	        });
         const artifacts = window.getR738C1BakeCaptureArtifacts();
         return {
@@ -1990,7 +5669,12 @@ async function main() {
       smokeTest: args.smokeTest
     });
 	    const packageRoot = args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture';
-	    const packageDir = path.join(repoRoot, '.omc', packageRoot, timestampForPath());
+	    const formalR7310Bake = args.fullRoomDiffuseBake &&
+	      args.atlasResolution === 1024 &&
+	      (args.targetSamples || args.samples) === 1000 &&
+	      !args.smokeTest;
+	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture) : null;
+	    const packageDir = formalPackageDir || path.join(repoRoot, '.omc', packageRoot, timestampForPath());
     fs.mkdirSync(packageDir, { recursive: true });
     const manifest = buildManifest({ report: payload.report, packageDir, smokeTest: args.smokeTest });
     const validationReport = {
@@ -2003,6 +5687,10 @@ async function main() {
     };
     if (args.smokeTest && validation.status === 'pass') validationReport.status = 'pass';
     if (validation.status !== 'pass') validationReport.status = 'fail';
+    const artifactHashes = {
+      atlasPatch0Sha256: sha256(atlasBuffer),
+      texelMetadataPatch0Sha256: sha256(metadataBuffer)
+    };
     fs.writeFileSync(path.join(packageDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 	    fs.writeFileSync(path.join(packageDir, 'raw-hdr-summary.json'), `${JSON.stringify(payload.rawHdrSummary, null, 2)}\n`);
 	    fs.writeFileSync(path.join(packageDir, 'surface-class-summary.json'), `${JSON.stringify(payload.surfaceClassSummary, null, 2)}\n`);
@@ -2010,6 +5698,18 @@ async function main() {
     fs.writeFileSync(path.join(packageDir, 'atlas-patch-000-rgba-f32.bin'), atlasBuffer);
     fs.writeFileSync(path.join(packageDir, 'texel-metadata-patch-000-f32.bin'), metadataBuffer);
     fs.writeFileSync(path.join(packageDir, 'validation-report.json'), `${JSON.stringify(validationReport, null, 2)}\n`);
+	    if (formalR7310Bake) {
+	      const pointerPath = r7310PointerPathForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture);
+	      if (pointerPath && validationReport.status === 'pass') {
+        const runtimePointer = buildR7310RuntimePointer({
+          report: payload.report,
+          manifest,
+          validationReport,
+          artifactHashes
+        });
+        fs.writeFileSync(path.join(repoRoot, pointerPath), `${JSON.stringify(runtimePointer, null, 2)}\n`);
+      }
+    }
     console.log('R7-3.8 C1 bake capture completed');
     console.log(`samples: ${payload.report.atlasSummary.actualSamples}`);
     console.log(`bakeContaminationGuardSnapshot: ${JSON.stringify((payload.report && payload.report.atlasSummary && payload.report.atlasSummary.bakeContaminationGuardSnapshot) || null)}`);

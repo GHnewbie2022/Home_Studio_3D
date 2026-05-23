@@ -1,0 +1,22 @@
+{
+  "config": 1,
+  "batch": "sw_column_north_shadow",
+  "surfaceTargetCount": 1,
+  "coveredSurfaceNames": [
+    "c1_sw_column_north_shadow"
+  ],
+  "missingSurfaceNames": [],
+  "validTexelRatioBySurface": {
+    "c1_sw_column_north_shadow": 1
+  },
+  "dilationAppliedBySurface": {
+    "c1_sw_column_north_shadow": false
+  },
+  "atlasPathBySurface": {
+    "c1_sw_column_north_shadow": "atlas-patch-000-rgba-f32.bin"
+  },
+  "allMajorSurfacesCovered": false,
+  "allStaticVisibleSurfacesAccountedFor": false,
+  "allStaticVisibleSurfacesCovered": false,
+  "finalC1Coverage": false
+}

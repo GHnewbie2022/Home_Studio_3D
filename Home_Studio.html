@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
 		<link rel="icon" href="data:,">
-		<link href="css/default.css?v=r7310-floor-side-edge-fix-v1" rel="stylesheet"/>
+		<link href="css/default.css?v=r7310-camera-pose-copy-v1" rel="stylesheet"/>
 
 		<script type="importmap">
 		{
@@ -56,6 +56,7 @@
 				<button id="btn-r7310-west-wall-diffuse" class="snapshot-action-btn glow-white">西牆烘焙：開</button>
 				<button id="btn-r7310-south-wall-diffuse" class="snapshot-action-btn glow-white">南牆烘焙：開</button>
 				<button id="btn-r7310-ceiling-diffuse" class="snapshot-action-btn glow-white">天花板烘焙：開</button>
+				<button id="btn-r7310-structural-diffuse" class="snapshot-action-btn glow-white">樑柱烘焙：開</button>
 			</div>
 			<div id="snapshot-bar"></div>
 			<div id="snapshot-actions">
@@ -130,6 +131,20 @@
 						</label>
 					</div>
 					<div id="config-desc" class="config-description">吸頂燈 + 牆面吸音板</div>
+					<div id="c2-ne-furniture-controls" class="config-furniture-controls">
+						<div class="config-description">東北家具</div>
+						<div class="config-furniture-actions">
+							<button type="button" id="btnC2NeWardrobe" class="action-btn">衣櫃</button>
+							<button type="button" id="btnC2NeBed" class="action-btn glow-white">床</button>
+						</div>
+					</div>
+					<div id="c2-south-gik-thickness-controls" class="config-furniture-controls">
+						<div class="config-description">C2-C4 南側板厚</div>
+						<div class="config-furniture-actions">
+							<button type="button" id="btnC2SouthGikStandard" class="action-btn">244</button>
+							<button type="button" id="btnC2SouthGikSpot" class="action-btn glow-white">SPOT</button>
+						</div>
+					</div>
 				</div>
 
 
@@ -310,14 +325,16 @@
 			</div>
 		</div>
 
+		<button id="copyCameraPoseInfo" type="button" aria-live="polite">複製視角 INFO</button>
+		<textarea id="cameraPoseInfo" readonly spellcheck="false" aria-label="相機狀態"></textarea>
 		<div id="cameraInfo" style="position:fixed; left:15px; bottom:6px; font-family:arial; font-size:11px; color:rgb(255,255,255); text-shadow:0 0 4px #000;"></div>
 
 		<script defer src="js/MobileJoystickControls.js"> </script>
 		<script defer src="js/PathTracingCommon.js"> </script>
 		<script defer src="js/BVH_Acc_Structure_Iterative_Fast_Builder.js"> </script>
-		<script defer src="js/InitCommon.js?v=r7310-loading-ui-v1"> </script>
+		<script defer src="js/InitCommon.js?v=r7310-north-east-hybrid-v1"> </script>
 
-			<script defer src="js/Home_Studio.js?v=r7310-floor-side-edge-fix-v1"> </script>
+				<script defer src="js/Home_Studio.js?v=r7310-default-bed-south-spot-v1"> </script>
 
 	</body>
 </html>

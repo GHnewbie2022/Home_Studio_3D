@@ -54,6 +54,68 @@ html, body {
 	user-select: none;
 }
 
+#cameraPoseInfo {
+	position: fixed;
+	right: 15px;
+	bottom: 78px;
+	width: min(520px, calc(100vw - 30px));
+	height: 84px;
+	box-sizing: border-box;
+	z-index: 21;
+	padding: 8px 10px;
+	background: rgba(28, 28, 26, 0.84);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 4px;
+	color: #ffffff;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+	font-size: 11px;
+	line-height: 1.35;
+	text-shadow: 0 0 4px #000000;
+	resize: none;
+	outline: none;
+	cursor: text;
+	user-select: text;
+	-webkit-user-select: text;
+	white-space: pre;
+}
+
+#cameraPoseInfo::selection {
+	background: rgba(255, 255, 255, 0.28);
+}
+
+#copyCameraPoseInfo {
+	position: fixed;
+	right: 15px;
+	bottom: 168px;
+	width: 132px;
+	height: 28px;
+	box-sizing: border-box;
+	z-index: 22;
+	padding: 0 10px;
+	background: rgba(28, 28, 26, 0.92);
+	border: 1px solid rgba(255, 255, 255, 0.24);
+	border-radius: 4px;
+	color: #ffffff;
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	text-align: center;
+	text-shadow: 0 0 4px #000000;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+}
+
+#copyCameraPoseInfo:hover {
+	background: rgba(48, 48, 44, 0.96);
+	border-color: rgba(255, 255, 255, 0.42);
+}
+
+#copyCameraPoseInfo.copied {
+	background: rgba(58, 92, 70, 0.94);
+	border-color: rgba(167, 232, 184, 0.54);
+}
+
 .toggleButton {
 	position:fixed;
 	background-color: gray;
@@ -196,6 +258,8 @@ button.action-btn.glow-gradient-bo {
 }
 .config-radio-label:hover { background: rgba(255,255,255,0.05); color: #d3d3d1; }
 .config-description { color: #666; font-size: 10px; margin-bottom: 4px; }
+.config-furniture-controls { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
+.config-furniture-actions { display: flex; gap: 4px; }
 
 .cam-btn {
 	margin: 0; width: auto; height: 26px; padding: 0 10px; border-radius: 4px;

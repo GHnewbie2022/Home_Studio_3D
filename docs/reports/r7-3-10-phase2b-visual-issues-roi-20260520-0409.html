@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>R7-3.10 Phase 2B Visual Issues ROI - 2026-05-20 04:09</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121212;
+      --panel: #1b1b1b;
+      --panel-2: #232323;
+      --text: #f2eee7;
+      --muted: #bcb3a6;
+      --line: #3b342c;
+      --accent: #ffb14a;
+      --danger: #ff604d;
+      --ok: #8ddf91;
+      --code: #0b0b0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 24px 56px;
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; }
+    h1 { font-size: 32px; letter-spacing: 0; }
+    h2 { font-size: 24px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--line); }
+    h3 { font-size: 18px; }
+    p { margin: 10px 0 0; color: var(--muted); }
+    a { color: var(--accent); }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 12px 0 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code);
+      border: 1px solid #2c2c2c;
+      color: #eee1cc;
+    }
+    .hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0 0;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--muted);
+    }
+    .pill strong {
+      color: var(--text);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 28px;
+      border-radius: 999px;
+      background: #392615;
+      color: #ffd09b;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .issue {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .shot-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+    figure {
+      margin: 0;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000;
+    }
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .dot.fail { background: var(--danger); }
+    .dot.ok { background: var(--ok); }
+    .notes {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .notes li {
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: #171717;
+      color: var(--muted);
+    }
+    @media (max-width: 860px) {
+      main { padding: 26px 16px 44px; }
+      .meta, .roi-grid, .shot-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>R7-3.10 Phase 2B 視覺問題 ROI 報告</h1>
+    <p>紀錄時間：2026-05-20 04:09。來源畫面為 <code>http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-strict-ready-v1</code>。本檔只記錄問題、截圖、重現視角與修復順序，未做修復。</p>
+    <div class="meta">
+      <div class="pill"><strong>目前共同目標</strong>直接光與第一道陰影走 LIVE，漫射光走 BAKE。</div>
+      <div class="pill"><strong>本輪新增紀錄</strong>西牆馬賽克、東牆垂直異常貼圖、南牆切面縫隙。</div>
+      <div class="pill"><strong>同視角重現</strong>已用 runner 依 cameraState 產生本機截圖包。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ROI 排序</h2>
+    <div class="roi-grid">
+      <article class="card">
+        <div class="rank">ROI 1</div>
+        <h3>西牆在樑柱牆交界附近呈現馬賽克</h3>
+        <p>最高優先。它直接違反現在的核心架構目標：同一個直角空間中，西樑下表面與西南柱北面已經平滑，西牆卻呈現不同光照結構。若根因在西牆 runtime route、圖集取樣、ready gate 或 LIVE/BAKE 混合邏輯，會牽動整片西牆與之後所有西側驗收。</p>
+      </article>
+      <article class="card">
+        <div class="rank">ROI 2</div>
+        <h3>東牆與東南扁柱交界附近有垂直異常貼圖</h3>
+        <p>第二優先。它像是西側問題的鏡像或同類型邊界問題，可以用來確認問題是單一西牆個案，或是東西牆共用架構在接近樑柱時都有 route / atlas 邊界錯亂。</p>
+      </article>
+      <article class="card">
+        <div class="rank">ROI 3</div>
+        <h3>南牆切面與西南柱交界有細微縫隙</h3>
+        <p>第三優先。它是可見幾何接合問題，範圍比前兩項小；但它和西南柱、南牆切面、窗洞 reveal 的 ownership 邊界有關，適合在西牆光照架構釐清後處理。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="issue" id="issue-1">
+    <h2>問題 1：西牆馬賽克光照結構不一致</h2>
+    <p>使用者觀察：在西樑、西南柱、西牆三者交界的直角空間附近拉近，西樑下表面與西南柱北面是平滑的，西牆卻呈現馬賽克。預期三者同樣採用 LIVE 直接光、LIVE 第一道陰影、BAKE 漫射。</p>
+    <div class="status"><span class="dot ok"></span>runner 包狀態：<code>.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-042535</code>，12 張對照圖已產生。</div>
+    <div class="shot-grid">
+      <figure>
+        <img src="../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-042535/all-on.png" alt="問題 1 all-on 同視角截圖">
+        <figcaption>同視角重現：all-on。可用來看西牆、樑下表面、柱北面的光照連續性。</figcaption>
+      </figure>
+      <figure>
+        <img src="../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-042535/all-off-live.png" alt="問題 1 LIVE 參考截圖">
+        <figcaption>同視角參考：all-off-live。用來確認 LIVE 直接光與第一道陰影本身是否平滑。</figcaption>
+      </figure>
+    </div>
+    <pre>cameraState={"position":{"x":-1.831099,"y":2.446851,"z":2.758468},"yaw":2.328785,"pitch":0.459,"fov":55,"forward":{"x":-0.651053,"y":0.443052,"z":0.616307}}
+forward={"x":-0.651053,"y":0.443052,"z":0.616307}
+view={"facing":"西(-X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+    <ul class="notes">
+      <li>待查重點：西牆像素是否仍吃到含直接陰影的舊 BAKE，或在交界附近落到錯誤的西牆圖集區塊。</li>
+      <li>下一步驗證：同一視角比較 <code>all-on</code>、<code>no-west-wall-full</code>、<code>only-west-wall-full</code>、<code>west-special-only</code>，再用 probe level 檢查 routeName 與 world position。</li>
+    </ul>
+  </section>
+
+  <section class="issue" id="issue-2">
+    <h2>問題 2：東牆與東南扁柱交界附近有垂直異常貼圖</h2>
+    <p>使用者觀察：東牆與東南扁柱交界附近，東牆區域有一道垂直異常貼圖。這個點可作為東側鏡像檢查，判斷是否存在和西牆相同的取樣或 route 邊界問題。</p>
+    <div class="status"><span class="dot ok"></span>runner 包狀態：<code>.omc/r7-3-10-east-wall-shadow-visual/20260520-042735</code>，4 張對照圖已產生。</div>
+    <div class="shot-grid">
+      <figure>
+        <img src="file:///Users/eajrockmacmini/Desktop/截圖%202026-05-20%20凌晨4.09.39.png" alt="問題 2 使用者紅框截圖">
+        <figcaption>使用者標註截圖：紅框指向東牆區域的垂直異常貼圖。</figcaption>
+      </figure>
+      <figure>
+        <img src="../../.omc/r7-3-10-east-wall-shadow-visual/20260520-042735/east-wall-shadow-same-view.png" alt="問題 2 runner 同視角截圖">
+        <figcaption>同視角重現：east-wall-shadow-same-view。</figcaption>
+      </figure>
+    </div>
+    <pre>cameraState={"position":{"x":1.861754,"y":2.470594,"z":2.453626},"yaw":-2.472415,"pitch":0.765,"fov":55,"forward":{"x":0.447503,"y":0.692537,"z":0.565803}}
+forward={"x":0.447503,"y":0.692537,"z":0.565803}
+view={"facing":"上(+Y)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+    <ul class="notes">
+      <li>待查重點：東牆 near SE column 的像素 route 是否落到 east-wall full、structural 或 east-beam special package 的錯誤邊界。</li>
+      <li>下一步驗證：比較 <code>east-wall-shadow-same-view</code>、<code>east-wall-shadow-east-off-structural-on</code>、<code>east-wall-shadow-east-on-structural-off</code>、<code>east-wall-shadow-all-bakes-off-reference</code>。</li>
+    </ul>
+  </section>
+
+  <section class="issue" id="issue-3">
+    <h2>問題 3：南牆切面與西南柱交界有細微縫隙</h2>
+    <p>使用者觀察：南牆切面與西南柱之間仍可看到細微縫隙。runner 的 continuity probe 在此 cameraState 下回報 fail，主要是取樣網格沒有取得完整 seam / west-beam 連續性統計；視覺截圖已保留，後續需要針對交界幾何 ownership 做專門 probe。</p>
+    <div class="status"><span class="dot fail"></span>runner 包狀態：<code>.omc/r7-3-10-south-window-sw-column-continuity/20260520-042850</code>，probe 回報 fail，4 張同視角圖已產生。</div>
+    <div class="shot-grid">
+      <figure>
+        <img src="../../.omc/r7-3-10-south-window-sw-column-continuity/20260520-042850/south-window-sw-column-bake-spp1.png" alt="問題 3 BAKE SPP1 同視角截圖">
+        <figcaption>同視角重現：bake_spp1。</figcaption>
+      </figure>
+      <figure>
+        <img src="../../.omc/r7-3-10-south-window-sw-column-continuity/20260520-042850/south-window-sw-column-live-spp1.png" alt="問題 3 LIVE SPP1 同視角截圖">
+        <figcaption>同視角參考：live_spp1。</figcaption>
+      </figure>
+    </div>
+    <pre>cameraState={"position":{"x":-1.607503,"y":1.074736,"z":3.015433},"yaw":2.188371,"pitch":-0.119,"fov":55,"forward":{"x":-0.80952,"y":-0.118719,"z":0.574964}}
+forward={"x":-0.80952,"y":-0.118719,"z":0.574964}
+view={"facing":"西(-X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+    <ul class="notes">
+      <li>待查重點：南牆左側 reveal 與西南柱交界是否有幾何微小間隙、重疊面、或 route ownership 切換造成的縫。</li>
+      <li>下一步驗證：建立更小的 seam 專用 sample grid，只掃使用者截圖中的交界線，分別查 LIVE、BAKE、world position、hit object。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>建議處理順序</h2>
+    <pre>1.  先查西牆馬賽克
+    原因：它直接打到整片西牆的 LIVE/BAKE 架構，且和目前 strict-ready 修復線最相關。
+
+2.  接著查東牆垂直異常貼圖
+    原因：可用來驗證問題是否為東西牆共用架構，避免只修西側又讓東側留下同類問題。
+
+3.  最後查南牆切面與西南柱縫隙
+    原因：較像局部幾何與 ownership 交界；適合在牆面光照架構清楚後收掉。</pre>
+  </section>
+</main>
+</body>
+</html>

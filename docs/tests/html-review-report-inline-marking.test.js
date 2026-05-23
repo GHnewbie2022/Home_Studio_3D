@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const report = fs.readFileSync('docs/reports/r7-3-10-west-join-bug-input-20260520-154203.html', 'utf8');
+const reviewJs = fs.readFileSync('docs/reports/assets/html-review.js', 'utf8');
+
+assert.match(report, /<main data-review-root>/);
+assert.match(report, /r7-3-10-west-join-bug-input-20260520-154203-direct-range-v3/);
+assert.match(report, /<script src="\.\/assets\/html-review\.js\?v=20260520-1646-card-polish"><\/script>/);
+assert.equal((report.match(/<h1>/g) || []).length, 1);
+assert.match(reviewJs, /function wrapRangedTextNodes/);
+assert.match(reviewJs, /function syncActiveReviewSelection/);
+assert.match(reviewJs, /startOffset/);
+assert.match(reviewJs, /endOffset/);
+assert.match(reviewJs, /startNodeIndex/);
+assert.match(reviewJs, /endNodeIndex/);
+assert.match(reviewJs, /rangeFromStoredOffsets/);
+assert.match(reviewJs, /rangeFromStoredNodeOffsets/);
+assert.match(reviewJs, /function addNewReviewItem/);
+assert.match(reviewJs, /function updateReviewVisibility/);
+assert.match(reviewJs, /pendingRange\.cloneRange\(\)/);
+assert.match(reviewJs, /updateReviewVisibility\(\);\s*sidebar\.textContent = "";/);
+assert.match(reviewJs, /target\.closest\("\[data-html-review-ui\]"\)/);
+assert.match(reviewJs, /function reviewTypeLabel/);
+assert.match(reviewJs, /function reviewColorLabel/);
+assert.match(reviewJs, /status\.hidden = !text/);
+assert.match(reviewJs, /status\.hidden = true/);
+assert.match(reviewJs, /html-review-card-meta/);
+assert.doesNotMatch(reviewJs, /card\.addEventListener\("click", \(\) => \{[\s\S]*?renderSidebar\(\);[\s\S]*?\}\);/);
+assert.doesNotMatch(reviewJs, /meta\.textContent = `\$\{index \+ 1\}\. \$\{item\.color/);
+assert.doesNotMatch(reviewJs, /edit\.textContent = "Edit"/);
+assert.doesNotMatch(reviewJs, /del\.textContent = "Delete"/);
+assert.doesNotMatch(reviewJs, /\(detached\)/);
+assert.doesNotMatch(reviewJs, /surroundContents/);
+assert.doesNotMatch(reviewJs, /extractContents/);

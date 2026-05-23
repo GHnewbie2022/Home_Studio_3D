@@ -1,0 +1,30 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "config": 1,
+  "batch": "se_column_west_shadow",
+  "targetId": 1009,
+  "surfaceName": "c1_se_column_west_shadow",
+  "worldBounds": {
+    "zMin": 2.49,
+    "zMax": 3.056,
+    "yMin": 0,
+    "yMax": 2.905,
+    "x": 1.78
+  },
+  "createdAt": "2026-05-18T07:53:09.072Z",
+  "branch": "codex/r7-3-10-beam-column-bake-expansion",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 1024,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/se-column-west-shadow-1024px-1000spp",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  }
+}

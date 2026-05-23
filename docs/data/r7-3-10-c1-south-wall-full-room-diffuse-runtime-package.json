@@ -40,14 +40,14 @@
       "yMax": 2.845
     },
     "bottomReveal": {
-      "xMin": -1.45,
-      "xMax": 0.39,
+      "xMin": -1.52,
+      "xMax": 0.46,
       "yMin": 1.10,
       "yMax": 1.27
     },
     "topReveal": {
-      "xMin": -1.45,
-      "xMax": 0.39,
+      "xMin": -1.52,
+      "xMax": 0.46,
       "yMin": 2.675,
       "yMax": 2.845
     }
@@ -57,5 +57,15 @@
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "coverageReport": "coverage-report.json",
     "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "3225fe77f96def62382e2841a306c78db983d68b92bf0ef03924182ac68040f0",
+    "texelMetadataPatch0Sha256": "2d06b27f27c31dc3b3094848a7777d06e9589cf6a318cea81a66b62430b70220"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 0.7347393035888672
   }
 }

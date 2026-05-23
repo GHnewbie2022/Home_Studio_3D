@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="html-review-page-id" content="r7-3-10-west-join-bug-input-20260520-154203-direct-range-v3">
+  <title>R7-3.10 West Join Bug Input - 2026-05-20 15:42:03</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111111;
+      --panel: #1b1b1b;
+      --panel-soft: #242424;
+      --text: #f3eee7;
+      --muted: #bdb3a7;
+      --line: #40382f;
+      --accent: #ffb14a;
+      --warn: #ff745d;
+      --ok: #83d68a;
+      --code: #080808;
+      --mark-yellow: #665827;
+      --mark-green: #36553f;
+      --mark-blue: #344c57;
+      --mark-rose: #5f3f43;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; letter-spacing: 0; }
+    h1 { font-size: 30px; }
+    h2 {
+      font-size: 23px;
+      margin-top: 34px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    h3 { font-size: 18px; }
+    p { margin: 10px 0 0; color: var(--muted); }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 12px 0 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code);
+      border: 1px solid #2d2d2d;
+      color: #eee1cc;
+    }
+    a { color: var(--accent); }
+    .hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 0;
+    }
+    .pill, .card, figure, .note {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+    }
+    .pill {
+      padding: 12px 14px;
+      color: var(--muted);
+    }
+    .pill strong {
+      color: var(--text);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .issue-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card { padding: 16px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
+      height: 28px;
+      border-radius: 999px;
+      background: #392615;
+      color: #ffd09b;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .notes {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .notes li {
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: #171717;
+      color: var(--muted);
+    }
+    .shot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    figure {
+      margin: 0;
+      overflow: hidden;
+      background: var(--panel-soft);
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000000;
+    }
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+    .note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      color: var(--muted);
+      border-left: 4px solid var(--warn);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .dot.ok { background: var(--ok); }
+    mark.html-review-mark {
+      border-radius: 3px;
+      padding: 0 .05em;
+      cursor: pointer;
+    }
+    mark.html-review-yellow { background: var(--mark-yellow); color: var(--text); }
+    mark.html-review-green { background: var(--mark-green); color: var(--text); }
+    mark.html-review-blue { background: var(--mark-blue); color: var(--text); }
+    mark.html-review-rose { background: var(--mark-rose); color: var(--text); }
+    .html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (min-width: 1240px) {
+      body.html-review-has-comments main {
+        margin-left: max(24px, calc((100vw - 1180px) / 2));
+        margin-right: 348px;
+      }
+    }
+    @media (max-width: 860px) {
+      main { padding: 28px 16px 48px; }
+      .meta, .issue-grid, .shot-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main data-review-root>
+    <section class="hero">
+      <h1>R7-3.10 西牆交界缺陷輸入報告</h1>
+      <p>本報告只整理使用者於 2026-05-20 15:42 提供的單一視角 BUG 資訊，作為後續逐項修正與審查的輸入文件。</p>
+      <div class="meta">
+        <div class="pill"><strong>報告時間</strong>2026-05-20 15:42:03</div>
+        <div class="pill"><strong>頁面版本</strong><code>r7310-camera-pose-copy-v1</code></div>
+        <div class="pill"><strong>場景設定</strong>config 1，samples 1，暫停，SPP 上限 1000</div>
+        <div class="pill"><strong>觀察區域</strong>西牆、西樑、西南柱交界</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>重現視角</h2>
+      <p>以下內容保留使用者複製的視角資訊原文，後續 runner 或人工驗收應優先使用這組條件重播。</p>
+      <pre>cameraState={"position":{"x":-1.853876,"y":2.489781,"z":2.775573},"yaw":1.993985,"pitch":0.224,"fov":55,"forward":{"x":-0.889005,"y":0.222131,"z":0.40041}}
+forward={"x":-0.889005,"y":0.222131,"z":0.40041}
+view={"facing":"西(-X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</pre>
+    </section>
+
+    <section>
+      <h2>使用者觀察</h2>
+      <div class="issue-grid">
+        <article class="card">
+          <div class="tag">BUG 01</div>
+          <h3>西牆與西樑交界</h3>
+          <ul class="notes">
+            <li>交界處可見縫隙。</li>
+            <li>西牆邊界呈現柔邊。</li>
+            <li>西樑邊界呈現硬邊。</li>
+            <li>此現象需要與 west wall route、west beam route 的接管邊界分開檢查。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="tag">BUG 02</div>
+          <h3>西樑與西南柱交界</h3>
+          <ul class="notes">
+            <li>交界處可見縫隙。</li>
+            <li>西牆邊界呈現陰影。</li>
+            <li>西南柱邊界呈現硬邊。</li>
+            <li>此現象需要與西樑南端、柱體北面、陰影 patch 採樣邊界分開檢查。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>畫面證據</h2>
+      <p>原始畫面為使用者於對話中貼上的截圖。本報告另外附上一組由 runner 以同 cameraState 產生的本機輔助重播圖，方便後續代理不用只靠文字定位。</p>
+      <div class="shot-grid">
+        <figure>
+          <img src="../../.omc/r7-3-10-west-wall-beam-shadow-live-match/20260520-154151/live-reference.png" alt="同 cameraState live reference 輔助截圖">
+          <figcaption>輔助截圖 A：同 cameraState，live reference，UI 已隱藏，samples 1。</figcaption>
+        </figure>
+        <figure>
+          <img src="../../.omc/r7-3-10-west-wall-beam-shadow-live-match/20260520-154151/west-wall-beam-shadow-bake.png" alt="同 cameraState west wall beam shadow bake 輔助截圖">
+          <figcaption>輔助截圖 B：同 cameraState，west-wall-beam-shadow bake route，UI 已隱藏，samples 1。</figcaption>
+        </figure>
+      </div>
+      <div class="note">
+        輔助截圖只證明 runner 可以用同一 cameraState 重播並輸出素材；不代表 BUG 已修正，也不代表 route 判定正確。
+      </div>
+    </section>
+
+    <section>
+      <h2>後續調查邊界</h2>
+      <ul class="notes">
+        <li>先把 BUG 01 與 BUG 02 分開處理，避免西牆、西樑、西南柱三者的邊界問題混在同一個修法裡。</li>
+        <li>BUG 01 優先比對西牆邊界柔邊與西樑邊界硬邊是否來自不同 route 的亮度或 alpha 連續性問題。</li>
+        <li>BUG 02 優先比對西樑南端與西南柱北面是否有幾何接觸、採樣範圍或 hybrid route 接管差異。</li>
+        <li>下一輪若新增 probe 或修正，請沿用本報告的 cameraState 作同視角 A/B 驗收。</li>
+      </ul>
+      <div class="status"><span class="dot ok"></span><span>本報告為輸入整理，不包含根因判定與修復方案。</span></div>
+    </section>
+  </main>
+  <script src="./assets/html-review.js?v=20260520-1646-card-polish"></script>
+</body>
+</html>

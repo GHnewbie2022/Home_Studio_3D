@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-05-23-r7-3-10-1008-alpha-sync-final-opus">
+<title>R7-3.10 1008 Alpha Sync 收斂回報（OPUS 審查版）</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-05-23 · local HTML review</p>
+    <h1>R7-3.10 1008 Alpha Sync 收斂回報（OPUS 審查版）</h1>
+    <h2>1. 本輪結論</h2>
+    <p>本輪依照 OPUS 第 42 節共識執行：1008 <code>se-column-north-shadow</code> 的 atlas alpha 必須跟 texel metadata alpha 同步，讓無效 texel 在 runtime 取樣時確實退出。</p>
+    <p>CODEX 已完成 1008 alpha sync，使用者也用最新實機視角肉眼確認：東樑與東南柱交界恢復正常，無白線。</p>
+    <p>使用者最新驗收視角：</p>
+    <pre><code>{
+  &quot;cameraState&quot;: {
+    &quot;position&quot;: { &quot;x&quot;: 1.829054, &quot;y&quot;: 2.825952, &quot;z&quot;: 2.461449 },
+    &quot;yaw&quot;: -1.9756,
+    &quot;pitch&quot;: 1.121,
+    &quot;fov&quot;: 53,
+    &quot;forward&quot;: { &quot;x&quot;: 0.399643, &quot;y&quot;: 0.900536, &quot;z&quot;: 0.171234 }
+  },
+  &quot;view&quot;: { &quot;facing&quot;: &quot;上(+Y)&quot;, &quot;config&quot;: 1, &quot;samples&quot;: 340, &quot;paused&quot;: false, &quot;sppCap&quot;: 1000 },
+  &quot;viewport&quot;: {
+    &quot;innerWidth&quot;: 727,
+    &quot;innerHeight&quot;: 741,
+    &quot;canvasCssWidth&quot;: 727,
+    &quot;canvasCssHeight&quot;: 409,
+    &quot;drawingBufferWidth&quot;: 1280,
+    &quot;drawingBufferHeight&quot;: 720,
+    &quot;devicePixelRatio&quot;: 3.5,
+    &quot;aspect&quot;: 1.777778
+  }
+}</code></pre>
+    <p>使用者回報文字：</p>
+    <pre><code>東樑與東南柱之交界恢復正常，無白線</code></pre>
+    <h2>2. 前情提要</h2>
+    <p>前一份 HTML 討論已把問題收斂成三件事：</p>
+    <pre><code>1. 白線生成點要追到源頭。
+2. 修法要消除白線生成原因。
+3. 補色、cross-fade、調亮暗都不列為正解。</code></pre>
+    <p>OPUS 第 42 節接受 CODEX 的稽核修正：</p>
+    <pre><code>1. 現行 bug 鎖定 1008。
+2. 其他 shadow patch 目前掃描為乾淨，列為架構風險。
+3. 共同規則要用 metadata 驅動，自動同步 atlas alpha。</code></pre>
+    <h2>3. 實作摘要</h2>
+    <p>本輪實作集中在 alpha 同步規則，讓 <code>metadata alpha = 0</code> 的 texel 在 atlas 內也變成 alpha 0 與 RGB 0。</p>
+    <p>主要改動：</p>
+    <pre><code>1. 新增 syncR7310C1AtlasAlphaToTexelMetadata(pixels, metadata, size)
+   位置：js/InitCommon.js
+   功能：依 texel metadata alpha 同步 atlas alpha；無效 texel 同步清成 rgba=0。
+
+2. 新增 shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult)
+   位置：js/InitCommon.js
+   功能：只要 package 有 metadata invalid texel，就自動套用同步規則。
+
+3. 保留 north wall 既有 mask 包裝，但內部改呼叫同一個 helper。
+
+4. 新增一次性同步工具
+   docs/tools/r7-3-10-sync-atlas-alpha-to-metadata.mjs
+
+5. 更新 1008 runtime package hash
+   docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json</code></pre>
+    <h2>4. 1008 同步結果</h2>
+    <p>原始報告：</p>
+    <pre><code>.omc/r7-3-10-item3-white-line-probe-35/section43-1008-alpha-sync-report.json</code></pre>
+    <p>關鍵數字：</p>
+    <pre><code>packageDir:
+  assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp
+
+invalidTexels:
+  64801
+
+before:
+  invalidAtlasAlphaOne = 64801
+  invalidBrightTexels  = 64801
+  maxInvalidLuma       = 0.5175585445
+
+after:
+  invalidAtlasAlphaOne = 0
+  invalidBrightTexels  = 0</code></pre>
+    <p>判讀：</p>
+    <pre><code>1008 原本有 64801 個 metadata 無效 texel 仍以 atlas alpha=1 參與取樣。
+這些 texel 全部帶亮值，最高 luma 約 0.5176。
+
+同步後，同一批 texel 的 atlas alpha 已歸零，RGB 也歸零。
+這符合 OPUS 第 42 節要求的載重條件。</code></pre>
+    <h2>5. 最新肉眼驗收</h2>
+    <p>使用者在修正後用全烘焙同開狀態檢查東樑與東南柱交界，確認白線消失。</p>
+    <p>目前判定：</p>
+    <pre><code>item 3：東樑與東南柱交界
+狀態：使用者肉眼驗收通過
+結果：恢復正常，無白線</code></pre>
+    <p>這次驗收視角不同於前一輪白線截圖，但仍指向同一個東樑與東南柱交界區域。CODEX 將使用者這次實機觀察視為優先證據。</p>
+    <h2>6. 已跑驗證</h2>
+    <p>已完成的本機驗證：</p>
+    <pre><code>node --check js/InitCommon.js
+node --check docs/tools/r7-3-10-sync-atlas-alpha-to-metadata.mjs
+
+node docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js
+node docs/tests/r7-3-10-se-column-north-shadow.test.js
+node docs/tests/r7-3-10-se-column-west-shadow.test.js
+node docs/tests/r7-3-10-south-wall-ac-shadow.test.js
+node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+node docs/tests/r7-3-10-structural-sampling-guard.test.js</code></pre>
+    <p>已清理測試債：</p>
+    <pre><code>docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js
+
+原本狀態：
+  test 仍期待 runtime atlas patch count = 18，導致合約測試失敗。
+
+修正後：
+  runtime atlas patch count 已是 22。
+
+判定：
+  這是測試合約過期，已更新為 22。
+
+驗證：
+  node docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js 通過。</code></pre>
+    <h2>7. 備份與 GitHub 前狀態</h2>
+    <p>CODEX 準備在此報告後執行：</p>
+    <pre><code>1. 本機產生 binary diff 備份。
+2. commit 到目前分支。
+3. push 到 GitHub。</code></pre>
+    <p>目前分支：</p>
+    <pre><code>codex/r7-3-10-beam-column-bake-expansion</code></pre>
+    <h2>8. 請 OPUS 審查</h2>
+    <p>請 OPUS 只看以下三點：</p>
+    <pre><code>1. 是否同意 1008 alpha sync 已符合第 42 節共識。
+2. 是否同意 item 3 在使用者最新肉眼驗收下可標記為已正常。
+3. 是否同意目前可進入分支收束，下一輪另開項目處理其他餘震。</code></pre>
+    <p>CODEX 本輪不再新增補色、cross-fade 或亮度微調。</p>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=3f1270966039"></script>
+</body>
+</html>

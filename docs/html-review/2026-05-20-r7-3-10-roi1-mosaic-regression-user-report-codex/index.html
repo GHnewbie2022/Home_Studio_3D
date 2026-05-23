@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-05-20-r7-3-10-roi1-mosaic-regression-user-report-codex">
+<title>R7-3.10 ROI1 修補後馬賽克回歸與柱面消失回報</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+figure.evidence-shot {
+  margin: 18px 0 24px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--paper-soft);
+}
+figure.evidence-shot img {
+  width: 100%;
+  max-height: 72vh;
+  margin: 0;
+  border-radius: 0;
+}
+figure.evidence-shot figcaption {
+  padding: 10px 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 13px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-05-20 · Home_Studio_3D user regression report</p>
+    <h1>R7-3.10 ROI1 修補後馬賽克回歸與柱面消失回報</h1>
+    <h2>1. 回報範圍</h2>
+    <p>本頁整理使用者在 CODEX 套用 ROI 1 D1B z gate 修補後，於 <code>Home_Studio.html</code> 看到的新回歸現象。這份只作為下一輪 debug 起點，暫不下正式修法結論。</p>
+    <p>前一輪 CODEX 改動重點：</p>
+    <pre><code>uR7310C1WestWallBeamShadowZMaxOverride = 2.7179
+
+目的：
+  清掉 ROI 1 anchor grid 的 1013|1016 邊界 pair。
+
+已知效果：
+  黑邊消失。
+
+新回歸：
+  西牆局部馬賽克回來。
+  西南柱南面與北面在南牆外視角會消失。
+  東牆靠近東南柱子的 hybrid 區域也出現類似錯誤。</code></pre>
+    <h2>2. 使用者觀察摘要</h2>
+    <p>使用者確認 ROI 1 黑邊消失，但同一區域出現更大的牆面馬賽克問題。第一張圖顯示西牆與西南柱附近有橫向條狀、塊狀 hybrid artifact。使用者從南牆外面看時，西南柱的南面與北面會消失；消失後會看到西側內面上的橫條馬賽克。</p>
+    <p>第二張圖顯示東牆靠近東南柱的位置也有類似問題。使用者描述為「hybrid 到這就變成別的東西了」，表示問題可能不是單一西牆 z gate，而是牆面 / 柱子 / 樑陰影 route ownership 在南端交界處共同失配。</p>
+    <h2>3. 西側回歸視角</h2>
+    <p>使用者提供的西側視角：</p>
+    <figure class="evidence-shot">
+      <img src="./evidence/west-user-view-replay.png" alt="西側 cameraState runner 重現圖">
+      <figcaption>CODEX 以使用者提供的西側 cameraState 透過 <code>--r7310-west-wall-mosaic-diagnostic</code> 重現。runner package：<code>.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-224034</code>。</figcaption>
+    </figure>
+    <pre><code>{
+  &quot;cameraState&quot;: {
+    &quot;position&quot;: { &quot;x&quot;: -1.824365, &quot;y&quot;: 2.432103, &quot;z&quot;: 2.789964 },
+    &quot;yaw&quot;: 2.0948,
+    &quot;pitch&quot;: 0.561,
+    &quot;fov&quot;: 55,
+    &quot;forward&quot;: { &quot;x&quot;: -0.733113, &quot;y&quot;: 0.532033, &quot;z&quot;: 0.423659 }
+  },
+  &quot;view&quot;: {
+    &quot;facing&quot;: &quot;西(-X)&quot;,
+    &quot;config&quot;: 1,
+    &quot;samples&quot;: 1,
+    &quot;paused&quot;: true,
+    &quot;sppCap&quot;: 1000
+  },
+  &quot;viewport&quot;: {
+    &quot;innerWidth&quot;: 1458,
+    &quot;innerHeight&quot;: 741,
+    &quot;canvasCssWidth&quot;: 1318,
+    &quot;canvasCssHeight&quot;: 741,
+    &quot;drawingBufferWidth&quot;: 1280,
+    &quot;drawingBufferHeight&quot;: 720,
+    &quot;devicePixelRatio&quot;: 3.5,
+    &quot;aspect&quot;: 1.777778
+  }
+}</code></pre>
+    <p>西側視覺現象：</p>
+    <ul>
+    <li>ROI 1 黑邊已消失。</li>
+    <li>西牆靠近西南柱、樑下方區域出現橫條馬賽克。</li>
+    <li>從南牆外側看，西南柱南面與北面會消失。</li>
+    <li>柱面消失後，能看到西側內面上類似橫條馬賽克的內容。</li>
+    </ul>
+    <h2>4. 東側回歸視角</h2>
+    <p>使用者提供的東側視角：</p>
+    <figure class="evidence-shot">
+      <img src="./evidence/east-user-view-replay.png" alt="東側 cameraState runner 重現圖">
+      <figcaption>CODEX 以使用者提供的東側 cameraState 透過 <code>--r7310-east-wall-beam-shadow-visual-test</code> 重現。runner package：<code>.omc/r7-3-10-east-wall-beam-shadow-live-match/20260520-224205</code>。</figcaption>
+    </figure>
+    <pre><code>{
+  &quot;cameraState&quot;: {
+    &quot;position&quot;: { &quot;x&quot;: 1.898765, &quot;y&quot;: 2.454393, &quot;z&quot;: 2.466606 },
+    &quot;yaw&quot;: -2.266,
+    &quot;pitch&quot;: 1.027,
+    &quot;fov&quot;: 55,
+    &quot;forward&quot;: { &quot;x&quot;: 0.397315, &quot;y&quot;: 0.855751, &quot;z&quot;: 0.331409 }
+  },
+  &quot;view&quot;: {
+    &quot;facing&quot;: &quot;上(+Y)&quot;,
+    &quot;config&quot;: 1,
+    &quot;samples&quot;: 1,
+    &quot;paused&quot;: true,
+    &quot;sppCap&quot;: 1000
+  },
+  &quot;viewport&quot;: {
+    &quot;innerWidth&quot;: 1458,
+    &quot;innerHeight&quot;: 741,
+    &quot;canvasCssWidth&quot;: 1318,
+    &quot;canvasCssHeight&quot;: 741,
+    &quot;drawingBufferWidth&quot;: 1280,
+    &quot;drawingBufferHeight&quot;: 720,
+    &quot;devicePixelRatio&quot;: 3.5,
+    &quot;aspect&quot;: 1.777778
+  }
+}</code></pre>
+    <p>東側視覺現象：</p>
+    <ul>
+    <li>東牆靠近東南柱子的交界出現 hybrid artifact。</li>
+    <li>畫面裡局部牆面與樑 / 柱交界的材質或光照來源看起來被錯誤替換。</li>
+    <li>問題位置與西側同屬「牆面南端 + 柱子 + 樑陰影」交界區。</li>
+    </ul>
+    <h2>5. 目前最重要的 debug 假設</h2>
+    <p>目前建議下一輪先查 route ownership，不要直接再調單一 z 值。</p>
+    <pre><code>H1：2.7179 修掉 ROI 1 黑邊，但把原本由 west-wall-beam-shadow route 承接的南端牆面區域改派給 west-wall-full route，導致該區域吃到解析度、UV 或 atlas 區塊不連續的內容。
+
+H2：西南柱南面 / 北面消失，可能是 geometry culling、runtime surface predicate、或南端 structural island 判定在外側視角下不穩。
+
+H3：東牆靠東南柱也出現相似 artifact，表示 east/west 的 dedicated hybrid handoff policy 可能有對稱性問題。
+
+H4：問題不一定只在 D1B 的 z max；也可能是牆面 full patch、beam shadow patch、column shadow patch 的優先順序在南端交界處互相覆蓋。</code></pre>
+    <h2>6. 下一輪建議檢查順序</h2>
+    <pre><code>1. 先用使用者提供的兩組 cameraState 重跑 runtime probe。
+   目標：輸出 routeId、targetId、normal、worldPos、radiance。
+
+2. 西側同視角做 A/B。
+   A = uR7310C1WestWallBeamShadowZMaxOverride 3.056
+   B = uR7310C1WestWallBeamShadowZMaxOverride 2.7179
+   目標：確認馬賽克是 D1B 造成，或原本就藏在其它 route。
+
+3. 檢查西南柱可見面。
+   目標：找出南面與北面消失時，hitObject、normal、routeId 是否仍落在預期 surface。
+
+4. 檢查東牆對稱案例。
+   目標：確認 eastWallBeamShadow / eastBeamUnderShadow / structural-beams-columns 的 handoff 是否也有南端 ownership 問題。
+
+5. 暫停再用單一 z 門檻硬切。
+   目標：先找到哪個 route 或哪張 atlas 被錯誤套用，再決定正式修法。</code></pre>
+    <h2>7. 給下一位代理的短結論</h2>
+    <pre><code>ROI 1 黑邊已被 2.7179 z gate 清掉，但使用者確認產生新回歸：
+  - 西牆靠西南柱出現橫條馬賽克。
+  - 從南牆外側看，西南柱南面與北面會消失。
+  - 東牆靠東南柱也出現類似 hybrid artifact。
+
+下一輪請先以使用者提供的兩組 cameraState 做 route / target / normal / worldPos probe。
+請先定位 route ownership 與 atlas handoff，再談修法。</code></pre>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=aff49bd1ee79"></script>
+</body>
+</html>

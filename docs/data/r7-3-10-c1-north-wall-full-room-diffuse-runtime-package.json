@@ -1,15 +1,19 @@
 {
   "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
   "packageStatus": "architecture_probe",
-  "runtimeScope": "c1_north_wall_diffuse_short_circuit",
+  "runtimeScope": "c1_north_wall_first_hit_hybrid",
   "runtimeEnabledDefault": true,
   "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-wall-door-hole-1024px-1000spp",
   "batch": "north_wall",
+  "northeastFurnitureMode": "bed",
   "targetId": 1002,
   "surfaceName": "c1_north_wall",
   "requestedSamples": 1000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
   "upscaled": false,
   "worldBounds": {
     "xMin": -2.11,
@@ -18,6 +22,23 @@
     "yMax": 2.905,
     "z": -1.874
   },
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "coverageReport": "coverage-report.json",
+    "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "35cbe01230ce3537c10c269fd0a5c23d659fa31e9559343b200871c4874cf52c",
+    "texelMetadataPatch0Sha256": "f4dcefc304d095ac6c369d92df499c4d7ef7768d1c2e67e1eb5f980f2b6108c4"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 0.868896484375
+  },
+  "mapping": "planar_xy",
   "invalidTexelRegions": {
     "doorHole": {
       "xMin": -1.52,
@@ -26,10 +47,8 @@
       "yMax": 2.03
     }
   },
-  "artifacts": {
-    "manifest": "manifest.json",
-    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
-    "coverageReport": "coverage-report.json",
-    "validationReport": "validation-report.json"
-  }
+  "referenceForAcceptance": "live_path_tracing_same_camera",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+  "runtimeAtlasSlot": 1,
+  "runtimeArchitecture": "single_full_north_wall_first_hit_hybrid"
 }

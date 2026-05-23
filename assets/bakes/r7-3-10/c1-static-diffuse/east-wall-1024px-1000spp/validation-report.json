@@ -26,9 +26,9 @@
   "metadataFloatCount": 12582912,
   "atlasVisibleLuma": {
     "texels": 1048576,
-    "nonzeroTexels": 582109,
-    "meanLuma": 0.3059058627924159,
-    "maxLuma": 0.8272547324498495
+    "nonzeroTexels": 714793,
+    "meanLuma": 0.18454551492154606,
+    "maxLuma": 0.49667705098787945
   },
   "browserValidationStatus": "pass",
   "runnerStatus": "pass",
@@ -57,6 +57,21 @@
     "uR7310C1FloorDiffuseMode": 0,
     "uR7310C1NorthWallDiffuseMode": 0,
     "uR7310C1EastWallDiffuseMode": 0,
+    "uR7310C1WestWallDiffuseMode": 0,
+    "uR7310C1SouthWallDiffuseMode": 0,
+    "uR7310C1CeilingDiffuseMode": 0,
+    "uR7310C1StructuralDiffuseMode": 0,
+    "uR7310C1SeColumnNorthShadowMode": 0,
+    "uR7310C1SeColumnWestShadowMode": 0,
+    "uR7310C1SouthWallAcShadowMode": 0,
+    "uR7310C1EastWallBeamShadowMode": 0,
+    "uR7310C1SwColumnNorthShadowMode": 0,
+    "uR7310C1WestWallBeamShadowMode": 0,
+    "uR7310C1SwColumnInnerShadowMode": 0,
+    "uR7310C1WestBeamInnerShadowMode": 0,
+    "uR7310C1WestBeamUnderShadowMode": 0,
+    "uR7310C1EastBeamInnerShadowMode": 0,
+    "uR7310C1EastBeamUnderShadowMode": 0,
     "uR738C1BakeCaptureMode": 2
   }
 }

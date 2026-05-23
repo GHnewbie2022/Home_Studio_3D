@@ -1,0 +1,230 @@
+    <style>
+      .review-kicker {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 18px 0 24px;
+      }
+          .mini-card {
+            border: 1px solid var(--rule);
+            border-radius: 7px;
+            padding: 12px;
+            background: var(--paper-soft);
+      }
+      .mini-card strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--accent);
+      }
+      .roi-table {
+        table-layout: fixed;
+      }
+      .roi-table th:nth-child(1) { width: 72px; }
+      .roi-table th:nth-child(2) { width: 150px; }
+      .shot-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 16px 0;
+      }
+      figure.shot {
+        margin: 0;
+        border: 1px solid var(--rule);
+        border-radius: 7px;
+            overflow: hidden;
+            background: var(--paper-soft);
+          }
+      figure.shot img {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: var(--code-bg);
+      }
+      figure.shot figcaption {
+        padding: 10px 12px;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      details {
+        border: 1px solid var(--rule);
+            border-radius: 7px;
+            padding: 10px 12px;
+            margin: 12px 0;
+            background: #211e17;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 650;
+      }
+      .review-questions li {
+        margin-bottom: 8px;
+      }
+      @media (max-width: 720px) {
+        .review-kicker,
+        .shot-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    <div class="callout">
+      <strong>審查目的：</strong>
+      這頁把原始報告
+      <code>docs/reports/r7-3-10-phase2b-seam-gap-roi-annotatable-20260520-1219.html</code>
+      重整成 HTML Review 架構。舊版右側註解面板已移除，請直接選取此頁文字做高亮或註解；需要留圖時可在註解視窗貼上截圖。
+    </div>
+
+    <section aria-labelledby="summary">
+      <h2 id="summary">1. 快速判讀</h2>
+      <p>
+        紀錄時間是 2026-05-20 12:19。來源畫面為
+        <code>http://127.0.0.1:9002/Home_Studio.html?v=r7310-phase2b-roi-fix-v1</code>。
+        本輪重點是：馬賽克問題消失後，東西牆邊界黑線與縫隙感回歸。
+      </p>
+
+      <div class="review-kicker">
+        <div class="mini-card">
+          <strong>共同目標</strong>
+          消除不合理的縫隙，使房間看起來是正常的一體成形。
+        </div>
+        <div class="mini-card">
+          <strong>架構目標</strong>
+          直接光與第一道直接陰影走 LIVE，漫射光走 BAKE。
+        </div>
+        <div class="mini-card">
+          <strong>目前狀態</strong>
+          此檔只做問題報告與 ROI 排序；修復前先鎖定根因。
+        </div>
+      </div>
+
+      <table class="roi-table">
+        <thead>
+          <tr>
+            <th>ROI</th>
+            <th>位置</th>
+            <th>優先理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1</strong></td>
+            <td>西牆三面交界角落</td>
+            <td>同時牽涉西牆、西樑、西南柱，且剛修過西牆馬賽克 route。這個回歸最容易檢查修 A 壞 B。</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td>東牆三面交界角落</td>
+            <td>作為鏡像檢查點，用來判斷問題是單一幾何個案，還是東西牆共用 ownership / atlas route 規則造成。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-labelledby="west">
+      <h2 id="west">2. ROI 1：西牆三面交界角落的縫隙黑線</h2>
+      <p>
+        使用者觀察：馬賽克問題已解決，西樑與西牆交界、西樑與西南柱交界又出現黑線與縫隙感。
+        預期結果是西牆、西樑、西南柱在角落看起來一體成形，只保留自然陰影過渡。
+      </p>
+      <p>
+        本機重現截圖包：
+        <code>.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609</code>
+      </p>
+
+      <div class="shot-grid">
+        <figure class="shot">
+          <img src="../../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609/all-on.png" alt="西側三面交界 all-on 截圖">
+          <figcaption>all-on：可見西牆與西樑、西南柱附近的細黑線與縫隙感。</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="../../../.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-121609/all-off-live.png" alt="西側三面交界 all-off-live 截圖">
+          <figcaption>all-off-live：用來比對縫隙是否來自幾何可見性、LIVE 直接陰影或 BAKE route。</figcaption>
+        </figure>
+      </div>
+
+      <h3>西側根因方向</h3>
+      <ul>
+        <li>西牆 beam-shadow route 優先後，接觸邊緣可能缺少幾何重疊或 guard coverage，導致邊線露出背景或錯誤陰影。</li>
+        <li>西樑、西南柱、西牆三者在 shader 的 ownership 邊界分離，接縫 pixel 可能在 route 間跳動。</li>
+        <li>驗收重點：同視角下消除西樑與西牆交界、西樑與西南柱交界的黑線；西牆保持無馬賽克。</li>
+      </ul>
+
+      <details>
+        <summary>西側 camera / viewport 資訊</summary>
+        <pre><code>cameraState={"position":{"x":-1.798925,"y":2.461438,"z":2.730018},"yaw":2.312015,"pitch":0.336,"fov":55,"forward":{"x":-0.696398,"y":0.329713,"z":0.637431}}
+forward={"x":-0.696398,"y":0.329713,"z":0.637431}
+view={"facing":"西(-X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</code></pre>
+      </details>
+
+      <details>
+        <summary>西側重現指令</summary>
+        <pre><code>node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-west-wall-mosaic-diagnostic --camera-state-json='{"position":{"x":-1.798925,"y":2.461438,"z":2.730018},"yaw":2.312015,"pitch":0.336,"fov":55,"forward":{"x":-0.696398,"y":0.329713,"z":0.637431}}' --target-samples=1 --timeout-ms=180000</code></pre>
+      </details>
+    </section>
+
+    <section aria-labelledby="east">
+      <h2 id="east">3. ROI 2：東牆三面交界角落的縫隙黑線</h2>
+      <p>
+        使用者觀察：馬賽克問題已解決，東牆與東南柱交界又出現黑線與縫隙感。
+        預期結果是東牆、東樑、東南柱在角落看起來一體成形，只保留自然陰影過渡。
+      </p>
+      <p>
+        本機重現截圖包：
+        <code>.omc/r7-3-10-east-wall-shadow-visual/20260520-121851</code>
+      </p>
+
+      <div class="shot-grid">
+        <figure class="shot">
+          <img src="../../../.omc/r7-3-10-east-wall-shadow-visual/20260520-121851/east-wall-shadow-same-view.png" alt="東側三面交界 all-on 截圖">
+          <figcaption>all-on：可見東牆與東南柱交界附近的垂直黑線與縫隙感。</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="../../../.omc/r7-3-10-east-wall-shadow-visual/20260520-121851/east-wall-shadow-all-bakes-off-reference.png" alt="東側三面交界 all-bakes-off 參考截圖">
+          <figcaption>all-bakes-off reference：用來比對黑線是否仍存在於 LIVE 幾何。</figcaption>
+        </figure>
+      </div>
+
+      <h3>東側根因方向</h3>
+      <ul>
+        <li>東牆 beam-shadow route 的接觸區 ownership 可能和東南柱 route 在邊界處分離。</li>
+        <li>東側鏡像幾何的延伸長度、厚度或法線條件與西側不同，造成縫隙感只在某些角度放大。</li>
+        <li>驗收重點：同視角下消除東牆與東南柱交界黑線；東牆維持無垂直異常貼圖。</li>
+      </ul>
+
+      <details>
+        <summary>東側 camera / viewport 資訊</summary>
+        <pre><code>cameraState={"position":{"x":1.89663,"y":2.501376,"z":2.476232},"yaw":-2.283971,"pitch":0.389,"fov":55,"forward":{"x":0.699786,"y":0.379263,"z":0.605359}}
+forward={"x":0.699786,"y":0.379263,"z":0.605359}
+view={"facing":"東(+X)","config":1,"samples":1,"paused":true,"sppCap":1000}
+viewport={"innerWidth":1458,"innerHeight":741,"canvasCssWidth":1318,"canvasCssHeight":741,"drawingBufferWidth":1280,"drawingBufferHeight":720,"devicePixelRatio":3.5,"aspect":1.777778}</code></pre>
+      </details>
+
+      <details>
+        <summary>東側重現指令</summary>
+        <pre><code>node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-east-wall-shadow-visual-test --camera-state-json='{"position":{"x":1.89663,"y":2.501376,"z":2.476232},"yaw":-2.283971,"pitch":0.389,"fov":55,"forward":{"x":0.699786,"y":0.379263,"z":0.605359}}' --target-samples=1 --timeout-ms=180000</code></pre>
+      </details>
+    </section>
+
+    <section aria-labelledby="acceptance">
+      <h2 id="acceptance">4. 修復驗收條件</h2>
+      <ul>
+        <li>西側同視角：西樑與西牆交界、西樑與西南柱交界沒有不合理黑線或縫隙。</li>
+        <li>東側同視角：東牆與東南柱交界沒有不合理黑線或縫隙。</li>
+        <li>西牆維持馬賽克已解決狀態，東牆維持垂直異常貼圖已解決狀態。</li>
+        <li>修復後需重跑兩個同視角截圖 helper，並保存 before / after 圖包。</li>
+        <li>若黑線在 all-bakes-off reference 仍存在，優先查幾何密合；若只在 BAKE 開啟後出現，優先查 route ownership 與 atlas 取樣。</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="review-questions">
+      <h2 id="review-questions">5. 建議審查問題</h2>
+      <ol class="review-questions">
+        <li>西側黑線應優先視為幾何密合問題，還是 shader route ownership 問題？</li>
+        <li>東側是否應等待西側根因確定後再套同方法，還是現在就平行驗證鏡像規則？</li>
+        <li>驗收圖包是否需要新增「只開 structural」、「只開 wall route」這類分層對照？</li>
+        <li>目前 ROI 排序是否足夠，或需要把西樑、西南柱、西牆拆成更小的子 ROI？</li>
+      </ol>
+    </section>

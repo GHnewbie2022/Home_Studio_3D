@@ -1,0 +1,45 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_east_beam_inner_shadow_diffuse_short_circuit",
+  "runtimeEnabledDefault": true,
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/east-beam-inner-shadow-1024px-1000spp",
+  "batch": "east_beam_inner_shadow",
+  "targetId": 1017,
+  "surfaceName": "c1_east_beam_inner_shadow",
+  "requestedSamples": 1000,
+  "targetAtlasResolution": 1024,
+  "diffuseOnly": true,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "upscaled": false,
+  "worldBounds": {
+    "zMin": -1.874,
+    "zMax": 2.49,
+    "yMin": 2.515,
+    "yMax": 2.905,
+    "x": 1.85
+  },
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "coverageReport": "coverage-report.json",
+    "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "6432a9aa5339d696c4782b4ae191c4aa29749166b8c0ad2b863092e4a39d4a07",
+    "texelMetadataPatch0Sha256": "06dd21c46fe05e94c331717c5e149870c5265bc9f3083a8fd4b7b0a9c63f1d96"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 1
+  },
+  "mapping": "single_planar_zy_on_x_face",
+  "referenceForAcceptance": "live_path_tracing_same_camera",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+  "runtimeAtlasSlot": 16,
+  "uniformContractAlias": "tR7310C1EastBeamInnerShadowTexture"
+}

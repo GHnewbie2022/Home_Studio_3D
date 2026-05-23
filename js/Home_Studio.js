@@ -20,6 +20,7 @@ const C_WOOD = [0.55, 0.35, 0.17];
 const C_DARK_WOOD = [0.36, 0.26, 0.18];
 const C_METAL = [0.50, 0.55, 0.55];
 const C_WHITE = [0.85, 0.85, 0.85];
+const C_BEDSHEET_SAGE = [0.58, 0.66, 0.54];
 const C_SPEAKER = [0.12, 0.12, 0.12];
 const C_STAND = [0.08, 0.08, 0.08];
 const C_STAND_PILLAR = [0.80, 0.82, 0.85];
@@ -111,9 +112,9 @@ addBox([-1.91, 0.0, 3.056], [0.69, 1.04, MAX_Z], z3, C_WALL_S, 1, 0, 1);        
 addBox([MIN_X, 2.04, -1.874], [-1.91, 2.905, -0.984], z3, C_WALL_L, 1, 0, 1);       // 9  西牆鐵門上方（fix22：bmin.z 縮至 -1.874 對齊北牆內面；20cm 懸空樑問題已由 fix21 beam Z 縮短解決，fix15 不再需要）
 addBox([MIN_X, 0.0, -1.874], [-1.91, 0.09, -0.984], z3, C_WALL_L, 1, 0, 1);         // 10 西牆門坎（fix22：bmin.z 縮至 -1.874 同上）
 addBox([MIN_X, 0.0, -0.984], [-1.91, 2.905, 3.056], z3, C_WALL_L, 1, 0, 1);         // 11 西牆南段（fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
-addBox([-1.91, 2.525, -1.874], [-1.75, 2.905, 3.056], z3, C_BEAM, 1, 0, 1);         // 12 西牆橫樑（fix21：bmin.z→-1.874；fix23：bmax.z 由 MAX_Z 縮至 3.056，含效 revert fix13 南延）
+addBox([-1.91, 2.525, -1.874], [-1.75, 2.905, 2.848], z3, C_BEAM, 1, 0, 1);         // 12 西牆橫樑（fix21：bmin.z→-1.874；fix23：bmax.z 由 MAX_Z 縮至 3.056；R7-3.10：南端交給西南角柱形成 L 形）
 addBox([1.85, 2.515, -1.874], [MAX_X, 2.905, 3.056], z3, C_BEAM, 1, 0, 1);          // 13 東牆橫樑（fix21：bmin.z→-1.874；fix23：bmax.z 由 MAX_Z 縮至 3.056，含效 revert fix13 南延）
-addBox([-1.91, 0.0, 2.848], [-1.75, 2.905, 3.056], z3, C_BEAM, 1, 0, 3);            // 14 西南角柱（r3-6-fix06：cullable=3 單軸 X-only，只跟西牆連動剝離，南牆剝離時柱子保持可視；fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
+addBox([-1.91, 0.0, 2.846], [-1.75, 2.905, 3.056], z3, C_BEAM, 1, 0, 3);            // 14 西南角柱（R7-3.10：北面與西樑底面重疊 2mm，關閉貼牆斜視角漏光縫；fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
 addBox([1.78, 0.0, 2.49], [1.91, 2.905, 3.056], z3, C_BEAM, 1, 0, 3);               // 15 東南角柱（x 縮為純內凸 [1.78,1.91]；r3-6-fix06：cullable=3 單軸 X-only，只跟東牆連動剝離；fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
 
 // R2-4 傢俱 (index 16-20)
@@ -207,6 +208,11 @@ addBox([-0.884, 2.786, -0.686], [-0.883, 2.803, 1.682], z3, C_STAND_PILLAR, 1, 0
 addBox([-0.884, 2.786,  1.681], [ 0.884, 2.803, 1.682], z3, C_STAND_PILLAR, 1, 0, 1, 4, 0.55, 1.0); // S 內側板 17mm
 addBox([-0.884, 2.786, -0.686], [ 0.884, 2.803,-0.685], z3, C_STAND_PILLAR, 1, 0, 1, 4, 0.55, 1.0); // N 內側板 17mm
 
+// 2026-05-20 C2 現場補件：西牆開關。北牆內面 z=-1.874，往南 1.845m → 中心 z=-0.029；中心高度 y=1.183m。
+// 使用白色 box 重用插座尺寸，不套 OUTLET type，避免 shader 自動畫黑色插孔。
+addBox([-1.91, 1.148, -0.089], [-1.90, 1.218, 0.031], z3, C_WHITE, 1, 0, 1);   // 西牆開關面板 7cm × 12cm
+addBox([-1.899, 1.161, -0.076], [-1.898, 1.205, 0.018], z3, C_WHITE, 1, 0, 1); // 西牆開關按鈕：四邊內縮 1.3cm
+
 // R3-3：商品規格 D-35NA12V4DR1 軟條燈 480 lm/m。
 // R6-3 Phase 1C：使用者決策預設 1600 lm/m（C3 Cloud-only 亮度）；480 lm/m 保留為低檔產品參考。
 // Cloud 鋁槽以 1/4 圓弧 diffuser 近似；16mm × 16mm 外接正方形對應半徑 16mm pizza。
@@ -237,7 +243,82 @@ const CLOUD_ROD_HALF_EXTENT = [
 ];
 
 // R2-8 吸音板
-const BASE_BOX_COUNT = 83; // base 53 + R2-14 八 + R2-15 四 + R2-16 六 + R2-17 四 + Cloud 鋁槽鋁板八 = 83
+const BASE_BOX_COUNT = 85; // base 83 + 2026-05-20 西牆開關面板/按鈕二件
+const NE_FURNITURE_MAIN_BOX_IDX = 32; // 實際 sceneBoxes index：R2-4 東北家具主 box
+const C2_NE_FURNITURE_LAYOUTS = {
+    wardrobe: {
+        main: { min: [1.35, 0.0, -1.874], max: [1.91, 1.955, -0.703], color: C_WOOD, type: 1 }
+    },
+    bed: {
+        main: { min: [-0.027, 0.0, -1.874], max: [1.91, 0.28, -0.314], color: C_BEDSHEET_SAGE, type: 1, roughness: 0.92, metalness: 0.0 }
+    }
+};
+let c2NortheastFurnitureMode = 'bed';
+
+function applySceneBoxSpec(boxIdx, spec) {
+    var box = sceneBoxes[boxIdx];
+    if (!box || !spec) return;
+    var type = spec.type || 1;
+    var color = spec.color || C_WHITE;
+    var fg = spec.fixtureGroup || 0;
+    var material = autoAssignMaterial(color, type, fg, boxIdx);
+    box.min = spec.min.slice();
+    box.max = spec.max.slice();
+    box.emission = spec.emission || z3;
+    box.color = color;
+    box.type = type;
+    box.meta = spec.meta || 0;
+    box.cullable = spec.cullable || 0;
+    box.fixtureGroup = fg;
+    box.roughness = (spec.roughness === undefined) ? material.roughness : spec.roughness;
+    box.metalness = (spec.metalness === undefined) ? material.metalness : spec.metalness;
+    box.rotateUV90 = spec.rotateUV90 || 0;
+}
+
+function applyC2NortheastFurnitureLayout(config) {
+    var useBed = (c2NortheastFurnitureMode === 'bed');
+    applySceneBoxSpec(
+        NE_FURNITURE_MAIN_BOX_IDX,
+        useBed ? C2_NE_FURNITURE_LAYOUTS.bed.main : C2_NE_FURNITURE_LAYOUTS.wardrobe.main
+    );
+    return useBed;
+}
+
+function reportC2NortheastFurnitureLayout() {
+    var bedActive = (c2NortheastFurnitureMode === 'bed');
+    return {
+        requestedMode: c2NortheastFurnitureMode,
+        activeMode: bedActive ? 'bed' : 'wardrobe',
+        currentPanelConfig: currentPanelConfig,
+        bedActiveInScene: bedActive,
+        bed: C2_NE_FURNITURE_LAYOUTS.bed,
+        wardrobe: C2_NE_FURNITURE_LAYOUTS.wardrobe
+    };
+}
+
+function refreshC2NortheastFurnitureButtons() {
+    var wardrobeBtn = document.getElementById('btnC2NeWardrobe');
+    var bedBtn = document.getElementById('btnC2NeBed');
+    if (!wardrobeBtn || !bedBtn) return;
+    var bedRequested = c2NortheastFurnitureMode === 'bed';
+    wardrobeBtn.classList.toggle('glow-white', !bedRequested);
+    bedBtn.classList.toggle('glow-white', bedRequested);
+    wardrobeBtn.title = '顯示東北衣櫃';
+    bedBtn.title = '顯示東北床位預覽';
+}
+
+function setC2NortheastFurnitureMode(mode) {
+    c2NortheastFurnitureMode = (mode === 'bed') ? 'bed' : 'wardrobe';
+    applyPanelConfig(currentPanelConfig);
+    refreshC2NortheastFurnitureButtons();
+    if (typeof window.setR7310C1NortheastFurnitureRuntimeMode === 'function')
+        window.setR7310C1NortheastFurnitureRuntimeMode(c2NortheastFurnitureMode);
+    wakeRender();
+    return reportC2NortheastFurnitureLayout();
+}
+
+window.setC2NortheastFurnitureMode = setC2NortheastFurnitureMode;
+window.reportC2NortheastFurnitureLayout = reportC2NortheastFurnitureLayout;
 
 // Config 1：3 片灰色（第一反射點）
 const panelConfig1 = [
@@ -251,15 +332,82 @@ const panelConfig2 = [
     { min: [-0.6, 0.585, -1.874], max: [0.6, 1.185, -1.756], color: C_GIK, meta: 0, cullable: 1, rotateUV90: 1 },      // N1 下層
     { min: [-0.6, 1.255, -1.874], max: [0.6, 1.855, -1.756], color: C_GIK, meta: 0, cullable: 1, rotateUV90: 1 },      // N2 中層
     { min: [-0.6, 1.925, -1.874], max: [0.6, 2.525, -1.756], color: C_GIK, meta: 0, cullable: 1, rotateUV90: 1 },      // N3 上層
-    { min: [1.792, 0.795, -0.5525], max: [1.91, 1.995, 0.0475], color: C_WHITE, meta: 1, cullable: 1 },  // E1 東牆
+    { min: [1.792, 0.795, -0.689], max: [1.91, 1.995, -0.089], color: C_WHITE, meta: 1, cullable: 1 },  // E1 東牆（C2 preview：往北 13.65cm）
     { min: [1.792, 0.655, 0.198], max: [1.91, 1.855, 0.798], color: C_WHITE, meta: 1, cullable: 1 },     // E2 東牆
-    { min: [1.792, 0.795, 0.9485], max: [1.91, 1.995, 1.5485], color: C_WHITE, meta: 1, cullable: 1 },   // E3 東牆
-    { min: [-1.91, 0.795, -0.5525], max: [-1.792, 1.995, 0.0475], color: C_WHITE, meta: 1, cullable: 1 },// W1 西牆
+    { min: [1.792, 0.795, 1.085], max: [1.91, 1.995, 1.685], color: C_WHITE, meta: 1, cullable: 1 },   // E3 東牆（C2 preview：往南 13.65cm）
+    { min: [-1.91, 0.795, -0.689], max: [-1.792, 1.995, -0.089], color: C_WHITE, meta: 1, cullable: 1 },// W1 西牆（C2 preview：往北 13.65cm）
     { min: [-1.91, 0.655, 0.198], max: [-1.792, 1.855, 0.798], color: C_WHITE, meta: 1, cullable: 1 },   // W2 西牆
-    { min: [-1.91, 0.795, 0.9485], max: [-1.792, 1.995, 1.5485], color: C_WHITE, meta: 1, cullable: 1 }, // W3 西牆
+    { min: [-1.91, 0.795, 1.085], max: [-1.792, 1.995, 1.685], color: C_WHITE, meta: 1, cullable: 1 }, // W3 西牆（C2 preview：往南 13.65cm）
 ];
 
 let currentPanelConfig = 1;
+const C2_PANEL_CONFIG2_E3_IDX = 5;
+const C2_PANEL_CONFIG2_W3_IDX = 8;
+const C2_SOUTH_GIK_THICKNESS_STANDARD = 0.118;
+const C2_SOUTH_GIK_THICKNESS_SPOT = 0.0508;
+let c2SouthGikThicknessMode = 'spot';
+
+function isC234PanelConfig(config) {
+    return config === 2 || config === 3 || config === 4;
+}
+
+function clonePanelConfigSpec(p) {
+    return {
+        min: p.min.slice(),
+        max: p.max.slice(),
+        color: p.color,
+        meta: p.meta,
+        cullable: p.cullable,
+        rotateUV90: p.rotateUV90 || 0
+    };
+}
+
+function resolvePanelConfig2Spec(config, panelIndex, p) {
+    var spec = clonePanelConfigSpec(p);
+    if (!isC234PanelConfig(config) || c2SouthGikThicknessMode !== 'spot') return spec;
+    if (panelIndex === C2_PANEL_CONFIG2_E3_IDX) {
+        spec.min[0] = 1.91 - C2_SOUTH_GIK_THICKNESS_SPOT;
+        spec.max[0] = 1.91;
+    } else if (panelIndex === C2_PANEL_CONFIG2_W3_IDX) {
+        spec.min[0] = -1.91;
+        spec.max[0] = -1.91 + C2_SOUTH_GIK_THICKNESS_SPOT;
+    }
+    return spec;
+}
+
+function reportC2SouthGikThicknessMode() {
+    return {
+        requestedMode: c2SouthGikThicknessMode,
+        currentPanelConfig: currentPanelConfig,
+        activeInScene: isC234PanelConfig(currentPanelConfig),
+        standardThicknessM: C2_SOUTH_GIK_THICKNESS_STANDARD,
+        spotThicknessM: C2_SOUTH_GIK_THICKNESS_SPOT,
+        e3: resolvePanelConfig2Spec(2, C2_PANEL_CONFIG2_E3_IDX, panelConfig2[C2_PANEL_CONFIG2_E3_IDX]),
+        w3: resolvePanelConfig2Spec(2, C2_PANEL_CONFIG2_W3_IDX, panelConfig2[C2_PANEL_CONFIG2_W3_IDX])
+    };
+}
+
+function refreshC2SouthGikThicknessButtons() {
+    var standardBtn = document.getElementById('btnC2SouthGikStandard');
+    var spotBtn = document.getElementById('btnC2SouthGikSpot');
+    if (!standardBtn || !spotBtn) return;
+    var spotActive = c2SouthGikThicknessMode === 'spot';
+    standardBtn.classList.toggle('glow-white', !spotActive);
+    spotBtn.classList.toggle('glow-white', spotActive);
+    standardBtn.title = 'C2/C3/C4 南側 E3/W3 使用 11.8cm 厚度';
+    spotBtn.title = 'C2/C3/C4 南側 E3/W3 使用 GIK SPOT 5.08cm 厚度';
+}
+
+function setC2SouthGikThicknessMode(mode) {
+    c2SouthGikThicknessMode = (mode === 'spot') ? 'spot' : 'standard';
+    applyPanelConfig(currentPanelConfig);
+    refreshC2SouthGikThicknessButtons();
+    wakeRender();
+    return reportC2SouthGikThicknessMode();
+}
+
+window.setC2SouthGikThicknessMode = setC2SouthGikThicknessMode;
+window.reportC2SouthGikThicknessMode = reportC2SouthGikThicknessMode;
 
 // R6 LGG-r30：per-config stateful 切換
 //   configPostDefaults  每個 config 第一次進入時的初值，亦是 cmd+click 重置目標
@@ -377,7 +525,7 @@ function buildSceneBVH() {
     bvhDataTexture.needsUpdate = true;
 
     // 4) Box Data Texture (512x1, RGBA32F, 5 pixels per box)
-    // R2-18：pixel 4 新增 [roughness, metalness, 0, 0]；目前 base 83 box，config 追加後仍 ≤ BVH_TEX_W=512
+    // R2-18：pixel 4 新增 [roughness, metalness, 0, 0]；目前 base 85 box，config 追加後仍 ≤ BVH_TEX_W=512
     var boxArr = new Float32Array(BVH_TEX_W * 1 * 4);
     for (var i = 0; i < N; i++) {
         var b = sceneBoxes[i];
@@ -440,6 +588,7 @@ function applyPanelConfig(config) {
         invalidateMovementProtectionStableFrame('applyPanelConfig');
     }
     sceneBoxes.length = BASE_BOX_COUNT;
+    applyC2NortheastFurnitureLayout(config);
     // R4-4-fix05：CONFIG 3 拆成「3=只 Cloud 漫射燈」+「4=只 軌道+廣角燈」；兩者吸音環境相同（全吸音）
     // 1: 吸頂燈 + 牆面吸音板（3 片）
     // 2: 吸頂燈 + 牆面吸音板（9 片配色 2）
@@ -450,8 +599,9 @@ function applyPanelConfig(config) {
             addBox(p.min, p.max, z3, p.color, 10, p.meta, p.cullable, 0, undefined, undefined, p.rotateUV90 || 0);
         });
     } else if (config === 2 || config === 3 || config === 4) {
-        panelConfig2.forEach(function (p) {
-            addBox(p.min, p.max, z3, p.color, 10, p.meta, p.cullable, 0, undefined, undefined, p.rotateUV90 || 0);
+        panelConfig2.forEach(function (p, panelIndex) {
+            var panelSpec = resolvePanelConfig2Spec(config, panelIndex, p);
+            addBox(panelSpec.min, panelSpec.max, z3, panelSpec.color, 10, panelSpec.meta, panelSpec.cullable, 0, undefined, undefined, panelSpec.rotateUV90 || 0);
         });
     }
     // Cloud 吊頂板 + 吸頂燈撤場：config 3/4 同樣處理（全吸音環境）
@@ -501,6 +651,8 @@ function applyPanelConfig(config) {
         if (leavingSnap) configState[oldConfig] = leavingSnap;
     }
     currentPanelConfig = config;
+    refreshC2NortheastFurnitureButtons();
+    refreshC2SouthGikThicknessButtons();
     var targetPost = configState[config] || configPostDefaults[config];
     applyConfigPost(targetPost);
     buildSceneBVH();
@@ -835,6 +987,7 @@ let trackWideZ           = 0.20;   // 廣角燈距 Cloud 邊距 m（R4-4-fix03 �
 //   idx [65..70] Cloud 吸音板 6 片
 //   idx [71..74] Cloud 燈條 4 支 ← CLOUD_BOX_IDX_BASE = 71 之基準
 //   idx [75..82] Cloud 鋁槽不發光鋁板 8 片
+//   idx [83..84] 西牆開關面板 / 按鈕
 const TRACK_BASE_IDX       = 53;
 const TRACK_STAND_IDX      = 57;
 const TRACK_WIDE_BASE_IDX  = 61;
@@ -5174,7 +5327,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-floor-side-edge-fix-v1';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-phase2b-west-wall-strict-ready-v1';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5442,6 +5595,21 @@ function initSceneData() {
     r738DefaultBakeAtlasTexture.needsUpdate = true;
     pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SeColumnWestShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SouthWallAcShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1EastWallBeamShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1WestWallBeamShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5450,9 +5618,57 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1WestWallDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1SouthWallDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1CeilingDiffuseMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1StructuralDiffuseMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SeColumnNorthShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SeColumnNorthShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SeColumnNorthShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SeColumnWestShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SeColumnWestShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SeColumnWestShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SouthWallAcShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWallAcShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWallAcShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1EastWallBeamShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastWallBeamShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastWallBeamShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SwColumnNorthShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SwColumnNorthShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SwColumnNorthShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1WestWallBeamShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestWallBeamShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestWallBeamShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride = { value: 2.7179 };
+	pathTracingUniforms.uR7310C1SwColumnInnerShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SwColumnInnerShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SwColumnInnerShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1WestBeamInnerShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestBeamInnerShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestBeamInnerShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1WestBeamUnderShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestBeamUnderShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1WestBeamUnderShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1EastBeamInnerShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastBeamInnerShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastBeamInnerShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1EastBeamUnderShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastBeamUnderShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1EastBeamUnderShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowResolution = { value: 1024.0 };
 	pathTracingUniforms.uR7310C1RuntimeProbeMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution = { value: 512.0 };
-	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 6.0 };
+	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 22.0 };
+	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
     pathTracingUniforms.uR738C1BakePastePreviewMode = { value: 0.0 };
     pathTracingUniforms.uR738C1BakePastePreviewReady = { value: 0.0 };
     pathTracingUniforms.uR738C1BakePastePreviewStrength = { value: 1.0 };
@@ -5850,12 +6066,14 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 	var westBtn = document.getElementById('btn-r7310-west-wall-diffuse');
 	var southBtn = document.getElementById('btn-r7310-south-wall-diffuse');
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
+	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
     var floorActive = !!(report && report.floorEnabled);
     var northActive = !!(report && report.northWallEnabled);
     var eastActive = !!(report && report.eastWallEnabled);
 	var westActive = !!(report && report.westWallEnabled);
 	var southActive = !!(report && report.southWallEnabled);
 	var ceilingActive = !!(report && report.ceilingEnabled);
+	var structuralActive = !!(report && report.structuralEnabled);
     if (floorBtn) {
         floorBtn.textContent = floorActive ? '地板烘焙：開' : '地板烘焙：關';
         floorBtn.classList.toggle('glow-white', floorActive);
@@ -5898,6 +6116,13 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '天花板漫射使用 R7-3.10 1024 bake'
 			: '天花板回到 live path tracing';
 	}
+	if (structuralBtn) {
+		structuralBtn.textContent = structuralActive ? '樑柱烘焙：開' : '樑柱烘焙：關';
+		structuralBtn.classList.toggle('glow-white', structuralActive);
+		structuralBtn.title = structuralActive
+			? '樑柱漫射使用 R7-3.10 1024 bake；套件未產生時保持 pending'
+			: '樑柱回到 live path tracing';
+	}
 }
 
 function bindR7310FullFloorDiffuseControls() {
@@ -5907,7 +6132,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var westBtn = document.getElementById('btn-r7310-west-wall-diffuse');
 	var southBtn = document.getElementById('btn-r7310-south-wall-diffuse');
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
-	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn) return;
+	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
+	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -5926,6 +6152,7 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(westBtn, 'westWallEnabled', 'setR7310C1WestWallDiffuseRuntimeEnabled');
 	bindButton(southBtn, 'southWallEnabled', 'setR7310C1SouthWallDiffuseRuntimeEnabled');
 	bindButton(ceilingBtn, 'ceilingEnabled', 'setR7310C1CeilingDiffuseRuntimeEnabled');
+	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());
 }
@@ -6765,6 +6992,36 @@ function initUI() {
             applyPanelConfig(conf);
         });
     });
+    var c2WardrobeBtn = document.getElementById('btnC2NeWardrobe');
+    var c2BedBtn = document.getElementById('btnC2NeBed');
+    if (c2WardrobeBtn) {
+        c2WardrobeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setC2NortheastFurnitureMode('wardrobe');
+        }, false);
+    }
+    if (c2BedBtn) {
+        c2BedBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setC2NortheastFurnitureMode('bed');
+        }, false);
+    }
+    refreshC2NortheastFurnitureButtons();
+    var c2SouthGikStandardBtn = document.getElementById('btnC2SouthGikStandard');
+    var c2SouthGikSpotBtn = document.getElementById('btnC2SouthGikSpot');
+    if (c2SouthGikStandardBtn) {
+        c2SouthGikStandardBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setC2SouthGikThicknessMode('standard');
+        }, false);
+    }
+    if (c2SouthGikSpotBtn) {
+        c2SouthGikSpotBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setC2SouthGikThicknessMode('spot');
+        }, false);
+    }
+    refreshC2SouthGikThicknessButtons();
 
     function applyGikColorToAbsBox(boxIdx, colorIdx) {
         var box = sceneBoxes[boxIdx];
@@ -6999,7 +7256,7 @@ function initUI() {
     }
 
     // Pointer-lock guard for snapshot bar and actions（bug fix：chip 點選會觸發 pointer lock）
-    ['snapshot-controls', 'floor-roughness-actions', 'r7310-full-floor-actions', 'snapshot-bar', 'snapshot-actions'].forEach(function(id) {
+    ['snapshot-controls', 'floor-roughness-actions', 'r7310-full-floor-actions', 'snapshot-bar', 'snapshot-actions', 'cameraPoseInfo', 'copyCameraPoseInfo'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) {
             el.addEventListener('mouseenter', function() { ableToEngagePointerLock = false; }, false);
@@ -7007,6 +7264,14 @@ function initUI() {
             el.addEventListener('click', function(e) { e.stopPropagation(); }, false);
         }
     });
+
+    var copyCameraPoseInfoButton = document.getElementById('copyCameraPoseInfo');
+    if (copyCameraPoseInfoButton) {
+        copyCameraPoseInfoButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            copyR7310CameraPoseInfoToClipboard();
+        }, false);
+    }
 
     // Capture-phase override：lock 模式下 mousedown 永遠阻止 pointer lock 觸發
     document.addEventListener('mousedown', function() {
@@ -7064,6 +7329,201 @@ function initUI() {
             };
         }
     });
+}
+
+function r7310FixedPoseNumber(value) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) return 0;
+    return Number(number.toFixed(6));
+}
+
+function r7310PoseVectorSnapshot(vector) {
+    return {
+        x: r7310FixedPoseNumber(vector && vector.x),
+        y: r7310FixedPoseNumber(vector && vector.y),
+        z: r7310FixedPoseNumber(vector && vector.z)
+    };
+}
+
+function r7310FacingLabel(forward) {
+    var absX = Math.abs(forward.x);
+    var absY = Math.abs(forward.y);
+    var absZ = Math.abs(forward.z);
+    if (absY > absX && absY > absZ)
+        return forward.y >= 0 ? '上(+Y)' : '下(-Y)';
+    if (absX >= absZ)
+        return forward.x >= 0 ? '東(+X)' : '西(-X)';
+    return forward.z >= 0 ? '南(+Z)' : '北(-Z)';
+}
+
+function r7310CameraAnglesFromForward(forward) {
+    var x = Number(forward && forward.x);
+    var y = Number(forward && forward.y);
+    var z = Number(forward && forward.z);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z))
+        return { yaw: 0, pitch: 0 };
+    var clampedY = Math.max(-1, Math.min(1, y));
+    return {
+        yaw: Math.atan2(-x, -z),
+        pitch: Math.asin(clampedY)
+    };
+}
+
+var cameraPoseInfoLastCopyText = 'cameraState=null\nforward=null\nview={"ready":false}';
+var cameraPoseInfoCopyResetTimer = null;
+
+function getR7310CameraPoseCopyButton() {
+    return (typeof cameraPoseCopyButtonElement !== 'undefined' && cameraPoseCopyButtonElement)
+        ? cameraPoseCopyButtonElement
+        : document.getElementById('copyCameraPoseInfo');
+}
+
+function setR7310CameraPoseCopyButtonState(copied, label) {
+    var button = getR7310CameraPoseCopyButton();
+    if (!button) return;
+    button.textContent = label || (copied ? '已複製' : '複製視角 INFO');
+    button.classList.toggle('copied', !!copied);
+}
+
+function fallbackCopyR7310CameraPoseInfoText(text) {
+    if (typeof document === 'undefined' || !document.body)
+        return Promise.reject(new Error('document unavailable'));
+    var scratch = document.createElement('textarea');
+    scratch.value = text;
+    scratch.setAttribute('readonly', '');
+    scratch.style.position = 'fixed';
+    scratch.style.left = '-9999px';
+    scratch.style.top = '0';
+    document.body.appendChild(scratch);
+    scratch.select();
+    var copied = false;
+    try {
+        copied = document.execCommand('copy');
+    } catch (err) {
+        copied = false;
+    }
+    document.body.removeChild(scratch);
+    return copied ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+}
+
+function writeR7310CameraPoseInfoToClipboard(text) {
+    if (typeof navigator !== 'undefined' &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.writeText === 'function')
+    {
+        return navigator.clipboard.writeText(text);
+    }
+    return fallbackCopyR7310CameraPoseInfoText(text);
+}
+
+function copyR7310CameraPoseInfoToClipboard() {
+    var el = (typeof cameraPoseInfoElement !== 'undefined' && cameraPoseInfoElement)
+        ? cameraPoseInfoElement
+        : document.getElementById('cameraPoseInfo');
+    var text = el && el.value ? el.value : cameraPoseInfoLastCopyText;
+    if (!text) {
+        var report = formatR7310CameraPoseInfo();
+        text = report.copyText;
+        cameraPoseInfoLastCopyText = report.copyText;
+        if (el) el.value = report.copyText;
+    }
+    return writeR7310CameraPoseInfoToClipboard(text).then(function() {
+        if (cameraPoseInfoCopyResetTimer) clearTimeout(cameraPoseInfoCopyResetTimer);
+        setR7310CameraPoseCopyButtonState(true, '已複製');
+        cameraPoseInfoCopyResetTimer = setTimeout(function() {
+            setR7310CameraPoseCopyButtonState(false, '複製視角 INFO');
+        }, 1400);
+    }).catch(function(err) {
+        if (typeof console !== 'undefined' && console.warn)
+            console.warn('Camera pose copy failed', err);
+        setR7310CameraPoseCopyButtonState(false, '複製失敗');
+    });
+}
+
+function formatR7310CameraPoseInfo(options) {
+    options = options || {};
+    if (typeof cameraControlsObject === 'undefined' || !cameraControlsObject ||
+        typeof worldCamera === 'undefined' || !worldCamera)
+    {
+        return {
+            ready: false,
+            copyText: 'cameraState=null\nforward=null\nview={"ready":false}'
+        };
+    }
+
+    if (cameraControlsObject.updateMatrixWorld) cameraControlsObject.updateMatrixWorld(true);
+    if (typeof cameraControlsYawObject !== 'undefined' && cameraControlsYawObject && cameraControlsYawObject.updateMatrixWorld)
+        cameraControlsYawObject.updateMatrixWorld(true);
+    if (typeof cameraControlsPitchObject !== 'undefined' && cameraControlsPitchObject && cameraControlsPitchObject.updateMatrixWorld)
+        cameraControlsPitchObject.updateMatrixWorld(true);
+    if (worldCamera.updateMatrixWorld) worldCamera.updateMatrixWorld(true);
+
+    var forwardVector = new THREE.Vector3(0, 0, -1);
+    if (worldCamera.getWorldDirection)
+        worldCamera.getWorldDirection(forwardVector);
+
+    var replayAngles = r7310CameraAnglesFromForward(forwardVector);
+    var displaySamples = Number.isFinite(Number(options.displaySamples))
+        ? Number(options.displaySamples)
+        : ((typeof sampleCounter === 'number') ? sampleCounter : 0);
+
+    var forward = r7310PoseVectorSnapshot(forwardVector);
+    var cameraState = {
+        position: r7310PoseVectorSnapshot(cameraControlsObject.position),
+        yaw: r7310FixedPoseNumber(replayAngles.yaw),
+        pitch: r7310FixedPoseNumber(replayAngles.pitch),
+        fov: r7310FixedPoseNumber(worldCamera.fov),
+        forward: forward
+    };
+    var view = {
+        facing: r7310FacingLabel(forward),
+        config: (typeof currentPanelConfig === 'number') ? currentPanelConfig : null,
+        samples: displaySamples,
+        paused: !!options.samplingPausedForMetrics,
+        sppCap: (typeof userSppCap === 'number') ? userSppCap : null
+    };
+    var canvas = (typeof renderer !== 'undefined' && renderer && renderer.domElement) ? renderer.domElement : null;
+    var viewport = {
+        innerWidth: (typeof window !== 'undefined' && Number.isFinite(window.innerWidth)) ? window.innerWidth : null,
+        innerHeight: (typeof window !== 'undefined' && Number.isFinite(window.innerHeight)) ? window.innerHeight : null,
+        canvasCssWidth: canvas && Number.isFinite(canvas.clientWidth) ? canvas.clientWidth : null,
+        canvasCssHeight: canvas && Number.isFinite(canvas.clientHeight) ? canvas.clientHeight : null,
+        drawingBufferWidth: canvas && Number.isFinite(canvas.width) ? canvas.width : null,
+        drawingBufferHeight: canvas && Number.isFinite(canvas.height) ? canvas.height : null,
+        devicePixelRatio: (typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)) ? window.devicePixelRatio : null,
+        aspect: Number.isFinite(worldCamera.aspect) ? r7310FixedPoseNumber(worldCamera.aspect) : null
+    };
+
+    return {
+        ready: true,
+        cameraState: cameraState,
+        forward: forward,
+        view: view,
+        viewport: viewport,
+        copyText: 'cameraState=' + JSON.stringify(cameraState) + '\n' +
+            'forward=' + JSON.stringify(forward) + '\n' +
+            'view=' + JSON.stringify(view) + '\n' +
+            'viewport=' + JSON.stringify(viewport)
+    };
+}
+
+window.reportR7310CameraPoseInfo = function() {
+    return formatR7310CameraPoseInfo();
+};
+
+window.copyR7310CameraPoseInfoToClipboard = copyR7310CameraPoseInfoToClipboard;
+
+function updateR7310CameraPoseInfo(displaySamples, samplingPausedForMetrics) {
+    var el = (typeof cameraPoseInfoElement !== 'undefined' && cameraPoseInfoElement)
+        ? cameraPoseInfoElement
+        : document.getElementById('cameraPoseInfo');
+    if (!el) return;
+    var report = formatR7310CameraPoseInfo({
+        displaySamples: displaySamples,
+        samplingPausedForMetrics: samplingPausedForMetrics
+    });
+    cameraPoseInfoLastCopyText = report.copyText;
+    el.value = report.copyText;
 }
 
 function updateVariablesAndUniforms() {
@@ -7157,6 +7617,7 @@ function updateVariablesAndUniforms() {
     if (_hibernating) window._fpsAcc.fps = 0;
     var _displaySamples = _hibernating ? userSppCap : sampleCounter;
     cameraInfoElement.innerHTML = "FPS: " + window._fpsAcc.fps + " / FOV: " + worldCamera.fov + " / Samples: " + _displaySamples + " / 耗時: " + _timeStr + (_samplingPausedForMetrics ? " (暫停)" : "") + (_hibernating ? " (休眠)" : "") + getCloudVisibilityProbeLabel() + getCloudThetaImportanceShaderABLabel() + getCloudMisWeightProbeLabel();
+    updateR7310CameraPoseInfo(_displaySamples, _samplingPausedForMetrics);
 
 }
 

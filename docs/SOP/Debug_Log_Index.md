@@ -1,7 +1,7 @@
 # Debug Log Index
 
 > 目的：讓接手代理先用本檔路由，再回 `Debug_Log.md` 讀必要章節。`Debug_Log.md` 保留為完整總帳，不建議每次接手全讀。
-> 更新日：2026-05-17
+> 更新日：2026-05-21
 
 ---
 
@@ -74,6 +74,7 @@ rtk rg -n '^## |^### |R7-3|v3k|effectiveStrength|sampleCounter|S2' docs/SOP/Debu
 ```
 必讀：
   - `docs/superpowers/plans/2026-05-17-r7-3-10-beam-column-bake-expansion-handoff.md`
+  - `docs/superpowers/plans/2026-05-18-r7-3-10-se-column-north-live-match-plan.md`
   - `docs/superpowers/plans/2026-05-16-r7-3-10-static-bake-expansion-codex-handoff.md`
   - `docs/superpowers/plans/2026-05-16-r7-3-10-static-diffuse-bake-expansion-investigation-opus.md`
   - `docs/superpowers/plans/2026-05-15-r7-3-10-c1-1024-bake-resolution-plan.md`
@@ -81,24 +82,52 @@ rtk rg -n '^## |^### |R7-3|v3k|effectiveStrength|sampleCounter|S2' docs/SOP/Debu
   - `Debug_Log.md` 的 `R7-3.10-static-diffuse-bake-expansion-east-wall-1024-runtime`
   - `Debug_Log.md` 的 `R7-3.10-c1-phase2-h5-h3-1024-bake-resolution-closeout`
   - `Debug_Log.md` 的 `R7-3.10-south-wall-reveal-atlas-edge-fix`
+  - `Debug_Log.md` 的 `R7-3.10-south-window-lower-reveal-gap-fix`
   - `Debug_Log.md` 的 `R7-3.10-floor-east-west-contact-edge-fix`
   - `Debug_Log.md` 的 `R7-3.10-beam-column-bake-expansion-branch-open`
+	  - `Debug_Log.md` 的 `R7-3.10-east-wall-beam-shadow-hybrid-indirect-bake-live-direct`
+	  - `Debug_Log.md` 的 `R7-3.10-east-wall-beam-shadow-seam-guard-fix`
+	  - `Debug_Log.md` 的 `R7-3.10-north-east-wall-first-hit-hybrid`
+	  - `Debug_Log.md` 的 `R7-3.10-west-beam-shadow-mirror-hybrid-indirect-bake`
+	  - `Debug_Log.md` 的 `R7-3.10-west-beam-shadow-bake-point-fix`
+	  - `Debug_Log.md` 的 `R7-3.10-south-wall-ac-shadow-hybrid-user-accepted`
+	  - `Debug_Log.md` 的 `R7-3.10-se-column-north-hybrid-all-bakes-guard`
+	  - `Debug_Log.md` 的 `R7-3.10-se-column-north-shadow-live-match-bake`
+	  - `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2-south-window-reveal-hybrid`
+	  - `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-south-window-sw-column-continuity-todo`
 
 目前狀態：
   - `main` 已推到 GitHub：2d79953 fix(R7-3.10): clean south reveal and floor side seams。
   - 目前新分支：`codex/r7-3-10-beam-column-bake-expansion`。
   - floor / north 1024 bake 已驗收，兩條衣櫃黑線看不出來。
   - floor / north / east / west / south / ceiling 正式 bake package 已移到 `assets/bakes/r7-3-10/c1-static-diffuse/`，runtime pointer 不再依賴 `.omc` 實驗資料夾。
-  - floor / north / east / west / south / ceiling 六個 runtime slot 目前同為 1024，合併 atlas 為六格。
-  - UI 目前拆成六顆按鈕：`地板烘焙`、`北牆烘焙`、`東牆烘焙`、`西牆烘焙`、`南牆烘焙`、`天花板烘焙`，預設全開。
+  - floor / north / east / west / south / ceiling 六個 runtime slot 目前同為 1024，樑柱 static diffuse bake 接成 slot 6。
+  - 北牆與東牆已改為 first-hit HYBRID：`c1_north_wall_first_hit_hybrid` / `c1_east_wall_first_hit_hybrid`，slot 仍是 1 / 2，正式 package 已重烘 1024px / 1000spp，讀間接漫射 bake，直接光與反射維持 live。
+	  - 專用混合陰影面已接成 6 個連續面：東南扁柱北面 targetId 1008 / slot 7、東南扁柱西面 targetId 1009 / slot 8、南牆冷氣陰影 targetId 1010 / slot 9、東牆東樑陰影 targetId 1011 / slot 10、西南柱子北面 targetId 1012 / slot 11、西牆西樑陰影 targetId 1013 / slot 12；runtime 合併圖集總數改為 13 slot。
+	  - 這 6 個專用面目前路線都是間接漫射讀 bake，直接光與斜陰影走即時路徑追蹤。
+	  - 東南扁柱北面專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/se-column-north-shadow-1024px-1000spp/`。
+	  - 東南扁柱西面專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/se-column-west-shadow-1024px-1000spp/`。
+	  - 南牆冷氣陰影專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/south-wall-ac-shadow-1024px-1000spp/`。
+	  - 東牆東樑陰影專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/east-wall-beam-shadow-1024px-1000spp/`。
+	  - 西南柱子北面專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/sw-column-north-shadow-1024px-1000spp/`。
+	  - 西牆西樑陰影專用 package：`assets/bakes/r7-3-10/c1-static-diffuse/west-wall-beam-shadow-1024px-1000spp/`。
+	  - 西側第一次鏡像實作曾漏接 `r7310C1BakeSurfacePoint` 的 patchId 1012 / 1013 分支，導致錯誤畫面被壓進西南柱北面與西牆；目前已補上各自世界座標映射並重烘 1024/1000spp package。
+	  - 東牆東樑陰影專用面已加 `z < 2.475` 保護線，西牆西樑陰影專用面已加 `z < 2.833` 保護線，保留牆與角柱交界給原本牆／柱路徑；目前快取版本號是 `r7310-phase2b-west-wall-mosaic-guard-v1`。
+  - 同視角驗收圖：`.omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435/live-reference.png` 與 `.omc/r7-3-10-se-column-north-shadow-live-match/20260518-134435/se-column-north-shadow-bake.png`。
+  - 東牆東樑陰影同視角圖：`.omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350/live-reference.png` 與 `.omc/r7-3-10-east-wall-beam-shadow-live-match/20260518-173350/east-wall-beam-shadow-bake.png`。
+  - 東南扁柱陰影驗收目標是同視角「即時路徑追蹤」對「間接烘焙加直接陰影現算」；舊 structural package 與舊 124711 完整漫射專用圖已退出這個驗收路徑。
+  - 全開 UI 回歸已修：東南扁柱北面 hybrid first hit 現在會擋掉舊 structural slot 6 的 full-diffuse short-circuit，避免同一片面亮度重複相加與舊小階梯殘留；快取版本號是 `r7310-se-column-hybrid-guard-v1`。
+  - 使用者已用超近距離 1SPP 肉眼驗收東南扁柱北面陰影：放大仍是滑順陰影，沒有階梯；1SPP 稍髒可接受。東南扁柱西面與南牆冷氣陰影也已由使用者回報成功。這條成功經驗要沿用為同類問題的主路線：受影響面讀間接漫射 bake，直接陰影與反射維持 live。
+  - UI 目前拆成七顆按鈕：`地板烘焙`、`北牆烘焙`、`東牆烘焙`、`西牆烘焙`、`南牆烘焙`、`天花板烘焙`、`樑柱烘焙`，預設全開。
   - C runtime fallback 已移除；不回 fallback，不改鄰格取樣。
   - Option A / Option B bake 防污染保護已保留。
   - partial bake + LIVE 局部偏亮已定性為深度相加的過渡假象。
   - 正式驗收基準是全相關靜態漫射面 bake vs 全 LIVE。
   - 目前主線先在現有 Home Studio 架構收成快速預覽 hybrid room。
   - hybrid room 技術分工：靜態漫射面讀 bake；反射保留 LIVE path tracing。
-  - floor / north / east / west / south / ceiling 已接成可分開開關的靜態漫射 bake；下一批可往樑柱與細部結構擴張。
+  - floor / north / east / west / south / ceiling / structural beams-columns 已接成可分開開關的靜態漫射 bake；東樑與東南扁柱接點已改為 `se_column_north_z` 整面連續 island 後重烘，並新增 `c1_se_column_north_shadow`、`c1_se_column_west_shadow`、`c1_south_wall_ac_shadow`、`c1_east_wall_beam_shadow` 四個專用面作為陰影驗收路線；專用面目前採間接漫射烘焙加即時直接陰影。
   - south window reveal atlas edge 已補半格 texel coverage，右側與上側 room-edge 黑線對應的 atlas luma 已由 0 補到 0.21+。
+  - south window lower reveal gap 已改為水平 reveal island 接到左右 reveal 入口；audit 由 `gap_or_strong_luma_jump_present` 變成 `no_large_gap_jump_at_probe_points`，兩個下角 gap luma 由 0 補到約 0.239 / 0.259。
   - floor east/west contact edge 已把地板 bake source 往房間內退一格，東西牆貼地黑線對應的 floor atlas luma 已由 0 補到 0.40+。
   - 快速預覽成功後，再開高品質 bake 生產線與 WebGPU / Metal / Blender 加速候選評估。
   - PlayCanvas 只列展示承載候選，等 baked room 穩定後再談。
@@ -408,8 +437,35 @@ R7 採樣升級：
   - R7-3.10 south wall reveal atlas edge fix 已加入：reveal atlas 邊界改吃進半格 texel 並把烘焙位置推入窗洞深度，右側與上側 room-edge 黑線的正式 south atlas luma 由 0 補到 0.21+；讀 `Debug_Log.md` 的 `R7-3.10-south-wall-reveal-atlas-edge-fix`。
   - R7-3.10 floor east/west contact edge fix 已加入：地板在 `x = ±1.91` 的 side contact 欄位改由一格內側位置烘焙，正式 floor atlas luma 由 0 補到 0.40+；讀 `Debug_Log.md` 的 `R7-3.10-floor-east-west-contact-edge-fix`。
   - R7-3.10 beam / column bake expansion branch 已開：從 GitHub 同步後的 main `2d79953` 開 `codex/r7-3-10-beam-column-bake-expansion`，下一步只處理樑柱，不混入家具或吸音板；讀 `Debug_Log.md` 的 `R7-3.10-beam-column-bake-expansion-branch-open`。
+  - R7-3.10 beam / column static diffuse bake 已完成：新增 `assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp/`，targetId `1007`，runtime 第 7 slot，UI 新增 `樑柱烘焙` 且預設開；東樑與東南扁柱接點改為 `se_column_north_z` 整面連續 island，反射維持 LIVE；讀 `Debug_Log.md` 的 `R7-3.10-beam-column-static-diffuse-bake`。
+  - R7-3.10 beam / column southeast column contact padding fix 已加入：`se_column_north_z` 東樑接觸 texel 由黑值補成同面可見邊烘焙值，structural 1024/1000spp 包已重烘，六面既有包維持原指標；讀 `Debug_Log.md` 的 `R7-3.10-beam-column-se-column-contact-padding-fix`。
+  - R7-3.10 east wall southeast column contact edge fix 已加入：東牆 `z=2.49` 接觸欄位由黑值補成東牆同面可見側烘焙值，正式 east-wall 1024/1000spp 包已更新；讀 `Debug_Log.md` 的 `R7-3.10-east-wall-southeast-column-contact-edge-fix`。
+  - R7-3.10 southeast column shadow-preserving contact refinement 已加入：前兩個 contact padding 的寬補法會讓東樑陰影變短矩形；新版改成 structural rect-scaled two-texel contact band 與東牆 0.25 texel visible-side source，深處遮蔽 texel 維持 0，正式 structural 與 east-wall 包已重烘；讀 `Debug_Log.md` 的 `R7-3.10-southeast-column-shadow-preserving-contact-refinement`。
   - R7-3.10 keyboard movement frame-time clamp 已加入：W / A / S / D / E / C 不再直接吃 raw frameTime，render frame 偶發延遲時會限制單幀位移；讀 `Debug_Log.md` 的 `R7-3.10-keyboard-movement-frame-time-clamp`。
-  - R7-3.9 C1 reflection bake 已清回純漫射 runtime：`.omc/r7-3-9-c1-accurate-reflection-bake/` 與 preview 產物移除，pointer 狀態為 `none`，runtime 預設不載入 R7-3.9 反射；讀 `Debug_Log.md` 的 `R7-3.9-c1-reflection-bake-reset-to-diffuse-only`
+  - R7-3.10 south window front-edge runtime guard 已加入：前一版 lower reveal atlas gap 只修到 audit 點，使用者刷新後黑線仍在；新版把南窗洞口前緣的 south-wall front-plane hole-edge hit 轉交 reveal bake，並把 UV 夾進一個 texel；讀 `Debug_Log.md` 的 `R7-3.10-south-window-front-edge-runtime-guard-fix`。
+  - R7-3.10 south window reveal-corner runtime clamp 已加入：使用者修正目標為南牆窗洞下緣與側邊的 90 度內角；side reveal 下排 valid texel 為黑，runtime reveal UV 已夾進一個 texel，並新增近距離視覺 helper；讀 `Debug_Log.md` 的 `R7-3.10-south-window-reveal-corner-runtime-clamp-fix`。
+  - R7-3.10 structural shadow linear reconstruction 已被使用者同視角判定 no-go：runner pass 只代表舊腳本視角，東樑打在東牆的陰影與冷氣打在東南扁柱的陰影仍需同視角重查；讀 `Debug_Log.md` 的 `R7-3.10-structural-shadow-linear-reconstruction`。
+  - R7-3.10 camera pose INFO 已加入：畫面會顯示可複製 `cameraState / forward / view`，後續處理東牆與東南扁柱陰影必須先用使用者貼回的 `cameraState` 重現同一視角；讀 `Debug_Log.md` 的 `R7-3.10-camera-pose-info-for-same-view-shadow-debug`。
+  - R7-3.10 camera pose replay 已修正：舊 INFO 的 `forward` 可信，但 `cameraState.yaw/pitch` 可能無法回放實際 camera matrix；新版 `cameraState` 內含 `forward`，回放時以 `forward` 反推 yaw/pitch，並新增 viewport 行；讀 `Debug_Log.md` 的 `R7-3.10-camera-pose-replay-forward-fix`。
+  - R7-3.10 east wall shadow chart-aware reconstruction 第一版未通過更近同視角；真正近距離問題在東樑底面 `y=2.515` 附近的東牆 atlas 亮度台階，已改成東牆 slot 2 chart-clamped 3x3 tent reconstruction，cache token `r7310-east-wall-tent-reconstruct-v1`；讀 `Debug_Log.md` 的 `R7-3.10-east-wall-beam-shadow-tent-reconstruction`。
+  - R7-3.10 east wall same-view guard texel fix 已加入：東牆正式 atlas 在 `z=2.49` / `y=2.515` 旁的 guard texel 由 0 補為相鄰可見東牆值，runtime 改用完整 rect + Tent3；同視角 1000 samples 已輸出 baked ON / OFF 成對截圖；讀 `Debug_Log.md` 的 `R7-3.10-east-wall-same-view-guard-texel-fix`。
+  - R7-3.10 east-beam same-view structural bookshelf overlap fix 是舊候選：使用者否決前一版後，四向同視角隔離指出來源在 structural slot 6；`se_column_inner_x` 誤收東南書櫃貼合遮住區，導致 hidden black texel 被近距離重建吃到；已加入 bookshelf overlap exclude、bake/runtime guard、hidden texel guard-fill，並以使用者相機輸出同視角 baked ON / all-bakes-OFF 證據；讀 `Debug_Log.md` 的 `R7-3.10-east-beam-same-view-structural-bookshelf-overlap-fix`。
+  - R7-3.10 east-beam same-view structural linear sampling fix 是舊候選：使用者新紅框相機證明前一個東南書櫃判讀不適用；runtime probe 命中 structural island 4 `east_beam_under_y` 與 island 8 `se_column_north_z`，未命中家具；guard-fill + 6px Tent 會洗掉窄陰影，structural slot 6 改回 rect-local linear sampling，並以同相機 1000 samples 裁紅框 ON/OFF 證據自查；讀 `Debug_Log.md` 的 `R7-3.10-east-beam-same-view-structural-linear-sampling-fix`。
+  - R7-3.10 se-column north hybrid all-bakes guard 是目前最新修正：使用者用全開 UI 發現亮度爆高與舊小階梯殘留，根因是 slot 7 hybrid first hit 之後又落入 slot 6 structural short-circuit；已加 `!r7310SeColumnNorthHybridFirstHit` guard 並用使用者相機輸出全開 1000 samples 證據；讀 `Debug_Log.md` 的 `R7-3.10-se-column-north-hybrid-all-bakes-guard`。
+	  - R7-3.10 se-column west hybrid indirect bake 已比照北面加入並由使用者口頭判定成功：`c1_se_column_west_shadow` 使用 targetId `1009`、runtime slot `8`，只烘 indirect diffuse，direct shadow 與 reflection 留 live path tracing；書櫃遮住區排除，正式 1024/1000spp package 與同視角 helper 已輸出；讀 `Debug_Log.md` 的 `R7-3.10-se-column-west-hybrid-indirect-bake`。
+	  - R7-3.10 south wall AC shadow hybrid indirect bake 已加入：`c1_south_wall_ac_shadow` 使用 targetId `1010`、runtime slot `9`，南牆冷氣陰影區只烘 indirect diffuse，direct shadow 與 reflection 留 live path tracing；南窗洞排除，正式 1024/1000spp package 與同視角 helper 已輸出；讀 `Debug_Log.md` 的 `R7-3.10-south-wall-ac-shadow-hybrid-indirect-bake`。
+	  - R7-3.10 west beam shadow mirror hybrid indirect bake 已加入：`c1_sw_column_north_shadow` 使用 targetId `1012`、runtime slot `11`，`c1_west_wall_beam_shadow` 使用 targetId `1013`、runtime slot `12`，兩者都只烘 indirect diffuse，direct shadow 與 reflection 留 live path tracing；西牆鐵門洞排除，正式 1024/1000spp package 與同視角 helper 已輸出；第一次西側結果曾因漏接 `r7310C1BakeSurfacePoint` 的 1012 / 1013 分支而烘出錯誤畫面，目前已修正並重烘；讀 `Debug_Log.md` 的 `R7-3.10-west-beam-shadow-mirror-hybrid-indirect-bake` 與 `R7-3.10-west-beam-shadow-bake-point-fix`。
+	  - R7-3.10 beam/column dedicated hybrid upgrade 已加入：東西牆維持現況，新增 `c1_sw_column_inner_shadow`、`c1_west_beam_inner_shadow`、`c1_west_beam_under_shadow`、`c1_east_beam_inner_shadow`、`c1_east_beam_under_shadow` 五個 dedicated indirect-diffuse target，targetId `1014..1018`、runtime slot `13..17`，runtime atlas patch count `18.0`；五包正式 1024/1000spp 重烘通過且污染快照 dirtyModes=0。後續全開變黑已修正為 6x3 runtime atlas grid，避免 18 x 1024 橫向貼圖超過常見 WebGL 上限；讀 `Debug_Log.md` 的 `R7-3.10-beam-column-dedicated-hybrid-upgrade` 與 `R7-3.10-beam-column-dedicated-hybrid-runtime-atlas-grid-fix`。
+	  - R7-3.10 beam under-shadow Phase 1 probe 已證明 `c1_west_beam_under_shadow` 與 `c1_east_beam_under_shadow` 都打到既有 visible underside hybrid route；不需 corrected target 或重烘，後續若肉眼仍覺得不對，先當視覺匹配/陰影平滑度問題查；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase1-beam-under-shadow-probe`。
+	  - R7-3.10 south window reveal dedicated hybrid Phase 2 已加入且使用者確認成功：南窗 left / right / bottom / top reveal 改成 targetId `1019..1022`、runtime slot `18..21`，只烘 indirect diffuse，direct shadow 與 reflection 留 live path tracing；front rim / opening edge 轉交最近 reveal target，runtime atlas 改成 22 槽、6x4 grid，南牆按鈕會同步切換四個新 target；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2-south-window-reveal-hybrid`。
+	  - R7-3.10 Phase 2B 南窗西側切面與西南柱東面連續性 v2 亮度改善後仍被使用者指出西樑像矩形戳進西南柱；最新修正把西樑幾何與 west_beam_inner_x ownership 截到 `zMax=2.848`，讓 `sw_column_upper_inner_coplanar_x` 回到 `sw_column_inner_x`，並同步重烘 `west-beam-inner-shadow`、`sw-column-inner-shadow`、`structural-beams-columns`。同視角 probe `continuityMeanDelta=-0.006790035322859128`、`westBeamContinuityMeanDelta=-0.011225053869436202`，驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-union-material-v6`；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-beam-sw-column-l-union-fix`。
+	  - R7-3.10 Phase 2B 西樑底面與西南柱北面交界已收斂到 v5：使用者更正 LIVE 乾淨，剩餘問題只在烘焙路徑；最新修正把 `sw-column-north-shadow` 可見烘焙範圍截到 `yMax=2.525`、`west-beam-under-shadow` 截到 `zMax=2.846`，同步 structural island contract 並重烘三包。使用者指定視角最新 baked 截圖已無黑線或縫隙，斜向暗帶由使用者判定為正常陰影，驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-phase2b-l-gap-closure-v5`；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-beam-under-sw-column-north-gap-closure`。
+	  - R7-3.10 Phase 2B 西牆 / 西樑 / 西南柱近距離矩形馬賽克陰影已修正：根因分別是 `c1_west_wall_beam_shadow` 高 z 隱藏 texel 與完整 `c1_west_wall` 西南角隱藏 texel 被 bilinear 取樣拉進可見陰影。已加 `fillR7310C1WestWallBeamShadowGuardTexels()` 與 `fillR7310C1WestWallSouthwestGuardTexels()`，重烘 `west-wall-beam-shadow`、`west-wall` 1024/1000spp；同視角診斷包 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-004702/`，驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-mosaic-guard-v1`；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-closeup-mosaic-guard`。
+	  - R7-3.10 Phase 2B 西牆近距離馬賽克陰影第二次修正：使用者新同視角指出 guard-fill 仍留下直接光烘焙像素；根因是紅框區仍落入舊 `c1_west_wall` full diffuse short-circuit。最新修正讓 `c1_west_wall_beam_shadow` 接管完整 west wall runtime surface，只烘 indirect diffuse，direct light / direct shadow 留 LIVE，並重烘 `west-wall-beam-shadow` 1024/1000spp；同視角診斷包 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-012349/`，驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-live-direct-v1`；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-live-direct-ownership`。
+	  - R7-3.10 Phase 2B 西牆近距離黑色矩形已歸因為 half-loaded diagnostic capture：舊 all-on 截圖在 `westWallBeamShadow`、`swColumnInnerShadow`、`westBeamInnerShadow`、`westBeamUnderShadow` 仍 pending 且 uniforms=0 時拍下；最新修正讓 `waitForR7310C1FullRoomDiffuseRuntimeReady()` 必須等 enabled packages 全 ready，並新增 westJoin probe 22..26。嚴格等待後同視角包 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-035138/` 目標 crop 黑像素與 dark 像素皆為 0，另有 `.omc/r7-3-10-west-wall-mosaic-diagnostic/20260520-033811/` 與 `20260520-033819/` 作西南柱與西牆大面積覆核；驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-phase2b-west-wall-strict-ready-v1`；讀 `Debug_Log.md` 的 `R7-3.10-bake-gap-and-loading-debug-map-phase2b-west-wall-strict-ready-guard`。
+	  - R7-3.10 東北家具 bed / wardrobe 牆面烘焙變體已加入：根因是 C2 家具幾何可切換，但北牆 slot 1 與東牆 slot 2 只有單一 HYBRID atlas，導致 bed / wardrobe 互留遮蔽殘影。新增 wardrobe 版北牆與東牆 1024/1000spp package、`--r7310-ne-furniture=bed|wardrobe` runner 參數、runtime atlas variant switch，以及瀏覽器切換驗證 `.omc/r7-3-10-ne-furniture-runtime/20260521-015323/`；讀 `Debug_Log.md` 的 `R7-3.10-ne-furniture-wall-bake-variants`。
+	  - R7-3.10 東北家具 east wall beam-shadow 覆蓋圖變體已加入：使用者新同視角證明 bed 狀態仍有衣櫃形殘影，根因是主東牆 slot 2 已可切換，但 `c1_east_wall_beam_shadow` runtime slot 10 仍吃單一舊 atlas。已新增 slot 10 bed / wardrobe 指標與 runtime selection，重烘 `east-wall-beam-shadow` 與 `east-wall-beam-shadow-wardrobe` 1024/1000spp；同視角驗證包 `.omc/r7-3-10-east-wall-beam-shadow-live-match/20260521-023747/`，驗證網址更新為 `http://localhost:9002/Home_Studio.html?v=r7310-ne-furniture-east-overlay-variant-v1`；讀 `Debug_Log.md` 的 `R7-3.10-ne-furniture-east-wall-beam-shadow-variant-fix`。
+	  - R7-3.9 C1 reflection bake 已清回純漫射 runtime：`.omc/r7-3-9-c1-accurate-reflection-bake/` 與 preview 產物移除，pointer 狀態為 `none`，runtime 預設不載入 R7-3.9 反射；讀 `Debug_Log.md` 的 `R7-3.9-c1-reflection-bake-reset-to-diffuse-only`
   - R7-3.9 C1 reflection bake 新 SOP 已改成官方依據版本：平面反射需反射視點或等價幾何，SSR 只依當前畫面，ray tracing 可取畫面外資料，CubeCamera 只代表特定 3D 位置；讀 `docs/superpowers/plans/2026-05-11-r7-3-9-c1-reflection-bake.md`
   - R7-3.9 C1 舊 sprout-only package `.omc/r7-3-9-c1-accurate-reflection-bake/20260512-134902/` 已判定為 camera-space reference，不是 runtime 可接受反射包；後續必須改走 surface position + outgoing direction 或 true planar reflection pass。
   - R7-3.9 C1 surrounding floor roughness 0.1 live reflection fix 與 roughness gate fix 都已被 reset 收攏成歷史紀錄；目前畫面基準只保留 R7-3.8 C1 嫩芽純漫射 bake。

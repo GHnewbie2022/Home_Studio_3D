@@ -175,7 +175,23 @@ function updateR7310C1RuntimeLoadingProgress()
 		{ enabled: r7310C1EastWallDiffuseRuntimeEnabled, ready: r7310C1EastWallDiffuseRuntimeReady },
 		{ enabled: r7310C1WestWallDiffuseRuntimeEnabled, ready: r7310C1WestWallDiffuseRuntimeReady },
 		{ enabled: r7310C1SouthWallDiffuseRuntimeEnabled, ready: r7310C1SouthWallDiffuseRuntimeReady },
-		{ enabled: r7310C1CeilingDiffuseRuntimeEnabled, ready: r7310C1CeilingDiffuseRuntimeReady }
+		{ enabled: r7310C1CeilingDiffuseRuntimeEnabled, ready: r7310C1CeilingDiffuseRuntimeReady },
+		{ enabled: r7310C1StructuralDiffuseRuntimeEnabled && !r7310C1StructuralDiffuseRuntimePending, ready: r7310C1StructuralDiffuseRuntimeReady },
+		{ enabled: r7310C1SeColumnNorthShadowRuntimeEnabled && !r7310C1SeColumnNorthShadowRuntimePending, ready: r7310C1SeColumnNorthShadowRuntimeReady },
+		{ enabled: r7310C1SeColumnWestShadowRuntimeEnabled && !r7310C1SeColumnWestShadowRuntimePending, ready: r7310C1SeColumnWestShadowRuntimeReady },
+		{ enabled: r7310C1SouthWallAcShadowRuntimeEnabled && !r7310C1SouthWallAcShadowRuntimePending, ready: r7310C1SouthWallAcShadowRuntimeReady },
+		{ enabled: r7310C1EastWallBeamShadowRuntimeEnabled && !r7310C1EastWallBeamShadowActiveRuntimePending(), ready: r7310C1EastWallBeamShadowActiveRuntimeReady() },
+		{ enabled: r7310C1SwColumnNorthShadowRuntimeEnabled && !r7310C1SwColumnNorthShadowRuntimePending, ready: r7310C1SwColumnNorthShadowRuntimeReady },
+		{ enabled: r7310C1WestWallBeamShadowRuntimeEnabled && !r7310C1WestWallBeamShadowRuntimePending, ready: r7310C1WestWallBeamShadowRuntimeReady },
+		{ enabled: r7310C1SwColumnInnerShadowRuntimeEnabled && !r7310C1SwColumnInnerShadowRuntimePending, ready: r7310C1SwColumnInnerShadowRuntimeReady },
+		{ enabled: r7310C1WestBeamInnerShadowRuntimeEnabled && !r7310C1WestBeamInnerShadowRuntimePending, ready: r7310C1WestBeamInnerShadowRuntimeReady },
+		{ enabled: r7310C1WestBeamUnderShadowRuntimeEnabled && !r7310C1WestBeamUnderShadowRuntimePending, ready: r7310C1WestBeamUnderShadowRuntimeReady },
+		{ enabled: r7310C1EastBeamInnerShadowRuntimeEnabled && !r7310C1EastBeamInnerShadowRuntimePending, ready: r7310C1EastBeamInnerShadowRuntimeReady },
+		{ enabled: r7310C1EastBeamUnderShadowRuntimeEnabled && !r7310C1EastBeamUnderShadowRuntimePending, ready: r7310C1EastBeamUnderShadowRuntimeReady },
+		{ enabled: r7310C1SouthWindowLeftRevealShadowRuntimeEnabled && !r7310C1SouthWindowLeftRevealShadowRuntimePending, ready: r7310C1SouthWindowLeftRevealShadowRuntimeReady },
+		{ enabled: r7310C1SouthWindowRightRevealShadowRuntimeEnabled && !r7310C1SouthWindowRightRevealShadowRuntimePending, ready: r7310C1SouthWindowRightRevealShadowRuntimeReady },
+		{ enabled: r7310C1SouthWindowBottomRevealShadowRuntimeEnabled && !r7310C1SouthWindowBottomRevealShadowRuntimePending, ready: r7310C1SouthWindowBottomRevealShadowRuntimeReady },
+		{ enabled: r7310C1SouthWindowTopRevealShadowRuntimeEnabled && !r7310C1SouthWindowTopRevealShadowRuntimePending, ready: r7310C1SouthWindowTopRevealShadowRuntimeReady }
 	];
 	var total = 0;
 	var ready = 0;
@@ -295,6 +311,22 @@ let cameraInfoElement = document.getElementById('cameraInfo');
 cameraInfoElement.style.cursor = "default";
 cameraInfoElement.style.userSelect = "none";
 cameraInfoElement.style.MozUserSelect = "none";
+
+let cameraPoseInfoElement = document.getElementById('cameraPoseInfo');
+if (cameraPoseInfoElement)
+{
+	cameraPoseInfoElement.style.cursor = "text";
+	cameraPoseInfoElement.style.userSelect = "text";
+	cameraPoseInfoElement.style.MozUserSelect = "text";
+}
+
+let cameraPoseCopyButtonElement = document.getElementById('copyCameraPoseInfo');
+if (cameraPoseCopyButtonElement)
+{
+	cameraPoseCopyButtonElement.style.cursor = "pointer";
+	cameraPoseCopyButtonElement.style.userSelect = "none";
+	cameraPoseCopyButtonElement.style.MozUserSelect = "none";
+}
 
 let mouseControl = true;
 let pointerlockChange;
@@ -1193,12 +1225,85 @@ function summarizeR7310AtlasVisibleLuma(atlasPixels)
 	};
 }
 
+function summarizeR7310StructuralIslands(atlasPixels, size)
+{
+	var islandCoverageByName = {};
+	var islandLumaByName = {};
+	if (!(atlasPixels instanceof Float32Array) || !Number.isFinite(size) || size <= 0)
+		return { islandCoverageByName: islandCoverageByName, islandLumaByName: islandLumaByName };
+	for (var islandIndex = 0; islandIndex < R7310_C1_STRUCTURAL_ISLANDS.length; islandIndex += 1)
+	{
+		var island = R7310_C1_STRUCTURAL_ISLANDS[islandIndex];
+		var rect = island.atlasRect;
+		var totalTexels = 0;
+		var nonzeroTexels = 0;
+		var sumLuma = 0.0;
+		var maxLuma = 0.0;
+		for (var y = 0; y < size; y += 1)
+		{
+			var v = (y + 0.5) / size;
+			if (v < rect.vMin || v > rect.vMax) continue;
+			for (var x = 0; x < size; x += 1)
+			{
+				var u = (x + 0.5) / size;
+				if (u < rect.uMin || u > rect.uMax) continue;
+				var offset = (y * size + x) * 4;
+				var r = atlasPixels[offset];
+				var g = atlasPixels[offset + 1];
+				var b = atlasPixels[offset + 2];
+				if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b))
+					continue;
+				var luma = (r + g + b) / 3.0;
+				totalTexels += 1;
+				sumLuma += luma;
+				if (luma > 0.0) nonzeroTexels += 1;
+				if (luma > maxLuma) maxLuma = luma;
+			}
+		}
+		islandCoverageByName[island.name] = {
+			totalTexels: totalTexels,
+			validTexels: totalTexels,
+			nonzeroTexels: nonzeroTexels,
+			validTexelRatio: totalTexels > 0 ? 1.0 : 0.0
+		};
+		islandLumaByName[island.name] = {
+			meanLuma: totalTexels ? sumLuma / totalTexels : 0.0,
+			maxLuma: maxLuma,
+			nonzeroTexels: nonzeroTexels
+		};
+	}
+	return {
+		islandCoverageByName: islandCoverageByName,
+		islandLumaByName: islandLumaByName
+	};
+}
+
 const R738_C1_BAKE_ACCEPTED_PACKAGE_URL = 'docs/data/r7-3-8-c1-bake-accepted-package.json';
 const R7310_C1_FLOOR_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
 const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
+const R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
+const R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
 const R7310_C1_SOUTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_CEILING_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json';
+const R7310_C1_STRUCTURAL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json';
+const R7310_C1_SE_COLUMN_WEST_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json';
+const R7310_C1_SOUTH_WALL_AC_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json';
+const R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json';
+const R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json';
+const R7310_C1_SW_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json';
+const R7310_C1_WEST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json';
+const R7310_C1_SW_COLUMN_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json';
+const R7310_C1_WEST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json';
+const R7310_C1_WEST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json';
+const R7310_C1_EAST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json';
+const R7310_C1_EAST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json';
+const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json';
+const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
+const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
+const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
+const R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS = 6;
 const R7310_C1_FLOOR_TARGET_ID = 1001;
 const R7310_C1_FLOOR_SURFACE_NAME = 'c1_floor_full_room';
 const R7310_C1_FLOOR_WORLD_BOUNDS = Object.freeze({
@@ -1232,6 +1337,20 @@ const R7310_C1_EAST_WALL_WORLD_BOUNDS = Object.freeze({
 	yMax: 2.905,
 	x: 1.91
 });
+const R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2.475;
+const R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
+const R7310_C1_EAST_WALL_SE_COLUMN_DEAD_ZONE = Object.freeze({
+	zMin: 2.49,
+	zMax: 3.056,
+	yMin: 0.0,
+	yMax: 2.905
+});
+const R7310_C1_EAST_WALL_BEAM_DEAD_ZONE = Object.freeze({
+	zMin: -1.874,
+	zMax: 2.49,
+	yMin: 2.515,
+	yMax: 2.905
+});
 const R7310_C1_WEST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_WEST_WALL_TARGET_ID = 1004;
 const R7310_C1_WEST_WALL_SURFACE_NAME = 'c1_west_wall';
@@ -1242,11 +1361,25 @@ const R7310_C1_WEST_WALL_WORLD_BOUNDS = Object.freeze({
 	yMax: 2.905,
 	x: -1.91
 });
+const R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN = 2.7179;
+const R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
 const R7310_C1_WEST_WALL_IRON_DOOR_HOLE = Object.freeze({
 	zMin: -1.874,
 	zMax: -0.984,
 	yMin: 0.09,
 	yMax: 2.04
+});
+const R7310_C1_WEST_WALL_SW_COLUMN_DEAD_ZONE = Object.freeze({
+	zMin: 2.846,
+	zMax: 3.056,
+	yMin: 0.0,
+	yMax: 2.905
+});
+const R7310_C1_WEST_WALL_BEAM_DEAD_ZONE = Object.freeze({
+	zMin: -1.874,
+	zMax: 2.846,
+	yMin: 2.525,
+	yMax: 2.905
 });
 const R7310_C1_SOUTH_WALL_TARGET_ID = 1005;
 const R7310_C1_SOUTH_WALL_SURFACE_NAME = 'c1_south_wall';
@@ -1273,8 +1406,8 @@ const R7310_C1_SOUTH_WALL_WINDOW_REVEAL = Object.freeze({
 	atlas: Object.freeze({
 		leftReveal: Object.freeze({ xMin: -1.69, xMax: -1.52, yMin: 1.10, yMax: 2.845 }),
 		rightReveal: Object.freeze({ xMin: 0.46, xMax: 0.63, yMin: 1.10, yMax: 2.845 }),
-		bottomReveal: Object.freeze({ xMin: -1.45, xMax: 0.39, yMin: 1.10, yMax: 1.27 }),
-		topReveal: Object.freeze({ xMin: -1.45, xMax: 0.39, yMin: 2.675, yMax: 2.845 })
+		bottomReveal: Object.freeze({ xMin: -1.52, xMax: 0.46, yMin: 1.10, yMax: 1.27 }),
+		topReveal: Object.freeze({ xMin: -1.52, xMax: 0.46, yMin: 2.675, yMax: 2.845 })
 	})
 });
 const R7310_C1_CEILING_TARGET_ID = 1006;
@@ -1285,6 +1418,242 @@ const R7310_C1_CEILING_WORLD_BOUNDS = Object.freeze({
 	zMin: -2.074,
 	zMax: 3.256,
 	y: 2.905
+});
+const R7310_C1_STRUCTURAL_TARGET_ID = 1007;
+const R7310_C1_STRUCTURAL_SURFACE_NAME = 'c1_structural_beams_columns';
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID = 1008;
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME = 'c1_se_column_north_shadow';
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: 1.78,
+	xMax: 1.91,
+	yMin: 0.0,
+	yMax: 2.905,
+	z: 2.49
+});
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_EAST_BEAM_BACK = Object.freeze({
+	xMin: 1.85,
+	xMax: 1.91,
+	yMin: 2.515,
+	yMax: 2.905
+});
+const R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID = 1009;
+const R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME = 'c1_se_column_west_shadow';
+const R7310_C1_SE_COLUMN_WEST_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: 2.49,
+	zMax: 3.056,
+	yMin: 0.0,
+	yMax: 2.905,
+	x: 1.78
+});
+const R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID = 1010;
+const R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME = 'c1_south_wall_ac_shadow';
+const R7310_C1_SOUTH_WALL_AC_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: -2.11,
+	xMax: 2.11,
+	yMin: 0.0,
+	yMax: 2.905,
+	z: 3.056
+});
+const R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK = Object.freeze({
+	xMin: 1.78,
+	xMax: 1.91,
+	yMin: 0.0,
+	yMax: 2.905
+});
+const R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID = 1011;
+const R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME = 'c1_east_wall_beam_shadow';
+const R7310_C1_EAST_WALL_BEAM_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: -1.874,
+	zMax: 3.056,
+	yMin: 0.0,
+	yMax: 2.905,
+	x: 1.91
+});
+const R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID = 1012;
+const R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME = 'c1_sw_column_north_shadow';
+const R7310_C1_SW_COLUMN_NORTH_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: -1.91,
+	xMax: -1.75,
+	yMin: 0.0,
+	yMax: 2.525,
+	z: 2.846
+});
+const R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID = 1013;
+const R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME = 'c1_west_wall_beam_shadow';
+const R7310_C1_WEST_WALL_BEAM_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: -1.874,
+	zMax: 3.056,
+	yMin: 0.0,
+	yMax: 2.905,
+	x: -1.91
+});
+const R7310_C1_SW_COLUMN_INNER_SHADOW_TARGET_ID = 1014;
+const R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME = 'c1_sw_column_inner_shadow';
+const R7310_C1_SW_COLUMN_INNER_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: 2.846,
+	zMax: 3.256,
+	yMin: 0.0,
+	yMax: 2.905,
+	x: -1.75
+});
+const R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID = 1015;
+const R7310_C1_WEST_BEAM_INNER_SHADOW_SURFACE_NAME = 'c1_west_beam_inner_shadow';
+const R7310_C1_WEST_BEAM_INNER_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: -1.874,
+	zMax: 2.848,
+	yMin: 2.525,
+	yMax: 2.905,
+	x: -1.75
+});
+const R7310_C1_WEST_BEAM_UNDER_SHADOW_TARGET_ID = 1016;
+const R7310_C1_WEST_BEAM_UNDER_SHADOW_SURFACE_NAME = 'c1_west_beam_under_shadow';
+const R7310_C1_WEST_BEAM_UNDER_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: -1.91,
+	xMax: -1.75,
+	zMin: -1.874,
+	zMax: 2.846,
+	y: 2.525
+});
+const R7310_C1_EAST_BEAM_INNER_SHADOW_TARGET_ID = 1017;
+const R7310_C1_EAST_BEAM_INNER_SHADOW_SURFACE_NAME = 'c1_east_beam_inner_shadow';
+const R7310_C1_EAST_BEAM_INNER_SHADOW_WORLD_BOUNDS = Object.freeze({
+	zMin: -1.874,
+	zMax: 2.49,
+	yMin: 2.515,
+	yMax: 2.905,
+	x: 1.85
+});
+const R7310_C1_EAST_BEAM_UNDER_SHADOW_TARGET_ID = 1018;
+const R7310_C1_EAST_BEAM_UNDER_SHADOW_SURFACE_NAME = 'c1_east_beam_under_shadow';
+const R7310_C1_EAST_BEAM_UNDER_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: 1.85,
+	xMax: 1.91,
+	zMin: -1.874,
+	zMax: 2.49,
+	y: 2.515
+});
+const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID = 1019;
+const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_SURFACE_NAME = 'c1_south_window_left_reveal_shadow';
+const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
+	yMin: 1.04,
+	yMax: 2.905,
+	zMin: 3.056,
+	zMax: 3.256,
+	x: -1.75
+});
+const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID = 1020;
+const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_SURFACE_NAME = 'c1_south_window_right_reveal_shadow';
+const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
+	yMin: 1.04,
+	yMax: 2.905,
+	zMin: 3.056,
+	zMax: 3.256,
+	x: 0.69
+});
+const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID = 1021;
+const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_SURFACE_NAME = 'c1_south_window_bottom_reveal_shadow';
+const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: -1.75,
+	xMax: 0.69,
+	zMin: 3.056,
+	zMax: 3.256,
+	y: 1.04
+});
+const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID = 1022;
+const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME = 'c1_south_window_top_reveal_shadow';
+const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
+	xMin: -1.75,
+	xMax: 0.69,
+	zMin: 3.056,
+	zMax: 3.256,
+	y: 2.905
+});
+function r7310C1InsideRectZY(z, y, rect)
+{
+	return z >= rect.zMin && z <= rect.zMax && y >= rect.yMin && y <= rect.yMax;
+}
+function r7310C1EastWallHiddenByBeamOrSeColumn(z, y)
+{
+	return r7310C1InsideRectZY(z, y, R7310_C1_EAST_WALL_SE_COLUMN_DEAD_ZONE) ||
+		r7310C1InsideRectZY(z, y, R7310_C1_EAST_WALL_BEAM_DEAD_ZONE);
+}
+function r7310C1WestWallHiddenByBeamOrSwColumn(z, y)
+{
+	return r7310C1InsideRectZY(z, y, R7310_C1_WEST_WALL_SW_COLUMN_DEAD_ZONE) ||
+		r7310C1InsideRectZY(z, y, R7310_C1_WEST_WALL_BEAM_DEAD_ZONE);
+}
+const R7310_C1_STRUCTURAL_ISLANDS = Object.freeze([
+	Object.freeze({
+		name: 'west_beam_inner_x',
+		atlasRect: Object.freeze({ uMin: 0.0, vMin: 0.0, uMax: 0.5, vMax: 0.17 }),
+		worldFace: Object.freeze({ axis: 'x', value: -1.75, yMin: 2.525, yMax: 2.905, zMin: -1.874, zMax: 2.848 }),
+		normal: '+X',
+		axes: Object.freeze({ u: 'z', v: 'y' })
+	}),
+	Object.freeze({
+		name: 'west_beam_under_y',
+		atlasRect: Object.freeze({ uMin: 0.0, vMin: 0.18, uMax: 0.5, vMax: 0.26 }),
+		worldFace: Object.freeze({ axis: 'y', value: 2.525, xMin: -1.91, xMax: -1.75, zMin: -1.874, zMax: 2.846 }),
+		normal: '-Y',
+		axes: Object.freeze({ u: 'z', v: 'x' })
+	}),
+	Object.freeze({
+		name: 'east_beam_inner_x',
+		atlasRect: Object.freeze({ uMin: 0.0, vMin: 0.27, uMax: 0.5, vMax: 0.44 }),
+		worldFace: Object.freeze({ axis: 'x', value: 1.85, yMin: 2.515, yMax: 2.905, zMin: -1.874, zMax: 2.49 }),
+		normal: '-X',
+		axes: Object.freeze({ u: 'z', v: 'y' })
+	}),
+	Object.freeze({
+		name: 'east_beam_under_y',
+		atlasRect: Object.freeze({ uMin: 0.0, vMin: 0.45, uMax: 0.5, vMax: 0.53 }),
+		worldFace: Object.freeze({ axis: 'y', value: 2.515, xMin: 1.85, xMax: 1.91, zMin: -1.874, zMax: 2.49 }),
+		normal: '-Y',
+		axes: Object.freeze({ u: 'z', v: 'x' })
+	}),
+	Object.freeze({
+		name: 'sw_column_inner_x',
+		atlasRect: Object.freeze({ uMin: 0.52, vMin: 0.0, uMax: 0.74, vMax: 0.36 }),
+		worldFace: Object.freeze({ axis: 'x', value: -1.75, yMin: 0.0, yMax: 2.905, zMin: 2.846, zMax: 3.056 }),
+		normal: '+X',
+		axes: Object.freeze({ u: 'z', v: 'y' })
+	}),
+	Object.freeze({
+		name: 'sw_column_north_z',
+		atlasRect: Object.freeze({ uMin: 0.76, vMin: 0.0, uMax: 0.94, vMax: 0.36 }),
+		worldFace: Object.freeze({ axis: 'z', value: 2.846, xMin: -1.91, xMax: -1.75, yMin: 0.0, yMax: 2.525 }),
+		normal: '-Z',
+		axes: Object.freeze({ u: 'x', v: 'y' })
+	}),
+	Object.freeze({
+		name: 'se_column_inner_x',
+		atlasRect: Object.freeze({ uMin: 0.52, vMin: 0.38, uMax: 0.74, vMax: 0.76 }),
+		worldFace: Object.freeze({ axis: 'x', value: 1.78, yMin: 0.0, yMax: 2.905, zMin: 2.49, zMax: 3.056 }),
+		normal: '-X',
+		axes: Object.freeze({ u: 'z', v: 'y' })
+	}),
+	Object.freeze({
+		name: 'se_column_north_z',
+		atlasRect: Object.freeze({ uMin: 0.0, vMin: 0.88, uMax: 1.0, vMax: 1.0 }),
+		worldFace: Object.freeze({ axis: 'z', value: 2.49, xMin: 1.78, xMax: 1.91, yMin: 0.0, yMax: 2.905 }),
+		normal: '-Z',
+		axes: Object.freeze({ u: 'y', v: 'x' })
+	})
+]);
+const R7310_C1_STRUCTURAL_EXCLUDED_CONTACT_FACES = Object.freeze([
+	'east_beam_under_y wall-overlap y=2.515, x=1.91..MAX_X, z=-1.874..3.056',
+	'east_beam_inner_x southeast-column overlap x=1.85, y=2.515..2.905, z=2.49..3.056',
+	'east_beam_under_y southeast-column overlap y=2.515, x=1.85..1.91, z=2.49..3.056',
+	'se_column_north_z east-beam overlap z=2.49, x=1.85..1.91, y=2.515..2.905',
+	'se_column_inner_x southeast-bookshelf overlap x=1.78, y=0..2.04, z=2.73..3.056',
+	'west_beam_under_y southwest-column overlap y=2.525, x=-1.91..-1.75, z=2.846..2.848',
+	'sw_column_north_z west-beam internal contact z=2.846, x=-1.91..-1.75, y=2.525..2.905'
+]);
+const R7310_C1_STRUCTURAL_GEOMETRY_GATE_REPORT = Object.freeze({
+	status: 'pass',
+	finalIslandCount: 8,
+	finalIslandRegistry: R7310_C1_STRUCTURAL_ISLANDS,
+	excludedContactFaces: R7310_C1_STRUCTURAL_EXCLUDED_CONTACT_FACES
 });
 const R739_C1_ACCURATE_REFLECTION_ACCEPTED_PACKAGE_URL = 'docs/data/r7-3-9-c1-accurate-reflection-accepted-package.json';
 const R739_C1_SPROUT_REFLECTION_BOUNDS = Object.freeze({ xMin: -1.0, xMax: 1.0, zMin: -1.0, zMax: 1.0, y: 0.01 });
@@ -1303,18 +1672,29 @@ let r7310C1FloorDiffuseRuntimePixels = null;
 let r7310C1FullRoomDiffuseRuntimeTexture = null;
 let r7310C1FullRoomDiffuseRuntimeError = null;
 let r7310C1FloorDiffuseRuntimeEnabled = true;
+let r7310C1NortheastFurnitureRuntimeMode = 'bed';
 let r7310C1NorthWallDiffuseRuntimeEnabled = true;
 let r7310C1NorthWallDiffuseRuntimeReady = false;
 let r7310C1NorthWallDiffuseRuntimeLoadPromise = null;
 let r7310C1NorthWallDiffuseRuntimePackage = null;
 let r7310C1NorthWallDiffuseRuntimeTexture = null;
 let r7310C1NorthWallDiffuseRuntimeError = null;
+let r7310C1NorthWallWardrobeDiffuseRuntimeReady = false;
+let r7310C1NorthWallWardrobeDiffuseRuntimeLoadPromise = null;
+let r7310C1NorthWallWardrobeDiffuseRuntimePackage = null;
+let r7310C1NorthWallWardrobeDiffuseRuntimeTexture = null;
+let r7310C1NorthWallWardrobeDiffuseRuntimeError = null;
 let r7310C1EastWallDiffuseRuntimeEnabled = true;
 let r7310C1EastWallDiffuseRuntimeReady = false;
 let r7310C1EastWallDiffuseRuntimeLoadPromise = null;
 let r7310C1EastWallDiffuseRuntimePackage = null;
 let r7310C1EastWallDiffuseRuntimeTexture = null;
 let r7310C1EastWallDiffuseRuntimeError = null;
+let r7310C1EastWallWardrobeDiffuseRuntimeReady = false;
+let r7310C1EastWallWardrobeDiffuseRuntimeLoadPromise = null;
+let r7310C1EastWallWardrobeDiffuseRuntimePackage = null;
+let r7310C1EastWallWardrobeDiffuseRuntimeTexture = null;
+let r7310C1EastWallWardrobeDiffuseRuntimeError = null;
 let r7310C1WestWallDiffuseRuntimeEnabled = true;
 let r7310C1WestWallDiffuseRuntimeReady = false;
 let r7310C1WestWallDiffuseRuntimeLoadPromise = null;
@@ -1333,6 +1713,140 @@ let r7310C1CeilingDiffuseRuntimeLoadPromise = null;
 let r7310C1CeilingDiffuseRuntimePackage = null;
 let r7310C1CeilingDiffuseRuntimeTexture = null;
 let r7310C1CeilingDiffuseRuntimeError = null;
+let r7310C1StructuralDiffuseRuntimeEnabled = true;
+let r7310C1StructuralDiffuseRuntimePending = true;
+let r7310C1StructuralDiffuseRuntimeReady = false;
+let r7310C1StructuralDiffuseRuntimeLoadPromise = null;
+let r7310C1StructuralDiffuseRuntimePackage = null;
+let r7310C1StructuralDiffuseRuntimeTexture = null;
+let r7310C1StructuralDiffuseRuntimeError = null;
+let r7310C1SeColumnNorthShadowRuntimeEnabled = true;
+let r7310C1SeColumnNorthShadowRuntimePending = true;
+let r7310C1SeColumnNorthShadowRuntimeReady = false;
+let r7310C1SeColumnNorthShadowRuntimeLoadPromise = null;
+let r7310C1SeColumnNorthShadowRuntimePackage = null;
+let r7310C1SeColumnNorthShadowRuntimeTexture = null;
+let r7310C1SeColumnNorthShadowRuntimeDataTexture = null;
+let r7310C1SeColumnNorthShadowRuntimeError = null;
+let r7310C1SeColumnWestShadowRuntimeEnabled = true;
+let r7310C1SeColumnWestShadowRuntimePending = true;
+let r7310C1SeColumnWestShadowRuntimeReady = false;
+let r7310C1SeColumnWestShadowRuntimeLoadPromise = null;
+let r7310C1SeColumnWestShadowRuntimePackage = null;
+let r7310C1SeColumnWestShadowRuntimeTexture = null;
+let r7310C1SeColumnWestShadowRuntimeDataTexture = null;
+let r7310C1SeColumnWestShadowRuntimeError = null;
+let r7310C1SouthWallAcShadowRuntimeEnabled = true;
+let r7310C1SouthWallAcShadowRuntimePending = true;
+let r7310C1SouthWallAcShadowRuntimeReady = false;
+let r7310C1SouthWallAcShadowRuntimeLoadPromise = null;
+let r7310C1SouthWallAcShadowRuntimePackage = null;
+let r7310C1SouthWallAcShadowRuntimeTexture = null;
+let r7310C1SouthWallAcShadowRuntimeDataTexture = null;
+let r7310C1SouthWallAcShadowRuntimeError = null;
+let r7310C1EastWallBeamShadowRuntimeEnabled = true;
+let r7310C1EastWallBeamShadowRuntimePending = true;
+let r7310C1EastWallBeamShadowRuntimeReady = false;
+let r7310C1EastWallBeamShadowRuntimeLoadPromise = null;
+let r7310C1EastWallBeamShadowRuntimePackage = null;
+let r7310C1EastWallBeamShadowRuntimeTexture = null;
+let r7310C1EastWallBeamShadowRuntimeDataTexture = null;
+let r7310C1EastWallBeamShadowRuntimeError = null;
+let r7310C1EastWallBeamShadowWardrobeRuntimePending = true;
+let r7310C1EastWallBeamShadowWardrobeRuntimeReady = false;
+let r7310C1EastWallBeamShadowWardrobeRuntimeLoadPromise = null;
+let r7310C1EastWallBeamShadowWardrobeRuntimePackage = null;
+let r7310C1EastWallBeamShadowWardrobeRuntimeTexture = null;
+let r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture = null;
+let r7310C1EastWallBeamShadowWardrobeRuntimeError = null;
+let r7310C1SwColumnNorthShadowRuntimeEnabled = true;
+let r7310C1SwColumnNorthShadowRuntimePending = true;
+let r7310C1SwColumnNorthShadowRuntimeReady = false;
+let r7310C1SwColumnNorthShadowRuntimeLoadPromise = null;
+let r7310C1SwColumnNorthShadowRuntimePackage = null;
+let r7310C1SwColumnNorthShadowRuntimeTexture = null;
+let r7310C1SwColumnNorthShadowRuntimeDataTexture = null;
+let r7310C1SwColumnNorthShadowRuntimeError = null;
+let r7310C1WestWallBeamShadowRuntimeEnabled = true;
+let r7310C1WestWallBeamShadowRuntimePending = true;
+let r7310C1WestWallBeamShadowRuntimeReady = false;
+let r7310C1WestWallBeamShadowRuntimeLoadPromise = null;
+let r7310C1WestWallBeamShadowRuntimePackage = null;
+let r7310C1WestWallBeamShadowRuntimeTexture = null;
+let r7310C1WestWallBeamShadowRuntimeDataTexture = null;
+let r7310C1WestWallBeamShadowRuntimeError = null;
+let r7310C1SwColumnInnerShadowRuntimeEnabled = true;
+let r7310C1SwColumnInnerShadowRuntimePending = true;
+let r7310C1SwColumnInnerShadowRuntimeReady = false;
+let r7310C1SwColumnInnerShadowRuntimeLoadPromise = null;
+let r7310C1SwColumnInnerShadowRuntimePackage = null;
+let r7310C1SwColumnInnerShadowRuntimeTexture = null;
+let r7310C1SwColumnInnerShadowRuntimeDataTexture = null;
+let r7310C1SwColumnInnerShadowRuntimeError = null;
+let r7310C1WestBeamInnerShadowRuntimeEnabled = true;
+let r7310C1WestBeamInnerShadowRuntimePending = true;
+let r7310C1WestBeamInnerShadowRuntimeReady = false;
+let r7310C1WestBeamInnerShadowRuntimeLoadPromise = null;
+let r7310C1WestBeamInnerShadowRuntimePackage = null;
+let r7310C1WestBeamInnerShadowRuntimeTexture = null;
+let r7310C1WestBeamInnerShadowRuntimeDataTexture = null;
+let r7310C1WestBeamInnerShadowRuntimeError = null;
+let r7310C1WestBeamUnderShadowRuntimeEnabled = true;
+let r7310C1WestBeamUnderShadowRuntimePending = true;
+let r7310C1WestBeamUnderShadowRuntimeReady = false;
+let r7310C1WestBeamUnderShadowRuntimeLoadPromise = null;
+let r7310C1WestBeamUnderShadowRuntimePackage = null;
+let r7310C1WestBeamUnderShadowRuntimeTexture = null;
+let r7310C1WestBeamUnderShadowRuntimeDataTexture = null;
+let r7310C1WestBeamUnderShadowRuntimeError = null;
+let r7310C1EastBeamInnerShadowRuntimeEnabled = true;
+let r7310C1EastBeamInnerShadowRuntimePending = true;
+let r7310C1EastBeamInnerShadowRuntimeReady = false;
+let r7310C1EastBeamInnerShadowRuntimeLoadPromise = null;
+let r7310C1EastBeamInnerShadowRuntimePackage = null;
+let r7310C1EastBeamInnerShadowRuntimeTexture = null;
+let r7310C1EastBeamInnerShadowRuntimeDataTexture = null;
+let r7310C1EastBeamInnerShadowRuntimeError = null;
+let r7310C1EastBeamUnderShadowRuntimeEnabled = true;
+let r7310C1EastBeamUnderShadowRuntimePending = true;
+let r7310C1EastBeamUnderShadowRuntimeReady = false;
+let r7310C1EastBeamUnderShadowRuntimeLoadPromise = null;
+let r7310C1EastBeamUnderShadowRuntimePackage = null;
+let r7310C1EastBeamUnderShadowRuntimeTexture = null;
+let r7310C1EastBeamUnderShadowRuntimeDataTexture = null;
+let r7310C1EastBeamUnderShadowRuntimeError = null;
+let r7310C1SouthWindowLeftRevealShadowRuntimeEnabled = true;
+let r7310C1SouthWindowLeftRevealShadowRuntimePending = true;
+let r7310C1SouthWindowLeftRevealShadowRuntimeReady = false;
+let r7310C1SouthWindowLeftRevealShadowRuntimeLoadPromise = null;
+let r7310C1SouthWindowLeftRevealShadowRuntimePackage = null;
+let r7310C1SouthWindowLeftRevealShadowRuntimeTexture = null;
+let r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture = null;
+let r7310C1SouthWindowLeftRevealShadowRuntimeError = null;
+let r7310C1SouthWindowRightRevealShadowRuntimeEnabled = true;
+let r7310C1SouthWindowRightRevealShadowRuntimePending = true;
+let r7310C1SouthWindowRightRevealShadowRuntimeReady = false;
+let r7310C1SouthWindowRightRevealShadowRuntimeLoadPromise = null;
+let r7310C1SouthWindowRightRevealShadowRuntimePackage = null;
+let r7310C1SouthWindowRightRevealShadowRuntimeTexture = null;
+let r7310C1SouthWindowRightRevealShadowRuntimeDataTexture = null;
+let r7310C1SouthWindowRightRevealShadowRuntimeError = null;
+let r7310C1SouthWindowBottomRevealShadowRuntimeEnabled = true;
+let r7310C1SouthWindowBottomRevealShadowRuntimePending = true;
+let r7310C1SouthWindowBottomRevealShadowRuntimeReady = false;
+let r7310C1SouthWindowBottomRevealShadowRuntimeLoadPromise = null;
+let r7310C1SouthWindowBottomRevealShadowRuntimePackage = null;
+let r7310C1SouthWindowBottomRevealShadowRuntimeTexture = null;
+let r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture = null;
+let r7310C1SouthWindowBottomRevealShadowRuntimeError = null;
+let r7310C1SouthWindowTopRevealShadowRuntimeEnabled = true;
+let r7310C1SouthWindowTopRevealShadowRuntimePending = true;
+let r7310C1SouthWindowTopRevealShadowRuntimeReady = false;
+let r7310C1SouthWindowTopRevealShadowRuntimeLoadPromise = null;
+let r7310C1SouthWindowTopRevealShadowRuntimePackage = null;
+let r7310C1SouthWindowTopRevealShadowRuntimeTexture = null;
+let r7310C1SouthWindowTopRevealShadowRuntimeDataTexture = null;
+let r7310C1SouthWindowTopRevealShadowRuntimeError = null;
 let r739C1AccurateReflectionEnabled = false;
 let r739C1AccurateReflectionReady = false;
 let r739C1AccurateReflectionLoadPromise = null;
@@ -1441,6 +1955,32 @@ function r7310C1FullRoomDiffuseRuntimeConfigAllowed()
 	return config === 1;
 }
 
+function r7310C1AnyFullRoomDiffuseSurfaceEnabled()
+{
+	return r7310C1FloorDiffuseRuntimeEnabled ||
+		r7310C1NorthWallDiffuseRuntimeEnabled ||
+		r7310C1EastWallDiffuseRuntimeEnabled ||
+		r7310C1WestWallDiffuseRuntimeEnabled ||
+		r7310C1SouthWallDiffuseRuntimeEnabled ||
+		r7310C1CeilingDiffuseRuntimeEnabled ||
+		r7310C1StructuralDiffuseRuntimeEnabled ||
+		r7310C1SeColumnNorthShadowRuntimeEnabled ||
+		r7310C1SeColumnWestShadowRuntimeEnabled ||
+		r7310C1SouthWallAcShadowRuntimeEnabled ||
+		r7310C1EastWallBeamShadowRuntimeEnabled ||
+		r7310C1SwColumnNorthShadowRuntimeEnabled ||
+		r7310C1WestWallBeamShadowRuntimeEnabled ||
+		r7310C1SwColumnInnerShadowRuntimeEnabled ||
+		r7310C1WestBeamInnerShadowRuntimeEnabled ||
+		r7310C1WestBeamUnderShadowRuntimeEnabled ||
+		r7310C1EastBeamInnerShadowRuntimeEnabled ||
+		r7310C1EastBeamUnderShadowRuntimeEnabled ||
+		r7310C1SouthWindowLeftRevealShadowRuntimeEnabled ||
+		r7310C1SouthWindowRightRevealShadowRuntimeEnabled ||
+		r7310C1SouthWindowBottomRevealShadowRuntimeEnabled ||
+		r7310C1SouthWindowTopRevealShadowRuntimeEnabled;
+}
+
 function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 {
 	if (!pathTracingUniforms) return false;
@@ -1451,11 +1991,11 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		configAllowed &&
 		captureMode === 0;
 	var northWallApplied = r7310C1NorthWallDiffuseRuntimeEnabled &&
-		r7310C1NorthWallDiffuseRuntimeReady &&
+		r7310C1NorthWallActiveDiffuseRuntimeReady() &&
 		configAllowed &&
 		captureMode === 0;
 	var eastWallApplied = r7310C1EastWallDiffuseRuntimeEnabled &&
-		r7310C1EastWallDiffuseRuntimeReady &&
+		r7310C1EastWallActiveDiffuseRuntimeReady() &&
 		configAllowed &&
 		captureMode === 0;
 	var westWallApplied = r7310C1WestWallDiffuseRuntimeEnabled &&
@@ -1470,7 +2010,87 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		r7310C1CeilingDiffuseRuntimeReady &&
 		configAllowed &&
 		captureMode === 0;
-	var applied = floorApplied || northWallApplied || eastWallApplied || westWallApplied || southWallApplied || ceilingApplied;
+	var structuralApplied = r7310C1StructuralDiffuseRuntimeEnabled &&
+		r7310C1StructuralDiffuseRuntimeReady &&
+		!r7310C1StructuralDiffuseRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var seColumnNorthShadowApplied = r7310C1SeColumnNorthShadowRuntimeEnabled &&
+		r7310C1SeColumnNorthShadowRuntimeReady &&
+		!r7310C1SeColumnNorthShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var seColumnWestShadowApplied = r7310C1SeColumnWestShadowRuntimeEnabled &&
+		r7310C1SeColumnWestShadowRuntimeReady &&
+		!r7310C1SeColumnWestShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var southWallAcShadowApplied = r7310C1SouthWallAcShadowRuntimeEnabled &&
+		r7310C1SouthWallAcShadowRuntimeReady &&
+		!r7310C1SouthWallAcShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var eastWallBeamShadowApplied = r7310C1EastWallBeamShadowRuntimeEnabled &&
+		r7310C1EastWallBeamShadowActiveRuntimeReady() &&
+		!r7310C1EastWallBeamShadowActiveRuntimePending() &&
+		configAllowed &&
+		captureMode === 0;
+	var swColumnNorthShadowApplied = r7310C1SwColumnNorthShadowRuntimeEnabled &&
+		r7310C1SwColumnNorthShadowRuntimeReady &&
+		!r7310C1SwColumnNorthShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var westWallBeamShadowApplied = r7310C1WestWallBeamShadowRuntimeEnabled &&
+		r7310C1WestWallBeamShadowRuntimeReady &&
+		!r7310C1WestWallBeamShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var swColumnInnerShadowApplied = r7310C1SwColumnInnerShadowRuntimeEnabled &&
+		r7310C1SwColumnInnerShadowRuntimeReady &&
+		!r7310C1SwColumnInnerShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var westBeamInnerShadowApplied = r7310C1WestBeamInnerShadowRuntimeEnabled &&
+		r7310C1WestBeamInnerShadowRuntimeReady &&
+		!r7310C1WestBeamInnerShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var westBeamUnderShadowApplied = r7310C1WestBeamUnderShadowRuntimeEnabled &&
+		r7310C1WestBeamUnderShadowRuntimeReady &&
+		!r7310C1WestBeamUnderShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var eastBeamInnerShadowApplied = r7310C1EastBeamInnerShadowRuntimeEnabled &&
+		r7310C1EastBeamInnerShadowRuntimeReady &&
+		!r7310C1EastBeamInnerShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var eastBeamUnderShadowApplied = r7310C1EastBeamUnderShadowRuntimeEnabled &&
+		r7310C1EastBeamUnderShadowRuntimeReady &&
+		!r7310C1EastBeamUnderShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var southWindowLeftRevealShadowApplied = r7310C1SouthWindowLeftRevealShadowRuntimeEnabled &&
+		r7310C1SouthWindowLeftRevealShadowRuntimeReady &&
+		!r7310C1SouthWindowLeftRevealShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var southWindowRightRevealShadowApplied = r7310C1SouthWindowRightRevealShadowRuntimeEnabled &&
+		r7310C1SouthWindowRightRevealShadowRuntimeReady &&
+		!r7310C1SouthWindowRightRevealShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var southWindowBottomRevealShadowApplied = r7310C1SouthWindowBottomRevealShadowRuntimeEnabled &&
+		r7310C1SouthWindowBottomRevealShadowRuntimeReady &&
+		!r7310C1SouthWindowBottomRevealShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var southWindowTopRevealShadowApplied = r7310C1SouthWindowTopRevealShadowRuntimeEnabled &&
+		r7310C1SouthWindowTopRevealShadowRuntimeReady &&
+		!r7310C1SouthWindowTopRevealShadowRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var applied = floorApplied || northWallApplied || eastWallApplied || westWallApplied || southWallApplied || ceilingApplied || structuralApplied || seColumnNorthShadowApplied || seColumnWestShadowApplied || southWallAcShadowApplied || eastWallBeamShadowApplied || swColumnNorthShadowApplied || westWallBeamShadowApplied || swColumnInnerShadowApplied || westBeamInnerShadowApplied || westBeamUnderShadowApplied || eastBeamInnerShadowApplied || eastBeamUnderShadowApplied || southWindowLeftRevealShadowApplied || southWindowRightRevealShadowApplied || southWindowBottomRevealShadowApplied || southWindowTopRevealShadowApplied;
 	if (pathTracingUniforms.uR7310C1FullRoomDiffuseMode)
 		pathTracingUniforms.uR7310C1FullRoomDiffuseMode.value = applied ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR7310C1FullRoomDiffuseReady)
@@ -1487,15 +2107,170 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		pathTracingUniforms.uR7310C1SouthWallDiffuseMode.value = southWallApplied ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR7310C1CeilingDiffuseMode)
 		pathTracingUniforms.uR7310C1CeilingDiffuseMode.value = ceilingApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1StructuralDiffuseMode)
+		pathTracingUniforms.uR7310C1StructuralDiffuseMode.value = structuralApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SeColumnNorthShadowMode)
+		pathTracingUniforms.uR7310C1SeColumnNorthShadowMode.value = seColumnNorthShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SeColumnNorthShadowReady)
+		pathTracingUniforms.uR7310C1SeColumnNorthShadowReady.value = r7310C1SeColumnNorthShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SeColumnWestShadowMode)
+		pathTracingUniforms.uR7310C1SeColumnWestShadowMode.value = seColumnWestShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SeColumnWestShadowReady)
+		pathTracingUniforms.uR7310C1SeColumnWestShadowReady.value = r7310C1SeColumnWestShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWallAcShadowMode)
+		pathTracingUniforms.uR7310C1SouthWallAcShadowMode.value = southWallAcShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWallAcShadowReady)
+		pathTracingUniforms.uR7310C1SouthWallAcShadowReady.value = r7310C1SouthWallAcShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastWallBeamShadowMode)
+		pathTracingUniforms.uR7310C1EastWallBeamShadowMode.value = eastWallBeamShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastWallBeamShadowReady)
+		pathTracingUniforms.uR7310C1EastWallBeamShadowReady.value = r7310C1EastWallBeamShadowActiveRuntimeReady() ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SwColumnNorthShadowMode)
+		pathTracingUniforms.uR7310C1SwColumnNorthShadowMode.value = swColumnNorthShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SwColumnNorthShadowReady)
+		pathTracingUniforms.uR7310C1SwColumnNorthShadowReady.value = r7310C1SwColumnNorthShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestWallBeamShadowMode)
+		pathTracingUniforms.uR7310C1WestWallBeamShadowMode.value = westWallBeamShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestWallBeamShadowReady)
+		pathTracingUniforms.uR7310C1WestWallBeamShadowReady.value = r7310C1WestWallBeamShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SwColumnInnerShadowMode)
+		pathTracingUniforms.uR7310C1SwColumnInnerShadowMode.value = swColumnInnerShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SwColumnInnerShadowReady)
+		pathTracingUniforms.uR7310C1SwColumnInnerShadowReady.value = r7310C1SwColumnInnerShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestBeamInnerShadowMode)
+		pathTracingUniforms.uR7310C1WestBeamInnerShadowMode.value = westBeamInnerShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestBeamInnerShadowReady)
+		pathTracingUniforms.uR7310C1WestBeamInnerShadowReady.value = r7310C1WestBeamInnerShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestBeamUnderShadowMode)
+		pathTracingUniforms.uR7310C1WestBeamUnderShadowMode.value = westBeamUnderShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1WestBeamUnderShadowReady)
+		pathTracingUniforms.uR7310C1WestBeamUnderShadowReady.value = r7310C1WestBeamUnderShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastBeamInnerShadowMode)
+		pathTracingUniforms.uR7310C1EastBeamInnerShadowMode.value = eastBeamInnerShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastBeamInnerShadowReady)
+		pathTracingUniforms.uR7310C1EastBeamInnerShadowReady.value = r7310C1EastBeamInnerShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastBeamUnderShadowMode)
+		pathTracingUniforms.uR7310C1EastBeamUnderShadowMode.value = eastBeamUnderShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1EastBeamUnderShadowReady)
+		pathTracingUniforms.uR7310C1EastBeamUnderShadowReady.value = r7310C1EastBeamUnderShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowMode)
+		pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowMode.value = southWindowLeftRevealShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowReady)
+		pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowReady.value = r7310C1SouthWindowLeftRevealShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowMode)
+		pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowMode.value = southWindowRightRevealShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowReady)
+		pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowReady.value = r7310C1SouthWindowRightRevealShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowMode)
+		pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowMode.value = southWindowBottomRevealShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowReady)
+		pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowReady.value = r7310C1SouthWindowBottomRevealShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode)
+		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode.value = southWindowTopRevealShadowApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady)
+		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady.value = r7310C1SouthWindowTopRevealShadowRuntimeReady ? 1.0 : 0.0;
 	if (r7310C1FullRoomDiffuseRuntimeTexture && pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture)
 		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture.value = r7310C1FullRoomDiffuseRuntimeTexture;
+	if (r7310C1SeColumnNorthShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture)
+		pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture.value = r7310C1SeColumnNorthShadowRuntimeDataTexture;
+	if (r7310C1SeColumnWestShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SeColumnWestShadowTexture)
+		pathTracingUniforms.tR7310C1SeColumnWestShadowTexture.value = r7310C1SeColumnWestShadowRuntimeDataTexture;
+	if (r7310C1SouthWallAcShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWallAcShadowTexture)
+		pathTracingUniforms.tR7310C1SouthWallAcShadowTexture.value = r7310C1SouthWallAcShadowRuntimeDataTexture;
+	var eastWallBeamShadowDataTexture = r7310C1EastWallBeamShadowActiveRuntimeDataTexture();
+	if (eastWallBeamShadowDataTexture && pathTracingUniforms.tR7310C1EastWallBeamShadowTexture)
+		pathTracingUniforms.tR7310C1EastWallBeamShadowTexture.value = eastWallBeamShadowDataTexture;
+	if (r7310C1SwColumnNorthShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture)
+		pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture.value = r7310C1SwColumnNorthShadowRuntimeDataTexture;
+	if (r7310C1WestWallBeamShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestWallBeamShadowTexture)
+		pathTracingUniforms.tR7310C1WestWallBeamShadowTexture.value = r7310C1WestWallBeamShadowRuntimeDataTexture;
+	if (r7310C1SwColumnInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture)
+		pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture.value = r7310C1SwColumnInnerShadowRuntimeDataTexture;
+	if (r7310C1WestBeamInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture)
+		pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture.value = r7310C1WestBeamInnerShadowRuntimeDataTexture;
+	if (r7310C1WestBeamUnderShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture)
+		pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture.value = r7310C1WestBeamUnderShadowRuntimeDataTexture;
+	if (r7310C1EastBeamInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture)
+		pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture.value = r7310C1EastBeamInnerShadowRuntimeDataTexture;
+	if (r7310C1EastBeamUnderShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture)
+		pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture.value = r7310C1EastBeamUnderShadowRuntimeDataTexture;
+	if (r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture)
+		pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture.value = r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture;
+	if (r7310C1SouthWindowRightRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture)
+		pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture.value = r7310C1SouthWindowRightRevealShadowRuntimeDataTexture;
+	if (r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture)
+		pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture.value = r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture;
+	if (r7310C1SouthWindowTopRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture)
+		pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture.value = r7310C1SouthWindowTopRevealShadowRuntimeDataTexture;
+	if (pathTracingUniforms.uR7310C1SeColumnNorthShadowResolution)
+		pathTracingUniforms.uR7310C1SeColumnNorthShadowResolution.value = r7310C1SeColumnNorthShadowRuntimePackage && r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SeColumnWestShadowResolution)
+		pathTracingUniforms.uR7310C1SeColumnWestShadowResolution.value = r7310C1SeColumnWestShadowRuntimePackage && r7310C1SeColumnWestShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SeColumnWestShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SouthWallAcShadowResolution)
+		pathTracingUniforms.uR7310C1SouthWallAcShadowResolution.value = r7310C1SouthWallAcShadowRuntimePackage && r7310C1SouthWallAcShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SouthWallAcShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1EastWallBeamShadowResolution)
+	{
+		var eastWallBeamShadowPackage = r7310C1EastWallBeamShadowActiveRuntimePackage();
+		pathTracingUniforms.uR7310C1EastWallBeamShadowResolution.value = eastWallBeamShadowPackage && eastWallBeamShadowPackage.targetAtlasResolution
+			? eastWallBeamShadowPackage.targetAtlasResolution
+			: 1024;
+	}
+	if (pathTracingUniforms.uR7310C1SwColumnNorthShadowResolution)
+		pathTracingUniforms.uR7310C1SwColumnNorthShadowResolution.value = r7310C1SwColumnNorthShadowRuntimePackage && r7310C1SwColumnNorthShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SwColumnNorthShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1WestWallBeamShadowResolution)
+		pathTracingUniforms.uR7310C1WestWallBeamShadowResolution.value = r7310C1WestWallBeamShadowRuntimePackage && r7310C1WestWallBeamShadowRuntimePackage.targetAtlasResolution
+			? r7310C1WestWallBeamShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SwColumnInnerShadowResolution)
+		pathTracingUniforms.uR7310C1SwColumnInnerShadowResolution.value = r7310C1SwColumnInnerShadowRuntimePackage && r7310C1SwColumnInnerShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SwColumnInnerShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1WestBeamInnerShadowResolution)
+		pathTracingUniforms.uR7310C1WestBeamInnerShadowResolution.value = r7310C1WestBeamInnerShadowRuntimePackage && r7310C1WestBeamInnerShadowRuntimePackage.targetAtlasResolution
+			? r7310C1WestBeamInnerShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1WestBeamUnderShadowResolution)
+		pathTracingUniforms.uR7310C1WestBeamUnderShadowResolution.value = r7310C1WestBeamUnderShadowRuntimePackage && r7310C1WestBeamUnderShadowRuntimePackage.targetAtlasResolution
+			? r7310C1WestBeamUnderShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1EastBeamInnerShadowResolution)
+		pathTracingUniforms.uR7310C1EastBeamInnerShadowResolution.value = r7310C1EastBeamInnerShadowRuntimePackage && r7310C1EastBeamInnerShadowRuntimePackage.targetAtlasResolution
+			? r7310C1EastBeamInnerShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1EastBeamUnderShadowResolution)
+		pathTracingUniforms.uR7310C1EastBeamUnderShadowResolution.value = r7310C1EastBeamUnderShadowRuntimePackage && r7310C1EastBeamUnderShadowRuntimePackage.targetAtlasResolution
+			? r7310C1EastBeamUnderShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowResolution)
+		pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowResolution.value = r7310C1SouthWindowLeftRevealShadowRuntimePackage && r7310C1SouthWindowLeftRevealShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SouthWindowLeftRevealShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowResolution)
+		pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowResolution.value = r7310C1SouthWindowRightRevealShadowRuntimePackage && r7310C1SouthWindowRightRevealShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SouthWindowRightRevealShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowResolution)
+		pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowResolution.value = r7310C1SouthWindowBottomRevealShadowRuntimePackage && r7310C1SouthWindowBottomRevealShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SouthWindowBottomRevealShadowRuntimePackage.targetAtlasResolution
+			: 1024;
+	if (pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowResolution)
+		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowResolution.value = r7310C1SouthWindowTopRevealShadowRuntimePackage && r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution
+			? r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution
+			: 1024;
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution)
 		pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution.value = r7310C1RuntimeAtlasResolution();
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount)
-	{
-		pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount.value = 5.0;
-		pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount.value = 6.0;
-	}
+		pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount.value = 22.0;
+	if (pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns)
+		pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns.value = R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS;
 	if (r7310C1FullRoomDiffuseRuntimePackage && r7310C1FullRoomDiffuseRuntimePackage.worldBounds && pathTracingUniforms.uR7310C1BakeFloorWorldBounds)
 	{
 		var b = r7310C1FullRoomDiffuseRuntimePackage.worldBounds;
@@ -1510,15 +2285,168 @@ function r7310C1RuntimeAtlasResolution()
 		return r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution;
 	if (r7310C1NorthWallDiffuseRuntimePackage && r7310C1NorthWallDiffuseRuntimePackage.targetAtlasResolution)
 		return r7310C1NorthWallDiffuseRuntimePackage.targetAtlasResolution;
+	if (r7310C1NorthWallWardrobeDiffuseRuntimePackage && r7310C1NorthWallWardrobeDiffuseRuntimePackage.targetAtlasResolution)
+		return r7310C1NorthWallWardrobeDiffuseRuntimePackage.targetAtlasResolution;
 	if (r7310C1EastWallDiffuseRuntimePackage && r7310C1EastWallDiffuseRuntimePackage.targetAtlasResolution)
 		return r7310C1EastWallDiffuseRuntimePackage.targetAtlasResolution;
+	if (r7310C1EastWallWardrobeDiffuseRuntimePackage && r7310C1EastWallWardrobeDiffuseRuntimePackage.targetAtlasResolution)
+		return r7310C1EastWallWardrobeDiffuseRuntimePackage.targetAtlasResolution;
 	if (r7310C1WestWallDiffuseRuntimePackage && r7310C1WestWallDiffuseRuntimePackage.targetAtlasResolution)
 		return r7310C1WestWallDiffuseRuntimePackage.targetAtlasResolution;
 	if (r7310C1SouthWallDiffuseRuntimePackage && r7310C1SouthWallDiffuseRuntimePackage.targetAtlasResolution)
 		return r7310C1SouthWallDiffuseRuntimePackage.targetAtlasResolution;
 	if (r7310C1CeilingDiffuseRuntimePackage && r7310C1CeilingDiffuseRuntimePackage.targetAtlasResolution)
 		return r7310C1CeilingDiffuseRuntimePackage.targetAtlasResolution;
+	if (!r7310C1StructuralDiffuseRuntimePending &&
+		r7310C1StructuralDiffuseRuntimePackage &&
+		r7310C1StructuralDiffuseRuntimePackage.targetAtlasResolution)
+		return r7310C1StructuralDiffuseRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SeColumnNorthShadowRuntimePending &&
+		r7310C1SeColumnNorthShadowRuntimePackage &&
+		r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SeColumnWestShadowRuntimePending &&
+		r7310C1SeColumnWestShadowRuntimePackage &&
+		r7310C1SeColumnWestShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SeColumnWestShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SouthWallAcShadowRuntimePending &&
+		r7310C1SouthWallAcShadowRuntimePackage &&
+		r7310C1SouthWallAcShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SouthWallAcShadowRuntimePackage.targetAtlasResolution;
+	var eastWallBeamShadowPackage = r7310C1EastWallBeamShadowActiveRuntimePackage();
+	if (!r7310C1EastWallBeamShadowActiveRuntimePending() &&
+		eastWallBeamShadowPackage &&
+		eastWallBeamShadowPackage.targetAtlasResolution)
+		return eastWallBeamShadowPackage.targetAtlasResolution;
+	if (!r7310C1SwColumnNorthShadowRuntimePending &&
+		r7310C1SwColumnNorthShadowRuntimePackage &&
+		r7310C1SwColumnNorthShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SwColumnNorthShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1WestWallBeamShadowRuntimePending &&
+		r7310C1WestWallBeamShadowRuntimePackage &&
+		r7310C1WestWallBeamShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1WestWallBeamShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SwColumnInnerShadowRuntimePending &&
+		r7310C1SwColumnInnerShadowRuntimePackage &&
+		r7310C1SwColumnInnerShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SwColumnInnerShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1WestBeamInnerShadowRuntimePending &&
+		r7310C1WestBeamInnerShadowRuntimePackage &&
+		r7310C1WestBeamInnerShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1WestBeamInnerShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1WestBeamUnderShadowRuntimePending &&
+		r7310C1WestBeamUnderShadowRuntimePackage &&
+		r7310C1WestBeamUnderShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1WestBeamUnderShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1EastBeamInnerShadowRuntimePending &&
+		r7310C1EastBeamInnerShadowRuntimePackage &&
+		r7310C1EastBeamInnerShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1EastBeamInnerShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1EastBeamUnderShadowRuntimePending &&
+		r7310C1EastBeamUnderShadowRuntimePackage &&
+		r7310C1EastBeamUnderShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1EastBeamUnderShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SouthWindowLeftRevealShadowRuntimePending &&
+		r7310C1SouthWindowLeftRevealShadowRuntimePackage &&
+		r7310C1SouthWindowLeftRevealShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SouthWindowLeftRevealShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SouthWindowRightRevealShadowRuntimePending &&
+		r7310C1SouthWindowRightRevealShadowRuntimePackage &&
+		r7310C1SouthWindowRightRevealShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SouthWindowRightRevealShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SouthWindowBottomRevealShadowRuntimePending &&
+		r7310C1SouthWindowBottomRevealShadowRuntimePackage &&
+		r7310C1SouthWindowBottomRevealShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SouthWindowBottomRevealShadowRuntimePackage.targetAtlasResolution;
+	if (!r7310C1SouthWindowTopRevealShadowRuntimePending &&
+		r7310C1SouthWindowTopRevealShadowRuntimePackage &&
+		r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution)
+		return r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution;
 	return 512;
+}
+
+function r7310C1NorthWallActiveDiffuseRuntimeReady()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1NorthWallWardrobeDiffuseRuntimeReady
+		: r7310C1NorthWallDiffuseRuntimeReady;
+}
+
+function r7310C1EastWallActiveDiffuseRuntimeReady()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallWardrobeDiffuseRuntimeReady
+		: r7310C1EastWallDiffuseRuntimeReady;
+}
+
+function r7310C1NorthWallActiveDiffuseRuntimePackage()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1NorthWallWardrobeDiffuseRuntimePackage
+		: r7310C1NorthWallDiffuseRuntimePackage;
+}
+
+function r7310C1EastWallActiveDiffuseRuntimePackage()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallWardrobeDiffuseRuntimePackage
+		: r7310C1EastWallDiffuseRuntimePackage;
+}
+
+function r7310C1NorthWallActiveDiffuseRuntimeTexture()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1NorthWallWardrobeDiffuseRuntimeTexture
+		: r7310C1NorthWallDiffuseRuntimeTexture;
+}
+
+function r7310C1EastWallActiveDiffuseRuntimeTexture()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallWardrobeDiffuseRuntimeTexture
+		: r7310C1EastWallDiffuseRuntimeTexture;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimePending()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimePending
+		: r7310C1EastWallBeamShadowRuntimePending;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimeReady()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimeReady
+		: r7310C1EastWallBeamShadowRuntimeReady;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimePackage()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimePackage
+		: r7310C1EastWallBeamShadowRuntimePackage;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimeTexture()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimeTexture
+		: r7310C1EastWallBeamShadowRuntimeTexture;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimeDataTexture()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture
+		: r7310C1EastWallBeamShadowRuntimeDataTexture;
+}
+
+function r7310C1EastWallBeamShadowActiveRuntimeError()
+{
+	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
+		? r7310C1EastWallBeamShadowWardrobeRuntimeError
+		: r7310C1EastWallBeamShadowRuntimeError;
 }
 
 function createR7310C1BlackRuntimeSlot(resolution)
@@ -1527,50 +2455,79 @@ function createR7310C1BlackRuntimeSlot(resolution)
 	return new Float32Array(safeResolution * safeResolution * 4);
 }
 
-function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels, eastWallPixels, westWallPixels, southWallPixels, ceilingPixels, resolution)
+function createR7310C1StandaloneRuntimeTexture(pixels, resolution)
 {
-	var combined = new Float32Array(resolution * resolution * 24);
+	if (!THREE || !(pixels instanceof Float32Array))
+		return null;
+	var texture = new THREE.DataTexture(
+		pixels,
+		resolution,
+		resolution,
+		THREE.RGBAFormat,
+		THREE.FloatType
+	);
+	texture.minFilter = THREE.NearestFilter;
+	texture.magFilter = THREE.NearestFilter;
+	texture.wrapS = THREE.ClampToEdgeWrapping;
+	texture.wrapT = THREE.ClampToEdgeWrapping;
+	texture.flipY = false;
+	texture.generateMipmaps = false;
+	texture.needsUpdate = true;
+	return texture;
+}
+
+function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels, eastWallPixels, westWallPixels, southWallPixels, ceilingPixels, structuralPixels, seColumnNorthShadowPixels, seColumnWestShadowPixels, southWallAcShadowPixels, eastWallBeamShadowPixels, swColumnNorthShadowPixels, westWallBeamShadowPixels, swColumnInnerShadowPixels, westBeamInnerShadowPixels, westBeamUnderShadowPixels, eastBeamInnerShadowPixels, eastBeamUnderShadowPixels, southWindowLeftRevealShadowPixels, southWindowRightRevealShadowPixels, southWindowBottomRevealShadowPixels, southWindowTopRevealShadowPixels, resolution)
+{
+	var slots = [
+		floorPixels,
+		northWallPixels,
+		eastWallPixels,
+		westWallPixels,
+		southWallPixels,
+		ceilingPixels,
+		structuralPixels,
+		seColumnNorthShadowPixels,
+		seColumnWestShadowPixels,
+		southWallAcShadowPixels,
+		eastWallBeamShadowPixels,
+		swColumnNorthShadowPixels,
+		westWallBeamShadowPixels,
+		swColumnInnerShadowPixels,
+		westBeamInnerShadowPixels,
+		westBeamUnderShadowPixels,
+		eastBeamInnerShadowPixels,
+		eastBeamUnderShadowPixels,
+		southWindowLeftRevealShadowPixels,
+		southWindowRightRevealShadowPixels,
+		southWindowBottomRevealShadowPixels,
+		southWindowTopRevealShadowPixels
+	];
+	var patchCount = 22;
+	var atlasColumns = R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS;
+	var atlasRows = Math.ceil(patchCount / atlasColumns);
+	var combined = new Float32Array(resolution * atlasColumns * resolution * atlasRows * 4);
 	for (var y = 0; y < resolution; y += 1)
 	{
 		for (var x = 0; x < resolution; x += 1)
 		{
 			var src = (y * resolution + x) * 4;
-			var floorDst = (y * resolution * 6 + x) * 4;
-			var northWallDst = (y * resolution * 6 + resolution + x) * 4;
-			var eastWallDst = (y * resolution * 6 + resolution * 2 + x) * 4;
-			var westWallDst = (y * resolution * 6 + resolution * 3 + x) * 4;
-			var southWallDst = (y * resolution * 6 + resolution * 4 + x) * 4;
-			var ceilingDst = (y * resolution * 6 + resolution * 5 + x) * 4;
-			combined[floorDst] = floorPixels[src];
-			combined[floorDst + 1] = floorPixels[src + 1];
-			combined[floorDst + 2] = floorPixels[src + 2];
-			combined[floorDst + 3] = floorPixels[src + 3];
-			combined[northWallDst] = northWallPixels[src];
-			combined[northWallDst + 1] = northWallPixels[src + 1];
-			combined[northWallDst + 2] = northWallPixels[src + 2];
-			combined[northWallDst + 3] = northWallPixels[src + 3];
-			combined[eastWallDst] = eastWallPixels[src];
-			combined[eastWallDst + 1] = eastWallPixels[src + 1];
-			combined[eastWallDst + 2] = eastWallPixels[src + 2];
-			combined[eastWallDst + 3] = eastWallPixels[src + 3];
-			combined[westWallDst] = westWallPixels[src];
-			combined[westWallDst + 1] = westWallPixels[src + 1];
-			combined[westWallDst + 2] = westWallPixels[src + 2];
-			combined[westWallDst + 3] = westWallPixels[src + 3];
-			combined[southWallDst] = southWallPixels[src];
-			combined[southWallDst + 1] = southWallPixels[src + 1];
-			combined[southWallDst + 2] = southWallPixels[src + 2];
-			combined[southWallDst + 3] = southWallPixels[src + 3];
-			combined[ceilingDst] = ceilingPixels[src];
-			combined[ceilingDst + 1] = ceilingPixels[src + 1];
-			combined[ceilingDst + 2] = ceilingPixels[src + 2];
-			combined[ceilingDst + 3] = ceilingPixels[src + 3];
+			for (var slot = 0; slot < patchCount; slot += 1)
+			{
+				var slotColumn = slot % atlasColumns;
+				var slotRow = Math.floor(slot / atlasColumns);
+				var dst = ((slotRow * resolution + y) * (resolution * atlasColumns) + slotColumn * resolution + x) * 4;
+				var pixels = slots[slot];
+				combined[dst] = pixels[src];
+				combined[dst + 1] = pixels[src + 1];
+				combined[dst + 2] = pixels[src + 2];
+				combined[dst + 3] = pixels[src + 3];
+			}
 		}
 	}
 	var texture = new THREE.DataTexture(
 		combined,
-		resolution * 6,
-		resolution,
+		resolution * R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS,
+		resolution * Math.ceil(patchCount / R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS),
 		THREE.RGBAFormat,
 		THREE.FloatType
 	);
@@ -1593,11 +2550,13 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 	var floorPixels = r7310C1FloorDiffuseRuntimePixels instanceof Float32Array
 		? r7310C1FloorDiffuseRuntimePixels
 		: createR7310C1BlackRuntimeSlot(resolution);
-	var northWallPixels = r7310C1NorthWallDiffuseRuntimeTexture instanceof Float32Array
-		? r7310C1NorthWallDiffuseRuntimeTexture
+	var northWallTexture = r7310C1NorthWallActiveDiffuseRuntimeTexture();
+	var eastWallTexture = r7310C1EastWallActiveDiffuseRuntimeTexture();
+	var northWallPixels = northWallTexture instanceof Float32Array
+		? northWallTexture
 		: createR7310C1BlackRuntimeSlot(resolution);
-	var eastWallPixels = r7310C1EastWallDiffuseRuntimeTexture instanceof Float32Array
-		? r7310C1EastWallDiffuseRuntimeTexture
+	var eastWallPixels = eastWallTexture instanceof Float32Array
+		? eastWallTexture
 		: createR7310C1BlackRuntimeSlot(resolution);
 	var westWallPixels = r7310C1WestWallDiffuseRuntimeTexture instanceof Float32Array
 		? r7310C1WestWallDiffuseRuntimeTexture
@@ -1607,6 +2566,55 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		: createR7310C1BlackRuntimeSlot(resolution);
 	var ceilingPixels = r7310C1CeilingDiffuseRuntimeTexture instanceof Float32Array
 		? r7310C1CeilingDiffuseRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var structuralPixels = r7310C1StructuralDiffuseRuntimeTexture instanceof Float32Array
+		? r7310C1StructuralDiffuseRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var seColumnNorthShadowPixels = r7310C1SeColumnNorthShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SeColumnNorthShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var seColumnWestShadowPixels = r7310C1SeColumnWestShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SeColumnWestShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var southWallAcShadowPixels = r7310C1SouthWallAcShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SouthWallAcShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var eastWallBeamShadowTexture = r7310C1EastWallBeamShadowActiveRuntimeTexture();
+	var eastWallBeamShadowPixels = eastWallBeamShadowTexture instanceof Float32Array
+		? eastWallBeamShadowTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var swColumnNorthShadowPixels = r7310C1SwColumnNorthShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SwColumnNorthShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var westWallBeamShadowPixels = r7310C1WestWallBeamShadowRuntimeTexture instanceof Float32Array
+		? r7310C1WestWallBeamShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var swColumnInnerShadowPixels = r7310C1SwColumnInnerShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SwColumnInnerShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var westBeamInnerShadowPixels = r7310C1WestBeamInnerShadowRuntimeTexture instanceof Float32Array
+		? r7310C1WestBeamInnerShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var westBeamUnderShadowPixels = r7310C1WestBeamUnderShadowRuntimeTexture instanceof Float32Array
+		? r7310C1WestBeamUnderShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var eastBeamInnerShadowPixels = r7310C1EastBeamInnerShadowRuntimeTexture instanceof Float32Array
+		? r7310C1EastBeamInnerShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var eastBeamUnderShadowPixels = r7310C1EastBeamUnderShadowRuntimeTexture instanceof Float32Array
+		? r7310C1EastBeamUnderShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var southWindowLeftRevealShadowPixels = r7310C1SouthWindowLeftRevealShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SouthWindowLeftRevealShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var southWindowRightRevealShadowPixels = r7310C1SouthWindowRightRevealShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SouthWindowRightRevealShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var southWindowBottomRevealShadowPixels = r7310C1SouthWindowBottomRevealShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SouthWindowBottomRevealShadowRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
+	var southWindowTopRevealShadowPixels = r7310C1SouthWindowTopRevealShadowRuntimeTexture instanceof Float32Array
+		? r7310C1SouthWindowTopRevealShadowRuntimeTexture
 		: createR7310C1BlackRuntimeSlot(resolution);
 	if (floorPixels.length !== expectedLength)
 		floorPixels = createR7310C1BlackRuntimeSlot(resolution);
@@ -1620,6 +2628,38 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		southWallPixels = createR7310C1BlackRuntimeSlot(resolution);
 	if (ceilingPixels.length !== expectedLength)
 		ceilingPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (structuralPixels.length !== expectedLength)
+		structuralPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (seColumnNorthShadowPixels.length !== expectedLength)
+		seColumnNorthShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (seColumnWestShadowPixels.length !== expectedLength)
+		seColumnWestShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (southWallAcShadowPixels.length !== expectedLength)
+		southWallAcShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (eastWallBeamShadowPixels.length !== expectedLength)
+		eastWallBeamShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (swColumnNorthShadowPixels.length !== expectedLength)
+		swColumnNorthShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (westWallBeamShadowPixels.length !== expectedLength)
+		westWallBeamShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (swColumnInnerShadowPixels.length !== expectedLength)
+		swColumnInnerShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (westBeamInnerShadowPixels.length !== expectedLength)
+		westBeamInnerShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (westBeamUnderShadowPixels.length !== expectedLength)
+		westBeamUnderShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (eastBeamInnerShadowPixels.length !== expectedLength)
+		eastBeamInnerShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (eastBeamUnderShadowPixels.length !== expectedLength)
+		eastBeamUnderShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (southWindowLeftRevealShadowPixels.length !== expectedLength)
+		southWindowLeftRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (southWindowRightRevealShadowPixels.length !== expectedLength)
+		southWindowRightRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (southWindowBottomRevealShadowPixels.length !== expectedLength)
+		southWindowBottomRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (southWindowTopRevealShadowPixels.length !== expectedLength)
+		southWindowTopRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
 	r7310C1FullRoomDiffuseRuntimeTexture = buildR7310C1CombinedDiffuseRuntimeTexture(
 		floorPixels,
 		northWallPixels,
@@ -1627,6 +2667,22 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		westWallPixels,
 		southWallPixels,
 		ceilingPixels,
+		structuralPixels,
+		seColumnNorthShadowPixels,
+		seColumnWestShadowPixels,
+		southWallAcShadowPixels,
+		eastWallBeamShadowPixels,
+		swColumnNorthShadowPixels,
+		westWallBeamShadowPixels,
+		swColumnInnerShadowPixels,
+		westBeamInnerShadowPixels,
+		westBeamUnderShadowPixels,
+		eastBeamInnerShadowPixels,
+		eastBeamUnderShadowPixels,
+		southWindowLeftRevealShadowPixels,
+		southWindowRightRevealShadowPixels,
+		southWindowBottomRevealShadowPixels,
+		southWindowTopRevealShadowPixels,
 		resolution
 	);
 	return true;
@@ -1827,8 +2883,10 @@ async function loadR7310C1NorthWallDiffuseRuntimePackage()
 			if (!pointerResponse.ok)
 				throw new Error('R7-3.10 north wall diffuse runtime pointer not found');
 			var pointer = await pointerResponse.json();
-			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_north_wall_diffuse_short_circuit')
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_north_wall_first_hit_hybrid')
 				throw new Error('R7-3.10 north wall diffuse runtime pointer failed contract');
+			if (pointer.runtimeArchitecture !== 'single_full_north_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 north wall diffuse runtime architecture mismatch');
 			if (pointer.targetId !== R7310_C1_NORTH_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 north wall diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
@@ -1890,8 +2948,10 @@ async function loadR7310C1EastWallDiffuseRuntimePackage()
 			if (!pointerResponse.ok)
 				throw new Error('R7-3.10 east wall diffuse runtime pointer not found');
 			var pointer = await pointerResponse.json();
-			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_east_wall_diffuse_short_circuit')
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_east_wall_first_hit_hybrid')
 				throw new Error('R7-3.10 east wall diffuse runtime pointer failed contract');
+			if (pointer.runtimeArchitecture !== 'single_full_east_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 east wall diffuse runtime architecture mismatch');
 			if (pointer.targetId !== R7310_C1_EAST_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 east wall diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
@@ -1941,6 +3001,134 @@ async function loadR7310C1EastWallDiffuseRuntimePackage()
 	return r7310C1EastWallDiffuseRuntimeLoadPromise;
 }
 
+async function loadR7310C1NorthWallWardrobeDiffuseRuntimePackage()
+{
+	if (r7310C1NorthWallWardrobeDiffuseRuntimeLoadPromise) return r7310C1NorthWallWardrobeDiffuseRuntimeLoadPromise;
+	r7310C1NorthWallWardrobeDiffuseRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1NorthWallWardrobeDiffuseRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+				throw new Error('R7-3.10 north wall wardrobe diffuse runtime pointer not found');
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_north_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 north wall wardrobe diffuse runtime pointer failed contract');
+			if (pointer.runtimeArchitecture !== 'single_full_north_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 north wall wardrobe diffuse runtime architecture mismatch');
+			if (pointer.northeastFurnitureMode !== 'wardrobe')
+				throw new Error('R7-3.10 north wall wardrobe diffuse furniture mode mismatch');
+			if (pointer.targetId !== R7310_C1_NORTH_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 north wall wardrobe diffuse runtime package metadata mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 north wall wardrobe diffuse validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 north wall wardrobe diffuse runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 north wall wardrobe diffuse atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 north wall wardrobe diffuse atlas binary length mismatch');
+			if (r7310C1FullRoomDiffuseRuntimePackage &&
+				r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1NorthWallDiffuseRuntimePackage &&
+				r7310C1NorthWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1EastWallDiffuseRuntimePackage &&
+				r7310C1EastWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1EastWallWardrobeDiffuseRuntimePackage &&
+				r7310C1EastWallWardrobeDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			r7310C1NorthWallWardrobeDiffuseRuntimePackage = pointer;
+			r7310C1NorthWallWardrobeDiffuseRuntimeTexture = new Float32Array(atlasBuffer);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1NorthWallWardrobeDiffuseRuntimeReady = true;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('northWall');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1NorthWallWardrobeDiffuseRuntimeReady = false;
+			r7310C1NorthWallWardrobeDiffuseRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1NorthWallWardrobeDiffuseRuntimeLoadPromise;
+}
+
+async function loadR7310C1EastWallWardrobeDiffuseRuntimePackage()
+{
+	if (r7310C1EastWallWardrobeDiffuseRuntimeLoadPromise) return r7310C1EastWallWardrobeDiffuseRuntimeLoadPromise;
+	r7310C1EastWallWardrobeDiffuseRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1EastWallWardrobeDiffuseRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+				throw new Error('R7-3.10 east wall wardrobe diffuse runtime pointer not found');
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_east_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 east wall wardrobe diffuse runtime pointer failed contract');
+			if (pointer.runtimeArchitecture !== 'single_full_east_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 east wall wardrobe diffuse runtime architecture mismatch');
+			if (pointer.northeastFurnitureMode !== 'wardrobe')
+				throw new Error('R7-3.10 east wall wardrobe diffuse furniture mode mismatch');
+			if (pointer.targetId !== R7310_C1_EAST_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 east wall wardrobe diffuse runtime package metadata mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 east wall wardrobe diffuse validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 east wall wardrobe diffuse runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 east wall wardrobe diffuse atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 east wall wardrobe diffuse atlas binary length mismatch');
+			if (r7310C1FullRoomDiffuseRuntimePackage &&
+				r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1NorthWallDiffuseRuntimePackage &&
+				r7310C1NorthWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1NorthWallWardrobeDiffuseRuntimePackage &&
+				r7310C1NorthWallWardrobeDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1EastWallDiffuseRuntimePackage &&
+				r7310C1EastWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			r7310C1EastWallWardrobeDiffuseRuntimePackage = pointer;
+			r7310C1EastWallWardrobeDiffuseRuntimeTexture = new Float32Array(atlasBuffer);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1EastWallWardrobeDiffuseRuntimeReady = true;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('eastWall');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1EastWallWardrobeDiffuseRuntimeReady = false;
+			r7310C1EastWallWardrobeDiffuseRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1EastWallWardrobeDiffuseRuntimeLoadPromise;
+}
+
 async function loadR7310C1WestWallDiffuseRuntimePackage()
 {
 	if (r7310C1WestWallDiffuseRuntimeLoadPromise) return r7310C1WestWallDiffuseRuntimeLoadPromise;
@@ -1957,6 +3145,8 @@ async function loadR7310C1WestWallDiffuseRuntimePackage()
 				throw new Error('R7-3.10 west wall diffuse runtime pointer failed contract');
 			if (pointer.targetId !== R7310_C1_WEST_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 west wall diffuse runtime package metadata mismatch');
+			if (pointer.runtimeArchitecture !== 'single_full_west_wall_first_hit_hybrid')
+				throw new Error('R7-3.10 west wall diffuse runtime architecture mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
 				throw new Error('R7-3.10 west wall diffuse validation report not found');
@@ -2130,6 +3320,960 @@ async function loadR7310C1CeilingDiffuseRuntimePackage()
 	return r7310C1CeilingDiffuseRuntimeLoadPromise;
 }
 
+async function loadR7310C1StructuralDiffuseRuntimePackage()
+{
+	if (r7310C1StructuralDiffuseRuntimeLoadPromise) return r7310C1StructuralDiffuseRuntimeLoadPromise;
+	r7310C1StructuralDiffuseRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1StructuralDiffuseRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_STRUCTURAL_DIFFUSE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1StructuralDiffuseRuntimePending = true;
+				r7310C1StructuralDiffuseRuntimeReady = false;
+				r7310C1StructuralDiffuseRuntimePackage = null;
+				r7310C1StructuralDiffuseRuntimeTexture = null;
+				refreshR7310C1CombinedDiffuseRuntimeTexture();
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('structural');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_structural_beams_columns_diffuse_short_circuit',
+					targetId: R7310_C1_STRUCTURAL_TARGET_ID,
+					surfaceName: R7310_C1_STRUCTURAL_SURFACE_NAME,
+					structuralPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_structural_beams_columns_diffuse_short_circuit')
+				throw new Error('R7-3.10 structural diffuse runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_STRUCTURAL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 structural diffuse runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_STRUCTURAL_SURFACE_NAME)
+				throw new Error('R7-3.10 structural diffuse runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 structural diffuse validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 structural diffuse runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 structural diffuse atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 structural diffuse atlas binary length mismatch');
+			if (r7310C1FullRoomDiffuseRuntimePackage &&
+				r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1NorthWallDiffuseRuntimePackage &&
+				r7310C1NorthWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1EastWallDiffuseRuntimePackage &&
+				r7310C1EastWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1WestWallDiffuseRuntimePackage &&
+				r7310C1WestWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1SouthWallDiffuseRuntimePackage &&
+				r7310C1SouthWallDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			if (r7310C1CeilingDiffuseRuntimePackage &&
+				r7310C1CeilingDiffuseRuntimePackage.targetAtlasResolution !== pointer.targetAtlasResolution)
+				throw new Error('R7-3.10 combined diffuse atlas resolution mismatch');
+			r7310C1StructuralDiffuseRuntimePending = false;
+			r7310C1StructuralDiffuseRuntimePackage = pointer;
+			r7310C1StructuralDiffuseRuntimeTexture = new Float32Array(atlasBuffer);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1StructuralDiffuseRuntimeReady = true;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('structural');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-structural-diffuse-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1StructuralDiffuseRuntimePending = false;
+			r7310C1StructuralDiffuseRuntimeReady = false;
+			r7310C1StructuralDiffuseRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1StructuralDiffuseRuntimeLoadPromise;
+}
+
+async function loadR7310C1SeColumnNorthShadowRuntimePackage()
+{
+	if (r7310C1SeColumnNorthShadowRuntimeLoadPromise) return r7310C1SeColumnNorthShadowRuntimeLoadPromise;
+	r7310C1SeColumnNorthShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1SeColumnNorthShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_SE_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1SeColumnNorthShadowRuntimePending = true;
+				r7310C1SeColumnNorthShadowRuntimeReady = false;
+				r7310C1SeColumnNorthShadowRuntimePackage = null;
+				r7310C1SeColumnNorthShadowRuntimeTexture = null;
+				r7310C1SeColumnNorthShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('seColumnNorthShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_se_column_north_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+					seColumnNorthShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1SeColumnNorthShadowRuntimePending = true;
+				r7310C1SeColumnNorthShadowRuntimeReady = false;
+				r7310C1SeColumnNorthShadowRuntimePackage = pointer;
+				r7310C1SeColumnNorthShadowRuntimeTexture = null;
+				r7310C1SeColumnNorthShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('seColumnNorthShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_se_column_north_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 southeast column north shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 southeast column north shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 southeast column north shadow runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 southeast column north shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 southeast column north shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 southeast column north shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 southeast column north shadow atlas binary length mismatch');
+			r7310C1SeColumnNorthShadowRuntimePending = false;
+			r7310C1SeColumnNorthShadowRuntimePackage = pointer;
+			r7310C1SeColumnNorthShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1SeColumnNorthShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1SeColumnNorthShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1SeColumnNorthShadowRuntimeReady = !!r7310C1SeColumnNorthShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('seColumnNorthShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-se-column-north-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1SeColumnNorthShadowRuntimePending = false;
+			r7310C1SeColumnNorthShadowRuntimeReady = false;
+			r7310C1SeColumnNorthShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1SeColumnNorthShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1SeColumnWestShadowRuntimePackage()
+{
+	if (r7310C1SeColumnWestShadowRuntimeLoadPromise) return r7310C1SeColumnWestShadowRuntimeLoadPromise;
+	r7310C1SeColumnWestShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1SeColumnWestShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_SE_COLUMN_WEST_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1SeColumnWestShadowRuntimePending = true;
+				r7310C1SeColumnWestShadowRuntimeReady = false;
+				r7310C1SeColumnWestShadowRuntimePackage = null;
+				r7310C1SeColumnWestShadowRuntimeTexture = null;
+				r7310C1SeColumnWestShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('seColumnWestShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_se_column_west_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME,
+					seColumnWestShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1SeColumnWestShadowRuntimePending = true;
+				r7310C1SeColumnWestShadowRuntimeReady = false;
+				r7310C1SeColumnWestShadowRuntimePackage = pointer;
+				r7310C1SeColumnWestShadowRuntimeTexture = null;
+				r7310C1SeColumnWestShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('seColumnWestShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_se_column_west_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 southeast column west shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 southeast column west shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 southeast column west shadow runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 southeast column west shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 southeast column west shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 southeast column west shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 southeast column west shadow atlas binary length mismatch');
+			r7310C1SeColumnWestShadowRuntimePending = false;
+			r7310C1SeColumnWestShadowRuntimePackage = pointer;
+			r7310C1SeColumnWestShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1SeColumnWestShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1SeColumnWestShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1SeColumnWestShadowRuntimeReady = !!r7310C1SeColumnWestShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('seColumnWestShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-se-column-west-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1SeColumnWestShadowRuntimePending = false;
+			r7310C1SeColumnWestShadowRuntimeReady = false;
+			r7310C1SeColumnWestShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1SeColumnWestShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1SouthWallAcShadowRuntimePackage()
+{
+	if (r7310C1SouthWallAcShadowRuntimeLoadPromise) return r7310C1SouthWallAcShadowRuntimeLoadPromise;
+	r7310C1SouthWallAcShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1SouthWallAcShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_SOUTH_WALL_AC_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1SouthWallAcShadowRuntimePending = true;
+				r7310C1SouthWallAcShadowRuntimeReady = false;
+				r7310C1SouthWallAcShadowRuntimePackage = null;
+				r7310C1SouthWallAcShadowRuntimeTexture = null;
+				r7310C1SouthWallAcShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('southWallAcShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_south_wall_ac_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME,
+					southWallAcShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1SouthWallAcShadowRuntimePending = true;
+				r7310C1SouthWallAcShadowRuntimeReady = false;
+				r7310C1SouthWallAcShadowRuntimePackage = pointer;
+				r7310C1SouthWallAcShadowRuntimeTexture = null;
+				r7310C1SouthWallAcShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('southWallAcShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_south_wall_ac_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 south wall AC shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 south wall AC shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 south wall AC shadow runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 south wall AC shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 south wall AC shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 south wall AC shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 south wall AC shadow atlas binary length mismatch');
+			r7310C1SouthWallAcShadowRuntimePending = false;
+			r7310C1SouthWallAcShadowRuntimePackage = pointer;
+			r7310C1SouthWallAcShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1SouthWallAcShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1SouthWallAcShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1SouthWallAcShadowRuntimeReady = !!r7310C1SouthWallAcShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('southWallAcShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-south-wall-ac-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1SouthWallAcShadowRuntimePending = false;
+			r7310C1SouthWallAcShadowRuntimeReady = false;
+			r7310C1SouthWallAcShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1SouthWallAcShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1EastWallBeamShadowRuntimePackage()
+{
+	if (r7310C1EastWallBeamShadowRuntimeLoadPromise) return r7310C1EastWallBeamShadowRuntimeLoadPromise;
+	r7310C1EastWallBeamShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1EastWallBeamShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1EastWallBeamShadowRuntimePending = true;
+				r7310C1EastWallBeamShadowRuntimeReady = false;
+				r7310C1EastWallBeamShadowRuntimePackage = null;
+				r7310C1EastWallBeamShadowRuntimeTexture = null;
+				r7310C1EastWallBeamShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_east_wall_beam_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME,
+					eastWallBeamShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1EastWallBeamShadowRuntimePending = true;
+				r7310C1EastWallBeamShadowRuntimeReady = false;
+				r7310C1EastWallBeamShadowRuntimePackage = pointer;
+				r7310C1EastWallBeamShadowRuntimeTexture = null;
+				r7310C1EastWallBeamShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_east_wall_beam_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 east wall beam shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 east wall beam shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 east wall beam shadow runtime surface mismatch');
+			if (pointer.northeastFurnitureMode !== 'bed')
+				throw new Error('R7-3.10 east wall beam shadow runtime furniture mode mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 east wall beam shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 east wall beam shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 east wall beam shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 east wall beam shadow atlas binary length mismatch');
+			r7310C1EastWallBeamShadowRuntimePending = false;
+			r7310C1EastWallBeamShadowRuntimePackage = pointer;
+			r7310C1EastWallBeamShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1EastWallBeamShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1EastWallBeamShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1EastWallBeamShadowRuntimeReady = !!r7310C1EastWallBeamShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-east-wall-beam-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1EastWallBeamShadowRuntimePending = false;
+			r7310C1EastWallBeamShadowRuntimeReady = false;
+			r7310C1EastWallBeamShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1EastWallBeamShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1EastWallBeamShadowWardrobeRuntimePackage()
+{
+	if (r7310C1EastWallBeamShadowWardrobeRuntimeLoadPromise) return r7310C1EastWallBeamShadowWardrobeRuntimeLoadPromise;
+	r7310C1EastWallBeamShadowWardrobeRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1EastWallBeamShadowWardrobeRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1EastWallBeamShadowWardrobeRuntimePending = true;
+				r7310C1EastWallBeamShadowWardrobeRuntimeReady = false;
+				r7310C1EastWallBeamShadowWardrobeRuntimePackage = null;
+				r7310C1EastWallBeamShadowWardrobeRuntimeTexture = null;
+				r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_east_wall_beam_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME,
+					northeastFurnitureMode: 'wardrobe',
+					eastWallBeamShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1EastWallBeamShadowWardrobeRuntimePending = true;
+				r7310C1EastWallBeamShadowWardrobeRuntimeReady = false;
+				r7310C1EastWallBeamShadowWardrobeRuntimePackage = pointer;
+				r7310C1EastWallBeamShadowWardrobeRuntimeTexture = null;
+				r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_east_wall_beam_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 east wall beam shadow wardrobe runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 east wall beam shadow wardrobe runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 east wall beam shadow wardrobe runtime surface mismatch');
+			if (pointer.northeastFurnitureMode !== 'wardrobe')
+				throw new Error('R7-3.10 east wall beam shadow wardrobe runtime furniture mode mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 east wall beam shadow wardrobe validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 east wall beam shadow wardrobe runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 east wall beam shadow wardrobe atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 east wall beam shadow wardrobe atlas binary length mismatch');
+			r7310C1EastWallBeamShadowWardrobeRuntimePending = false;
+			r7310C1EastWallBeamShadowWardrobeRuntimePackage = pointer;
+			r7310C1EastWallBeamShadowWardrobeRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1EastWallBeamShadowWardrobeRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1EastWallBeamShadowWardrobeRuntimeReady = !!r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('eastWallBeamShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1EastWallBeamShadowWardrobeRuntimePending = false;
+			r7310C1EastWallBeamShadowWardrobeRuntimeReady = false;
+			r7310C1EastWallBeamShadowWardrobeRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1EastWallBeamShadowWardrobeRuntimeLoadPromise;
+}
+
+async function loadR7310C1SwColumnNorthShadowRuntimePackage()
+{
+	if (r7310C1SwColumnNorthShadowRuntimeLoadPromise) return r7310C1SwColumnNorthShadowRuntimeLoadPromise;
+	r7310C1SwColumnNorthShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1SwColumnNorthShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_SW_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1SwColumnNorthShadowRuntimePending = true;
+				r7310C1SwColumnNorthShadowRuntimeReady = false;
+				r7310C1SwColumnNorthShadowRuntimePackage = null;
+				r7310C1SwColumnNorthShadowRuntimeTexture = null;
+				r7310C1SwColumnNorthShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('swColumnNorthShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_sw_column_north_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+					swColumnNorthShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1SwColumnNorthShadowRuntimePending = true;
+				r7310C1SwColumnNorthShadowRuntimeReady = false;
+				r7310C1SwColumnNorthShadowRuntimePackage = pointer;
+				r7310C1SwColumnNorthShadowRuntimeTexture = null;
+				r7310C1SwColumnNorthShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('swColumnNorthShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_sw_column_north_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 southwest column north shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 southwest column north shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 southwest column north shadow runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 southwest column north shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 southwest column north shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 southwest column north shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 southwest column north shadow atlas binary length mismatch');
+			r7310C1SwColumnNorthShadowRuntimePending = false;
+			r7310C1SwColumnNorthShadowRuntimePackage = pointer;
+			r7310C1SwColumnNorthShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1SwColumnNorthShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1SwColumnNorthShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1SwColumnNorthShadowRuntimeReady = !!r7310C1SwColumnNorthShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('swColumnNorthShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-sw-column-north-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1SwColumnNorthShadowRuntimePending = false;
+			r7310C1SwColumnNorthShadowRuntimeReady = false;
+			r7310C1SwColumnNorthShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1SwColumnNorthShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1WestWallBeamShadowRuntimePackage()
+{
+	if (r7310C1WestWallBeamShadowRuntimeLoadPromise) return r7310C1WestWallBeamShadowRuntimeLoadPromise;
+	r7310C1WestWallBeamShadowRuntimeLoadPromise = (async function()
+	{
+		try
+		{
+			r7310C1WestWallBeamShadowRuntimeError = null;
+			var pointerResponse = await fetch(R7310_C1_WEST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				r7310C1WestWallBeamShadowRuntimePending = true;
+				r7310C1WestWallBeamShadowRuntimeReady = false;
+				r7310C1WestWallBeamShadowRuntimePackage = null;
+				r7310C1WestWallBeamShadowRuntimeTexture = null;
+				r7310C1WestWallBeamShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('westWallBeamShadow');
+				return {
+					packageStatus: 'pending',
+					runtimeScope: 'c1_west_wall_beam_shadow_diffuse_short_circuit',
+					targetId: R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID,
+					surfaceName: R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME,
+					westWallBeamShadowPending: true
+				};
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				r7310C1WestWallBeamShadowRuntimePending = true;
+				r7310C1WestWallBeamShadowRuntimeReady = false;
+				r7310C1WestWallBeamShadowRuntimePackage = pointer;
+				r7310C1WestWallBeamShadowRuntimeTexture = null;
+				r7310C1WestWallBeamShadowRuntimeDataTexture = null;
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete('westWallBeamShadow');
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_west_wall_beam_shadow_diffuse_short_circuit')
+				throw new Error('R7-3.10 west wall beam shadow runtime pointer failed contract');
+			if (pointer.targetId !== R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 west wall beam shadow runtime package metadata mismatch');
+			if (pointer.surfaceName !== R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME)
+				throw new Error('R7-3.10 west wall beam shadow runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 west wall beam shadow validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 west wall beam shadow runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 west wall beam shadow atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 west wall beam shadow atlas binary length mismatch');
+			r7310C1WestWallBeamShadowRuntimePending = false;
+			r7310C1WestWallBeamShadowRuntimePackage = pointer;
+			r7310C1WestWallBeamShadowRuntimeTexture = new Float32Array(atlasBuffer);
+			r7310C1WestWallBeamShadowRuntimeDataTexture = createR7310C1StandaloneRuntimeTexture(
+				r7310C1WestWallBeamShadowRuntimeTexture,
+				pointer.targetAtlasResolution
+			);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			r7310C1WestWallBeamShadowRuntimeReady = !!r7310C1WestWallBeamShadowRuntimeDataTexture;
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete('westWallBeamShadow');
+			if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-west-wall-beam-shadow-runtime-ready');
+			return pointer;
+		}
+		catch (error)
+		{
+			r7310C1WestWallBeamShadowRuntimePending = false;
+			r7310C1WestWallBeamShadowRuntimeReady = false;
+			r7310C1WestWallBeamShadowRuntimeError = error && error.message ? error.message : String(error);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	return r7310C1WestWallBeamShadowRuntimeLoadPromise;
+}
+
+async function loadR7310C1DedicatedBeamColumnShadowRuntimePackage(spec)
+{
+	if (spec.getLoadPromise()) return spec.getLoadPromise();
+	var loadPromise = (async function()
+	{
+		try
+		{
+			spec.setError(null);
+			var pointerResponse = await fetch(spec.packageUrl, { cache: 'no-store' });
+			if (!pointerResponse.ok)
+			{
+				spec.setPending(true);
+				spec.setReady(false);
+				spec.setPackage(null);
+				spec.setTexture(null);
+				spec.setDataTexture(null);
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete(spec.stepName);
+				var pendingResult = {
+					packageStatus: 'pending',
+					runtimeScope: spec.runtimeScope,
+					targetId: spec.targetId,
+					surfaceName: spec.surfaceName
+				};
+				pendingResult[spec.pendingKey] = true;
+				return pendingResult;
+			}
+			var pointer = await pointerResponse.json();
+			if (pointer.packageStatus === 'pending')
+			{
+				spec.setPending(true);
+				spec.setReady(false);
+				spec.setPackage(pointer);
+				spec.setTexture(null);
+				spec.setDataTexture(null);
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				markR7310C1RuntimeLoadingStepComplete(spec.stepName);
+				return pointer;
+			}
+			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== spec.runtimeScope)
+				throw new Error('R7-3.10 ' + spec.label + ' runtime pointer failed contract');
+			if (pointer.targetId !== spec.targetId || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+				throw new Error('R7-3.10 ' + spec.label + ' runtime package metadata mismatch');
+			if (pointer.surfaceName !== spec.surfaceName)
+				throw new Error('R7-3.10 ' + spec.label + ' runtime surface mismatch');
+			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
+			if (!validationResponse.ok)
+				throw new Error('R7-3.10 ' + spec.label + ' validation report not found');
+			var validation = await validationResponse.json();
+			if (validation.runnerStatus !== 'pass')
+				throw new Error('R7-3.10 ' + spec.label + ' runner validation is not pass');
+			var atlasResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.atlasPatch0, { cache: 'no-store' });
+			if (!atlasResponse.ok)
+				throw new Error('R7-3.10 ' + spec.label + ' atlas binary not found');
+			var atlasBuffer = await atlasResponse.arrayBuffer();
+			var expectedBytes = pointer.targetAtlasResolution * pointer.targetAtlasResolution * 4 * 4;
+			if (atlasBuffer.byteLength !== expectedBytes)
+				throw new Error('R7-3.10 ' + spec.label + ' atlas binary length mismatch');
+			spec.setPending(false);
+			spec.setPackage(pointer);
+			var atlasPixels = new Float32Array(atlasBuffer);
+			spec.setTexture(atlasPixels);
+			var dataTexture = createR7310C1StandaloneRuntimeTexture(atlasPixels, pointer.targetAtlasResolution);
+			spec.setDataTexture(dataTexture);
+			refreshR7310C1CombinedDiffuseRuntimeTexture();
+			spec.setReady(!!dataTexture);
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			markR7310C1RuntimeLoadingStepComplete(spec.stepName);
+			if (typeof wakeRender === 'function') wakeRender(spec.wakeReason);
+			return pointer;
+		}
+		catch (error)
+		{
+			spec.setPending(false);
+			spec.setReady(false);
+			spec.setError(error && error.message ? error.message : String(error));
+			updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			throw error;
+		}
+	})();
+	spec.setLoadPromise(loadPromise);
+	return loadPromise;
+}
+
+async function loadR7310C1SwColumnInnerShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1SwColumnInnerShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1SwColumnInnerShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_SW_COLUMN_INNER_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_sw_column_inner_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_SW_COLUMN_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME,
+		stepName: 'swColumnInnerShadow',
+		pendingKey: 'swColumnInnerShadowPending',
+		label: 'southwest column inner shadow',
+		wakeReason: 'r7-3-10-c1-sw-column-inner-shadow-runtime-ready',
+		setPending: function(value) { r7310C1SwColumnInnerShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1SwColumnInnerShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1SwColumnInnerShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1SwColumnInnerShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1SwColumnInnerShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1SwColumnInnerShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1WestBeamInnerShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1WestBeamInnerShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1WestBeamInnerShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_WEST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_west_beam_inner_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		stepName: 'westBeamInnerShadow',
+		pendingKey: 'westBeamInnerShadowPending',
+		label: 'west beam inner shadow',
+		wakeReason: 'r7-3-10-c1-west-beam-inner-shadow-runtime-ready',
+		setPending: function(value) { r7310C1WestBeamInnerShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1WestBeamInnerShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1WestBeamInnerShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1WestBeamInnerShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1WestBeamInnerShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1WestBeamInnerShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1WestBeamUnderShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1WestBeamUnderShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1WestBeamUnderShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_WEST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_west_beam_under_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_WEST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		stepName: 'westBeamUnderShadow',
+		pendingKey: 'westBeamUnderShadowPending',
+		label: 'west beam under shadow',
+		wakeReason: 'r7-3-10-c1-west-beam-under-shadow-runtime-ready',
+		setPending: function(value) { r7310C1WestBeamUnderShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1WestBeamUnderShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1WestBeamUnderShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1WestBeamUnderShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1WestBeamUnderShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1WestBeamUnderShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1EastBeamInnerShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1EastBeamInnerShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1EastBeamInnerShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_EAST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_east_beam_inner_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_EAST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		stepName: 'eastBeamInnerShadow',
+		pendingKey: 'eastBeamInnerShadowPending',
+		label: 'east beam inner shadow',
+		wakeReason: 'r7-3-10-c1-east-beam-inner-shadow-runtime-ready',
+		setPending: function(value) { r7310C1EastBeamInnerShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1EastBeamInnerShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1EastBeamInnerShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1EastBeamInnerShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1EastBeamInnerShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1EastBeamInnerShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1EastBeamUnderShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1EastBeamUnderShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1EastBeamUnderShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_EAST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_east_beam_under_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_EAST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		stepName: 'eastBeamUnderShadow',
+		pendingKey: 'eastBeamUnderShadowPending',
+		label: 'east beam under shadow',
+		wakeReason: 'r7-3-10-c1-east-beam-under-shadow-runtime-ready',
+		setPending: function(value) { r7310C1EastBeamUnderShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1EastBeamUnderShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1EastBeamUnderShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1EastBeamUnderShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1EastBeamUnderShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1EastBeamUnderShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1SouthWindowLeftRevealShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1SouthWindowLeftRevealShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_south_window_left_reveal_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_SURFACE_NAME,
+		stepName: 'southWindowLeftRevealShadow',
+		pendingKey: 'southWindowLeftRevealShadowPending',
+		label: 'south window left reveal shadow',
+		wakeReason: 'r7-3-10-c1-south-window-left-reveal-shadow-runtime-ready',
+		setPending: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1SouthWindowLeftRevealShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1SouthWindowRightRevealShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1SouthWindowRightRevealShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1SouthWindowRightRevealShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_south_window_right_reveal_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_SURFACE_NAME,
+		stepName: 'southWindowRightRevealShadow',
+		pendingKey: 'southWindowRightRevealShadowPending',
+		label: 'south window right reveal shadow',
+		wakeReason: 'r7-3-10-c1-south-window-right-reveal-shadow-runtime-ready',
+		setPending: function(value) { r7310C1SouthWindowRightRevealShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1SouthWindowRightRevealShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1SouthWindowRightRevealShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1SouthWindowRightRevealShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1SouthWindowRightRevealShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1SouthWindowRightRevealShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1SouthWindowBottomRevealShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1SouthWindowBottomRevealShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_south_window_bottom_reveal_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_SURFACE_NAME,
+		stepName: 'southWindowBottomRevealShadow',
+		pendingKey: 'southWindowBottomRevealShadowPending',
+		label: 'south window bottom reveal shadow',
+		wakeReason: 'r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-ready',
+		setPending: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1SouthWindowBottomRevealShadowRuntimeError = value; }
+	});
+}
+
+async function loadR7310C1SouthWindowTopRevealShadowRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1SouthWindowTopRevealShadowRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1SouthWindowTopRevealShadowRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_south_window_top_reveal_shadow_diffuse_short_circuit',
+		targetId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME,
+		stepName: 'southWindowTopRevealShadow',
+		pendingKey: 'southWindowTopRevealShadowPending',
+		label: 'south window top reveal shadow',
+		wakeReason: 'r7-3-10-c1-south-window-top-reveal-shadow-runtime-ready',
+		setPending: function(value) { r7310C1SouthWindowTopRevealShadowRuntimePending = value; },
+		setReady: function(value) { r7310C1SouthWindowTopRevealShadowRuntimeReady = value; },
+		setPackage: function(value) { r7310C1SouthWindowTopRevealShadowRuntimePackage = value; },
+		setTexture: function(value) { r7310C1SouthWindowTopRevealShadowRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1SouthWindowTopRevealShadowRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1SouthWindowTopRevealShadowRuntimeError = value; }
+	});
+}
+
 function captureR738BakeState()
 {
 	return {
@@ -2147,6 +4291,30 @@ function captureR738BakeState()
 				r7310WestWallDiffuseMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallDiffuseMode ? pathTracingUniforms.uR7310C1WestWallDiffuseMode.value : 0.0,
 				r7310SouthWallDiffuseMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallDiffuseMode ? pathTracingUniforms.uR7310C1SouthWallDiffuseMode.value : 0.0,
 				r7310CeilingDiffuseMode: pathTracingUniforms && pathTracingUniforms.uR7310C1CeilingDiffuseMode ? pathTracingUniforms.uR7310C1CeilingDiffuseMode.value : 0.0,
+				r7310StructuralDiffuseMode: pathTracingUniforms && pathTracingUniforms.uR7310C1StructuralDiffuseMode ? pathTracingUniforms.uR7310C1StructuralDiffuseMode.value : 0.0,
+				r7310SeColumnNorthShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SeColumnNorthShadowMode.value : 0.0,
+				r7310SeColumnNorthShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowReady ? pathTracingUniforms.uR7310C1SeColumnNorthShadowReady.value : 0.0,
+				r7310SeColumnWestShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowMode ? pathTracingUniforms.uR7310C1SeColumnWestShadowMode.value : 0.0,
+				r7310SeColumnWestShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowReady ? pathTracingUniforms.uR7310C1SeColumnWestShadowReady.value : 0.0,
+				r7310SouthWallAcShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowMode ? pathTracingUniforms.uR7310C1SouthWallAcShadowMode.value : 0.0,
+				r7310SouthWallAcShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowReady ? pathTracingUniforms.uR7310C1SouthWallAcShadowReady.value : 0.0,
+				r7310EastWallBeamShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowMode ? pathTracingUniforms.uR7310C1EastWallBeamShadowMode.value : 0.0,
+				r7310EastWallBeamShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowReady ? pathTracingUniforms.uR7310C1EastWallBeamShadowReady.value : 0.0,
+				r7310SwColumnNorthShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SwColumnNorthShadowMode.value : 0.0,
+				r7310SwColumnNorthShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowReady ? pathTracingUniforms.uR7310C1SwColumnNorthShadowReady.value : 0.0,
+				r7310WestWallBeamShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowMode ? pathTracingUniforms.uR7310C1WestWallBeamShadowMode.value : 0.0,
+				r7310WestWallBeamShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowReady ? pathTracingUniforms.uR7310C1WestWallBeamShadowReady.value : 0.0,
+				r7310WestWallBeamShadowZMaxOverride: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride ? pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value : 2.7179,
+				r7310SwColumnInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowMode ? pathTracingUniforms.uR7310C1SwColumnInnerShadowMode.value : 0.0,
+				r7310SwColumnInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowReady ? pathTracingUniforms.uR7310C1SwColumnInnerShadowReady.value : 0.0,
+				r7310WestBeamInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowMode ? pathTracingUniforms.uR7310C1WestBeamInnerShadowMode.value : 0.0,
+				r7310WestBeamInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowReady ? pathTracingUniforms.uR7310C1WestBeamInnerShadowReady.value : 0.0,
+				r7310WestBeamUnderShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowMode ? pathTracingUniforms.uR7310C1WestBeamUnderShadowMode.value : 0.0,
+				r7310WestBeamUnderShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowReady ? pathTracingUniforms.uR7310C1WestBeamUnderShadowReady.value : 0.0,
+				r7310EastBeamInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowMode ? pathTracingUniforms.uR7310C1EastBeamInnerShadowMode.value : 0.0,
+				r7310EastBeamInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowReady ? pathTracingUniforms.uR7310C1EastBeamInnerShadowReady.value : 0.0,
+				r7310EastBeamUnderShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowMode ? pathTracingUniforms.uR7310C1EastBeamUnderShadowMode.value : 0.0,
+				r7310EastBeamUnderShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowReady ? pathTracingUniforms.uR7310C1EastBeamUnderShadowReady.value : 0.0,
 				r7310RuntimeProbeMode: pathTracingUniforms && pathTracingUniforms.uR7310C1RuntimeProbeMode ? pathTracingUniforms.uR7310C1RuntimeProbeMode.value : 0.0,
 			r739AccurateReflectionMode: pathTracingUniforms && pathTracingUniforms.uR739C1AccurateReflectionMode ? pathTracingUniforms.uR739C1AccurateReflectionMode.value : 0.0,
 		r739CurrentViewReflectionMode: pathTracingUniforms && pathTracingUniforms.uR739C1CurrentViewReflectionMode ? pathTracingUniforms.uR739C1CurrentViewReflectionMode.value : 0.0,
@@ -2185,6 +4353,30 @@ function restoreR738BakeState(state)
 			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallDiffuseMode) pathTracingUniforms.uR7310C1WestWallDiffuseMode.value = state.r7310WestWallDiffuseMode;
 			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallDiffuseMode) pathTracingUniforms.uR7310C1SouthWallDiffuseMode.value = state.r7310SouthWallDiffuseMode;
 			if (pathTracingUniforms && pathTracingUniforms.uR7310C1CeilingDiffuseMode) pathTracingUniforms.uR7310C1CeilingDiffuseMode.value = state.r7310CeilingDiffuseMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1StructuralDiffuseMode) pathTracingUniforms.uR7310C1StructuralDiffuseMode.value = state.r7310StructuralDiffuseMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowMode) pathTracingUniforms.uR7310C1SeColumnNorthShadowMode.value = state.r7310SeColumnNorthShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowReady) pathTracingUniforms.uR7310C1SeColumnNorthShadowReady.value = state.r7310SeColumnNorthShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowMode) pathTracingUniforms.uR7310C1SeColumnWestShadowMode.value = state.r7310SeColumnWestShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowReady) pathTracingUniforms.uR7310C1SeColumnWestShadowReady.value = state.r7310SeColumnWestShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowMode) pathTracingUniforms.uR7310C1SouthWallAcShadowMode.value = state.r7310SouthWallAcShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowReady) pathTracingUniforms.uR7310C1SouthWallAcShadowReady.value = state.r7310SouthWallAcShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowMode) pathTracingUniforms.uR7310C1EastWallBeamShadowMode.value = state.r7310EastWallBeamShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowReady) pathTracingUniforms.uR7310C1EastWallBeamShadowReady.value = state.r7310EastWallBeamShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowMode) pathTracingUniforms.uR7310C1SwColumnNorthShadowMode.value = state.r7310SwColumnNorthShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowReady) pathTracingUniforms.uR7310C1SwColumnNorthShadowReady.value = state.r7310SwColumnNorthShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowMode) pathTracingUniforms.uR7310C1WestWallBeamShadowMode.value = state.r7310WestWallBeamShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowReady) pathTracingUniforms.uR7310C1WestWallBeamShadowReady.value = state.r7310WestWallBeamShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride) pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value = state.r7310WestWallBeamShadowZMaxOverride;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowMode) pathTracingUniforms.uR7310C1SwColumnInnerShadowMode.value = state.r7310SwColumnInnerShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowReady) pathTracingUniforms.uR7310C1SwColumnInnerShadowReady.value = state.r7310SwColumnInnerShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowMode) pathTracingUniforms.uR7310C1WestBeamInnerShadowMode.value = state.r7310WestBeamInnerShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowReady) pathTracingUniforms.uR7310C1WestBeamInnerShadowReady.value = state.r7310WestBeamInnerShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowMode) pathTracingUniforms.uR7310C1WestBeamUnderShadowMode.value = state.r7310WestBeamUnderShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowReady) pathTracingUniforms.uR7310C1WestBeamUnderShadowReady.value = state.r7310WestBeamUnderShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowMode) pathTracingUniforms.uR7310C1EastBeamInnerShadowMode.value = state.r7310EastBeamInnerShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowReady) pathTracingUniforms.uR7310C1EastBeamInnerShadowReady.value = state.r7310EastBeamInnerShadowReady;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowMode) pathTracingUniforms.uR7310C1EastBeamUnderShadowMode.value = state.r7310EastBeamUnderShadowMode;
+			if (pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowReady) pathTracingUniforms.uR7310C1EastBeamUnderShadowReady.value = state.r7310EastBeamUnderShadowReady;
 			if (pathTracingUniforms && pathTracingUniforms.uR7310C1RuntimeProbeMode) pathTracingUniforms.uR7310C1RuntimeProbeMode.value = state.r7310RuntimeProbeMode;
 		if (pathTracingUniforms && pathTracingUniforms.uR739C1AccurateReflectionMode) pathTracingUniforms.uR739C1AccurateReflectionMode.value = state.r739AccurateReflectionMode;
 	if (pathTracingUniforms && pathTracingUniforms.uR739C1CurrentViewReflectionMode) pathTracingUniforms.uR739C1CurrentViewReflectionMode.value = state.r739CurrentViewReflectionMode;
@@ -2250,7 +4442,12 @@ window.prepareR738C1BakeCapture = async function(options)
 {
 	options = options || {};
 	var targetAtlasResolution = normalizeR738PositiveInt(options.targetAtlasResolution, 512, 1, 4096);
+	var northeastFurnitureMode = (options.northeastFurnitureMode === 'wardrobe') ? 'wardrobe' : 'bed';
+	if (typeof window.setC2NortheastFurnitureMode === 'function')
+		window.setC2NortheastFurnitureMode(northeastFurnitureMode);
 	if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+	if (typeof window.setR7310C1NortheastFurnitureRuntimeMode === 'function')
+		window.setR7310C1NortheastFurnitureRuntimeMode(northeastFurnitureMode);
 	if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
 	if (pathTracingUniforms && pathTracingUniforms.uR738C1BakeCaptureMode) pathTracingUniforms.uR738C1BakeCaptureMode.value = 0;
 	if (pathTracingUniforms && pathTracingUniforms.uR738C1BakePatchId) pathTracingUniforms.uR738C1BakePatchId.value = 0;
@@ -2261,6 +4458,7 @@ window.prepareR738C1BakeCapture = async function(options)
 	return {
 		version: 'r7-3-8-c1-1000spp-bake-capture',
 		config: (typeof currentPanelConfig === 'number') ? currentPanelConfig : 1,
+		northeastFurnitureMode: northeastFurnitureMode,
 		targetAtlasResolution: targetAtlasResolution,
 		upscaled: false
 	};
@@ -2282,8 +4480,9 @@ window.waitForR738C1Samples = async function(targetSamples, timeoutMs)
 	throw new Error('R7-3.8 C1 bake capture timeout before ' + target + ' samples');
 };
 
-async function renderR738MainRawHdrSamples(targetSamples, timeoutMs)
+async function renderR738MainRawHdrSamples(targetSamples, timeoutMs, options)
 {
+	options = options || {};
 	if (!renderer || !pathTracingRenderTarget || !screenCopyRenderTarget || !pathTracingScene || !worldCamera || !screenCopyScene || !orthoCamera)
 		throw new Error('R7-3.8 raw HDR capture missing renderer state');
 	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
@@ -2304,7 +4503,14 @@ async function renderR738MainRawHdrSamples(targetSamples, timeoutMs)
 		pathTracingUniforms.uFrameCounter.value = frameCounter;
 		pathTracingUniforms.uPreviousSampleCount.value = 1.0;
 		pathTracingUniforms.uCameraIsMoving.value = false;
-		pathTracingUniforms.uRandomVec2.value.set(Math.random(), Math.random());
+		var requestedRandomVec2 = options.randomVec2 || null;
+		var probeRandomX = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.x))
+			? Number(requestedRandomVec2.x)
+			: Math.random();
+		var probeRandomY = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.y))
+			? Number(requestedRandomVec2.y)
+			: Math.random();
+		pathTracingUniforms.uRandomVec2.value.set(probeRandomX, probeRandomY);
 		pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
 		if (screenOutputUniforms)
 		{
@@ -2517,6 +4723,8 @@ function buildR7310C1EastWallTexelMetadata(size)
 			var v = (y + 0.5) / size;
 			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isHandoff = worldZ >= R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN ||
+				worldY >= R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = b.x;
 			metadata[offset + 1] = worldY;
@@ -2525,12 +4733,45 @@ function buildR7310C1EastWallTexelMetadata(size)
 			metadata[offset + 4] = 0.0;
 			metadata[offset + 5] = 0.0;
 			metadata[offset + 6] = 4.0;
-			metadata[offset + 7] = 1.0;
+			metadata[offset + 7] = isHandoff ? 0.0 : 1.0;
 			metadata[offset + 8] = 0.0;
 			metadata[offset + 9] = 0.0;
 			metadata[offset + 10] = u;
 			metadata[offset + 11] = v;
-			valid += 1;
+			if (!isHandoff) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1EastWallBeamShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_EAST_WALL_BEAM_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isDeadZone = r7310C1EastWallHiddenByBeamOrSeColumn(worldZ, worldY);
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = -1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 4.0;
+			metadata[offset + 7] = isDeadZone ? 0.0 : 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (!isDeadZone) valid += 1;
 		}
 	}
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
@@ -2551,7 +4792,9 @@ function buildR7310C1WestWallTexelMetadata(size)
 			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
 			var isDoorHole = worldZ >= hole.zMin && worldZ <= hole.zMax && worldY >= hole.yMin && worldY <= hole.yMax;
-			var isValid = !isDoorHole;
+			var isHandoff = worldZ >= R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN ||
+				worldY >= R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN;
+			var isValid = !isDoorHole && !isHandoff;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = b.x;
 			metadata[offset + 1] = worldY;
@@ -2661,6 +4904,43 @@ function buildR7310C1SouthWallTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
+function buildR7310C1SouthWallAcShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_SOUTH_WALL_AC_SHADOW_WORLD_BOUNDS;
+	var hole = R7310_C1_SOUTH_WALL_WINDOW_HOLE;
+	var seColumnBack = R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldX = b.xMin + (b.xMax - b.xMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isWindowHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
+			var isSeColumnBack = worldX >= seColumnBack.xMin && worldX <= seColumnBack.xMax && worldY >= seColumnBack.yMin && worldY <= seColumnBack.yMax;
+			var isValid = !isWindowHole && !isSeColumnBack;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = b.z;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = -1.0;
+			metadata[offset + 6] = 4.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (isValid) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
 function buildR7310C1CeilingTexelMetadata(size)
 {
 	var metadata = new Float32Array(size * size * 12);
@@ -2693,7 +4973,474 @@ function buildR7310C1CeilingTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
-function maskR7310C1NorthWallAtlasPixels(pixels, metadata, size)
+function r7310StructuralNormalVector(normalName)
+{
+	if (normalName === '+X') return { x: 1.0, y: 0.0, z: 0.0 };
+	if (normalName === '-X') return { x: -1.0, y: 0.0, z: 0.0 };
+	if (normalName === '+Y') return { x: 0.0, y: 1.0, z: 0.0 };
+	if (normalName === '-Y') return { x: 0.0, y: -1.0, z: 0.0 };
+	if (normalName === '+Z') return { x: 0.0, y: 0.0, z: 1.0 };
+	if (normalName === '-Z') return { x: 0.0, y: 0.0, z: -1.0 };
+	return { x: 0.0, y: 1.0, z: 0.0 };
+}
+
+function r7310StructuralFaceAxisValue(face, axis, t)
+{
+	var min = face[axis + 'Min'];
+	var max = face[axis + 'Max'];
+	if (!Number.isFinite(min) || !Number.isFinite(max))
+		return Number.isFinite(face.value) ? face.value : 0.0;
+	return min + (max - min) * t;
+}
+
+function r7310StructuralSeColumnNorthHiddenByEastBeam(position)
+{
+	return position.x >= 1.85 && position.y >= 2.515;
+}
+
+function r7310StructuralSeColumnInnerHiddenByBookshelf(position)
+{
+	return position.z >= 2.73 && position.y <= 2.04;
+}
+
+function buildR7310C1StructuralTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var island = null;
+			for (var i = 0; i < R7310_C1_STRUCTURAL_ISLANDS.length; i += 1)
+			{
+				var candidate = R7310_C1_STRUCTURAL_ISLANDS[i];
+				var rect = candidate.atlasRect;
+				if (u >= rect.uMin && u <= rect.uMax && v >= rect.vMin && v <= rect.vMax)
+				{
+					island = candidate;
+					break;
+				}
+			}
+			var offset = (y * size + x) * 12;
+			if (!island)
+			{
+				metadata[offset + 7] = 0.0;
+				metadata[offset + 10] = u;
+				metadata[offset + 11] = v;
+				continue;
+			}
+			var face = island.worldFace;
+			var rectForIsland = island.atlasRect;
+			var tu = (u - rectForIsland.uMin) / Math.max(0.00001, rectForIsland.uMax - rectForIsland.uMin);
+			var tv = (v - rectForIsland.vMin) / Math.max(0.00001, rectForIsland.vMax - rectForIsland.vMin);
+			var position = { x: 0.0, y: 0.0, z: 0.0 };
+			position[face.axis] = face.value;
+			position[island.axes.u] = r7310StructuralFaceAxisValue(face, island.axes.u, tu);
+			position[island.axes.v] = r7310StructuralFaceAxisValue(face, island.axes.v, tv);
+			var normal = r7310StructuralNormalVector(island.normal);
+			var isValid = !(
+				(island.name === 'se_column_north_z' && r7310StructuralSeColumnNorthHiddenByEastBeam(position)) ||
+				(island.name === 'se_column_inner_x' && r7310StructuralSeColumnInnerHiddenByBookshelf(position))
+			);
+			metadata[offset] = position.x;
+			metadata[offset + 1] = position.y;
+			metadata[offset + 2] = position.z;
+			metadata[offset + 3] = normal.x;
+			metadata[offset + 4] = normal.y;
+			metadata[offset + 5] = normal.z;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
+			metadata[offset + 8] = i + 1;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (isValid) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SeColumnNorthShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_SE_COLUMN_NORTH_SHADOW_WORLD_BOUNDS;
+	var eastBeamBack = R7310_C1_SE_COLUMN_NORTH_SHADOW_EAST_BEAM_BACK;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldX = b.xMin + (b.xMax - b.xMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isEastBeamBack = worldX >= eastBeamBack.xMin && worldX <= eastBeamBack.xMax && worldY >= eastBeamBack.yMin && worldY <= eastBeamBack.yMax;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = b.z;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = -1.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = isEastBeamBack ? 0.0 : 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (!isEastBeamBack) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SwColumnNorthShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_SW_COLUMN_NORTH_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldX = b.xMin + (b.xMax - b.xMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = b.z;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = -1.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SeColumnWestShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_SE_COLUMN_WEST_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isValid = !r7310StructuralSeColumnInnerHiddenByBookshelf({ y: worldY, z: worldZ });
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = -1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (isValid) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SwColumnInnerShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_SW_COLUMN_INNER_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1WestBeamInnerShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_WEST_BEAM_INNER_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1WestBeamUnderShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_WEST_BEAM_UNDER_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldX = b.xMin + (b.xMax - b.xMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = b.y;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = -1.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1EastBeamInnerShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_EAST_BEAM_INNER_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = -1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1EastBeamUnderShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_EAST_BEAM_UNDER_SHADOW_WORLD_BOUNDS;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldX = b.xMin + (b.xMax - b.xMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = b.y;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = -1.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SouthWindowXRevealShadowTexelMetadata(size, bounds, normalX)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = bounds.zMin + (bounds.zMax - bounds.zMin) * u;
+			var worldY = bounds.yMin + (bounds.yMax - bounds.yMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = bounds.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = normalX;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, bounds, normalY)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldX = bounds.xMin + (bounds.xMax - bounds.xMin) * u;
+			var worldZ = bounds.zMin + (bounds.zMax - bounds.zMin) * v;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = bounds.y;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = normalY;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function buildR7310C1SouthWindowLeftRevealShadowTexelMetadata(size)
+{
+	return buildR7310C1SouthWindowXRevealShadowTexelMetadata(size, R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_WORLD_BOUNDS, 1.0);
+}
+
+function buildR7310C1SouthWindowRightRevealShadowTexelMetadata(size)
+{
+	return buildR7310C1SouthWindowXRevealShadowTexelMetadata(size, R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_WORLD_BOUNDS, -1.0);
+}
+
+function buildR7310C1SouthWindowBottomRevealShadowTexelMetadata(size)
+{
+	return buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_WORLD_BOUNDS, 1.0);
+}
+
+function buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size)
+{
+	return buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS, -1.0);
+}
+
+function buildR7310C1WestWallBeamShadowTexelMetadata(size)
+{
+	var metadata = new Float32Array(size * size * 12);
+	var b = R7310_C1_WEST_WALL_BEAM_SHADOW_WORLD_BOUNDS;
+	var hole = R7310_C1_WEST_WALL_IRON_DOOR_HOLE;
+	var valid = 0;
+	for (var y = 0; y < size; y += 1)
+	{
+		for (var x = 0; x < size; x += 1)
+		{
+			var u = (x + 0.5) / size;
+			var v = (y + 0.5) / size;
+			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
+			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isDoorHole = worldZ >= hole.zMin && worldZ <= hole.zMax && worldY >= hole.yMin && worldY <= hole.yMax;
+			var isDeadZone = r7310C1WestWallHiddenByBeamOrSwColumn(worldZ, worldY);
+			var isValid = !isDoorHole && !isDeadZone;
+			var offset = (y * size + x) * 12;
+			metadata[offset] = b.x;
+			metadata[offset + 1] = worldY;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 1.0;
+			metadata[offset + 4] = 0.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 4.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (isValid) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
+function syncR7310C1AtlasAlphaToTexelMetadata(pixels, metadata, size)
 {
 	for (var i = 0; i < size * size; i += 1)
 	{
@@ -2707,14 +5454,91 @@ function maskR7310C1NorthWallAtlasPixels(pixels, metadata, size)
 	}
 }
 
+function shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult)
+{
+	if (!metadataResult || !(metadataResult.validTexelRatio < 0.999999))
+		return false;
+	if (patchId === R7310_C1_FLOOR_TARGET_ID || patchId === R7310_C1_STRUCTURAL_TARGET_ID)
+		return false;
+	return true;
+}
+
+function maskR7310C1NorthWallAtlasPixels(pixels, metadata, size)
+{
+	syncR7310C1AtlasAlphaToTexelMetadata(pixels, metadata, size);
+}
+
+function fillR7310C1StructuralSeColumnInnerBookshelfGuardTexels(pixels, size)
+{
+	var uStart = 0.520 + ((2.73 - 2.49) / (3.056 - 2.49)) * (0.740 - 0.520);
+	var vEnd = 0.380 + (2.04 / 2.905) * (0.760 - 0.380);
+	var xMin = Math.max(1, Math.ceil(uStart * size - 0.5));
+	var xMax = Math.min(size - 2, Math.floor(0.740 * size - 0.5));
+	var yMin = Math.max(1, Math.ceil(0.380 * size - 0.5));
+	var yMax = Math.min(size - 2, Math.floor(vEnd * size - 0.5));
+	var sourceX = Math.max(0, xMin - 1);
+	for (var y = yMin; y <= yMax; y += 1)
+	{
+		var source = (y * size + sourceX) * 4;
+		for (var x = xMin; x <= xMax; x += 1)
+		{
+			var dst = (y * size + x) * 4;
+			pixels[dst] = pixels[source];
+			pixels[dst + 1] = pixels[source + 1];
+			pixels[dst + 2] = pixels[source + 2];
+			pixels[dst + 3] = pixels[source + 3];
+		}
+	}
+}
+
+function fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels(pixels, size)
+{
+	var uStart = Math.max(1, Math.min(size - 1, Math.ceil((2.515 / 2.905) * size - 0.5)));
+	var vStart = Math.max(1, Math.min(size - 1, Math.ceil((0.880 + ((1.85 - 1.780) / 0.130) * 0.120) * size - 0.5)));
+	var uSource = uStart - 1;
+	var vSource = vStart - 1;
+	for (var y = vStart; y < size; y += 1)
+	{
+		for (var x = uStart; x < size; x += 1)
+		{
+			var sourceX = x;
+			var sourceY = y;
+			if ((x - uStart) <= (y - vStart))
+				sourceX = uSource;
+			else
+				sourceY = vSource;
+			var src = (sourceY * size + sourceX) * 4;
+			var dst = (y * size + x) * 4;
+			pixels[dst] = pixels[src];
+			pixels[dst + 1] = pixels[src + 1];
+			pixels[dst + 2] = pixels[src + 2];
+			pixels[dst + 3] = pixels[src + 3];
+		}
+	}
+}
+
 function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 {
 	if (surfaceName === R7310_C1_NORTH_WALL_SURFACE_NAME)
 		return 0.80;
+	if (surfaceName === R7310_C1_EAST_WALL_SURFACE_NAME)
+		return 0.70;
 	if (surfaceName === R7310_C1_WEST_WALL_SURFACE_NAME)
-		return 0.80;
+		return 0.60;
+	if (surfaceName === R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME)
+		return 0.70;
+	if (surfaceName === R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME)
+		return 0.70;
 	if (surfaceName === R7310_C1_SOUTH_WALL_SURFACE_NAME)
 		return 0.60;
+	if (surfaceName === R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME)
+		return 0.59;
+	if (surfaceName === R7310_C1_STRUCTURAL_SURFACE_NAME)
+		return 0.30;
+	if (surfaceName === R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME)
+		return 0.93;
+	if (surfaceName === R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME)
+		return 0.50;
 	return 0.99;
 }
 
@@ -2814,6 +5638,8 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 			pathTracingUniforms.uR738C1BakePatchId.value = patchId;
 			pathTracingUniforms.uR738C1BakePatchResolution.value = size;
 			if (pathTracingUniforms.uR738C1BakeDiffuseOnlyMode) pathTracingUniforms.uR738C1BakeDiffuseOnlyMode.value = 1.0;
+			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
 			if (pathTracingUniforms.uR7310C1BakeFloorWorldBounds)
 				pathTracingUniforms.uR7310C1BakeFloorWorldBounds.value.set(floorWorldBounds.xMin, floorWorldBounds.xMax, floorWorldBounds.zMin, floorWorldBounds.zMax);
 			if (pathTracingUniforms.uXrayEnabled) pathTracingUniforms.uXrayEnabled.value = 0.0;
@@ -2856,27 +5682,54 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 				uR7310C1WestWallDiffuseMode: pathTracingUniforms.uR7310C1WestWallDiffuseMode ? pathTracingUniforms.uR7310C1WestWallDiffuseMode.value : null,
 				uR7310C1SouthWallDiffuseMode: pathTracingUniforms.uR7310C1SouthWallDiffuseMode ? pathTracingUniforms.uR7310C1SouthWallDiffuseMode.value : null,
 				uR7310C1CeilingDiffuseMode: pathTracingUniforms.uR7310C1CeilingDiffuseMode ? pathTracingUniforms.uR7310C1CeilingDiffuseMode.value : null,
+				uR7310C1StructuralDiffuseMode: pathTracingUniforms.uR7310C1StructuralDiffuseMode ? pathTracingUniforms.uR7310C1StructuralDiffuseMode.value : null,
+				uR7310C1SeColumnNorthShadowMode: pathTracingUniforms.uR7310C1SeColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SeColumnNorthShadowMode.value : null,
+				uR7310C1SeColumnWestShadowMode: pathTracingUniforms.uR7310C1SeColumnWestShadowMode ? pathTracingUniforms.uR7310C1SeColumnWestShadowMode.value : null,
+				uR7310C1SouthWallAcShadowMode: pathTracingUniforms.uR7310C1SouthWallAcShadowMode ? pathTracingUniforms.uR7310C1SouthWallAcShadowMode.value : null,
+				uR7310C1EastWallBeamShadowMode: pathTracingUniforms.uR7310C1EastWallBeamShadowMode ? pathTracingUniforms.uR7310C1EastWallBeamShadowMode.value : null,
+				uR7310C1SwColumnNorthShadowMode: pathTracingUniforms.uR7310C1SwColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SwColumnNorthShadowMode.value : null,
+				uR7310C1WestWallBeamShadowMode: pathTracingUniforms.uR7310C1WestWallBeamShadowMode ? pathTracingUniforms.uR7310C1WestWallBeamShadowMode.value : null,
+				uR7310C1SwColumnInnerShadowMode: pathTracingUniforms.uR7310C1SwColumnInnerShadowMode ? pathTracingUniforms.uR7310C1SwColumnInnerShadowMode.value : null,
+				uR7310C1WestBeamInnerShadowMode: pathTracingUniforms.uR7310C1WestBeamInnerShadowMode ? pathTracingUniforms.uR7310C1WestBeamInnerShadowMode.value : null,
+				uR7310C1WestBeamUnderShadowMode: pathTracingUniforms.uR7310C1WestBeamUnderShadowMode ? pathTracingUniforms.uR7310C1WestBeamUnderShadowMode.value : null,
+				uR7310C1EastBeamInnerShadowMode: pathTracingUniforms.uR7310C1EastBeamInnerShadowMode ? pathTracingUniforms.uR7310C1EastBeamInnerShadowMode.value : null,
+				uR7310C1EastBeamUnderShadowMode: pathTracingUniforms.uR7310C1EastBeamUnderShadowMode ? pathTracingUniforms.uR7310C1EastBeamUnderShadowMode.value : null,
 				uR738C1BakeCaptureMode: pathTracingUniforms.uR738C1BakeCaptureMode ? pathTracingUniforms.uR738C1BakeCaptureMode.value : null
 			};
 		var readback = await readR738RenderTargetFloatPixels(target);
 		var averaged = averageR738AtlasPixels(readback.pixels, samples);
-		var metadataResult = patchId === R7310_C1_FLOOR_TARGET_ID
-			? buildR7310C1FloorTexelMetadata(size)
-			: (patchId === R7310_C1_NORTH_WALL_TARGET_ID
-				? buildR7310C1NorthWallTexelMetadata(size)
-				: (patchId === R7310_C1_EAST_WALL_TARGET_ID
-					? buildR7310C1EastWallTexelMetadata(size)
-					: (patchId === R7310_C1_WEST_WALL_TARGET_ID
-							? buildR7310C1WestWallTexelMetadata(size)
-							: (patchId === R7310_C1_SOUTH_WALL_TARGET_ID
-								? buildR7310C1SouthWallTexelMetadata(size)
-								: (patchId === R7310_C1_CEILING_TARGET_ID
-									? buildR7310C1CeilingTexelMetadata(size)
-									: buildR738TexelMetadata(size, floorWorldBounds))))));
-		if (patchId === R7310_C1_NORTH_WALL_TARGET_ID || patchId === R7310_C1_WEST_WALL_TARGET_ID || patchId === R7310_C1_SOUTH_WALL_TARGET_ID)
-			maskR7310C1NorthWallAtlasPixels(averaged.pixels, metadataResult.metadata, size);
-		window.__r738C1BakeCaptureLastAtlasPixels = averaged.pixels;
-		window.__r738C1BakeCaptureLastTexelMetadata = metadataResult.metadata;
+			var metadataResult = buildR738TexelMetadata(size, floorWorldBounds);
+			if (patchId === R7310_C1_FLOOR_TARGET_ID) metadataResult = buildR7310C1FloorTexelMetadata(size);
+			else if (patchId === R7310_C1_NORTH_WALL_TARGET_ID) metadataResult = buildR7310C1NorthWallTexelMetadata(size);
+			else if (patchId === R7310_C1_EAST_WALL_TARGET_ID) metadataResult = buildR7310C1EastWallTexelMetadata(size);
+			else if (patchId === R7310_C1_WEST_WALL_TARGET_ID) metadataResult = buildR7310C1WestWallTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WALL_TARGET_ID) metadataResult = buildR7310C1SouthWallTexelMetadata(size);
+			else if (patchId === R7310_C1_CEILING_TARGET_ID) metadataResult = buildR7310C1CeilingTexelMetadata(size);
+			else if (patchId === R7310_C1_STRUCTURAL_TARGET_ID) metadataResult = buildR7310C1StructuralTexelMetadata(size);
+			else if (patchId === R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID) metadataResult = buildR7310C1SeColumnNorthShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID) metadataResult = buildR7310C1SeColumnWestShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWallAcShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID) metadataResult = buildR7310C1EastWallBeamShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID) metadataResult = buildR7310C1SwColumnNorthShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID) metadataResult = buildR7310C1WestWallBeamShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SW_COLUMN_INNER_SHADOW_TARGET_ID) metadataResult = buildR7310C1SwColumnInnerShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID) metadataResult = buildR7310C1WestBeamInnerShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_WEST_BEAM_UNDER_SHADOW_TARGET_ID) metadataResult = buildR7310C1WestBeamUnderShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_EAST_BEAM_INNER_SHADOW_TARGET_ID) metadataResult = buildR7310C1EastBeamInnerShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_EAST_BEAM_UNDER_SHADOW_TARGET_ID) metadataResult = buildR7310C1EastBeamUnderShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowLeftRevealShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowRightRevealShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowBottomRevealShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size);
+			if (shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult))
+				syncR7310C1AtlasAlphaToTexelMetadata(averaged.pixels, metadataResult.metadata, size);
+				if (patchId === R7310_C1_STRUCTURAL_TARGET_ID)
+				{
+					fillR7310C1StructuralSeColumnInnerBookshelfGuardTexels(averaged.pixels, size);
+					fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels(averaged.pixels, size);
+				}
+			window.__r738C1BakeCaptureLastAtlasPixels = averaged.pixels;
+			window.__r738C1BakeCaptureLastTexelMetadata = metadataResult.metadata;
 		return {
 			enabled: true,
 			patchCount: 1,
@@ -2942,6 +5795,18 @@ async function captureR7310C1EastWallDiffuseAtlas(targetSamples, timeoutMs, opti
 }
 window.captureR7310C1EastWallDiffuseAtlas = captureR7310C1EastWallDiffuseAtlas;
 
+async function captureR7310C1EastWallBeamShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1EastWallBeamShadowAtlas = captureR7310C1EastWallBeamShadowAtlas;
+
 async function captureR7310C1WestWallDiffuseAtlas(targetSamples, timeoutMs, options)
 {
 	options = options || {};
@@ -2966,6 +5831,18 @@ async function captureR7310C1SouthWallDiffuseAtlas(targetSamples, timeoutMs, opt
 }
 window.captureR7310C1SouthWallDiffuseAtlas = captureR7310C1SouthWallDiffuseAtlas;
 
+async function captureR7310C1SouthWallAcShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SouthWallAcShadowAtlas = captureR7310C1SouthWallAcShadowAtlas;
+
 async function captureR7310C1CeilingDiffuseAtlas(targetSamples, timeoutMs, options)
 {
 	options = options || {};
@@ -2977,6 +5854,174 @@ async function captureR7310C1CeilingDiffuseAtlas(targetSamples, timeoutMs, optio
 	});
 }
 window.captureR7310C1CeilingDiffuseAtlas = captureR7310C1CeilingDiffuseAtlas;
+
+async function captureR7310C1StructuralDiffuseAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_STRUCTURAL_TARGET_ID,
+		surfaceName: R7310_C1_STRUCTURAL_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1StructuralDiffuseAtlas = captureR7310C1StructuralDiffuseAtlas;
+
+async function captureR7310C1SeColumnNorthShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SeColumnNorthShadowAtlas = captureR7310C1SeColumnNorthShadowAtlas;
+
+async function captureR7310C1SeColumnWestShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SeColumnWestShadowAtlas = captureR7310C1SeColumnWestShadowAtlas;
+
+async function captureR7310C1SwColumnNorthShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SwColumnNorthShadowAtlas = captureR7310C1SwColumnNorthShadowAtlas;
+
+async function captureR7310C1WestWallBeamShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1WestWallBeamShadowAtlas = captureR7310C1WestWallBeamShadowAtlas;
+
+async function captureR7310C1SwColumnInnerShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SW_COLUMN_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SwColumnInnerShadowAtlas = captureR7310C1SwColumnInnerShadowAtlas;
+
+async function captureR7310C1WestBeamInnerShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1WestBeamInnerShadowAtlas = captureR7310C1WestBeamInnerShadowAtlas;
+
+async function captureR7310C1WestBeamUnderShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_WEST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1WestBeamUnderShadowAtlas = captureR7310C1WestBeamUnderShadowAtlas;
+
+async function captureR7310C1EastBeamInnerShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_EAST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1EastBeamInnerShadowAtlas = captureR7310C1EastBeamInnerShadowAtlas;
+
+async function captureR7310C1EastBeamUnderShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_EAST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1EastBeamUnderShadowAtlas = captureR7310C1EastBeamUnderShadowAtlas;
+
+async function captureR7310C1SouthWindowLeftRevealShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SouthWindowLeftRevealShadowAtlas = captureR7310C1SouthWindowLeftRevealShadowAtlas;
+
+async function captureR7310C1SouthWindowRightRevealShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SouthWindowRightRevealShadowAtlas = captureR7310C1SouthWindowRightRevealShadowAtlas;
+
+async function captureR7310C1SouthWindowBottomRevealShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SouthWindowBottomRevealShadowAtlas = captureR7310C1SouthWindowBottomRevealShadowAtlas;
+
+async function captureR7310C1SouthWindowTopRevealShadowAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1SouthWindowTopRevealShadowAtlas = captureR7310C1SouthWindowTopRevealShadowAtlas;
 
 function buildR738ValidationReport(report, rawHdrReadback, atlasPixels, texelMetadata, reprojection)
 {
@@ -3083,6 +6128,194 @@ window.reportR738C1BakeCaptureAfterSamples = async function(targetSamples, timeo
 		};
 	};
 
+async function reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, spec)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await spec.captureAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var validTexelRatioBySurface = {};
+		var dilationAppliedBySurface = {};
+		var atlasPathBySurface = {};
+		validTexelRatioBySurface[spec.surfaceName] = atlasSummary.validTexelRatio;
+		dilationAppliedBySurface[spec.surfaceName] = false;
+		atlasPathBySurface[spec.surfaceName] = 'atlas-patch-000-rgba-f32.bin';
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: spec.batch,
+			targetId: spec.targetId,
+			surfaceName: spec.surfaceName,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: spec.mapping,
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: spec.worldBounds,
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: spec.batch,
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [spec.surfaceName],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: validTexelRatioBySurface,
+				dilationAppliedBySurface: dilationAppliedBySurface,
+				atlasPathBySurface: atlasPathBySurface,
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+}
+
+window.reportR7310C1SwColumnInnerShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'sw_column_inner_shadow',
+		targetId: R7310_C1_SW_COLUMN_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SW_COLUMN_INNER_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zy_on_x_face',
+		captureAtlas: captureR7310C1SwColumnInnerShadowAtlas
+	});
+};
+
+window.reportR7310C1WestBeamInnerShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'west_beam_inner_shadow',
+		targetId: R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_WEST_BEAM_INNER_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zy_on_x_face',
+		captureAtlas: captureR7310C1WestBeamInnerShadowAtlas
+	});
+};
+
+window.reportR7310C1WestBeamUnderShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'west_beam_under_shadow',
+		targetId: R7310_C1_WEST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_WEST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_WEST_BEAM_UNDER_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zx_on_y_face',
+		captureAtlas: captureR7310C1WestBeamUnderShadowAtlas
+	});
+};
+
+window.reportR7310C1EastBeamInnerShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'east_beam_inner_shadow',
+		targetId: R7310_C1_EAST_BEAM_INNER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_INNER_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_EAST_BEAM_INNER_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zy_on_x_face',
+		captureAtlas: captureR7310C1EastBeamInnerShadowAtlas
+	});
+};
+
+window.reportR7310C1EastBeamUnderShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'east_beam_under_shadow',
+		targetId: R7310_C1_EAST_BEAM_UNDER_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_EAST_BEAM_UNDER_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_EAST_BEAM_UNDER_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zx_on_y_face',
+		captureAtlas: captureR7310C1EastBeamUnderShadowAtlas
+	});
+};
+
+window.reportR7310C1SouthWindowLeftRevealShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'south_window_left_reveal_shadow',
+		targetId: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zy_on_x_face',
+		captureAtlas: captureR7310C1SouthWindowLeftRevealShadowAtlas
+	});
+};
+
+window.reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'south_window_right_reveal_shadow',
+		targetId: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_zy_on_x_face',
+		captureAtlas: captureR7310C1SouthWindowRightRevealShadowAtlas
+	});
+};
+
+window.reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'south_window_bottom_reveal_shadow',
+		targetId: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_xz_on_y_face',
+		captureAtlas: captureR7310C1SouthWindowBottomRevealShadowAtlas
+	});
+};
+
+window.reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'south_window_top_reveal_shadow',
+		targetId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_xz_on_y_face',
+		captureAtlas: captureR7310C1SouthWindowTopRevealShadowAtlas
+	});
+};
+
 window.reportR7310C1FloorDiffuseBakeAfterSamples = async function(targetSamples, timeoutMs, options)
 {
 	options = options || {};
@@ -3180,6 +6413,7 @@ window.reportR7310C1NorthWallDiffuseBakeAfterSamples = async function(targetSamp
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
+			northeastFurnitureMode: prep.northeastFurnitureMode,
 			batch: 'north_wall',
 			targetId: R7310_C1_NORTH_WALL_TARGET_ID,
 			surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
@@ -3196,7 +6430,16 @@ window.reportR7310C1NorthWallDiffuseBakeAfterSamples = async function(targetSamp
 			targetAtlasResolution: prep.targetAtlasResolution,
 			upscaled: false,
 			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'planar_xy',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			runtimeArchitecture: 'single_full_north_wall_first_hit_hybrid',
 			worldBounds: R7310_C1_NORTH_WALL_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				doorHole: R7310_C1_NORTH_WALL_DOOR_HOLE
+			},
 			rawHdrSummary: rawHdrSummary,
 			surfaceClassSummary: surfaceClassSummary,
 			atlasSummary: atlasSummary,
@@ -3255,6 +6498,7 @@ window.reportR7310C1EastWallDiffuseBakeAfterSamples = async function(targetSampl
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
+			northeastFurnitureMode: prep.northeastFurnitureMode,
 			batch: 'east_wall',
 			targetId: R7310_C1_EAST_WALL_TARGET_ID,
 			surfaceName: R7310_C1_EAST_WALL_SURFACE_NAME,
@@ -3271,7 +6515,17 @@ window.reportR7310C1EastWallDiffuseBakeAfterSamples = async function(targetSampl
 			targetAtlasResolution: prep.targetAtlasResolution,
 			upscaled: false,
 			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'planar_zy',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			runtimeArchitecture: 'single_full_east_wall_first_hit_hybrid',
 			worldBounds: R7310_C1_EAST_WALL_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				seColumnDeadZone: R7310_C1_EAST_WALL_SE_COLUMN_DEAD_ZONE,
+				eastBeamDeadZone: R7310_C1_EAST_WALL_BEAM_DEAD_ZONE
+			},
 			rawHdrSummary: rawHdrSummary,
 			surfaceClassSummary: surfaceClassSummary,
 			atlasSummary: atlasSummary,
@@ -3289,6 +6543,91 @@ window.reportR7310C1EastWallDiffuseBakeAfterSamples = async function(targetSampl
 				},
 				atlasPathBySurface: {
 					c1_east_wall: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1EastWallBeamShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1EastWallBeamShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'east_wall_beam_shadow',
+			targetId: R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME,
+			northeastFurnitureMode: prep.northeastFurnitureMode,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_zy_on_x_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_EAST_WALL_BEAM_SHADOW_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				seColumnDeadZone: R7310_C1_EAST_WALL_SE_COLUMN_DEAD_ZONE,
+				eastBeamDeadZone: R7310_C1_EAST_WALL_BEAM_DEAD_ZONE
+			},
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'east_wall_beam_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_east_wall_beam_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_east_wall_beam_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_east_wall_beam_shadow: 'atlas-patch-000-rgba-f32.bin'
 				},
 				allMajorSurfacesCovered: false,
 				allStaticVisibleSurfacesAccountedFor: false,
@@ -3347,6 +6686,11 @@ window.reportR7310C1WestWallDiffuseBakeAfterSamples = async function(targetSampl
 			upscaled: false,
 			diffuseOnly: true,
 			worldBounds: R7310_C1_WEST_WALL_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				ironDoorHole: R7310_C1_WEST_WALL_IRON_DOOR_HOLE,
+				swColumnDeadZone: R7310_C1_WEST_WALL_SW_COLUMN_DEAD_ZONE,
+				westBeamDeadZone: R7310_C1_WEST_WALL_BEAM_DEAD_ZONE
+			},
 			rawHdrSummary: rawHdrSummary,
 			surfaceClassSummary: surfaceClassSummary,
 			atlasSummary: atlasSummary,
@@ -3462,6 +6806,89 @@ window.reportR7310C1SouthWallDiffuseBakeAfterSamples = async function(targetSamp
 	}
 };
 
+window.reportR7310C1SouthWallAcShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1SouthWallAcShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'south_wall_ac_shadow',
+			targetId: R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_xy_on_z_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_SOUTH_WALL_AC_SHADOW_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				windowHole: R7310_C1_SOUTH_WALL_WINDOW_HOLE
+			},
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'south_wall_ac_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_south_wall_ac_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_south_wall_ac_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_south_wall_ac_shadow: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
 window.reportR7310C1CeilingDiffuseBakeAfterSamples = async function(targetSamples, timeoutMs, options)
 {
 	options = options || {};
@@ -3518,6 +6945,416 @@ window.reportR7310C1CeilingDiffuseBakeAfterSamples = async function(targetSample
 				},
 				atlasPathBySurface: {
 					c1_ceiling: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1StructuralDiffuseBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1StructuralDiffuseAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var structuralIslandSummary = summarizeR7310StructuralIslands(atlasPixels, prep.targetAtlasResolution);
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'structural_beams_columns',
+			targetId: R7310_C1_STRUCTURAL_TARGET_ID,
+			surfaceName: R7310_C1_STRUCTURAL_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			mapping: 'packed_rect_islands',
+			runtimeAtlasSlot: 6,
+			geometryGateReport: R7310_C1_STRUCTURAL_GEOMETRY_GATE_REPORT,
+			islands: R7310_C1_STRUCTURAL_ISLANDS,
+			excludedContactFaces: R7310_C1_STRUCTURAL_EXCLUDED_CONTACT_FACES,
+			islandCoverageByName: structuralIslandSummary.islandCoverageByName,
+			islandLumaByName: structuralIslandSummary.islandLumaByName,
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'structural_beams_columns',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_STRUCTURAL_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_structural_beams_columns: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_structural_beams_columns: false
+				},
+				atlasPathBySurface: {
+					c1_structural_beams_columns: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1SeColumnNorthShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1SeColumnNorthShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'se_column_north_shadow',
+			targetId: R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_xy_on_z_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_SE_COLUMN_NORTH_SHADOW_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				eastBeamBack: R7310_C1_SE_COLUMN_NORTH_SHADOW_EAST_BEAM_BACK
+			},
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'se_column_north_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_se_column_north_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_se_column_north_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_se_column_north_shadow: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1SeColumnWestShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1SeColumnWestShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'se_column_west_shadow',
+			targetId: R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_zy_on_x_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_SE_COLUMN_WEST_SHADOW_WORLD_BOUNDS,
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'se_column_west_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_se_column_west_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_se_column_west_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_se_column_west_shadow: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1SwColumnNorthShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1SwColumnNorthShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'sw_column_north_shadow',
+			targetId: R7310_C1_SW_COLUMN_NORTH_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_xy_on_z_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_SW_COLUMN_NORTH_SHADOW_WORLD_BOUNDS,
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'sw_column_north_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_SW_COLUMN_NORTH_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_sw_column_north_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_sw_column_north_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_sw_column_north_shadow: 'atlas-patch-000-rgba-f32.bin'
+				},
+				allMajorSurfacesCovered: false,
+				allStaticVisibleSurfacesAccountedFor: false,
+				allStaticVisibleSurfacesCovered: false,
+				finalC1Coverage: false
+			}
+		};
+		report.validation = buildR738ValidationReport(report, rawHdr, atlasPixels, texelMetadata, reprojection);
+		window.__r738C1BakeCaptureLastReport = report;
+		window.__r738C1BakeCaptureLastRawHdrSummary = rawHdrSummary;
+		window.__r738C1BakeCaptureLastSurfaceClassSummary = surfaceClassSummary;
+		return report;
+	}
+	finally
+	{
+		restoreR738BakeState(state);
+	}
+};
+
+window.reportR7310C1WestWallBeamShadowBakeAfterSamples = async function(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
+	var timeout = normalizeR738PositiveInt(timeoutMs, 180000, 1000, 3600000);
+	var state = captureR738BakeState();
+	try
+	{
+		var prep = await window.prepareR738C1BakeCapture(options);
+		var actualSamples = await renderR738MainRawHdrSamples(target, timeout);
+		var rawHdr = await readR738RenderTargetFloatPixels(screenCopyRenderTarget);
+		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
+		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
+		var atlasSummary = await captureR7310C1WestWallBeamShadowAtlas(target, timeout, {
+			targetAtlasResolution: prep.targetAtlasResolution
+		});
+		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
+		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var report = {
+			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
+			config: 1,
+			batch: 'west_wall_beam_shadow',
+			targetId: R7310_C1_WEST_WALL_BEAM_SHADOW_TARGET_ID,
+			surfaceName: R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME,
+			requestedSamples: target,
+			actualSamples: actualSamples,
+			rawHdr: { actualSamples: actualSamples },
+			renderTarget: 'screenCopyRenderTarget',
+			buffer: {
+				width: rawHdr.width,
+				height: rawHdr.height,
+				format: 'RGBA',
+				type: 'Float32Array'
+			},
+			targetAtlasResolution: prep.targetAtlasResolution,
+			upscaled: false,
+			diffuseOnly: true,
+			bakedRadianceKind: 'indirect_diffuse_radiance',
+			directLightAlreadyIncluded: false,
+			addDirectLightAfterBakeLookup: true,
+			mapping: 'single_planar_zy_on_x_face',
+			referenceForAcceptance: 'live_path_tracing_same_camera',
+			worldBounds: R7310_C1_WEST_WALL_BEAM_SHADOW_WORLD_BOUNDS,
+			invalidTexelRegions: {
+				ironDoorHole: R7310_C1_WEST_WALL_IRON_DOOR_HOLE,
+				swColumnDeadZone: R7310_C1_WEST_WALL_SW_COLUMN_DEAD_ZONE,
+				westBeamDeadZone: R7310_C1_WEST_WALL_BEAM_DEAD_ZONE
+			},
+			rawHdrSummary: rawHdrSummary,
+			surfaceClassSummary: surfaceClassSummary,
+			atlasSummary: atlasSummary,
+			coverageReport: {
+				config: 1,
+				batch: 'west_wall_beam_shadow',
+				surfaceTargetCount: 1,
+				coveredSurfaceNames: [R7310_C1_WEST_WALL_BEAM_SHADOW_SURFACE_NAME],
+				missingSurfaceNames: [],
+				validTexelRatioBySurface: {
+					c1_west_wall_beam_shadow: atlasSummary.validTexelRatio
+				},
+				dilationAppliedBySurface: {
+					c1_west_wall_beam_shadow: false
+				},
+				atlasPathBySurface: {
+					c1_west_wall_beam_shadow: 'atlas-patch-000-rgba-f32.bin'
 				},
 				allMajorSurfacesCovered: false,
 				allStaticVisibleSurfacesAccountedFor: false,
@@ -4299,16 +8136,32 @@ window.logR739SproutABHelp = function()
 	return window.reportR739SproutABMode();
 };
 
+function r7310CameraAnglesFromForwardState(forward)
+{
+	var x = Number(forward && forward.x);
+	var y = Number(forward && forward.y);
+	var z = Number(forward && forward.z);
+	if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z))
+		return null;
+	return {
+		yaw: Math.atan2(-x, -z),
+		pitch: Math.asin(Math.max(-1, Math.min(1, y)))
+	};
+}
+
 window.setR739Config1ValidationCameraState = function(state)
 {
 	if (!state || !state.position)
 		throw new Error('R7-3.9 validation camera state missing position');
 	if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
 	cameraControlsObject.position.set(state.position.x, state.position.y, state.position.z);
-	cameraControlsPitchObject.rotation.set(Number(state.pitch) || 0, 0, 0);
-	cameraControlsYawObject.rotation.set(0, Number(state.yaw) || 0, 0);
-	inputRotationHorizontal = Number(state.yaw) || 0;
-	inputRotationVertical = Number(state.pitch) || 0;
+	var replayAngles = r7310CameraAnglesFromForwardState(state.forward);
+	var yaw = replayAngles ? replayAngles.yaw : (Number(state.yaw) || 0);
+	var pitch = replayAngles ? replayAngles.pitch : (Number(state.pitch) || 0);
+	cameraControlsPitchObject.rotation.set(pitch, 0, 0);
+	cameraControlsYawObject.rotation.set(0, yaw, 0);
+	inputRotationHorizontal = yaw;
+	inputRotationVertical = pitch;
 	oldYawRotation = inputRotationHorizontal;
 	oldPitchRotation = inputRotationVertical;
 	worldCamera.fov = Number.isFinite(Number(state.fov)) ? Number(state.fov) : 55;
@@ -4414,9 +8267,28 @@ window.loadR738C1BakePastePreviewPackage = loadR738C1BakePastePreviewPackage;
 window.loadR7310C1FullRoomDiffuseRuntimePackage = loadR7310C1FullRoomDiffuseRuntimePackage;
 window.loadR7310C1NorthWallDiffuseRuntimePackage = loadR7310C1NorthWallDiffuseRuntimePackage;
 window.loadR7310C1EastWallDiffuseRuntimePackage = loadR7310C1EastWallDiffuseRuntimePackage;
+window.loadR7310C1NorthWallWardrobeDiffuseRuntimePackage = loadR7310C1NorthWallWardrobeDiffuseRuntimePackage;
+window.loadR7310C1EastWallWardrobeDiffuseRuntimePackage = loadR7310C1EastWallWardrobeDiffuseRuntimePackage;
 window.loadR7310C1WestWallDiffuseRuntimePackage = loadR7310C1WestWallDiffuseRuntimePackage;
 window.loadR7310C1SouthWallDiffuseRuntimePackage = loadR7310C1SouthWallDiffuseRuntimePackage;
 window.loadR7310C1CeilingDiffuseRuntimePackage = loadR7310C1CeilingDiffuseRuntimePackage;
+window.loadR7310C1StructuralDiffuseRuntimePackage = loadR7310C1StructuralDiffuseRuntimePackage;
+window.loadR7310C1SeColumnNorthShadowRuntimePackage = loadR7310C1SeColumnNorthShadowRuntimePackage;
+window.loadR7310C1SeColumnWestShadowRuntimePackage = loadR7310C1SeColumnWestShadowRuntimePackage;
+window.loadR7310C1SouthWallAcShadowRuntimePackage = loadR7310C1SouthWallAcShadowRuntimePackage;
+window.loadR7310C1EastWallBeamShadowRuntimePackage = loadR7310C1EastWallBeamShadowRuntimePackage;
+window.loadR7310C1EastWallBeamShadowWardrobeRuntimePackage = loadR7310C1EastWallBeamShadowWardrobeRuntimePackage;
+window.loadR7310C1SwColumnNorthShadowRuntimePackage = loadR7310C1SwColumnNorthShadowRuntimePackage;
+window.loadR7310C1WestWallBeamShadowRuntimePackage = loadR7310C1WestWallBeamShadowRuntimePackage;
+window.loadR7310C1SwColumnInnerShadowRuntimePackage = loadR7310C1SwColumnInnerShadowRuntimePackage;
+window.loadR7310C1WestBeamInnerShadowRuntimePackage = loadR7310C1WestBeamInnerShadowRuntimePackage;
+window.loadR7310C1WestBeamUnderShadowRuntimePackage = loadR7310C1WestBeamUnderShadowRuntimePackage;
+window.loadR7310C1EastBeamInnerShadowRuntimePackage = loadR7310C1EastBeamInnerShadowRuntimePackage;
+window.loadR7310C1EastBeamUnderShadowRuntimePackage = loadR7310C1EastBeamUnderShadowRuntimePackage;
+window.loadR7310C1SouthWindowLeftRevealShadowRuntimePackage = loadR7310C1SouthWindowLeftRevealShadowRuntimePackage;
+window.loadR7310C1SouthWindowRightRevealShadowRuntimePackage = loadR7310C1SouthWindowRightRevealShadowRuntimePackage;
+window.loadR7310C1SouthWindowBottomRevealShadowRuntimePackage = loadR7310C1SouthWindowBottomRevealShadowRuntimePackage;
+window.loadR7310C1SouthWindowTopRevealShadowRuntimePackage = loadR7310C1SouthWindowTopRevealShadowRuntimePackage;
 
 window.waitForR738C1BakePastePreviewReady = async function(timeoutMs)
 {
@@ -4443,11 +8315,27 @@ window.waitForR7310C1FullRoomDiffuseRuntimeReady = async function(timeoutMs)
 	while (performance.now() - start < timeout)
 	{
 		var enabledReady = (!r7310C1FloorDiffuseRuntimeEnabled || r7310C1FullRoomDiffuseRuntimeReady) &&
-			(!r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeReady) &&
-			(!r7310C1EastWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeReady) &&
+			(!r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1NorthWallActiveDiffuseRuntimeReady()) &&
+			(!r7310C1EastWallDiffuseRuntimeEnabled || r7310C1EastWallActiveDiffuseRuntimeReady()) &&
 			(!r7310C1WestWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeReady) &&
 			(!r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeReady) &&
-			(!r7310C1CeilingDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeReady);
+			(!r7310C1CeilingDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeReady) &&
+			(!r7310C1StructuralDiffuseRuntimeEnabled || r7310C1StructuralDiffuseRuntimePending || r7310C1StructuralDiffuseRuntimeReady) &&
+			(!r7310C1SeColumnNorthShadowRuntimeEnabled || r7310C1SeColumnNorthShadowRuntimePending || r7310C1SeColumnNorthShadowRuntimeReady) &&
+			(!r7310C1SeColumnWestShadowRuntimeEnabled || r7310C1SeColumnWestShadowRuntimePending || r7310C1SeColumnWestShadowRuntimeReady) &&
+			(!r7310C1SouthWallAcShadowRuntimeEnabled || r7310C1SouthWallAcShadowRuntimePending || r7310C1SouthWallAcShadowRuntimeReady) &&
+			(!r7310C1EastWallBeamShadowRuntimeEnabled || r7310C1EastWallBeamShadowActiveRuntimePending() || r7310C1EastWallBeamShadowActiveRuntimeReady()) &&
+			(!r7310C1SwColumnNorthShadowRuntimeEnabled || r7310C1SwColumnNorthShadowRuntimePending || r7310C1SwColumnNorthShadowRuntimeReady) &&
+			(!r7310C1WestWallBeamShadowRuntimeEnabled || r7310C1WestWallBeamShadowRuntimeReady) &&
+			(!r7310C1SwColumnInnerShadowRuntimeEnabled || r7310C1SwColumnInnerShadowRuntimeReady) &&
+			(!r7310C1WestBeamInnerShadowRuntimeEnabled || r7310C1WestBeamInnerShadowRuntimeReady) &&
+			(!r7310C1WestBeamUnderShadowRuntimeEnabled || r7310C1WestBeamUnderShadowRuntimePending || r7310C1WestBeamUnderShadowRuntimeReady) &&
+			(!r7310C1EastBeamInnerShadowRuntimeEnabled || r7310C1EastBeamInnerShadowRuntimePending || r7310C1EastBeamInnerShadowRuntimeReady) &&
+			(!r7310C1EastBeamUnderShadowRuntimeEnabled || r7310C1EastBeamUnderShadowRuntimePending || r7310C1EastBeamUnderShadowRuntimeReady) &&
+			(!r7310C1SouthWindowLeftRevealShadowRuntimeEnabled || r7310C1SouthWindowLeftRevealShadowRuntimePending || r7310C1SouthWindowLeftRevealShadowRuntimeReady) &&
+			(!r7310C1SouthWindowRightRevealShadowRuntimeEnabled || r7310C1SouthWindowRightRevealShadowRuntimePending || r7310C1SouthWindowRightRevealShadowRuntimeReady) &&
+			(!r7310C1SouthWindowBottomRevealShadowRuntimeEnabled || r7310C1SouthWindowBottomRevealShadowRuntimePending || r7310C1SouthWindowBottomRevealShadowRuntimeReady) &&
+			(!r7310C1SouthWindowTopRevealShadowRuntimeEnabled || r7310C1SouthWindowTopRevealShadowRuntimePending || r7310C1SouthWindowTopRevealShadowRuntimeReady);
 		if (enabledReady)
 			return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
 		if (r7310C1FullRoomDiffuseRuntimeError)
@@ -4456,12 +8344,48 @@ window.waitForR7310C1FullRoomDiffuseRuntimeReady = async function(timeoutMs)
 			throw new Error(r7310C1NorthWallDiffuseRuntimeError);
 		if (r7310C1EastWallDiffuseRuntimeError)
 			throw new Error(r7310C1EastWallDiffuseRuntimeError);
+		if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1NorthWallWardrobeDiffuseRuntimeError)
+			throw new Error(r7310C1NorthWallWardrobeDiffuseRuntimeError);
+		if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1EastWallWardrobeDiffuseRuntimeError)
+			throw new Error(r7310C1EastWallWardrobeDiffuseRuntimeError);
 		if (r7310C1WestWallDiffuseRuntimeError)
 			throw new Error(r7310C1WestWallDiffuseRuntimeError);
 		if (r7310C1SouthWallDiffuseRuntimeError)
 			throw new Error(r7310C1SouthWallDiffuseRuntimeError);
 		if (r7310C1CeilingDiffuseRuntimeError)
 			throw new Error(r7310C1CeilingDiffuseRuntimeError);
+		if (!r7310C1StructuralDiffuseRuntimePending && r7310C1StructuralDiffuseRuntimeError)
+			throw new Error(r7310C1StructuralDiffuseRuntimeError);
+		if (!r7310C1SeColumnNorthShadowRuntimePending && r7310C1SeColumnNorthShadowRuntimeError)
+			throw new Error(r7310C1SeColumnNorthShadowRuntimeError);
+		if (!r7310C1SeColumnWestShadowRuntimePending && r7310C1SeColumnWestShadowRuntimeError)
+			throw new Error(r7310C1SeColumnWestShadowRuntimeError);
+		if (!r7310C1SouthWallAcShadowRuntimePending && r7310C1SouthWallAcShadowRuntimeError)
+			throw new Error(r7310C1SouthWallAcShadowRuntimeError);
+		if (!r7310C1EastWallBeamShadowActiveRuntimePending() && r7310C1EastWallBeamShadowActiveRuntimeError())
+			throw new Error(r7310C1EastWallBeamShadowActiveRuntimeError());
+		if (!r7310C1SwColumnNorthShadowRuntimePending && r7310C1SwColumnNorthShadowRuntimeError)
+			throw new Error(r7310C1SwColumnNorthShadowRuntimeError);
+		if (!r7310C1WestWallBeamShadowRuntimePending && r7310C1WestWallBeamShadowRuntimeError)
+			throw new Error(r7310C1WestWallBeamShadowRuntimeError);
+		if (!r7310C1SwColumnInnerShadowRuntimePending && r7310C1SwColumnInnerShadowRuntimeError)
+			throw new Error(r7310C1SwColumnInnerShadowRuntimeError);
+		if (!r7310C1WestBeamInnerShadowRuntimePending && r7310C1WestBeamInnerShadowRuntimeError)
+			throw new Error(r7310C1WestBeamInnerShadowRuntimeError);
+		if (!r7310C1WestBeamUnderShadowRuntimePending && r7310C1WestBeamUnderShadowRuntimeError)
+			throw new Error(r7310C1WestBeamUnderShadowRuntimeError);
+		if (!r7310C1EastBeamInnerShadowRuntimePending && r7310C1EastBeamInnerShadowRuntimeError)
+			throw new Error(r7310C1EastBeamInnerShadowRuntimeError);
+		if (!r7310C1EastBeamUnderShadowRuntimePending && r7310C1EastBeamUnderShadowRuntimeError)
+			throw new Error(r7310C1EastBeamUnderShadowRuntimeError);
+		if (!r7310C1SouthWindowLeftRevealShadowRuntimePending && r7310C1SouthWindowLeftRevealShadowRuntimeError)
+			throw new Error(r7310C1SouthWindowLeftRevealShadowRuntimeError);
+		if (!r7310C1SouthWindowRightRevealShadowRuntimePending && r7310C1SouthWindowRightRevealShadowRuntimeError)
+			throw new Error(r7310C1SouthWindowRightRevealShadowRuntimeError);
+		if (!r7310C1SouthWindowBottomRevealShadowRuntimePending && r7310C1SouthWindowBottomRevealShadowRuntimeError)
+			throw new Error(r7310C1SouthWindowBottomRevealShadowRuntimeError);
+		if (!r7310C1SouthWindowTopRevealShadowRuntimePending && r7310C1SouthWindowTopRevealShadowRuntimeError)
+			throw new Error(r7310C1SouthWindowTopRevealShadowRuntimeError);
 		await new Promise(function(resolve) { setTimeout(resolve, 100); });
 	}
 	throw new Error('R7-3.10 C1 full room diffuse runtime package did not become ready');
@@ -4512,13 +8436,51 @@ function ensureR7310C1FullRoomDiffuseRuntimeLoading()
 		loadR7310C1NorthWallDiffuseRuntimePackage().catch(function() {});
 	if (r7310C1EastWallDiffuseRuntimeEnabled && !r7310C1EastWallDiffuseRuntimeReady)
 		loadR7310C1EastWallDiffuseRuntimePackage().catch(function() {});
+	if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1NorthWallDiffuseRuntimeEnabled && !r7310C1NorthWallWardrobeDiffuseRuntimeReady)
+		loadR7310C1NorthWallWardrobeDiffuseRuntimePackage().catch(function() {});
+	if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1EastWallDiffuseRuntimeEnabled && !r7310C1EastWallWardrobeDiffuseRuntimeReady)
+		loadR7310C1EastWallWardrobeDiffuseRuntimePackage().catch(function() {});
 	if (r7310C1WestWallDiffuseRuntimeEnabled && !r7310C1WestWallDiffuseRuntimeReady)
 		loadR7310C1WestWallDiffuseRuntimePackage().catch(function() {});
 	if (r7310C1SouthWallDiffuseRuntimeEnabled && !r7310C1SouthWallDiffuseRuntimeReady)
 		loadR7310C1SouthWallDiffuseRuntimePackage().catch(function() {});
 	if (r7310C1CeilingDiffuseRuntimeEnabled && !r7310C1CeilingDiffuseRuntimeReady)
 		loadR7310C1CeilingDiffuseRuntimePackage().catch(function() {});
-	if (!r7310C1FloorDiffuseRuntimeEnabled && !r7310C1NorthWallDiffuseRuntimeEnabled && !r7310C1EastWallDiffuseRuntimeEnabled && !r7310C1WestWallDiffuseRuntimeEnabled && !r7310C1SouthWallDiffuseRuntimeEnabled && !r7310C1CeilingDiffuseRuntimeEnabled)
+	if (r7310C1StructuralDiffuseRuntimeEnabled && (r7310C1StructuralDiffuseRuntimePending || !r7310C1StructuralDiffuseRuntimeReady))
+		loadR7310C1StructuralDiffuseRuntimePackage().catch(function() {});
+	if (r7310C1SeColumnNorthShadowRuntimeEnabled && (r7310C1SeColumnNorthShadowRuntimePending || !r7310C1SeColumnNorthShadowRuntimeReady))
+		loadR7310C1SeColumnNorthShadowRuntimePackage().catch(function() {});
+	if (r7310C1SeColumnWestShadowRuntimeEnabled && (r7310C1SeColumnWestShadowRuntimePending || !r7310C1SeColumnWestShadowRuntimeReady))
+		loadR7310C1SeColumnWestShadowRuntimePackage().catch(function() {});
+	if (r7310C1SouthWallAcShadowRuntimeEnabled && (r7310C1SouthWallAcShadowRuntimePending || !r7310C1SouthWallAcShadowRuntimeReady))
+		loadR7310C1SouthWallAcShadowRuntimePackage().catch(function() {});
+	if (r7310C1EastWallBeamShadowRuntimeEnabled && r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && (r7310C1EastWallBeamShadowWardrobeRuntimePending || !r7310C1EastWallBeamShadowWardrobeRuntimeReady))
+		loadR7310C1EastWallBeamShadowWardrobeRuntimePackage().catch(function() {});
+	if (r7310C1EastWallBeamShadowRuntimeEnabled && r7310C1NortheastFurnitureRuntimeMode !== 'wardrobe' && (r7310C1EastWallBeamShadowRuntimePending || !r7310C1EastWallBeamShadowRuntimeReady))
+		loadR7310C1EastWallBeamShadowRuntimePackage().catch(function() {});
+	if (r7310C1SwColumnNorthShadowRuntimeEnabled && (r7310C1SwColumnNorthShadowRuntimePending || !r7310C1SwColumnNorthShadowRuntimeReady))
+		loadR7310C1SwColumnNorthShadowRuntimePackage().catch(function() {});
+	if (r7310C1WestWallBeamShadowRuntimeEnabled && (r7310C1WestWallBeamShadowRuntimePending || !r7310C1WestWallBeamShadowRuntimeReady))
+		loadR7310C1WestWallBeamShadowRuntimePackage().catch(function() {});
+	if (r7310C1SwColumnInnerShadowRuntimeEnabled && (r7310C1SwColumnInnerShadowRuntimePending || !r7310C1SwColumnInnerShadowRuntimeReady))
+		loadR7310C1SwColumnInnerShadowRuntimePackage().catch(function() {});
+	if (r7310C1WestBeamInnerShadowRuntimeEnabled && (r7310C1WestBeamInnerShadowRuntimePending || !r7310C1WestBeamInnerShadowRuntimeReady))
+		loadR7310C1WestBeamInnerShadowRuntimePackage().catch(function() {});
+	if (r7310C1WestBeamUnderShadowRuntimeEnabled && (r7310C1WestBeamUnderShadowRuntimePending || !r7310C1WestBeamUnderShadowRuntimeReady))
+		loadR7310C1WestBeamUnderShadowRuntimePackage().catch(function() {});
+	if (r7310C1EastBeamInnerShadowRuntimeEnabled && (r7310C1EastBeamInnerShadowRuntimePending || !r7310C1EastBeamInnerShadowRuntimeReady))
+		loadR7310C1EastBeamInnerShadowRuntimePackage().catch(function() {});
+	if (r7310C1EastBeamUnderShadowRuntimeEnabled && (r7310C1EastBeamUnderShadowRuntimePending || !r7310C1EastBeamUnderShadowRuntimeReady))
+		loadR7310C1EastBeamUnderShadowRuntimePackage().catch(function() {});
+	if (r7310C1SouthWindowLeftRevealShadowRuntimeEnabled && (r7310C1SouthWindowLeftRevealShadowRuntimePending || !r7310C1SouthWindowLeftRevealShadowRuntimeReady))
+		loadR7310C1SouthWindowLeftRevealShadowRuntimePackage().catch(function() {});
+	if (r7310C1SouthWindowRightRevealShadowRuntimeEnabled && (r7310C1SouthWindowRightRevealShadowRuntimePending || !r7310C1SouthWindowRightRevealShadowRuntimeReady))
+		loadR7310C1SouthWindowRightRevealShadowRuntimePackage().catch(function() {});
+	if (r7310C1SouthWindowBottomRevealShadowRuntimeEnabled && (r7310C1SouthWindowBottomRevealShadowRuntimePending || !r7310C1SouthWindowBottomRevealShadowRuntimeReady))
+		loadR7310C1SouthWindowBottomRevealShadowRuntimePackage().catch(function() {});
+	if (r7310C1SouthWindowTopRevealShadowRuntimeEnabled && (r7310C1SouthWindowTopRevealShadowRuntimePending || !r7310C1SouthWindowTopRevealShadowRuntimeReady))
+		loadR7310C1SouthWindowTopRevealShadowRuntimePackage().catch(function() {});
+	if (!r7310C1AnyFullRoomDiffuseSurfaceEnabled())
 		resetR738MainAccumulation();
 }
 
@@ -4531,6 +8493,22 @@ window.setR7310C1FullRoomDiffuseRuntimeEnabled = function(enabled)
 	r7310C1WestWallDiffuseRuntimeEnabled = !!enabled;
 	r7310C1SouthWallDiffuseRuntimeEnabled = !!enabled;
 	r7310C1CeilingDiffuseRuntimeEnabled = !!enabled;
+	r7310C1StructuralDiffuseRuntimeEnabled = !!enabled;
+	r7310C1SeColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1SeColumnWestShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWallAcShadowRuntimeEnabled = !!enabled;
+	r7310C1EastWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1SwColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1WestWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1SwColumnInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1WestBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1WestBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1EastBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1EastBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowLeftRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowRightRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowBottomRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowTopRevealShadowRuntimeEnabled = !!enabled;
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4541,7 +8519,7 @@ window.setR7310C1FullRoomDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1FloorDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1FloorDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4552,7 +8530,7 @@ window.setR7310C1FloorDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1NorthWallDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1NorthWallDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4563,7 +8541,8 @@ window.setR7310C1NorthWallDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1EastWallDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1EastWallDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1EastWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4571,10 +8550,27 @@ window.setR7310C1EastWallDiffuseRuntimeEnabled = function(enabled)
 	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
 };
 
+window.setR7310C1NortheastFurnitureRuntimeMode = function(mode)
+{
+	var nextMode = (mode === 'wardrobe') ? 'wardrobe' : 'bed';
+	var changed = r7310C1NortheastFurnitureRuntimeMode !== nextMode;
+	r7310C1NortheastFurnitureRuntimeMode = nextMode;
+	refreshR7310C1CombinedDiffuseRuntimeTexture();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (changed)
+	{
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-ne-furniture-runtime-mode');
+	}
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
 window.setR7310C1WestWallDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1WestWallDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1WestWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4585,7 +8581,12 @@ window.setR7310C1WestWallDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1SouthWallDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1SouthWallDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1SouthWallAcShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowLeftRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowRightRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowBottomRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1SouthWindowTopRevealShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
@@ -4596,11 +8597,162 @@ window.setR7310C1SouthWallDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1CeilingDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1CeilingDiffuseRuntimeEnabled = !!enabled;
-	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
 	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-ceiling-diffuse-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1StructuralDiffuseRuntimeEnabled = function(enabled)
+{
+	r7310C1StructuralDiffuseRuntimeEnabled = !!enabled;
+	r7310C1SeColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1SeColumnWestShadowRuntimeEnabled = !!enabled;
+	r7310C1SwColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1SwColumnInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1WestBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1WestBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1EastBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1EastBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-structural-diffuse-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1SeColumnNorthShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1SeColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-se-column-north-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1SeColumnWestShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1SeColumnWestShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-se-column-west-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1SouthWallAcShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1SouthWallAcShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-south-wall-ac-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1EastWallBeamShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1EastWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-east-wall-beam-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1SwColumnNorthShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1SwColumnNorthShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-sw-column-north-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1WestWallBeamShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1WestWallBeamShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-west-wall-beam-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1WestWallBeamShadowZMaxOverride = function(value)
+{
+	var zMax = Number(value);
+	if (!Number.isFinite(zMax))
+		zMax = 2.7179;
+	if (pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride)
+		pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value = zMax;
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-west-wall-beam-shadow-zmax-override');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1SwColumnInnerShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1SwColumnInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-sw-column-inner-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1WestBeamInnerShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1WestBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-west-beam-inner-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1WestBeamUnderShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1WestBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-west-beam-under-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1EastBeamInnerShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1EastBeamInnerShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-east-beam-inner-shadow-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
+window.setR7310C1EastBeamUnderShadowRuntimeEnabled = function(enabled)
+{
+	r7310C1EastBeamUnderShadowRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-east-beam-under-shadow-runtime-toggle');
 	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
 };
 
@@ -4610,25 +8762,93 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 	var sproutPasteApplied = updateR738C1BakePastePreviewUniforms();
 	return {
 		version: 'r7-3-10-c1-full-room-diffuse-runtime',
-		enabled: r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled,
+		enabled: r7310C1AnyFullRoomDiffuseSurfaceEnabled(),
+		northeastFurnitureRuntimeMode: r7310C1NortheastFurnitureRuntimeMode,
 		eastWallEnabled: r7310C1EastWallDiffuseRuntimeEnabled,
 		floorEnabled: r7310C1FloorDiffuseRuntimeEnabled,
 		northWallEnabled: r7310C1NorthWallDiffuseRuntimeEnabled,
 		westWallEnabled: r7310C1WestWallDiffuseRuntimeEnabled,
 		southWallEnabled: r7310C1SouthWallDiffuseRuntimeEnabled,
 		ceilingEnabled: r7310C1CeilingDiffuseRuntimeEnabled,
+		structuralEnabled: r7310C1StructuralDiffuseRuntimeEnabled,
+		seColumnNorthShadowEnabled: r7310C1SeColumnNorthShadowRuntimeEnabled,
+		seColumnWestShadowEnabled: r7310C1SeColumnWestShadowRuntimeEnabled,
+		southWallAcShadowEnabled: r7310C1SouthWallAcShadowRuntimeEnabled,
+		eastWallBeamShadowEnabled: r7310C1EastWallBeamShadowRuntimeEnabled,
+		swColumnNorthShadowEnabled: r7310C1SwColumnNorthShadowRuntimeEnabled,
+		westWallBeamShadowEnabled: r7310C1WestWallBeamShadowRuntimeEnabled,
+		swColumnInnerShadowEnabled: r7310C1SwColumnInnerShadowRuntimeEnabled,
+		westBeamInnerShadowEnabled: r7310C1WestBeamInnerShadowRuntimeEnabled,
+		westBeamUnderShadowEnabled: r7310C1WestBeamUnderShadowRuntimeEnabled,
+		eastBeamInnerShadowEnabled: r7310C1EastBeamInnerShadowRuntimeEnabled,
+		eastBeamUnderShadowEnabled: r7310C1EastBeamUnderShadowRuntimeEnabled,
 		ready: r7310C1FullRoomDiffuseRuntimeReady,
 		floorReady: r7310C1FullRoomDiffuseRuntimeReady,
-		northWallReady: r7310C1NorthWallDiffuseRuntimeReady,
-		eastWallReady: r7310C1EastWallDiffuseRuntimeReady,
+		northWallReady: r7310C1NorthWallActiveDiffuseRuntimeReady(),
+		eastWallReady: r7310C1EastWallActiveDiffuseRuntimeReady(),
+		northWallBedReady: r7310C1NorthWallDiffuseRuntimeReady,
+		eastWallBedReady: r7310C1EastWallDiffuseRuntimeReady,
+		northWallWardrobeReady: r7310C1NorthWallWardrobeDiffuseRuntimeReady,
+		eastWallWardrobeReady: r7310C1EastWallWardrobeDiffuseRuntimeReady,
 		westWallReady: r7310C1WestWallDiffuseRuntimeReady,
 		southWallReady: r7310C1SouthWallDiffuseRuntimeReady,
 		ceilingReady: r7310C1CeilingDiffuseRuntimeReady,
+		structuralPending: r7310C1StructuralDiffuseRuntimePending,
+		structuralReady: r7310C1StructuralDiffuseRuntimeReady,
+		seColumnNorthShadowPending: r7310C1SeColumnNorthShadowRuntimePending,
+		seColumnNorthShadowReady: r7310C1SeColumnNorthShadowRuntimeReady,
+		seColumnWestShadowPending: r7310C1SeColumnWestShadowRuntimePending,
+		seColumnWestShadowReady: r7310C1SeColumnWestShadowRuntimeReady,
+		southWallAcShadowPending: r7310C1SouthWallAcShadowRuntimePending,
+		southWallAcShadowReady: r7310C1SouthWallAcShadowRuntimeReady,
+		eastWallBeamShadowPending: r7310C1EastWallBeamShadowActiveRuntimePending(),
+		eastWallBeamShadowReady: r7310C1EastWallBeamShadowActiveRuntimeReady(),
+		eastWallBeamShadowBedPending: r7310C1EastWallBeamShadowRuntimePending,
+		eastWallBeamShadowBedReady: r7310C1EastWallBeamShadowRuntimeReady,
+		eastWallBeamShadowWardrobePending: r7310C1EastWallBeamShadowWardrobeRuntimePending,
+		eastWallBeamShadowWardrobeReady: r7310C1EastWallBeamShadowWardrobeRuntimeReady,
+		swColumnNorthShadowPending: r7310C1SwColumnNorthShadowRuntimePending,
+		swColumnNorthShadowReady: r7310C1SwColumnNorthShadowRuntimeReady,
+		westWallBeamShadowPending: r7310C1WestWallBeamShadowRuntimePending,
+		westWallBeamShadowReady: r7310C1WestWallBeamShadowRuntimeReady,
+		swColumnInnerShadowPending: r7310C1SwColumnInnerShadowRuntimePending,
+		swColumnInnerShadowReady: r7310C1SwColumnInnerShadowRuntimeReady,
+		westBeamInnerShadowPending: r7310C1WestBeamInnerShadowRuntimePending,
+		westBeamInnerShadowReady: r7310C1WestBeamInnerShadowRuntimeReady,
+		westBeamUnderShadowPending: r7310C1WestBeamUnderShadowRuntimePending,
+		westBeamUnderShadowReady: r7310C1WestBeamUnderShadowRuntimeReady,
+		eastBeamInnerShadowPending: r7310C1EastBeamInnerShadowRuntimePending,
+		eastBeamInnerShadowReady: r7310C1EastBeamInnerShadowRuntimeReady,
+		eastBeamUnderShadowPending: r7310C1EastBeamUnderShadowRuntimePending,
+		eastBeamUnderShadowReady: r7310C1EastBeamUnderShadowRuntimeReady,
+		southWindowLeftRevealShadowPending: r7310C1SouthWindowLeftRevealShadowRuntimePending,
+		southWindowLeftRevealShadowReady: r7310C1SouthWindowLeftRevealShadowRuntimeReady,
+		southWindowRightRevealShadowPending: r7310C1SouthWindowRightRevealShadowRuntimePending,
+		southWindowRightRevealShadowReady: r7310C1SouthWindowRightRevealShadowRuntimeReady,
+		southWindowBottomRevealShadowPending: r7310C1SouthWindowBottomRevealShadowRuntimePending,
+		southWindowBottomRevealShadowReady: r7310C1SouthWindowBottomRevealShadowRuntimeReady,
+		southWindowTopRevealShadowPending: r7310C1SouthWindowTopRevealShadowRuntimePending,
+		southWindowTopRevealShadowReady: r7310C1SouthWindowTopRevealShadowRuntimeReady,
 		applied: applied,
-		error: r7310C1FullRoomDiffuseRuntimeError || r7310C1NorthWallDiffuseRuntimeError || r7310C1EastWallDiffuseRuntimeError || r7310C1WestWallDiffuseRuntimeError || r7310C1SouthWallDiffuseRuntimeError || r7310C1CeilingDiffuseRuntimeError,
+		error: r7310C1FullRoomDiffuseRuntimeError || r7310C1NorthWallDiffuseRuntimeError || r7310C1EastWallDiffuseRuntimeError || (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' ? r7310C1NorthWallWardrobeDiffuseRuntimeError : null) || (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' ? r7310C1EastWallWardrobeDiffuseRuntimeError : null) || r7310C1WestWallDiffuseRuntimeError || r7310C1SouthWallDiffuseRuntimeError || r7310C1CeilingDiffuseRuntimeError || (!r7310C1StructuralDiffuseRuntimePending ? r7310C1StructuralDiffuseRuntimeError : null) || (!r7310C1SeColumnNorthShadowRuntimePending ? r7310C1SeColumnNorthShadowRuntimeError : null) || (!r7310C1SeColumnWestShadowRuntimePending ? r7310C1SeColumnWestShadowRuntimeError : null) || (!r7310C1SouthWallAcShadowRuntimePending ? r7310C1SouthWallAcShadowRuntimeError : null) || (!r7310C1EastWallBeamShadowActiveRuntimePending() ? r7310C1EastWallBeamShadowActiveRuntimeError() : null) || (!r7310C1SwColumnNorthShadowRuntimePending ? r7310C1SwColumnNorthShadowRuntimeError : null) || (!r7310C1WestWallBeamShadowRuntimePending ? r7310C1WestWallBeamShadowRuntimeError : null) || (!r7310C1SwColumnInnerShadowRuntimePending ? r7310C1SwColumnInnerShadowRuntimeError : null) || (!r7310C1WestBeamInnerShadowRuntimePending ? r7310C1WestBeamInnerShadowRuntimeError : null) || (!r7310C1WestBeamUnderShadowRuntimePending ? r7310C1WestBeamUnderShadowRuntimeError : null) || (!r7310C1EastBeamInnerShadowRuntimePending ? r7310C1EastBeamInnerShadowRuntimeError : null) || (!r7310C1EastBeamUnderShadowRuntimePending ? r7310C1EastBeamUnderShadowRuntimeError : null) || (!r7310C1SouthWindowLeftRevealShadowRuntimePending ? r7310C1SouthWindowLeftRevealShadowRuntimeError : null) || (!r7310C1SouthWindowRightRevealShadowRuntimePending ? r7310C1SouthWindowRightRevealShadowRuntimeError : null) || (!r7310C1SouthWindowBottomRevealShadowRuntimePending ? r7310C1SouthWindowBottomRevealShadowRuntimeError : null) || (!r7310C1SouthWindowTopRevealShadowRuntimePending ? r7310C1SouthWindowTopRevealShadowRuntimeError : null),
 		configAllowed: r7310C1FullRoomDiffuseRuntimeConfigAllowed(),
 		uiMeaningOff: 'all_live_path_tracing',
-		uiMeaningOn: 'selected_floor_north_east_west_south_wall_or_ceiling_1024_baked_diffuse_plus_live_reflection',
+		uiMeaningOn: 'selected_floor_north_east_west_south_wall_ceiling_or_structural_1024_baked_diffuse_plus_live_reflection',
+		uiMeaningDedicatedSeColumnNorthShadow: 'se_column_north_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSeColumnWestShadow: 'se_column_west_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSouthWallAcShadow: 'south_wall_ac_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedEastWallBeamShadow: 'east_wall_beam_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSwColumnNorthShadow: 'sw_column_north_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedWestWallBeamShadow: 'west_wall_beam_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSwColumnInnerShadow: 'sw_column_inner_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedWestBeamInnerShadow: 'west_beam_inner_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedWestBeamUnderShadow: 'west_beam_under_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedEastBeamInnerShadow: 'east_beam_inner_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedEastBeamUnderShadow: 'east_beam_under_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSouthWindowLeftRevealShadow: 'south_window_left_reveal_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSouthWindowRightRevealShadow: 'south_window_right_reveal_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSouthWindowBottomRevealShadow: 'south_window_bottom_reveal_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
+		uiMeaningDedicatedSouthWindowTopRevealShadow: 'south_window_top_reveal_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection',
 		sproutPasteApplied: sproutPasteApplied,
 		sproutPasteUniformMode: pathTracingUniforms && pathTracingUniforms.uR738C1BakePastePreviewMode ? pathTracingUniforms.uR738C1BakePastePreviewMode.value : null,
 		sproutPasteDisabledByFloorToggle: r7310C1FloorToggleOwnsSproutPaste(),
@@ -4638,12 +8858,17 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		targetAtlasResolution: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution : null,
 		requestedSamples: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.requestedSamples : null,
 		diffuseOnly: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.diffuseOnly === true : null,
-		northWallPackageDir: r7310C1NorthWallDiffuseRuntimePackage ? r7310C1NorthWallDiffuseRuntimePackage.packageDir : null,
-		northWallTargetId: r7310C1NorthWallDiffuseRuntimePackage ? r7310C1NorthWallDiffuseRuntimePackage.targetId : null,
-		northWallSurfaceName: r7310C1NorthWallDiffuseRuntimePackage ? r7310C1NorthWallDiffuseRuntimePackage.surfaceName : null,
-		eastWallPackageDir: r7310C1EastWallDiffuseRuntimePackage ? r7310C1EastWallDiffuseRuntimePackage.packageDir : null,
-		eastWallTargetId: r7310C1EastWallDiffuseRuntimePackage ? r7310C1EastWallDiffuseRuntimePackage.targetId : null,
-		eastWallSurfaceName: r7310C1EastWallDiffuseRuntimePackage ? r7310C1EastWallDiffuseRuntimePackage.surfaceName : null,
+		runtimeAtlasPatchCount: 22,
+		runtimeAtlasGridColumns: R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS,
+		runtimeAtlasGridRows: Math.ceil(22 / R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS),
+		northWallPackageDir: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().packageDir : null,
+		northWallTargetId: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().targetId : null,
+		northWallSurfaceName: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().surfaceName : null,
+		northWallFurnitureVariant: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().northeastFurnitureMode : null,
+		eastWallPackageDir: r7310C1EastWallActiveDiffuseRuntimePackage() ? r7310C1EastWallActiveDiffuseRuntimePackage().packageDir : null,
+		eastWallTargetId: r7310C1EastWallActiveDiffuseRuntimePackage() ? r7310C1EastWallActiveDiffuseRuntimePackage().targetId : null,
+		eastWallSurfaceName: r7310C1EastWallActiveDiffuseRuntimePackage() ? r7310C1EastWallActiveDiffuseRuntimePackage().surfaceName : null,
+		eastWallFurnitureVariant: r7310C1EastWallActiveDiffuseRuntimePackage() ? r7310C1EastWallActiveDiffuseRuntimePackage().northeastFurnitureMode : null,
 		westWallPackageDir: r7310C1WestWallDiffuseRuntimePackage ? r7310C1WestWallDiffuseRuntimePackage.packageDir : null,
 		westWallTargetId: r7310C1WestWallDiffuseRuntimePackage ? r7310C1WestWallDiffuseRuntimePackage.targetId : null,
 		westWallSurfaceName: r7310C1WestWallDiffuseRuntimePackage ? r7310C1WestWallDiffuseRuntimePackage.surfaceName : null,
@@ -4653,6 +8878,55 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		ceilingPackageDir: r7310C1CeilingDiffuseRuntimePackage ? r7310C1CeilingDiffuseRuntimePackage.packageDir : null,
 		ceilingTargetId: r7310C1CeilingDiffuseRuntimePackage ? r7310C1CeilingDiffuseRuntimePackage.targetId : null,
 		ceilingSurfaceName: r7310C1CeilingDiffuseRuntimePackage ? r7310C1CeilingDiffuseRuntimePackage.surfaceName : null,
+		structuralPackageDir: r7310C1StructuralDiffuseRuntimePackage ? r7310C1StructuralDiffuseRuntimePackage.packageDir : null,
+		structuralTargetId: r7310C1StructuralDiffuseRuntimePackage ? r7310C1StructuralDiffuseRuntimePackage.targetId : null,
+		structuralSurfaceName: r7310C1StructuralDiffuseRuntimePackage ? r7310C1StructuralDiffuseRuntimePackage.surfaceName : null,
+		seColumnNorthShadowPackageDir: r7310C1SeColumnNorthShadowRuntimePackage ? r7310C1SeColumnNorthShadowRuntimePackage.packageDir : null,
+		seColumnNorthShadowTargetId: r7310C1SeColumnNorthShadowRuntimePackage ? r7310C1SeColumnNorthShadowRuntimePackage.targetId : null,
+		seColumnNorthShadowSurfaceName: r7310C1SeColumnNorthShadowRuntimePackage ? r7310C1SeColumnNorthShadowRuntimePackage.surfaceName : null,
+		seColumnWestShadowPackageDir: r7310C1SeColumnWestShadowRuntimePackage ? r7310C1SeColumnWestShadowRuntimePackage.packageDir : null,
+		seColumnWestShadowTargetId: r7310C1SeColumnWestShadowRuntimePackage ? r7310C1SeColumnWestShadowRuntimePackage.targetId : null,
+		seColumnWestShadowSurfaceName: r7310C1SeColumnWestShadowRuntimePackage ? r7310C1SeColumnWestShadowRuntimePackage.surfaceName : null,
+		southWallAcShadowPackageDir: r7310C1SouthWallAcShadowRuntimePackage ? r7310C1SouthWallAcShadowRuntimePackage.packageDir : null,
+		southWallAcShadowTargetId: r7310C1SouthWallAcShadowRuntimePackage ? r7310C1SouthWallAcShadowRuntimePackage.targetId : null,
+		southWallAcShadowSurfaceName: r7310C1SouthWallAcShadowRuntimePackage ? r7310C1SouthWallAcShadowRuntimePackage.surfaceName : null,
+		eastWallBeamShadowPackageDir: r7310C1EastWallBeamShadowActiveRuntimePackage() ? r7310C1EastWallBeamShadowActiveRuntimePackage().packageDir : null,
+		eastWallBeamShadowTargetId: r7310C1EastWallBeamShadowActiveRuntimePackage() ? r7310C1EastWallBeamShadowActiveRuntimePackage().targetId : null,
+		eastWallBeamShadowSurfaceName: r7310C1EastWallBeamShadowActiveRuntimePackage() ? r7310C1EastWallBeamShadowActiveRuntimePackage().surfaceName : null,
+		eastWallBeamShadowFurnitureVariant: r7310C1EastWallBeamShadowActiveRuntimePackage() ? r7310C1EastWallBeamShadowActiveRuntimePackage().northeastFurnitureMode : null,
+		swColumnNorthShadowPackageDir: r7310C1SwColumnNorthShadowRuntimePackage ? r7310C1SwColumnNorthShadowRuntimePackage.packageDir : null,
+		swColumnNorthShadowTargetId: r7310C1SwColumnNorthShadowRuntimePackage ? r7310C1SwColumnNorthShadowRuntimePackage.targetId : null,
+		swColumnNorthShadowSurfaceName: r7310C1SwColumnNorthShadowRuntimePackage ? r7310C1SwColumnNorthShadowRuntimePackage.surfaceName : null,
+		westWallBeamShadowPackageDir: r7310C1WestWallBeamShadowRuntimePackage ? r7310C1WestWallBeamShadowRuntimePackage.packageDir : null,
+		westWallBeamShadowTargetId: r7310C1WestWallBeamShadowRuntimePackage ? r7310C1WestWallBeamShadowRuntimePackage.targetId : null,
+		westWallBeamShadowSurfaceName: r7310C1WestWallBeamShadowRuntimePackage ? r7310C1WestWallBeamShadowRuntimePackage.surfaceName : null,
+		swColumnInnerShadowPackageDir: r7310C1SwColumnInnerShadowRuntimePackage ? r7310C1SwColumnInnerShadowRuntimePackage.packageDir : null,
+		swColumnInnerShadowTargetId: r7310C1SwColumnInnerShadowRuntimePackage ? r7310C1SwColumnInnerShadowRuntimePackage.targetId : null,
+		swColumnInnerShadowSurfaceName: r7310C1SwColumnInnerShadowRuntimePackage ? r7310C1SwColumnInnerShadowRuntimePackage.surfaceName : null,
+		westBeamInnerShadowPackageDir: r7310C1WestBeamInnerShadowRuntimePackage ? r7310C1WestBeamInnerShadowRuntimePackage.packageDir : null,
+		westBeamInnerShadowTargetId: r7310C1WestBeamInnerShadowRuntimePackage ? r7310C1WestBeamInnerShadowRuntimePackage.targetId : null,
+		westBeamInnerShadowSurfaceName: r7310C1WestBeamInnerShadowRuntimePackage ? r7310C1WestBeamInnerShadowRuntimePackage.surfaceName : null,
+		westBeamUnderShadowPackageDir: r7310C1WestBeamUnderShadowRuntimePackage ? r7310C1WestBeamUnderShadowRuntimePackage.packageDir : null,
+		westBeamUnderShadowTargetId: r7310C1WestBeamUnderShadowRuntimePackage ? r7310C1WestBeamUnderShadowRuntimePackage.targetId : null,
+		westBeamUnderShadowSurfaceName: r7310C1WestBeamUnderShadowRuntimePackage ? r7310C1WestBeamUnderShadowRuntimePackage.surfaceName : null,
+		eastBeamInnerShadowPackageDir: r7310C1EastBeamInnerShadowRuntimePackage ? r7310C1EastBeamInnerShadowRuntimePackage.packageDir : null,
+		eastBeamInnerShadowTargetId: r7310C1EastBeamInnerShadowRuntimePackage ? r7310C1EastBeamInnerShadowRuntimePackage.targetId : null,
+		eastBeamInnerShadowSurfaceName: r7310C1EastBeamInnerShadowRuntimePackage ? r7310C1EastBeamInnerShadowRuntimePackage.surfaceName : null,
+		eastBeamUnderShadowPackageDir: r7310C1EastBeamUnderShadowRuntimePackage ? r7310C1EastBeamUnderShadowRuntimePackage.packageDir : null,
+		eastBeamUnderShadowTargetId: r7310C1EastBeamUnderShadowRuntimePackage ? r7310C1EastBeamUnderShadowRuntimePackage.targetId : null,
+		eastBeamUnderShadowSurfaceName: r7310C1EastBeamUnderShadowRuntimePackage ? r7310C1EastBeamUnderShadowRuntimePackage.surfaceName : null,
+		southWindowLeftRevealShadowPackageDir: r7310C1SouthWindowLeftRevealShadowRuntimePackage ? r7310C1SouthWindowLeftRevealShadowRuntimePackage.packageDir : null,
+		southWindowLeftRevealShadowTargetId: r7310C1SouthWindowLeftRevealShadowRuntimePackage ? r7310C1SouthWindowLeftRevealShadowRuntimePackage.targetId : null,
+		southWindowLeftRevealShadowSurfaceName: r7310C1SouthWindowLeftRevealShadowRuntimePackage ? r7310C1SouthWindowLeftRevealShadowRuntimePackage.surfaceName : null,
+		southWindowRightRevealShadowPackageDir: r7310C1SouthWindowRightRevealShadowRuntimePackage ? r7310C1SouthWindowRightRevealShadowRuntimePackage.packageDir : null,
+		southWindowRightRevealShadowTargetId: r7310C1SouthWindowRightRevealShadowRuntimePackage ? r7310C1SouthWindowRightRevealShadowRuntimePackage.targetId : null,
+		southWindowRightRevealShadowSurfaceName: r7310C1SouthWindowRightRevealShadowRuntimePackage ? r7310C1SouthWindowRightRevealShadowRuntimePackage.surfaceName : null,
+		southWindowBottomRevealShadowPackageDir: r7310C1SouthWindowBottomRevealShadowRuntimePackage ? r7310C1SouthWindowBottomRevealShadowRuntimePackage.packageDir : null,
+		southWindowBottomRevealShadowTargetId: r7310C1SouthWindowBottomRevealShadowRuntimePackage ? r7310C1SouthWindowBottomRevealShadowRuntimePackage.targetId : null,
+		southWindowBottomRevealShadowSurfaceName: r7310C1SouthWindowBottomRevealShadowRuntimePackage ? r7310C1SouthWindowBottomRevealShadowRuntimePackage.surfaceName : null,
+		southWindowTopRevealShadowPackageDir: r7310C1SouthWindowTopRevealShadowRuntimePackage ? r7310C1SouthWindowTopRevealShadowRuntimePackage.packageDir : null,
+		southWindowTopRevealShadowTargetId: r7310C1SouthWindowTopRevealShadowRuntimePackage ? r7310C1SouthWindowTopRevealShadowRuntimePackage.targetId : null,
+		southWindowTopRevealShadowSurfaceName: r7310C1SouthWindowTopRevealShadowRuntimePackage ? r7310C1SouthWindowTopRevealShadowRuntimePackage.surfaceName : null,
 		uniformMode: pathTracingUniforms && pathTracingUniforms.uR7310C1FullRoomDiffuseMode ? pathTracingUniforms.uR7310C1FullRoomDiffuseMode.value : null,
 		uniformReady: pathTracingUniforms && pathTracingUniforms.uR7310C1FullRoomDiffuseReady ? pathTracingUniforms.uR7310C1FullRoomDiffuseReady.value : null,
 		uniformFloorMode: pathTracingUniforms && pathTracingUniforms.uR7310C1FloorDiffuseMode ? pathTracingUniforms.uR7310C1FloorDiffuseMode.value : null,
@@ -4661,7 +8935,40 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		uniformWestWallMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallDiffuseMode ? pathTracingUniforms.uR7310C1WestWallDiffuseMode.value : null,
 		uniformSouthWallMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallDiffuseMode ? pathTracingUniforms.uR7310C1SouthWallDiffuseMode.value : null,
 		uniformCeilingMode: pathTracingUniforms && pathTracingUniforms.uR7310C1CeilingDiffuseMode ? pathTracingUniforms.uR7310C1CeilingDiffuseMode.value : null,
-		currentSamples: Math.round(typeof sampleCounter === 'number' ? sampleCounter : 0)
+		uniformStructuralMode: pathTracingUniforms && pathTracingUniforms.uR7310C1StructuralDiffuseMode ? pathTracingUniforms.uR7310C1StructuralDiffuseMode.value : null,
+		uniformSeColumnNorthShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SeColumnNorthShadowMode.value : null,
+		uniformSeColumnNorthShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnNorthShadowReady ? pathTracingUniforms.uR7310C1SeColumnNorthShadowReady.value : null,
+		uniformSeColumnWestShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowMode ? pathTracingUniforms.uR7310C1SeColumnWestShadowMode.value : null,
+		uniformSeColumnWestShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SeColumnWestShadowReady ? pathTracingUniforms.uR7310C1SeColumnWestShadowReady.value : null,
+		uniformSouthWallAcShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowMode ? pathTracingUniforms.uR7310C1SouthWallAcShadowMode.value : null,
+		uniformSouthWallAcShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWallAcShadowReady ? pathTracingUniforms.uR7310C1SouthWallAcShadowReady.value : null,
+		uniformEastWallBeamShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowMode ? pathTracingUniforms.uR7310C1EastWallBeamShadowMode.value : null,
+		uniformEastWallBeamShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastWallBeamShadowReady ? pathTracingUniforms.uR7310C1EastWallBeamShadowReady.value : null,
+		uniformSwColumnNorthShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowMode ? pathTracingUniforms.uR7310C1SwColumnNorthShadowMode.value : null,
+		uniformSwColumnNorthShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnNorthShadowReady ? pathTracingUniforms.uR7310C1SwColumnNorthShadowReady.value : null,
+		uniformWestWallBeamShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowMode ? pathTracingUniforms.uR7310C1WestWallBeamShadowMode.value : null,
+		uniformWestWallBeamShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowReady ? pathTracingUniforms.uR7310C1WestWallBeamShadowReady.value : null,
+		uniformWestWallBeamShadowZMaxOverride: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride ? pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value : null,
+		uniformSwColumnInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowMode ? pathTracingUniforms.uR7310C1SwColumnInnerShadowMode.value : null,
+		uniformSwColumnInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SwColumnInnerShadowReady ? pathTracingUniforms.uR7310C1SwColumnInnerShadowReady.value : null,
+		uniformWestBeamInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowMode ? pathTracingUniforms.uR7310C1WestBeamInnerShadowMode.value : null,
+		uniformWestBeamInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamInnerShadowReady ? pathTracingUniforms.uR7310C1WestBeamInnerShadowReady.value : null,
+		uniformWestBeamUnderShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowMode ? pathTracingUniforms.uR7310C1WestBeamUnderShadowMode.value : null,
+		uniformWestBeamUnderShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1WestBeamUnderShadowReady ? pathTracingUniforms.uR7310C1WestBeamUnderShadowReady.value : null,
+		uniformEastBeamInnerShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowMode ? pathTracingUniforms.uR7310C1EastBeamInnerShadowMode.value : null,
+		uniformEastBeamInnerShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamInnerShadowReady ? pathTracingUniforms.uR7310C1EastBeamInnerShadowReady.value : null,
+		uniformEastBeamUnderShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowMode ? pathTracingUniforms.uR7310C1EastBeamUnderShadowMode.value : null,
+		uniformEastBeamUnderShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1EastBeamUnderShadowReady ? pathTracingUniforms.uR7310C1EastBeamUnderShadowReady.value : null,
+		uniformSouthWindowLeftRevealShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowMode ? pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowMode.value : null,
+		uniformSouthWindowLeftRevealShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowReady ? pathTracingUniforms.uR7310C1SouthWindowLeftRevealShadowReady.value : null,
+		uniformSouthWindowRightRevealShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowMode ? pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowMode.value : null,
+		uniformSouthWindowRightRevealShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowReady ? pathTracingUniforms.uR7310C1SouthWindowRightRevealShadowReady.value : null,
+		uniformSouthWindowBottomRevealShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowMode ? pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowMode.value : null,
+		uniformSouthWindowBottomRevealShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowReady ? pathTracingUniforms.uR7310C1SouthWindowBottomRevealShadowReady.value : null,
+		uniformSouthWindowTopRevealShadowMode: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode ? pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode.value : null,
+		uniformSouthWindowTopRevealShadowReady: pathTracingUniforms && pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady ? pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady.value : null,
+		currentSamples: Math.round(typeof sampleCounter === 'number' ? sampleCounter : 0),
+		runtimeArchitecture: 'single_full_west_wall_first_hit_hybrid'
 	};
 };
 
@@ -4673,6 +8980,29 @@ function r7310C1RuntimeProbeDecodeModeForLevel(probeLevel)
 	if (probeLevel === 5) return 'isRayExiting';
 	if (probeLevel === 6) return 'cameraPosY';
 	if (probeLevel === 7) return 'atlasRowCol';
+	if (probeLevel === 8) return 'structuralIslandUv';
+	if (probeLevel === 9) return 'structuralWorldPosition';
+	if (probeLevel === 10) return 'eastWallWorldPosition';
+	if (probeLevel === 11) return 'beamUnderRoute';
+	if (probeLevel === 12) return 'beamUnderNormal';
+	if (probeLevel === 13) return 'beamUnderWorldPosition';
+	if (probeLevel === 14) return 'beamUnderHitObject';
+	if (probeLevel === 15) return 'beamUnderDirectLight';
+	if (probeLevel === 16) return 'beamUnderDirectFacing';
+	if (probeLevel === 17) return 'southWindowSwColumnContinuityRoute';
+	if (probeLevel === 18) return 'southWindowSwColumnContinuityNormal';
+	if (probeLevel === 19) return 'southWindowSwColumnContinuityWorldPosition';
+	if (probeLevel === 20) return 'southWindowSwColumnContinuityHitObject';
+	if (probeLevel === 21) return 'southWindowSwColumnContinuityIndirectRadiance';
+	if (probeLevel === 22) return 'westJoinRoute';
+	if (probeLevel === 23) return 'westJoinNormal';
+	if (probeLevel === 24) return 'westJoinWorldPosition';
+	if (probeLevel === 25) return 'westJoinHitObject';
+	if (probeLevel === 26) return 'westJoinIndirectRadiance';
+	if (probeLevel === 27) return 'eastJoinRoute';
+	if (probeLevel === 28) return 'joinCoverage';
+	if (probeLevel === 29) return 'joinCutawayFlags';
+	if (probeLevel === 30) return 'joinIndirectRadiance';
 	return 'surfaceClass';
 }
 
@@ -4695,6 +9025,190 @@ function decodeR7310C1RuntimeProbeSample(r, g, b, decodeMode)
 			: 512;
 		return { row: Math.round(r * atlasRes), col: Math.round(g * atlasRes), world: b };
 	}
+	if (decodeMode === 'structuralIslandUv')
+		return { islandId: Math.round(r * 255), u: g, v: b };
+	if (decodeMode === 'structuralWorldPosition')
+		return { x: r, y: g, z: b };
+	if (decodeMode === 'eastWallWorldPosition')
+		return { x: r, y: g, z: b };
+	if (decodeMode === 'beamUnderRoute')
+	{
+		var routeId = Math.round(r * 255);
+		var structuralIslandId = Math.round(g * 255);
+		var targetOffset = Math.round(b * 255);
+		var routeNames = {
+			0: 'none',
+			1: 'west_beam_under_shadow_hybrid',
+			2: 'east_beam_under_shadow_hybrid',
+			3: 'west_beam_under_shadow_geometry_only',
+			4: 'east_beam_under_shadow_geometry_only',
+			5: 'west_beam_under_structural_island_only',
+			6: 'east_beam_under_structural_island_only'
+		};
+		return {
+			routeId: routeId,
+			routeName: routeNames[routeId] || 'unknown',
+			structuralIslandId: structuralIslandId,
+			targetId: targetOffset > 0 ? 1000 + targetOffset : null
+		};
+	}
+	if (decodeMode === 'beamUnderNormal')
+		return { x: r * 2 - 1, y: g * 2 - 1, z: b * 2 - 1 };
+	if (decodeMode === 'beamUnderWorldPosition')
+		return { x: r * 4.4 - 2.2, y: g * 3.2 - 0.1, z: b * 5.4 - 2.1 };
+	if (decodeMode === 'beamUnderHitObject')
+	{
+		var hitType = Math.round(r * 255);
+		var objectIdLow = Math.round(g * 255);
+		var objectIdHigh = Math.round(b * 255);
+		return { hitType: hitType, objectID: objectIdHigh * 256 + objectIdLow };
+	}
+	if (decodeMode === 'beamUnderDirectLight')
+		return {
+			routeId: Math.round(r * 255),
+			directLuma: g,
+			pickedLightIndex: Math.round(b * 255) - 1
+		};
+	if (decodeMode === 'beamUnderDirectFacing')
+		return {
+			routeId: Math.round(r * 255),
+			sourceFacingCos: g,
+			zeroContributionClass: Math.round(b * 255)
+		};
+	if (decodeMode === 'southWindowSwColumnContinuityRoute')
+	{
+		var continuityRouteId = Math.round(r * 255);
+		var continuityStructuralIslandId = Math.round(g * 255);
+		var continuityTargetOffset = Math.round(b * 255);
+		var continuityRouteNames = {
+			0: 'none',
+			1: 'sw_column_inner_shadow_hybrid',
+			2: 'south_window_left_reveal_shadow_hybrid',
+			3: 'sw_column_inner_shadow_geometry_only',
+			4: 'south_window_left_reveal_shadow_geometry_only',
+			5: 'sw_column_inner_structural_island_only',
+			6: 'west_beam_inner_shadow_hybrid',
+			7: 'west_beam_inner_shadow_geometry_only'
+		};
+		return {
+			routeId: continuityRouteId,
+			routeName: continuityRouteNames[continuityRouteId] || 'unknown',
+			structuralIslandId: continuityStructuralIslandId,
+			targetId: continuityTargetOffset > 0 ? 1000 + continuityTargetOffset : null
+		};
+	}
+	if (decodeMode === 'southWindowSwColumnContinuityNormal')
+		return { x: r * 2 - 1, y: g * 2 - 1, z: b * 2 - 1 };
+	if (decodeMode === 'southWindowSwColumnContinuityWorldPosition')
+		return { x: r * 4.4 - 2.2, y: g * 3.2 - 0.1, z: b * 5.4 - 2.1 };
+	if (decodeMode === 'southWindowSwColumnContinuityHitObject')
+	{
+		var continuityHitType = Math.round(r * 255);
+		var continuityObjectIdLow = Math.round(g * 255);
+		var continuityObjectIdHigh = Math.round(b * 255);
+		return { hitType: continuityHitType, objectID: continuityObjectIdHigh * 256 + continuityObjectIdLow };
+	}
+	if (decodeMode === 'southWindowSwColumnContinuityIndirectRadiance')
+		return {
+			r: r,
+			g: g,
+			b: b,
+			luma: 0.2126 * r + 0.7152 * g + 0.0722 * b
+		};
+	if (decodeMode === 'westJoinRoute')
+	{
+		var westJoinRouteId = Math.round(r * 255);
+		var westJoinStructuralIslandId = Math.round(g * 255);
+		var westJoinTargetOffset = Math.round(b * 255);
+		var westJoinRouteNames = {
+			0: 'none',
+			1: 'sw_column_north_shadow_hybrid',
+			2: 'west_wall_full_hybrid',
+			3: 'west_wall_beam_shadow_hybrid',
+			4: 'sw_column_inner_shadow_hybrid',
+			5: 'west_beam_inner_shadow_hybrid',
+			6: 'west_beam_under_shadow_hybrid',
+			7: 'structural_beam_column_only'
+		};
+		return {
+			routeId: westJoinRouteId,
+			routeName: westJoinRouteNames[westJoinRouteId] || 'unknown',
+			structuralIslandId: westJoinStructuralIslandId,
+			targetId: westJoinTargetOffset > 0 ? 1000 + westJoinTargetOffset : null
+		};
+	}
+	if (decodeMode === 'westJoinNormal')
+		return { x: r * 2 - 1, y: g * 2 - 1, z: b * 2 - 1 };
+	if (decodeMode === 'westJoinWorldPosition')
+		return { x: r * 4.4 - 2.2, y: g * 3.2 - 0.1, z: b * 5.4 - 2.1 };
+	if (decodeMode === 'westJoinHitObject')
+	{
+		var westJoinHitType = Math.round(r * 255);
+		var westJoinObjectIdLow = Math.round(g * 255);
+		var westJoinObjectIdHigh = Math.round(b * 255);
+		return { hitType: westJoinHitType, objectID: westJoinObjectIdHigh * 256 + westJoinObjectIdLow };
+	}
+	if (decodeMode === 'westJoinIndirectRadiance')
+		return {
+			r: r,
+			g: g,
+			b: b,
+			luma: 0.2126 * r + 0.7152 * g + 0.0722 * b
+		};
+	if (decodeMode === 'eastJoinRoute')
+	{
+		var eastJoinRouteId = Math.round(r * 255);
+		var eastJoinStructuralIslandId = Math.round(g * 255);
+		var eastJoinTargetOffset = Math.round(b * 255);
+		var eastJoinRouteNames = {
+			0: 'none',
+			1: 'se_column_north_shadow_hybrid',
+			2: 'se_column_west_shadow_hybrid',
+			3: 'east_wall_beam_shadow_hybrid',
+			4: 'east_wall_full_hybrid',
+			5: 'structural_beam_column_only'
+		};
+		return {
+			routeId: eastJoinRouteId,
+			routeName: eastJoinRouteNames[eastJoinRouteId] || 'unknown',
+			structuralIslandId: eastJoinStructuralIslandId,
+			targetId: eastJoinTargetOffset > 0 ? 1000 + eastJoinTargetOffset : null
+		};
+	}
+	if (decodeMode === 'joinCoverage')
+	{
+		var coverageRouteId = Math.round(b * 255);
+		var coverageRouteNames = {
+			0: 'none',
+			1: 'se_column_north_shadow_hybrid',
+			2: 'se_column_west_shadow_hybrid',
+			3: 'east_wall_beam_shadow_hybrid',
+			4: 'east_wall_full_hybrid',
+			5: 'sw_column_north_shadow_hybrid',
+			6: 'west_wall_beam_shadow_hybrid',
+			7: 'west_wall_full_hybrid',
+			8: 'sw_column_inner_shadow_hybrid'
+		};
+		return {
+			weightSum: r,
+			validAlpha: g,
+			routeId: coverageRouteId,
+			routeName: coverageRouteNames[coverageRouteId] || 'unknown'
+		};
+	}
+	if (decodeMode === 'joinCutawayFlags')
+		return {
+			xrayEnabled: r > 0.5,
+			seColumnNorthHiddenByEastBeam: g > 0.5,
+			seColumnInnerHiddenByBookshelf: b > 0.5
+		};
+	if (decodeMode === 'joinIndirectRadiance')
+		return {
+			r: r,
+			g: g,
+			b: b,
+			luma: 0.2126 * r + 0.7152 * g + 0.0722 * b
+		};
 	return { r: r, g: g, b: b };
 }
 
@@ -4733,7 +9247,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 	options = options || {};
 	var requestedProbeLevel = Number(options.probeLevel);
 	var probeLevel = Number.isFinite(requestedProbeLevel)
-		? Math.max(1, Math.min(7, Math.round(requestedProbeLevel)))
+		? Math.max(1, Math.min(30, Math.round(requestedProbeLevel)))
 		: 1;
 	var samplePointSpace = options.samplePointSpace === 'canvasCssPixel' ? 'canvasCssPixel' : 'renderTargetPixel';
 	var decodeMode = typeof options.decodeMode === 'string'
@@ -4747,6 +9261,9 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 	var savedWestWallRuntimeEnabled = r7310C1WestWallDiffuseRuntimeEnabled;
 	var savedSouthWallRuntimeEnabled = r7310C1SouthWallDiffuseRuntimeEnabled;
 	var savedCeilingRuntimeEnabled = r7310C1CeilingDiffuseRuntimeEnabled;
+	var savedStructuralRuntimeEnabled = r7310C1StructuralDiffuseRuntimeEnabled;
+	var savedSeColumnNorthShadowRuntimeEnabled = r7310C1SeColumnNorthShadowRuntimeEnabled;
+	var savedSeColumnWestShadowRuntimeEnabled = r7310C1SeColumnWestShadowRuntimeEnabled;
 	var state = captureR738BakeState();
 	var target = null;
 	var previous = null;
@@ -4755,6 +9272,10 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 	{
 		await window.waitForR7310C1FullRoomDiffuseRuntimeReady(timeout);
 		if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+		if (Number.isFinite(Number(options.westWallBeamShadowZMaxOverride)) &&
+			pathTracingUniforms &&
+			pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride)
+			pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value = Number(options.westWallBeamShadowZMaxOverride);
 		if (options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
 			window.setR739Config1ValidationCameraState(options.cameraState);
 		if (options.northWallCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
@@ -4768,7 +9289,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				fov: 55
 			});
 		}
-		if (options.eastWallCamera === true && typeof window.setR739Config1ValidationCameraState === 'function')
+		if (options.eastWallCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
 		{
 			window.setR739Config1ValidationCameraState({
 				name: 'r7310_east_wall_runtime_probe',
@@ -4778,7 +9299,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				fov: 55
 			});
 		}
-		if (options.westWallCamera === true && typeof window.setR739Config1ValidationCameraState === 'function')
+		if (options.westWallCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
 		{
 			window.setR739Config1ValidationCameraState({
 				name: 'r7310_west_wall_runtime_probe',
@@ -4788,24 +9309,72 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				fov: 55
 			});
 		}
-		r7310C1FloorDiffuseRuntimeEnabled = options.northWallCamera === true || options.eastWallCamera === true || options.westWallCamera === true ? false : true;
-		r7310C1NorthWallDiffuseRuntimeEnabled = options.northWallCamera === true;
-		r7310C1EastWallDiffuseRuntimeEnabled = options.eastWallCamera === true;
-			r7310C1WestWallDiffuseRuntimeEnabled = options.westWallCamera === true;
-			r7310C1SouthWallDiffuseRuntimeEnabled = false;
-			r7310C1CeilingDiffuseRuntimeEnabled = false;
-			r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1FloorDiffuseRuntimeEnabled || r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1EastWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeEnabled;
+		if (options.southWallCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
+		{
+			window.setR739Config1ValidationCameraState({
+				name: 'r7310_south_wall_runtime_probe',
+				position: { x: 0.0, y: 1.45, z: 1.25 },
+				yaw: 3.14159265359,
+				pitch: 0.0,
+				fov: 55
+			});
+		}
+		if (options.ceilingCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
+		{
+			window.setR739Config1ValidationCameraState({
+				name: 'r7310_ceiling_runtime_probe',
+				position: { x: 0.0, y: 1.25, z: 0.0 },
+				yaw: 0.0,
+				pitch: 1.10,
+				fov: 70
+			});
+		}
+		if (options.structuralCamera === true && !options.cameraState && typeof window.setR739Config1ValidationCameraState === 'function')
+		{
+			window.setR739Config1ValidationCameraState({
+				name: 'r7310_structural_runtime_probe',
+				position: { x: 0.0, y: 1.45, z: 1.05 },
+				yaw: 3.14159265359,
+				pitch: 0.0,
+				fov: 70
+			});
+		}
+		var allSurfaceProbe = options.allSurfaces === true;
+		var specificSurfaceProbe = options.northWallCamera === true ||
+			options.eastWallCamera === true ||
+			options.westWallCamera === true ||
+			options.southWallCamera === true ||
+			options.ceilingCamera === true ||
+			options.structuralCamera === true ||
+			options.seColumnNorthShadowCamera === true ||
+			options.seColumnWestShadowCamera === true;
+		r7310C1FloorDiffuseRuntimeEnabled = allSurfaceProbe || (specificSurfaceProbe ? false : true);
+		r7310C1NorthWallDiffuseRuntimeEnabled = allSurfaceProbe || options.northWallCamera === true;
+		r7310C1EastWallDiffuseRuntimeEnabled = allSurfaceProbe || options.eastWallCamera === true;
+			r7310C1WestWallDiffuseRuntimeEnabled = allSurfaceProbe || options.westWallCamera === true;
+			r7310C1SouthWallDiffuseRuntimeEnabled = allSurfaceProbe || options.southWallCamera === true;
+			r7310C1CeilingDiffuseRuntimeEnabled = allSurfaceProbe || options.ceilingCamera === true;
+			r7310C1StructuralDiffuseRuntimeEnabled = allSurfaceProbe || options.structuralCamera === true;
+			r7310C1SeColumnNorthShadowRuntimeEnabled = allSurfaceProbe || options.seColumnNorthShadowCamera === true;
+			r7310C1SeColumnWestShadowRuntimeEnabled = allSurfaceProbe || options.seColumnWestShadowCamera === true;
+			r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 		ensureR7310C1FullRoomDiffuseRuntimeLoading();
 		var selectedReadyStart = performance.now();
 		while (performance.now() - selectedReadyStart < timeout)
 		{
-			var selectedReady = r7310C1EastWallDiffuseRuntimeEnabled
-				? r7310C1EastWallDiffuseRuntimeReady
-				: (r7310C1WestWallDiffuseRuntimeEnabled
-				? r7310C1WestWallDiffuseRuntimeReady
-				: (r7310C1NorthWallDiffuseRuntimeEnabled
-				? r7310C1NorthWallDiffuseRuntimeReady
-				: r7310C1FullRoomDiffuseRuntimeReady));
+			var selectedReady = true;
+			if (r7310C1FloorDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1FullRoomDiffuseRuntimeReady;
+			if (r7310C1NorthWallDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1NorthWallDiffuseRuntimeReady;
+			if (r7310C1EastWallDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1EastWallDiffuseRuntimeReady;
+			if (r7310C1WestWallDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1WestWallDiffuseRuntimeReady;
+			if (r7310C1SouthWallDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1SouthWallDiffuseRuntimeReady;
+			if (r7310C1CeilingDiffuseRuntimeEnabled) selectedReady = selectedReady && r7310C1CeilingDiffuseRuntimeReady;
+			if (r7310C1StructuralDiffuseRuntimeEnabled)
+				selectedReady = selectedReady && (r7310C1StructuralDiffuseRuntimeReady || (r7310C1StructuralDiffuseRuntimePending && options.structuralPendingOk === true));
+			if (r7310C1SeColumnNorthShadowRuntimeEnabled)
+				selectedReady = selectedReady && (r7310C1SeColumnNorthShadowRuntimeReady || (r7310C1SeColumnNorthShadowRuntimePending && options.seColumnNorthShadowPendingOk === true));
+			if (r7310C1SeColumnWestShadowRuntimeEnabled)
+				selectedReady = selectedReady && (r7310C1SeColumnWestShadowRuntimeReady || (r7310C1SeColumnWestShadowRuntimePending && options.seColumnWestShadowPendingOk === true));
 			if (selectedReady)
 				break;
 			await new Promise(function(resolve) { setTimeout(resolve, 100); });
@@ -4816,6 +9385,22 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 			throw new Error('R7-3.10 west wall diffuse runtime package did not become ready');
 		if (r7310C1NorthWallDiffuseRuntimeEnabled && !r7310C1NorthWallDiffuseRuntimeReady)
 			throw new Error('R7-3.10 north wall diffuse runtime package did not become ready');
+		if (r7310C1SouthWallDiffuseRuntimeEnabled && !r7310C1SouthWallDiffuseRuntimeReady)
+			throw new Error('R7-3.10 south wall diffuse runtime package did not become ready');
+		if (r7310C1CeilingDiffuseRuntimeEnabled && !r7310C1CeilingDiffuseRuntimeReady)
+			throw new Error('R7-3.10 ceiling diffuse runtime package did not become ready');
+		if (r7310C1StructuralDiffuseRuntimeEnabled &&
+			!r7310C1StructuralDiffuseRuntimeReady &&
+			!(r7310C1StructuralDiffuseRuntimePending && options.structuralPendingOk === true))
+			throw new Error('R7-3.10 structural diffuse runtime package did not become ready');
+		if (r7310C1SeColumnNorthShadowRuntimeEnabled &&
+			!r7310C1SeColumnNorthShadowRuntimeReady &&
+			!(r7310C1SeColumnNorthShadowRuntimePending && options.seColumnNorthShadowPendingOk === true))
+			throw new Error('R7-3.10 southeast column north shadow runtime package did not become ready');
+		if (r7310C1SeColumnWestShadowRuntimeEnabled &&
+			!r7310C1SeColumnWestShadowRuntimeReady &&
+			!(r7310C1SeColumnWestShadowRuntimePending && options.seColumnWestShadowPendingOk === true))
+			throw new Error('R7-3.10 southeast column west shadow runtime package did not become ready');
 		if (r7310C1FloorDiffuseRuntimeEnabled && !r7310C1FullRoomDiffuseRuntimeReady)
 			throw new Error('R7-3.10 floor diffuse runtime package did not become ready');
 		updateR738C1BakePastePreviewUniforms();
@@ -4844,7 +9429,14 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 		pathTracingUniforms.uFrameCounter.value = frameCounter;
 		pathTracingUniforms.uPreviousSampleCount.value = 1.0;
 		pathTracingUniforms.uCameraIsMoving.value = false;
-		pathTracingUniforms.uRandomVec2.value.set(Math.random(), Math.random());
+		var requestedRandomVec2 = options.randomVec2 || null;
+		var probeRandomX = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.x))
+			? Number(requestedRandomVec2.x)
+			: Math.random();
+		var probeRandomY = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.y))
+			? Number(requestedRandomVec2.y)
+			: Math.random();
+		pathTracingUniforms.uRandomVec2.value.set(probeRandomX, probeRandomY);
 		pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
 		renderer.setRenderTarget(target);
 		renderer.render(pathTracingScene, worldCamera);
@@ -4870,6 +9462,17 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 		var northWallShortCircuitCount = 0;
 		var eastWallShortCircuitCount = 0;
 		var westWallShortCircuitCount = 0;
+		var southWallShortCircuitCount = 0;
+		var southRevealShortCircuitCount = 0;
+		var ceilingShortCircuitCount = 0;
+		var structuralShortCircuitCount = 0;
+		var structuralIslandHitByName = {};
+		var structuralIslandShortCircuitByName = {};
+		for (var islandIndex = 0; islandIndex < R7310_C1_STRUCTURAL_ISLANDS.length; islandIndex += 1)
+		{
+			structuralIslandHitByName[R7310_C1_STRUCTURAL_ISLANDS[islandIndex].name] = 0;
+			structuralIslandShortCircuitByName[R7310_C1_STRUCTURAL_ISLANDS[islandIndex].name] = 0;
+		}
 		for (var i = 0; i < pixels.length; i += 4)
 		{
 			if (pixels[i] < 0.25 && pixels[i + 1] > 0.75 && pixels[i + 2] < 0.25)
@@ -4880,18 +9483,38 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				eastWallShortCircuitCount += 1;
 			if (pixels[i] > 0.75 && pixels[i + 1] > 0.75 && pixels[i + 2] < 0.25)
 				westWallShortCircuitCount += 1;
+			if (pixels[i] < 0.25 && pixels[i + 1] < 0.25 && pixels[i + 2] > 0.75)
+			{
+				southWallShortCircuitCount += 1;
+				southRevealShortCircuitCount += 1;
+			}
+			if (pixels[i] > 0.75 && pixels[i + 1] > 0.75 && pixels[i + 2] > 0.75)
+				ceilingShortCircuitCount += 1;
+			if (pixels[i] > 0.75 && pixels[i + 1] < 0.25 && pixels[i + 2] < 0.25)
+				structuralShortCircuitCount += 1;
 		}
 		var hitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.floor) ? surfaceClassSummary.floor : 0;
 		var northWallHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.wall) ? surfaceClassSummary.wall : 0;
 		var eastWallHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.wall) ? surfaceClassSummary.wall : 0;
 		var westWallHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.wall) ? surfaceClassSummary.wall : 0;
+		var southWallHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.wall) ? surfaceClassSummary.wall : 0;
+		var ceilingHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.ceiling) ? surfaceClassSummary.ceiling : 0;
+		var structuralHitCount = surfaceClassSummary && Number.isFinite(surfaceClassSummary.wall) ? surfaceClassSummary.wall : 0;
+		if (surfaceClassSummary && Number.isFinite(surfaceClassSummary.object))
+			structuralHitCount += surfaceClassSummary.object;
 		var status = options.eastWallCamera === true
 			? (eastWallHitCount > 0 && eastWallShortCircuitCount > 0 ? 'pass' : 'fail')
 			: (options.westWallCamera === true
 			? (westWallHitCount > 0 && westWallShortCircuitCount > 0 ? 'pass' : 'fail')
 			: (options.northWallCamera === true
 			? (northWallHitCount > 0 && northWallShortCircuitCount > 0 ? 'pass' : 'fail')
-			: (hitCount > 0 && shortCircuitCount > 0 ? 'pass' : 'fail')));
+			: (options.southWallCamera === true
+			? (southWallHitCount > 0 && southWallShortCircuitCount > 0 ? 'pass' : 'fail')
+			: (options.ceilingCamera === true
+			? (ceilingHitCount > 0 && ceilingShortCircuitCount > 0 ? 'pass' : 'fail')
+			: (options.structuralCamera === true
+			? ((r7310C1StructuralDiffuseRuntimePending && options.structuralPendingOk === true) || (structuralHitCount > 0 && structuralShortCircuitCount > 0) ? 'pass' : 'fail')
+			: (hitCount > 0 && shortCircuitCount > 0 ? 'pass' : 'fail'))))));
 		if (probeLevel > 1)
 		{
 			var finiteProbeSamples = r7310ProbeSamples.every(function(sample)
@@ -4964,10 +9587,27 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				rowHistogram: rowEntries
 			};
 		}
+		var structuralProbeSamples = r7310ProbeSamples;
+		for (var structuralSampleIndex = 0; structuralSampleIndex < structuralProbeSamples.length; structuralSampleIndex += 1)
+		{
+			var decodedStructuralSample = structuralProbeSamples[structuralSampleIndex].decoded || {};
+			var decodedIslandId = Math.round(Number(decodedStructuralSample.islandId) || 0);
+			var decodedIsland = R7310_C1_STRUCTURAL_ISLANDS[decodedIslandId - 1];
+			if (!decodedIsland) continue;
+			structuralIslandHitByName[decodedIsland.name] += 1;
+			structuralIslandShortCircuitByName[decodedIsland.name] += 1;
+		}
+		var structuralProbePasses = r7310C1StructuralDiffuseRuntimePending && options.structuralPendingOk === true
+			? true
+			: (options.structuralCamera === true
+				? structuralShortCircuitCount > 0 || (probeLevel > 1 && r7310ProbeSamples.length > 0)
+				: null);
+		var structuralIslandUv = probeLevel === 8 ? r7310ProbeSamples.map(function(sample) { return sample.decoded; }) : [];
+		var structuralWorldPosition = probeLevel === 9 ? r7310ProbeSamples.map(function(sample) { return sample.decoded; }) : [];
 		return {
 			version: 'r7-3-10-c1-full-room-diffuse-runtime-probe',
 			config: 1,
-			probeTarget: options.eastWallCamera === true ? 'east_wall' : (options.westWallCamera === true ? 'west_wall' : (options.northWallCamera === true ? 'north_wall' : 'floor')),
+			probeTarget: options.eastWallCamera === true ? 'east_wall' : (options.westWallCamera === true ? 'west_wall' : (options.northWallCamera === true ? 'north_wall' : (options.southWallCamera === true ? 'south_wall' : (options.ceilingCamera === true ? 'ceiling' : (options.structuralCamera === true ? 'structural_beams_columns' : (options.seColumnWestShadowCamera === true ? 'se_column_west_shadow' : (options.seColumnNorthShadowCamera === true ? 'se_column_north_shadow' : 'floor'))))))),
 			enabled: true,
 			floorEnabled: r7310C1FloorDiffuseRuntimeEnabled,
 			northWallEnabled: r7310C1NorthWallDiffuseRuntimeEnabled,
@@ -4975,6 +9615,10 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				westWallEnabled: r7310C1WestWallDiffuseRuntimeEnabled,
 				southWallEnabled: r7310C1SouthWallDiffuseRuntimeEnabled,
 				ceilingEnabled: r7310C1CeilingDiffuseRuntimeEnabled,
+				structuralEnabled: r7310C1StructuralDiffuseRuntimeEnabled,
+				seColumnNorthShadowEnabled: r7310C1SeColumnNorthShadowRuntimeEnabled,
+				seColumnWestShadowEnabled: r7310C1SeColumnWestShadowRuntimeEnabled,
+				structuralPending: r7310C1StructuralDiffuseRuntimePending,
 			ready: r7310C1FullRoomDiffuseRuntimeReady,
 			applied: updateR7310C1FullRoomDiffuseRuntimeUniforms(),
 			packageDir: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.packageDir : null,
@@ -4983,6 +9627,9 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				westWallPackageDir: r7310C1WestWallDiffuseRuntimePackage ? r7310C1WestWallDiffuseRuntimePackage.packageDir : null,
 				southWallPackageDir: r7310C1SouthWallDiffuseRuntimePackage ? r7310C1SouthWallDiffuseRuntimePackage.packageDir : null,
 				ceilingPackageDir: r7310C1CeilingDiffuseRuntimePackage ? r7310C1CeilingDiffuseRuntimePackage.packageDir : null,
+				structuralPackageDir: r7310C1StructuralDiffuseRuntimePackage ? r7310C1StructuralDiffuseRuntimePackage.packageDir : null,
+				seColumnNorthShadowPackageDir: r7310C1SeColumnNorthShadowRuntimePackage ? r7310C1SeColumnNorthShadowRuntimePackage.packageDir : null,
+				seColumnWestShadowPackageDir: r7310C1SeColumnWestShadowRuntimePackage ? r7310C1SeColumnWestShadowRuntimePackage.packageDir : null,
 			bakedSurfaceHitCount: hitCount,
 			bakedSurfaceShortCircuitCount: shortCircuitCount,
 			northWallSurfaceHitCount: northWallHitCount,
@@ -4991,6 +9638,20 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 			eastWallShortCircuitCount: eastWallShortCircuitCount,
 			westWallSurfaceHitCount: westWallHitCount,
 			westWallShortCircuitCount: westWallShortCircuitCount,
+			southWallSurfaceHitCount: southWallHitCount,
+			southWallShortCircuitCount: southWallShortCircuitCount,
+			southRevealShortCircuitCount: southRevealShortCircuitCount,
+			southRevealProbeSamples: r7310ProbeSamples,
+			ceilingSurfaceHitCount: ceilingHitCount,
+			ceilingShortCircuitCount: ceilingShortCircuitCount,
+			structuralSurfaceHitCount: structuralHitCount,
+			structuralShortCircuitCount: structuralShortCircuitCount,
+			structuralIslandHitByName: structuralIslandHitByName,
+			structuralIslandShortCircuitByName: structuralIslandShortCircuitByName,
+			structuralProbeSamples: structuralProbeSamples,
+			structuralProbePasses: structuralProbePasses,
+			structuralIslandUv: structuralIslandUv,
+			structuralWorldPosition: structuralWorldPosition,
 			probeLevel: probeLevel,
 			samplePointSpace: samplePointSpace,
 			decodeMode: decodeMode,
@@ -4999,6 +9660,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 			surfaceClassSummary: surfaceClassSummary,
 			probePixels: readback.width * readback.height,
 			h5BlackLineProbe: h5BlackLineProbe,
+			uniformWestWallBeamShadowZMaxOverride: pathTracingUniforms && pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride ? pathTracingUniforms.uR7310C1WestWallBeamShadowZMaxOverride.value : null,
 			currentSamples: Math.round(typeof sampleCounter === 'number' ? sampleCounter : 0)
 		};
 	}
@@ -5013,6 +9675,9 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 			r7310C1WestWallDiffuseRuntimeEnabled = savedWestWallRuntimeEnabled;
 			r7310C1SouthWallDiffuseRuntimeEnabled = savedSouthWallRuntimeEnabled;
 			r7310C1CeilingDiffuseRuntimeEnabled = savedCeilingRuntimeEnabled;
+			r7310C1StructuralDiffuseRuntimeEnabled = savedStructuralRuntimeEnabled;
+			r7310C1SeColumnNorthShadowRuntimeEnabled = savedSeColumnNorthShadowRuntimeEnabled;
+			r7310C1SeColumnWestShadowRuntimeEnabled = savedSeColumnWestShadowRuntimeEnabled;
 		restoreR738BakeState(state);
 		if (savedRenderTarget && renderer) renderer.setRenderTarget(savedRenderTarget);
 		if (target) target.dispose();
