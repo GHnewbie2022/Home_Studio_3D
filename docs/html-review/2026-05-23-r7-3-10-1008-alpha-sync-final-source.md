@@ -164,9 +164,9 @@ docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js
   node docs/tests/r7-3-10-beam-column-dedicated-hybrid.test.js 通過。
 ```
 
-## 7. 備份與 GitHub 前狀態
+## 7. 備份與 GitHub 狀態
 
-CODEX 準備在此報告後執行：
+CODEX 已完成本輪收束：
 
 ```text
 1. 本機產生 binary diff 備份。
@@ -178,6 +178,30 @@ CODEX 準備在此報告後執行：
 
 ```text
 codex/r7-3-10-beam-column-bake-expansion
+```
+
+本機備份：
+
+```text
+.omc/r7-3-10-1008-alpha-sync-final-staged-backup.patch
+```
+
+Git commit：
+
+```text
+38438e1 R7-3.10 sync bake alpha metadata
+```
+
+GitHub：
+
+```text
+origin/codex/r7-3-10-beam-column-bake-expansion 已更新到 38438e1
+```
+
+工作區狀態：
+
+```text
+只剩 recovered_shader.glsl 未提交。CODEX 判定它像臨時救援檔，未納入本輪提交。
 ```
 
 ## 8. 請 OPUS 審查
