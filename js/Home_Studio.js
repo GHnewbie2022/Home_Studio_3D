@@ -7273,6 +7273,14 @@ function initUI() {
         }, false);
     }
 
+    var pasteCameraPoseInfoButton = document.getElementById('pasteCameraPoseInfo');
+    if (pasteCameraPoseInfoButton) {
+        pasteCameraPoseInfoButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            pasteR7310CameraPoseFromClipboard();
+        }, false);
+    }
+
     // Capture-phase override：lock 模式下 mousedown 永遠阻止 pointer lock 觸發
     document.addEventListener('mousedown', function() {
         if (uiLocked) ableToEngagePointerLock = false;
@@ -7440,6 +7448,94 @@ function copyR7310CameraPoseInfoToClipboard() {
     });
 }
 
+function extractR7310BalancedJsonObject(text, marker) {
+    var from = marker ? text.indexOf(marker) : 0;
+    if (from < 0) return null;
+    var start = text.indexOf('{', from);
+    if (start < 0) return null;
+    var depth = 0, inStr = false, esc = false;
+    for (var i = start; i < text.length; i += 1) {
+        var ch = text.charAt(i);
+        if (inStr) {
+            if (esc) esc = false;
+            else if (ch === '\\') esc = true;
+            else if (ch === '"') inStr = false;
+        } else if (ch === '"') {
+            inStr = true;
+        } else if (ch === '{') {
+            depth += 1;
+        } else if (ch === '}') {
+            depth -= 1;
+            if (depth === 0) return text.slice(start, i + 1);
+        }
+    }
+    return null;
+}
+
+function parseR7310CameraStateFromText(text) {
+    if (!text || typeof text !== 'string') return null;
+    var trimmed = text.trim();
+    if (!trimmed) return null;
+    var jsonStr = (trimmed.indexOf('cameraState') >= 0)
+        ? extractR7310BalancedJsonObject(trimmed, 'cameraState')
+        : (trimmed.charAt(0) === '{' ? extractR7310BalancedJsonObject(trimmed, '') : null);
+    if (!jsonStr) return null;
+    var obj;
+    try { obj = JSON.parse(jsonStr); } catch (err) { return null; }
+    if (obj && obj.cameraState && obj.cameraState.position) return obj.cameraState;
+    if (obj && obj.position) return obj;
+    return null;
+}
+
+var cameraPosePasteResetTimer = null;
+
+function getR7310CameraPosePasteButton() {
+    return document.getElementById('pasteCameraPoseInfo');
+}
+
+function setR7310CameraPosePasteButtonState(label, ok) {
+    var button = getR7310CameraPosePasteButton();
+    if (!button) return;
+    button.textContent = label || '貼上視角';
+    button.classList.toggle('copied', !!ok);
+    if (cameraPosePasteResetTimer) clearTimeout(cameraPosePasteResetTimer);
+    cameraPosePasteResetTimer = setTimeout(function() {
+        var b = getR7310CameraPosePasteButton();
+        if (b) { b.textContent = '貼上視角'; b.classList.remove('copied'); }
+    }, 1600);
+}
+
+function pasteR7310CameraPoseFromClipboard() {
+    if (typeof navigator === 'undefined' || !navigator.clipboard ||
+        typeof navigator.clipboard.readText !== 'function') {
+        setR7310CameraPosePasteButtonState('貼上失敗：瀏覽器不支援', false);
+        return;
+    }
+    navigator.clipboard.readText().then(function(text) {
+        var cameraState = parseR7310CameraStateFromText(text);
+        if (!cameraState || !cameraState.position) {
+            setR7310CameraPosePasteButtonState('貼上失敗：格式不符', false);
+            return;
+        }
+        if (typeof window.setR739Config1ValidationCameraState !== 'function') {
+            setR7310CameraPosePasteButtonState('貼上失敗：套用函式缺失', false);
+            return;
+        }
+        try {
+            window.setR739Config1ValidationCameraState(cameraState);
+            setR7310CameraPosePasteButtonState('已套用視角', true);
+        } catch (err) {
+            if (typeof console !== 'undefined' && console.warn)
+                console.warn('Camera pose paste failed', err);
+            setR7310CameraPosePasteButtonState('貼上失敗', false);
+        }
+    }).catch(function(err) {
+        if (typeof console !== 'undefined' && console.warn)
+            console.warn('Clipboard read failed', err);
+        setR7310CameraPosePasteButtonState('貼上失敗：無法讀剪貼簿', false);
+    });
+}
+
 function formatR7310CameraPoseInfo(options) {
     options = options || {};
     if (typeof cameraControlsObject === 'undefined' || !cameraControlsObject ||
@@ -7512,6 +7608,7 @@ window.reportR7310CameraPoseInfo = function() {
 };
 
 window.copyR7310CameraPoseInfoToClipboard = copyR7310CameraPoseInfoToClipboard;
+window.pasteR7310CameraPoseFromClipboard = pasteR7310CameraPoseFromClipboard;
 
 function updateR7310CameraPoseInfo(displaySamples, samplingPausedForMetrics) {
     var el = (typeof cameraPoseInfoElement !== 'undefined' && cameraPoseInfoElement)

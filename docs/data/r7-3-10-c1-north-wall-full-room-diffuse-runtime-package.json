@@ -29,14 +29,14 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "35cbe01230ce3537c10c269fd0a5c23d659fa31e9559343b200871c4874cf52c",
-    "texelMetadataPatch0Sha256": "f4dcefc304d095ac6c369d92df499c4d7ef7768d1c2e67e1eb5f980f2b6108c4"
+    "atlasPatch0Sha256": "9d9fa867ef8310bd4263ecb454fe304d45180d446c6677eb2a64c6675602e727",
+    "texelMetadataPatch0Sha256": "072b0f7060541c38e2cd75103429088223a2a0df0cf887050bb0cf5e73407335"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
     "actualSamples": 1000,
-    "validTexelRatio": 0.868896484375
+    "validTexelRatio": 0.773193359375
   },
   "mapping": "planar_xy",
   "invalidTexelRegions": {
@@ -45,6 +45,10 @@
       "xMax": -0.73,
       "yMin": 0,
       "yMax": 2.03
+    },
+    "sideWallBacks": {
+      "westXMax": -1.91,
+      "eastXMin": 1.91
     }
   },
   "referenceForAcceptance": "live_path_tracing_same_camera",

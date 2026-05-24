@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
 		<link rel="icon" href="data:,">
-		<link href="css/default.css?v=r7310-camera-pose-copy-v1" rel="stylesheet"/>
+		<link href="css/default.css?v=r7310-camera-pose-copy-v1-pasteview" rel="stylesheet"/>
 
 		<script type="importmap">
 		{
@@ -326,7 +326,8 @@
 		</div>
 
 		<button id="copyCameraPoseInfo" type="button" aria-live="polite">複製視角 INFO</button>
-		<textarea id="cameraPoseInfo" readonly spellcheck="false" aria-label="相機狀態"></textarea>
+		<button id="pasteCameraPoseInfo" type="button" aria-live="polite">貼上視角</button>
+		<textarea id="cameraPoseInfo" readonly spellcheck="false" aria-label="相機狀態" style="display:none;"></textarea>
 		<div id="cameraInfo" style="position:fixed; left:15px; bottom:6px; font-family:arial; font-size:11px; color:rgb(255,255,255); text-shadow:0 0 4px #000;"></div>
 
 		<script defer src="js/MobileJoystickControls.js"> </script>
@@ -334,7 +335,7 @@
 		<script defer src="js/BVH_Acc_Structure_Iterative_Fast_Builder.js"> </script>
 		<script defer src="js/InitCommon.js?v=r7310-north-east-hybrid-v1"> </script>
 
-				<script defer src="js/Home_Studio.js?v=r7310-default-bed-south-spot-v1"> </script>
+				<script defer src="js/Home_Studio.js?v=r7310-default-bed-south-spot-v1-pasteview"> </script>
 
 	</body>
 </html>

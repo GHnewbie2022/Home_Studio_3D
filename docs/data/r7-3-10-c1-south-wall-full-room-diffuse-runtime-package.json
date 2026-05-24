@@ -24,25 +24,39 @@
       "xMax": 0.69,
       "yMin": 1.04,
       "yMax": 2.905
+    },
+    "sideColumnBacks": {
+      "swColumnBack": {
+        "xMin": -1.91,
+        "xMax": -1.75,
+        "yMin": 0,
+        "yMax": 2.905
+      },
+      "seColumnBack": {
+        "xMin": 1.78,
+        "xMax": 1.91,
+        "yMin": 0,
+        "yMax": 2.905
+      }
     }
   },
   "windowRevealAtlasRegions": {
     "leftReveal": {
       "xMin": -1.69,
       "xMax": -1.52,
-      "yMin": 1.10,
+      "yMin": 1.1,
       "yMax": 2.845
     },
     "rightReveal": {
       "xMin": 0.46,
       "xMax": 0.63,
-      "yMin": 1.10,
+      "yMin": 1.1,
       "yMax": 2.845
     },
     "bottomReveal": {
       "xMin": -1.52,
       "xMax": 0.46,
-      "yMin": 1.10,
+      "yMin": 1.1,
       "yMax": 1.27
     },
     "topReveal": {
@@ -59,13 +73,13 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "3225fe77f96def62382e2841a306c78db983d68b92bf0ef03924182ac68040f0",
-    "texelMetadataPatch0Sha256": "2d06b27f27c31dc3b3094848a7777d06e9589cf6a318cea81a66b62430b70220"
+    "atlasPatch0Sha256": "c76a602050b5cbe962a4ca1318ce548e63b6273fa3bff5f51dce50b718539229",
+    "texelMetadataPatch0Sha256": "08e22d6d6c8179b5998bd9d4a172450cfebb45e243a576526334ae89d729f153"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
     "actualSamples": 1000,
-    "validTexelRatio": 0.7347393035888672
+    "validTexelRatio": 0.6673564910888672
   }
 }

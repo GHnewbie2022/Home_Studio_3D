@@ -616,6 +616,20 @@ bool r7310C1StructuralSeColumnInnerHiddenByBookshelf(float z, float y)
 {
 	return z >= 2.73 && y <= 2.04;
 }
+bool r7310C1NorthWallHiddenBySideWall(float x)
+{
+	return x <= -1.91 || x >= 1.91;
+}
+bool r7310C1SouthWallHiddenBySideColumn(float x, float y)
+{
+	bool swColumnBack = x >= -1.91 && x <= -1.75 && y >= 0.0 && y <= 2.905;
+	bool seColumnBack = x >= 1.78 && x <= 1.91 && y >= 0.0 && y <= 2.905;
+	return swColumnBack || seColumnBack;
+}
+bool r7310C1SwColumnInnerHiddenBySouthWall(float z, float y)
+{
+	return z >= 3.056 && z <= 3.256 && y >= 0.0 && y <= 2.905;
+}
 bool r7310C1EastWallHiddenByBeamOrSeColumn(float z, float y)
 {
 	return z >= 2.49 || (z <= 2.49 && y >= 2.515);
@@ -649,6 +663,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 		float x = mix(-2.11, 2.11, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
 		if (x >= -1.52 && x <= -0.73 && y >= 0.0 && y <= 2.03)
+			return false;
+		if (r7310C1NorthWallHiddenBySideWall(x))
 			return false;
 		position = vec3(x, y, -1.874);
 		normal = vec3(0.0, 0.0, 1.0);
@@ -686,6 +702,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	{
 		float x = mix(-2.11, 2.11, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1SouthWallHiddenBySideColumn(x, y))
+			return false;
 		if (r7310C1SouthWallWindowRevealBakePoint(x, y, position, normal))
 		{
 			hitType = 1;
@@ -834,6 +852,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 			return false;
 		if (r7310C1SouthWallAcShadowHiddenBySeColumn(x, y))
 			return false;
+		if (r7310C1SouthWallHiddenBySideColumn(x, y))
+			return false;
 		position = vec3(x, y, 3.056);
 		normal = vec3(0.0, 0.0, -1.0);
 		hitType = 1;
@@ -880,6 +900,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	{
 		float z = mix(2.846, 3.256, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
+		if (r7310C1SwColumnInnerHiddenBySouthWall(z, y))
+			return false;
 		position = vec3(-1.75, y, z);
 		normal = vec3(1.0, 0.0, 0.0);
 		hitType = 1;
@@ -1037,6 +1059,27 @@ vec4 r7310C1FullRoomDiffuseSamplePatchTexel(vec2 pixelCoord, float patchSlot)
 	float row = floor(slot / columns);
 	vec2 localUv = (pixelCoord + vec2(0.5)) / resolution;
 	return texture(tR7310C1FullRoomDiffuseAtlasTexture, vec2((localUv.x + column) / columns, (localUv.y + row) / rows));
+}
+vec3 r7310C1FullRoomDiffuseSamplePatchValidLinear(vec2 atlasUv, float patchSlot)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 pixel = clamp(atlasUv * resolution - vec2(0.5), vec2(0.0), vec2(resolution - 1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), vec2(resolution - 1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1FullRoomDiffuseSamplePatchTexel(p0, patchSlot);
+	vec4 c10 = r7310C1FullRoomDiffuseSamplePatchTexel(vec2(p1.x, p0.y), patchSlot);
+	vec4 c01 = r7310C1FullRoomDiffuseSamplePatchTexel(vec2(p0.x, p1.y), patchSlot);
+	vec4 c11 = r7310C1FullRoomDiffuseSamplePatchTexel(p1, patchSlot);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexel(floor(pixel + vec2(0.5)), patchSlot);
+	return nearest.a > 0.5 ? max(nearest.rgb, vec3(0.0)) : vec3(0.0);
 }
 vec3 r7310C1FullRoomDiffuseSamplePatchPixel(vec2 pixelCoord, float patchSlot)
 {
@@ -1319,6 +1362,11 @@ bool r7310C1NorthWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 		atlasUv = vec2(0.0);
 		return false;
 	}
+	if (r7310C1NorthWallHiddenBySideWall(visiblePosition.x))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	if (visiblePosition.x >= -1.52 && visiblePosition.x <= -0.73 && visiblePosition.y >= 0.0 && visiblePosition.y <= 2.03)
 	{
 		atlasUv = vec2(0.0);
@@ -1344,7 +1392,7 @@ vec3 r7310C1NorthWallHybridRadiance(int visibleHitType, float visibleObjectID, v
 	vec2 atlasUv = vec2(0.0);
 	if (!r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv))
 		return vec3(0.0);
-	return r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 1.0));
+	return r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, 1.0);
 }
 bool r7310C1NorthWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
 {
@@ -1537,7 +1585,7 @@ bool r7310C1RuntimeSurfaceIsSwColumnInnerShadow(int visibleHitType, float visibl
 		visiblePosition.x >= -1.760 &&
 		visiblePosition.x <= -1.740 &&
 		visiblePosition.z >= 2.846 &&
-		visiblePosition.z <= 3.256 &&
+		visiblePosition.z <= 3.056 &&
 		visiblePosition.y >= 0.0 &&
 		visiblePosition.y <= 2.905;
 }
@@ -1923,11 +1971,12 @@ float r7310C1SouthWindowFrontEdgeNearestReveal(vec3 visiblePosition, vec3 visibl
 bool r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
-		visibleNormal.x > 0.5 &&
-		visiblePosition.z >= 3.056 &&
-		visiblePosition.z <= 3.256 &&
+		((visibleNormal.x > 0.5 &&
+			visiblePosition.x >= -1.76 && visiblePosition.x <= -1.74 &&
+			visiblePosition.y >= 1.04 && visiblePosition.y <= 2.905 &&
+			visiblePosition.z >= 3.056 && visiblePosition.z <= 3.256) ||
 		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 0.5 &&
-			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 1.5);
+			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 1.5));
 }
 bool r7310C1RuntimeSurfaceIsSouthWindowRightRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {

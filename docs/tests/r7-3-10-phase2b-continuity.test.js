@@ -155,7 +155,7 @@ assert.doesNotMatch(southWallBaseColor, /uWallAlbedo/);
 
 const swColumnSurface = extractFunction(shader, 'r7310C1RuntimeSurfaceIsSwColumnInnerShadow');
 assert.match(swColumnSurface, /visiblePosition\.z >= 2\.846/);
-assert.match(swColumnSurface, /visiblePosition\.z <= 3\.256/);
+assert.match(swColumnSurface, /visiblePosition\.z <= 3\.056/);
 assert.doesNotMatch(swColumnSurface, /visiblePosition\.z >= 2\.848/);
 assert.match(swColumnSurface, /visiblePosition\.y >= 0\.0/);
 assert.match(swColumnSurface, /visiblePosition\.y <= 2\.905/);
@@ -188,6 +188,10 @@ assert.match(lUnionWallFace, /westBeamInnerFace \|\| swColumnInnerFace/);
 
 const leftRevealSurface = extractFunction(shader, 'r7310C1RuntimeSurfaceIsSouthWindowLeftRevealShadow');
 assert.match(leftRevealSurface, /visibleNormal\.x > 0\.5/);
+assert.match(leftRevealSurface, /visiblePosition\.x >= -1\.76/);
+assert.match(leftRevealSurface, /visiblePosition\.x <= -1\.74/);
+assert.match(leftRevealSurface, /visiblePosition\.y >= 1\.04/);
+assert.match(leftRevealSurface, /visiblePosition\.y <= 2\.905/);
 assert.match(leftRevealSurface, /visiblePosition\.z >= 3\.056/);
 assert.match(leftRevealSurface, /visiblePosition\.z <= 3\.256/);
 assert.match(leftRevealSurface, /r7310C1SouthWindowFrontEdgeNearestReveal/);

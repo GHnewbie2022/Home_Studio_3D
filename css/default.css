@@ -116,6 +116,39 @@ html, body {
 	border-color: rgba(167, 232, 184, 0.54);
 }
 
+#pasteCameraPoseInfo {
+	position: fixed;
+	right: 155px;
+	bottom: 168px;
+	width: 132px;
+	height: 28px;
+	box-sizing: border-box;
+	z-index: 22;
+	padding: 0 10px;
+	background: rgba(28, 28, 26, 0.92);
+	border: 1px solid rgba(255, 255, 255, 0.24);
+	border-radius: 4px;
+	color: #ffffff;
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	line-height: 26px;
+	text-align: center;
+	text-shadow: 0 0 4px #000000;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+}
+
+#pasteCameraPoseInfo:hover {
+	background: rgba(48, 48, 44, 0.96);
+	border-color: rgba(255, 255, 255, 0.42);
+}
+
+#pasteCameraPoseInfo.copied {
+	background: rgba(58, 92, 70, 0.94);
+	border-color: rgba(167, 232, 184, 0.54);
+}
+
 .toggleButton {
 	position:fixed;
 	background-color: gray;

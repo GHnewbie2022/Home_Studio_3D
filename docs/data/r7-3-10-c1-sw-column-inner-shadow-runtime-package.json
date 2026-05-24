@@ -28,18 +28,26 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "4e9ce68556e8371d61d0161bd26aa680593d1a4f4d22c103739e1d4f7115d01e",
-    "texelMetadataPatch0Sha256": "90bbffe157b79ac16bffbc6800389ea458a28c8f944008e5ee979d71a4c9c268"
+    "atlasPatch0Sha256": "158dc450467723de7e83a505e428f9c62a532647cf1529388370055ab1c28999",
+    "texelMetadataPatch0Sha256": "50c5266151eb608445e6edb9609e506efd7d50a34bef360aff5be83aac7c2433"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
     "actualSamples": 1000,
-    "validTexelRatio": 1
+    "validTexelRatio": 0.51171875
   },
   "mapping": "single_planar_zy_on_x_face",
   "referenceForAcceptance": "live_path_tracing_same_camera",
   "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
   "runtimeAtlasSlot": 13,
-  "uniformContractAlias": "tR7310C1SwColumnInnerShadowTexture"
+  "uniformContractAlias": "tR7310C1SwColumnInnerShadowTexture",
+  "invalidTexelRegions": {
+    "southWallBack": {
+      "zMin": 3.056,
+      "zMax": 3.256,
+      "yMin": 0,
+      "yMax": 2.905
+    }
+  }
 }

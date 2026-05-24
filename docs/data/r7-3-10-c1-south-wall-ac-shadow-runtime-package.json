@@ -29,14 +29,14 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "00481eded7fb00dbbcd7b1b2ed495ad612ea5ebc42801b0f55b7ba79262afa91",
-    "texelMetadataPatch0Sha256": "704cba6b5b7bd56e6e4c235047e4eed73746bdddf72ee2ac9575aa2a560be002"
+    "atlasPatch0Sha256": "cabb066fbdd4f606cd20dc3dacb85d47f213c72d65c4fa6ea85401efb056e9f0",
+    "texelMetadataPatch0Sha256": "c327d10003bd237e66842b6ff49912fed10abac7bdaebdc1c4bfb255a224c34f"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
     "actualSamples": 1000,
-    "validTexelRatio": 0.5988006591796875
+    "validTexelRatio": 0.5616912841796875
   },
   "mapping": "single_planar_xy_on_z_face",
   "invalidTexelRegions": {
@@ -45,6 +45,20 @@
       "xMax": 0.69,
       "yMin": 1.04,
       "yMax": 2.905
+    },
+    "sideColumnBacks": {
+      "swColumnBack": {
+        "xMin": -1.91,
+        "xMax": -1.75,
+        "yMin": 0,
+        "yMax": 2.905
+      },
+      "seColumnBack": {
+        "xMin": 1.78,
+        "xMax": 1.91,
+        "yMin": 0,
+        "yMax": 2.905
+      }
     }
   },
   "referenceForAcceptance": "live_path_tracing_same_camera",

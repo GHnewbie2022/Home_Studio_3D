@@ -1328,6 +1328,10 @@ const R7310_C1_NORTH_WALL_DOOR_HOLE = Object.freeze({
 	yMin: 0.0,
 	yMax: 2.03
 });
+const R7310_C1_NORTH_WALL_SIDE_WALL_BACKS = Object.freeze({
+	westXMax: -1.91,
+	eastXMin: 1.91
+});
 const R7310_C1_EAST_WALL_TARGET_ID = 1003;
 const R7310_C1_EAST_WALL_SURFACE_NAME = 'c1_east_wall';
 const R7310_C1_EAST_WALL_WORLD_BOUNDS = Object.freeze({
@@ -1410,6 +1414,18 @@ const R7310_C1_SOUTH_WALL_WINDOW_REVEAL = Object.freeze({
 		topReveal: Object.freeze({ xMin: -1.52, xMax: 0.46, yMin: 2.675, yMax: 2.845 })
 	})
 });
+const R7310_C1_SOUTH_WALL_SW_COLUMN_BACK = Object.freeze({
+	xMin: -1.91,
+	xMax: -1.75,
+	yMin: 0.0,
+	yMax: 2.905
+});
+const R7310_C1_SOUTH_WALL_SE_COLUMN_BACK = Object.freeze({
+	xMin: 1.78,
+	xMax: 1.91,
+	yMin: 0.0,
+	yMax: 2.905
+});
 const R7310_C1_CEILING_TARGET_ID = 1006;
 const R7310_C1_CEILING_SURFACE_NAME = 'c1_ceiling';
 const R7310_C1_CEILING_WORLD_BOUNDS = Object.freeze({
@@ -1460,6 +1476,12 @@ const R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK = Object.freeze({
 	yMin: 0.0,
 	yMax: 2.905
 });
+const R7310_C1_SOUTH_WALL_AC_SHADOW_SW_COLUMN_BACK = Object.freeze({
+	xMin: -1.91,
+	xMax: -1.75,
+	yMin: 0.0,
+	yMax: 2.905
+});
 const R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID = 1011;
 const R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME = 'c1_east_wall_beam_shadow';
 const R7310_C1_EAST_WALL_BEAM_SHADOW_WORLD_BOUNDS = Object.freeze({
@@ -1495,6 +1517,12 @@ const R7310_C1_SW_COLUMN_INNER_SHADOW_WORLD_BOUNDS = Object.freeze({
 	yMin: 0.0,
 	yMax: 2.905,
 	x: -1.75
+});
+const R7310_C1_SW_COLUMN_INNER_SHADOW_SOUTH_WALL_BACK = Object.freeze({
+	zMin: 3.056,
+	zMax: 3.256,
+	yMin: 0.0,
+	yMax: 2.905
 });
 const R7310_C1_WEST_BEAM_INNER_SHADOW_TARGET_ID = 1015;
 const R7310_C1_WEST_BEAM_INNER_SHADOW_SURFACE_NAME = 'c1_west_beam_inner_shadow';
@@ -1571,6 +1599,29 @@ const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
 function r7310C1InsideRectZY(z, y, rect)
 {
 	return z >= rect.zMin && z <= rect.zMax && y >= rect.yMin && y <= rect.yMax;
+}
+function r7310C1InsideRectXY(x, y, rect)
+{
+	return x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;
+}
+function r7310C1NorthWallHiddenBySideWall(x)
+{
+	return x <= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.westXMax ||
+		x >= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.eastXMin;
+}
+function r7310C1SouthWallHiddenBySideColumn(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_SOUTH_WALL_SW_COLUMN_BACK) ||
+		r7310C1InsideRectXY(x, y, R7310_C1_SOUTH_WALL_SE_COLUMN_BACK);
+}
+function r7310C1SouthWallAcShadowHiddenBySideColumn(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_SOUTH_WALL_AC_SHADOW_SW_COLUMN_BACK) ||
+		r7310C1InsideRectXY(x, y, R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK);
+}
+function r7310C1SwColumnInnerHiddenBySouthWall(z, y)
+{
+	return r7310C1InsideRectZY(z, y, R7310_C1_SW_COLUMN_INNER_SHADOW_SOUTH_WALL_BACK);
 }
 function r7310C1EastWallHiddenByBeamOrSeColumn(z, y)
 {
@@ -4690,7 +4741,8 @@ function buildR7310C1NorthWallTexelMetadata(size)
 			var worldX = b.xMin + (b.xMax - b.xMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
 			var isDoorHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
-			var isValid = !isDoorHole;
+			var isSideWallBack = r7310C1NorthWallHiddenBySideWall(worldX);
+			var isValid = !isDoorHole && !isSideWallBack;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = worldY;
@@ -4839,13 +4891,14 @@ function buildR7310C1SouthWallTexelMetadata(size)
 			var worldX = b.xMin + (b.xMax - b.xMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
 			var isWindowHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
+			var isSideColumnBack = r7310C1SouthWallHiddenBySideColumn(worldX, worldY);
 			var posX = worldX;
 			var posY = worldY;
 			var posZ = b.z;
 			var normalX = 0.0;
 			var normalY = 0.0;
 			var normalZ = -1.0;
-			var isValid = !isWindowHole;
+			var isValid = !isWindowHole && !isSideColumnBack;
 			if (isWindowHole)
 			{
 				if (revealAtlasContains(revealAtlas.leftReveal, worldX, worldY))
@@ -4909,7 +4962,6 @@ function buildR7310C1SouthWallAcShadowTexelMetadata(size)
 	var metadata = new Float32Array(size * size * 12);
 	var b = R7310_C1_SOUTH_WALL_AC_SHADOW_WORLD_BOUNDS;
 	var hole = R7310_C1_SOUTH_WALL_WINDOW_HOLE;
-	var seColumnBack = R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK;
 	var valid = 0;
 	for (var y = 0; y < size; y += 1)
 	{
@@ -4920,8 +4972,8 @@ function buildR7310C1SouthWallAcShadowTexelMetadata(size)
 			var worldX = b.xMin + (b.xMax - b.xMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
 			var isWindowHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
-			var isSeColumnBack = worldX >= seColumnBack.xMin && worldX <= seColumnBack.xMax && worldY >= seColumnBack.yMin && worldY <= seColumnBack.yMax;
-			var isValid = !isWindowHole && !isSeColumnBack;
+			var isSideColumnBack = r7310C1SouthWallAcShadowHiddenBySideColumn(worldX, worldY);
+			var isValid = !isWindowHole && !isSideColumnBack;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = worldY;
@@ -5175,6 +5227,7 @@ function buildR7310C1SwColumnInnerShadowTexelMetadata(size)
 			var v = (y + 0.5) / size;
 			var worldZ = b.zMin + (b.zMax - b.zMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
+			var isValid = !r7310C1SwColumnInnerHiddenBySouthWall(worldZ, worldY);
 			var offset = (y * size + x) * 12;
 			metadata[offset] = b.x;
 			metadata[offset + 1] = worldY;
@@ -5183,12 +5236,12 @@ function buildR7310C1SwColumnInnerShadowTexelMetadata(size)
 			metadata[offset + 4] = 0.0;
 			metadata[offset + 5] = 0.0;
 			metadata[offset + 6] = 6.0;
-			metadata[offset + 7] = 1.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
 			metadata[offset + 8] = 0.0;
 			metadata[offset + 9] = 0.0;
 			metadata[offset + 10] = u;
 			metadata[offset + 11] = v;
-			valid += 1;
+			if (isValid) valid += 1;
 		}
 	}
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
@@ -5520,7 +5573,7 @@ function fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels(pixels, size)
 function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 {
 	if (surfaceName === R7310_C1_NORTH_WALL_SURFACE_NAME)
-		return 0.80;
+		return 0.77;
 	if (surfaceName === R7310_C1_EAST_WALL_SURFACE_NAME)
 		return 0.70;
 	if (surfaceName === R7310_C1_WEST_WALL_SURFACE_NAME)
@@ -5532,12 +5585,14 @@ function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 	if (surfaceName === R7310_C1_SOUTH_WALL_SURFACE_NAME)
 		return 0.60;
 	if (surfaceName === R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME)
-		return 0.59;
+		return 0.56;
 	if (surfaceName === R7310_C1_STRUCTURAL_SURFACE_NAME)
 		return 0.30;
 	if (surfaceName === R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME)
 		return 0.93;
 	if (surfaceName === R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME)
+		return 0.50;
+	if (surfaceName === R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME)
 		return 0.50;
 	return 0.99;
 }

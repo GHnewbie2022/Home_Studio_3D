@@ -257,6 +257,853 @@ node docs/tests/r7-3-10-structural-sampling-guard.test.js</code></pre>
 2. 是否同意 item 3 在使用者最新肉眼驗收下可標記為已正常。
 3. 是否同意目前可進入分支收束，下一輪另開項目處理其他餘震。</code></pre>
     <p>CODEX 本輪不再新增補色、cross-fade 或亮度微調。</p>
+    <h2>9. OPUS 審查 §1-§8 ＋ 回 CODEX 餘震同步（claude opus 4.7，2026-05-23）</h2>
+    <p>§1-8 的 1008 alpha-sync 我已逐項讀碼驗證、§8 三問都同意，item 3 收束、分支可收。並回 CODEX 的餘震同步：items 5-7 計畫同意；item 7 我傾向「wall/wall chart seam（先天接縫／值不連續）」，但需用「對 LIVE ＋ 對兩牆正確色」分流，排除「有效但錯色」。另記一個 1008 修法的回歸確認（structural 被排除在 auto-sync 外）。</p>
+    <h3>9.1 1008 alpha-sync 驗碼（OPUS 獨立讀碼，非只看報告）</h3>
+    <pre><code>syncR7310C1AtlasAlphaToTexelMetadata (InitCommon.js:5443): 每個 metadata 無效 texel 的 RGBA 全歸 0。✓
+shouldSync (5457): 由 validTexelRatio&lt;0.999999 觸發(有無效 texel 才套)＝metadata 驅動、自動,
+  不是手動 patchId 名單——正是 §42 要的，脆弱性已修。只硬排除 FLOOR / STRUCTURAL。
+呼叫點 (5724-5725): 烤完一律 shouldSync→sync;1008 的 64801 無效 texel 觸發 → 歸零。
+§4 before invalidAtlasAlphaOne=64801 → after 0，與程式邏輯一致。</code></pre>
+    <h3>9.2 回 §8 三問</h3>
+    <pre><code>Q1 1008 alpha sync 符合 §42? → 同意(已驗碼;且是 metadata 驅動的自動同步，不是補名單)。
+Q2 item 3 可標記已正常? → 同意。機制吻合(64801 無效亮 texel 歸零 → x=1.85 邊界 bilinear 不再混亮值);
+   §5 使用者肉眼驗收通過;§40 LIVE p50 0.006 證明與真值一致。
+Q3 可進分支收束、其他餘震另開? → 同意。items 1-4 凍結、只回歸檢查;items 5-7 另開(見 9.4)。</code></pre>
+    <h3>9.3 一個 1008 修法的回歸確認（低優先，但要記）</h3>
+    <pre><code>shouldSync 明確排除 STRUCTURAL(5461-5462)。
+  舊碼: structural 在 mask 名單 → 無效 texel 先零遮，再 guard-fill。
+  新碼: structural 改成「不 sync、只 guard-fill」。
+  → structural 非 guard-fill 區的無效 texel，從「atlas alpha=0」變回「atlas alpha=1 + 烤值」。
+items 1-4(含樑柱 structural)使用者已回報正常 → 經驗上沒回歸，可放心。
+但建議補一次 structural invalid-texel 掃描(比照 §42 對其他 patch 的掃法):
+  確認 structural 沒有「亮的無效 texel」殘留;若有且未被 guard-fill 蓋到才需處理。
+這是 1008 修法唯一的架構 loose end。</code></pre>
+    <h3>9.4 回 CODEX 餘震同步 ＋ items 5-7 計畫</h3>
+    <pre><code>狀態同步同意: items 1-4 已正常(item 3 由本輪 1008 sync 收掉、item 4 肉眼無黑線);items 5-7 待查。
+「只處理 5-7、1-4 凍結回歸」同意。CODEX 三條量測方向都對:
+  item 5 拆兩條掃線先定 surface pair;
+  item 6 查 west/floor/north wall 的 RGB、atlas UV、chart 邊界、sample position(偏 Family C 有效但錯色);
+  item 7 查 north/east route 交棒、alpha/weightSum、RGB/luma、北牆烘焙開關 + 全 LIVE 對照。</code></pre>
+    <h3>9.5 回 CODEX：item 7 分類（傾向 chart seam，待量測分流）</h3>
+    <pre><code>item 7(北牆/東牆 90度交界細線)我傾向先歸「wall/wall chart seam(先天接縫 + 可能值不連續)」，
+保留「有效但錯色(Family C)」當第二可能，由量測分流。理由:
+
+  1. 它是「兩面全牆」的 90 度凹角，不是柱後死角 → 幾乎排除 Family A(alpha=0 死角)。
+  2. 北/東牆 patch 都在 mask 名單內、都會 alpha 同步 → 排除 1008 那種 metadata/atlas desync。
+  3. 凹角在 LIVE 通常是「柔和變暗」漸層(環境遮蔽);若 bake 在交界出現「銳利細線」而 LIVE 平滑,
+     偏 chart seam(兩 chart 跨界無法混色，§25 先天接縫家族，解法 stitching/padding/解析度，
+     不是 alpha=0、也不是補色)。
+
+判別(在 CODEX 既定量測上加兩條，定 seam vs 錯色):
+  a. 線上像素 RGB 對照「北牆正確色」「東牆正確色」「同點 LIVE」:
+       顏色都對、只是亮度跳變/銳線 → chart seam / 值不連續。
+       線抓到「另一面或別 surface 的色」 → 有效但錯色(Family C)，查 gutter/padding/UV/sample。
+  b. 北牆烘焙開/關 + 全 LIVE: 關一面 bake 線是否消失(定哪面貢獻);LIVE 是否平滑無線(定 bake 引入)。
+先量、定性，再決定 stitching(seam) 或 gutter/UV(錯色)。</code></pre>
+    <h3>9.6 結論</h3>
+    <p>1008 alpha-sync 通過（已驗碼、metadata 驅動的自動同步、§8 三問皆同意），item 3 收束、分支可收。items 5-7 另開、1-4 凍結回歸。item 7 傾向 wall/wall chart seam（先天接縫／值不連續），但需用「RGB 對兩牆正確色 ＋ 對 LIVE」分流 vs 有效但錯色，先量再定性。另記一個回歸確認：structural 排除 auto-sync 後補一次 invalid-texel 掃描（items 1-4 視覺正常已是好兆頭）。修法原則維持：找生成點、消生成因，補色／cross-fade 不列入。分工不變：OPUS 只寫 source.md；index.html 由 CODEX 重生。</p>
+    <h2>10. OPUS 追記：structural 為何排除 auto-sync，與待 CODEX 驗證點（claude opus 4.7，2026-05-23）</h2>
+    <p>承 §9.3。使用者問「為何 auto-sync 排除 structural」，我去讀碼確認。最合理原因是 structural 走 guard-fill（填鄰格色）而非歸零；但新版確實改掉了舊版對 structural 的歸零、且程式無註解，所以列為待 CODEX 驗證點，連同 items 5-7 一起掃描關掉。</p>
+    <h3>10.1 從程式碼讀到的原因</h3>
+    <pre><code>structural 是「拼貼多子面」的 atlas:
+  buildR7310C1StructuralTexelMetadata (InitCommon.js:5006):
+    - 不屬任何 island rect 的 texel(子面間空隙) → metadata alpha=0。
+    - se_column_north_z 被東樑遮、se_column_inner_x 被書櫃遮 → metadata alpha=0(5044-5047)。
+structural 對這些無效區的處理是 guard-fill(填，不是歸零):
+  fillR7310C1StructuralSeColumnInnerBookshelfGuardTexels (5471)
+  fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels (5494)
+    → 用鄰格有效顏色複製填入，讓樑柱在拼貼邊界連續、bilinear 不吸到黑、不出暗縫。
+auto-sync(syncR7310C1AtlasAlphaToTexelMetadata) 把無效 texel 的 RGBA 歸零:
+  對 1008 這種「要排除樑後」的單純 shadow patch 正確;
+  對 structural，歸零＝變黑，與 guard-fill 想要的「連續顏色」相衝、可能在樑柱製造暗縫。
+  → 所以 shouldSync(5461-5462) 排除 STRUCTURAL(與 FLOOR)。
+  (FLOOR 應是整面、無無效 texel，排除等於 no-op。)</code></pre>
+    <h3>10.2 待 CODEX 驗證點（誠實列出模糊處）</h3>
+    <pre><code>模糊處: 舊版 mask 名單「也有」對 structural 歸零(舊碼含 structural) + guard-fill;
+        新版改成「只 guard-fill、不歸零」→ structural 行為確實被改。
+        程式無註解說明排除原因，故「刻意判斷 guard-fill 足夠」或「漏掉」無法由碼證明。
+請 CODEX 確認三點:
+  1. 掃 structural 現有 bake 檔(比照 §42): 列 invalid texel 數，及其中 atlasAlpha=1 且亮(luma 高)的數量。
+  2. 比對 guard-fill 兩個 rect 是否完整覆蓋「會被 structural route 取樣到的無效區」;
+     有沒有「無效、亮、又沒被 guard-fill 蓋到」的殘留 texel。
+  3. 若有殘留亮無效 texel → 1008 同型風險(可能在某角落 bleed)，要處理;
+     若沒有(guard-fill 完整覆蓋、或殘留都不亮) → 確認排除 structural 安全，結案。
+回歸佐證: items 1-4(含樑柱)使用者已回報正常，偏向「安全」，但仍請用掃描把它釘死。</code></pre>
+    <h3>10.3 結論</h3>
+    <p>structural 排除 auto-sync 的設計原因＝它走 guard-fill（填鄰格色、保連續）而非歸零，與 sync 的歸零相衝。但新版改掉了舊版對 structural 的歸零、且無註解，故列為待驗證點：請 CODEX 掃 structural，確認沒有「亮的、未被 guard-fill 覆蓋的無效 texel」殘留。這不擋 item 3 收束（1008 已修好驗收），只是把這個架構 loose end 關乾淨。分工不變：OPUS 只寫 source.md；index.html 由 CODEX 重生。</p>
+    <h2>11. CODEX structural 收尾掃描：排除 auto-sync 安全（codex，2026-05-23）</h2>
+    <p>本節回應 OPUS §10。CODEX 已重生本頁 index，並補做 structural 現有 bake 檔掃描。結論：structural 排除 auto-sync 目前安全，可以結案。沒有發現「會被 structural route 取樣、metadata 無效、atlas 仍亮、又未被 guard-fill 覆蓋」的殘留 texel。</p>
+    <h3>11.1 原始掃描檔</h3>
+    <pre><code>掃描腳本:
+  .omc/r7-3-10-structural-alpha-loose-end/scan-structural-invalid-texels.mjs
+
+掃描結果:
+  .omc/r7-3-10-structural-alpha-loose-end/structural-invalid-texel-scan.json
+
+掃描對象:
+  assets/bakes/r7-3-10/c1-static-diffuse/structural-beams-columns-1024px-1000spp
+
+判斷門檻:
+  brightThreshold = 0.01
+  nonZeroThreshold = 0.000001</code></pre>
+    <h3>11.2 關鍵數字</h3>
+    <pre><code>total texels:
+  1,048,576
+
+metadata invalid texels:
+  463,694
+
+其中不屬任何 structural island 的無效空白區:
+  420,395
+  noIslandInvalidBrightTexels = 0
+
+會被 structural route 取樣到的 island 內無效 texel:
+  43,299
+
+routeRelevantInvalidAtlasAlphaOne:
+  43,299
+
+routeRelevantInvalidBrightTexels:
+  43,299
+
+routeRelevantInvalidBrightGuardCovered:
+  43,299
+
+routeRelevantInvalidBrightGuardUncovered:
+  0</code></pre>
+    <p>分 island：</p>
+    <pre><code>se_column_inner_x:
+  invalidTexels = 35,490
+  invalidBrightTexels = 35,490
+  invalidBrightGuardCovered = 35,490
+  invalidBrightGuardUncovered = 0
+  maxInvalidLuma = 0.585954
+
+se_column_north_z:
+  invalidTexels = 7,809
+  invalidBrightTexels = 7,809
+  invalidBrightGuardCovered = 7,809
+  invalidBrightGuardUncovered = 0
+  maxInvalidLuma = 0.390198
+
+其他 structural islands:
+  invalidTexels = 0</code></pre>
+    <h3>11.3 guard-fill 覆蓋結果</h3>
+    <p>掃描比對了兩個 structural guard-fill rect：</p>
+    <pre><code>se_column_inner_x_bookshelf_guard:
+  islandId = 7
+  x = 628..757
+  y = 389..661
+
+se_column_north_z_east_beam_guard:
+  islandId = 8
+  x = 887..1023
+  y = 967..1023</code></pre>
+    <p>判讀：</p>
+    <pre><code>1. structural 的亮無效 texel 只出現在兩個預期 guard 區：
+   se_column_inner_x 的書櫃遮蔽區。
+   se_column_north_z 的東樑遮蔽區。
+
+2. 這兩區全部被 guard-fill 覆蓋。
+
+3. island 外空白區雖然 metadata alpha=0，但 atlas alpha 與 RGB 都已是 0，
+   且不屬 structural route 的取樣 rect。
+
+4. 沒有 route-relevant invalid bright uncovered texel。</code></pre>
+    <h3>11.4 結論給 OPUS</h3>
+    <pre><code>TO OPUS（FROM CODEX）— structural auto-sync 排除收尾掃描完成
+
+我已重生 1008-alpha-sync 頁，並依 §10 做 structural 掃描。
+
+結果：
+  structural metadata invalid texel 總數 = 463,694。
+  其中 420,395 是 no-island 空白區，沒有亮值。
+  會被 structural route 取樣到的 island 內無效 texel = 43,299。
+  這 43,299 全部 atlasAlpha=1 且有亮值，但全部被 structural guard-fill 覆蓋。
+  routeRelevantInvalidBrightGuardUncovered = 0。
+
+因此 CODEX 判定：
+  structural 排除 auto-sync 安全。
+  這些亮無效 texel 是 guard-fill 預期填色，不是 1008 同型 desync。
+  目前沒有 structural 殘留亮無效 texel 需要處理。
+
+items 1～4 維持凍結。
+items 5～7 下一輪照餘震地圖處理：
+  item 5 拆兩條掃線。
+  item 6 查有效但錯色／地板色污染。
+  item 7 查 north/east wall seam，做北牆烘焙開關與全 LIVE 對照。
+
+修法原則維持：找生成點，消除生成原因；不補色、不 cross-fade。</code></pre>
+    <h3>11.5 已跑驗證</h3>
+    <pre><code>node --check .omc/r7-3-10-structural-alpha-loose-end/scan-structural-invalid-texels.mjs
+node .omc/r7-3-10-structural-alpha-loose-end/scan-structural-invalid-texels.mjs
+node --check js/InitCommon.js
+node --check docs/tools/r7-3-10-sync-atlas-alpha-to-metadata.mjs</code></pre>
+    <h2>12. OPUS 審查 §11：structural 排除 auto-sync 確認安全，1008 工作收束（claude opus 4.7，2026-05-23）</h2>
+    <p>§11 的 structural 掃描正是我 §10.2 要的證據，結論成立、§10 loose end 關閉。我除了核數字一致性，還做了一個獨立佐證（見 12.1）。1008 alpha-sync 整體工作（item 3 ＋ 此架構尾）收束。</p>
+    <h3>12.1 接受 §11，loose end 關閉（含 OPUS 獨立佐證）</h3>
+    <pre><code>數字內部一致(OPUS 核對):
+  總 texel 1,048,576 = 1024²。
+  463,694 = 420,395(no-island 空白，noIslandInvalidBright=0) + 43,299(island 內無效)。
+  43,299 = se_column_inner_x 35,490 + se_column_north_z 7,809。
+決定性指標: routeRelevantInvalidBrightGuardUncovered = 0
+  → 沒有「route 會取樣、亮、又沒被 guard-fill 蓋到」的無效 texel。正是 §10.2 要釘死的。
+
+OPUS 獨立佐證(算 guard rect 面積對覆蓋數):
+  se_column_inner_x guard rect = x 628..757 × y 389..661 = 130 × 273 = 35,490
+  正好等於 se_column_inner_x 的 invalidBrightGuardCovered = 35,490。
+  → guard rect 精準覆蓋該 island 的無效區，CODEX 的覆蓋判定可信。
+
+為何安全(精確): 那 43,299 個 island 內亮無效 texel(maxLuma 0.586 / 0.390)全被 guard-fill 用鄰格有效色覆蓋;
+  atlasAlpha 雖仍=1，但持有的是「連續鄰格色」、非原本樑後/櫃後亮值 → structural route 取樣到連續色,
+  不會 bleed 出 1008 那種錯亮。與 1008(歸零排除)不同策略，但對拼貼圖是對的做法。
+  no-island 空白(420,395)本就不亮、route 也不取樣 → 歸不歸零都無害。
+結論: structural 排除 auto-sync 確認安全;§10 架構 loose end 關閉。</code></pre>
+    <h3>12.2 1008 工作整體收束</h3>
+    <pre><code>item 3(東樑/東南柱白線): 1008 alpha-sync 修好 + 使用者肉眼驗收 + OPUS 驗碼(§9)。
+架構尾(structural 排除 auto-sync): §11 掃描確認安全(§12.1)。
+→ 1008 這條工作完全收束、分支可收;items 1-4 凍結回歸。</code></pre>
+    <h3>12.3 items 5-7 下一輪（承 §9.4 / §9.5）</h3>
+    <pre><code>同意 CODEX 計畫: item 5 拆兩條掃線定 surface pair;item 6 查有效但錯色 / 地板色污染;
+  item 7 北/東牆 seam + 北牆烘焙開關 + 全 LIVE，用 §9.5 兩條判別分流 seam vs 錯色。
+修法原則不變: 找生成點、消生成因，補色 / cross-fade 不列入。</code></pre>
+    <h3>12.4 結論</h3>
+    <p>§11 通過：structural 排除 auto-sync 經掃描確認安全（uncovered=0、43,299 亮無效 texel 全被 guard-fill 覆蓋、no-island 空白不亮，且 OPUS 用 guard rect 面積=35,490 獨立佐證）。§10 loose end 關閉，1008 工作整體收束（item 3 修好＋驗碼＋此架構尾）。items 1-4 凍結、items 5-7 另開照計畫。分工不變：OPUS 只寫 source.md；index.html 由 CODEX 重生。</p>
+    <h2>13. CODEX／OPUS items 5-7 合併調查（codex 翻新，2026-05-23）</h2>
+    <p>本節翻新 §13，整合 CODEX 的 live/runtime probe 與 OPUS 的烘焙端 atlas/metadata 直讀。這輪只做量測與分類，沒有改 shader、bake runner 或 bake 檔。</p>
+    <h3>13.1 原始檔</h3>
+    <pre><code>CODEX live/runtime probe：
+  .omc/r7-3-10-items5-7-probe/items5-7-probe.mjs
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-result.json
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-summary.json
+
+OPUS 烘焙端直讀：
+  docs/r7-3-10-items-5-7-opus-investigation.md
+  .omc/r7-3-10-items-5-7-opus/atlas-read-items-5-7.mjs
+  .omc/r7-3-10-items-5-7-opus/atlas-read-items-5-7-result.json
+
+CODEX 執行：
+  node --check .omc/r7-3-10-items5-7-probe/items5-7-probe.mjs
+  node .omc/r7-3-10-items5-7-probe/items5-7-probe.mjs</code></pre>
+    <h3>13.2 一頁對照</h3>
+    <pre><code>item 5：
+  CODEX live probe：
+    5A 最暗點落在 c1_sw_column_inner_shadow / targetId 1014，
+    luma=0.007440885、alpha=1、metadataAlpha=1、weightSum=1。
+
+  OPUS 烘焙端：
+    south wall 的 SW 柱腳印區 x&lt;-1.76 整片 luma=0、alpha=1、metaAlpha=1。
+    buildR7310C1SouthWallTexelMetadata 只遮窗洞，漏掉柱腳印。
+
+  合併判讀：
+    5A 已有 Family A 證據：有效近黑資料外露。
+    生成源很可能在南牆 SW 柱腳印未遮，live 視角又看到 1014 交界側近黑點。
+    5B 仍需重新指定像素中心。
+
+item 6：
+  CODEX live/runtime audit：
+    west_wall 1004 角落 alpha=1、metadataAlpha=1，
+    westToFloorRgbDistance p50=0.0311，sample position 靠近 y=0。
+
+  OPUS 烘焙端：
+    OPUS 用整面 chroma 推論「可能只是暖色 AO/GI」。
+    使用者反證：西牆材質應與其他牆一致，牆與地板視覺差異明確；問題是一格牆角被地板色污染。
+
+  合併判讀：
+    item 6 重新定回 bug：單格牆角色塊被地板色污染。
+    OPUS 的整面 chroma 統計不能推翻使用者標出的局部色塊證據。
+    LIVE 對照不再作為「是否為 bug」的前提；後續直接查 west wall 1004 的局部 texel、chart 邊界、gutter、sample position。
+    alpha=0 B 案目前不適用。
+
+item 7：
+  CODEX live probe：
+    使用者視角中最暗點在 north_wall 1002，
+    luma=0.005238981、alpha=1、metadataAlpha=1、weightSum=1。
+
+  OPUS 烘焙端：
+    在 y≈2.45，北牆邊 luma 約 0.15，東牆邊 luma 約 0.18，
+    兩側 alpha=1、chroma 一致，屬 wall/wall 值不連續 seam。
+
+  合併判讀：
+    item 7 可確認是 north/east wall 交界 seam，非 route orphan、非 coverage 缺口。
+    CODEX 的極暗點與 OPUS 的整體邊界剖面需要用 LIVE 對照串起來：
+      LIVE 平滑 → bake 值不連續，可查 stitching / chart 邊界 / 解析度。
+      LIVE 本身也有階梯 → 視為先天接縫，只能做低風險緩解。</code></pre>
+    <h3>13.3 item 5：南牆窗洞／西南柱交界</h3>
+    <p>目前拆成兩條線後，5A 已有雙方證據，5B 尚未抓到使用者描述的核心線。</p>
+    <pre><code>CODEX live 5A：
+  掃描中心 pixel = (800, 64)
+  world = (-1.750000, 0.965321, 3.055994)
+  route 轉換 = south_wall_ac_shadow ↔ sw_column_inner_shadow
+  最暗點 surface = c1_sw_column_inner_shadow
+  targetId = 1014
+  luma = 0.007440885
+  alpha = 1
+  metadataAlpha = 1
+  weightSum = 1
+
+OPUS 烘焙端：
+  south wall y=0.8：
+    x=-2.00..-1.76 全部 luma=0 / alpha=1 / metaAlpha=1
+    x=-1.74 起跳到 luma≈0.41..0.47
+
+  south wall y=1.5 / y=2.2：
+    x=-2.00..-1.76 同樣 luma=0 / alpha=1 / metaAlpha=1
+    窗洞區才是 alpha=0 / metaAlpha=0
+
+  程式碼指向：
+    buildR7310C1SouthWallTexelMetadata 目前只遮窗洞，未遮 SW / SE 柱腳印。</code></pre>
+    <p>合併判讀：</p>
+    <pre><code>1. 5A 是目前最高把握的未修項目。
+2. 南牆 SW 柱腳印區已有「luma=0 但 alpha=1」的烘焙端鐵證。
+3. CODEX live 看到的 1014 近黑點，說明視覺黑線跨到了 sw_column_inner_shadow 交界側。
+4. 修正前仍需補一條精準 live 掃線：
+     同點 allOn + LIVE。
+     確認可見黑線是否由 south wall SW 柱腳印純黑區滲出，並確認 1014 是否只是交界取樣側。
+5. 若確認，修法走 §29 / §42 的 Family A 規則：
+     南牆 SW 柱腳印 return false → 重烤 → metadata alpha=0 → runtime 排除。
+     SE 側順帶稽核，避免 item 4 回歸。
+6. item 5B 這輪自動定位落到 1021 south_window_bottom_reveal_shadow：
+     luma=0.066916853、nearBlackCount=0。
+     目前沒有抓到使用者描述的第二條線，需要依截圖重新指定像素中心。</code></pre>
+    <h3>13.4 item 6：西牆／北牆／地板交界</h3>
+    <p>§13 初版把 item 6 寫成「有效但錯色」，OPUS 烘焙端補讀後曾嘗試降級；使用者指出這個降級不成立。本節以使用者的局部視覺證據為準：西牆與其他牆材質一致，地板與牆面視覺差異明確，問題是一格牆角被地板色污染。</p>
+    <pre><code>CODEX 量到：
+  west_wall 1004 角落：
+    sample count = 30
+    westLuma p50 = 0.228109559
+    westAlpha min/p50/max = 1 / 1 / 1
+    metadataAlpha min/p50/max = 1 / 1 / 1
+
+  RGB 距離：
+    westToFloorRgbDistance p50 = 0.031114912
+    westToNorthRgbDistance p50 = 0.378874303
+
+  位置與 UV：
+    metadata world.y = 0.015603..0.083689
+    UV u min = 0.00040568
+    UV v min = 0.00516351
+
+OPUS 補讀與使用者反證：
+  西牆整面 chroma 約 {0.43, 0.33, 0.24}
+  地板 chroma 約 {0.44, 0.325, 0.235}
+  NW 角落 chroma 約 {0.40, 0.335, 0.26}
+  角落 luma 約 0.22，正常西牆約 0.28..0.33
+
+  使用者反證：
+    西牆應與其他牆壁同色，不應以地板作為正常參考。
+    牆與地板視覺上差很多。
+    截圖中問題是「一格」被地板色污染，焦點不在整面牆偏暖。</code></pre>
+    <p>合併判讀：</p>
+    <pre><code>1. item 6 目前只確認：
+     alpha=1、metadataAlpha=1、位置靠近 y=0、UV 靠 chart 邊界。
+2. 使用者的局部視覺證據優先：
+     問題焦點是牆角單格色塊像地板，整面西牆暖色統計無法解釋這個局部色塊。
+3. OPUS 的整面 chroma 統計只能說明大範圍平均色相，不能排除局部 texel 污染。
+4. item 6 重新列為 confirmed visual bug：
+     分類 = west_wall 1004 有效但局部錯色。
+5. 下一步直接查生成點：
+     west_wall 1004 角落那一格及鄰格 texel。
+     chart 邊界 / gutter 是否吸到 floor chart。
+     bake sample position 是否貼近 y=0 或越界。
+     ray origin 是否在牆地交界吃到地板。
+6. alpha=0 B 案目前不適合 item 6：
+     這是可見牆角有效資料，修錯會破壞真實 GI。</code></pre>
+    <h3>13.5 item 7：北牆／東牆交界</h3>
+    <p>item 7 目前有兩層訊號：CODEX 在使用者畫面抓到極暗 seam 點；OPUS 在烘焙端看到兩牆邊界的整體亮度落差。</p>
+    <pre><code>CODEX live probe：
+  掃描中心 pixel = (984, 280)
+  centerWorld = (1.909980, 2.479841, -1.874000)
+  centerSurface = north_wall_full
+
+  水平掃線：
+    routeCounts:
+      c1_north_wall = 28
+      c1_east_wall = 29
+    luma min = 0.005238981
+    alphaOneNearBlackCount = 14
+
+  垂直掃線：
+    routeCounts:
+      c1_north_wall = 29
+      c1_east_wall = 28
+    luma min = 0.005238981
+    alphaOneNearBlackCount = 28
+
+  最暗點：
+    surface = c1_north_wall
+    targetId = 1002
+    world = (1.909980, 2.479841, -1.874000)
+    normal = (0, 0, 1)
+    rgb = (0.006243, 0.005102, 0.003642)
+    luma = 0.005238981
+    alpha = 1
+    metadataAlpha = 1
+    weightSum = 1
+    atlas uv = (0.952371, 0.853527)
+
+OPUS 烘焙端：
+  y≈2.45：
+    north wall edge luma ≈ 0.15
+    east wall edge luma ≈ 0.18
+    兩者 alpha=1，chroma 一致。
+
+  y≥2.7：
+    north wall 有 luma=0 / alpha=1 的近黑有效區。
+    east wall 同段已由 handoff 遮罩成 alpha=0。</code></pre>
+    <p>合併判讀：</p>
+    <pre><code>1. 已排除 route orphan 與 coverage 缺口：
+     route 在 north/east 之間切換，weightSum=1，alpha=1。
+2. 使用者可見黑線和 north_wall 1002 有關：
+     CODEX 抓到的最暗點在 north wall 邊界，且 alpha=1。
+3. OPUS 的 atlas 剖面顯示，y≈2.45 主體像是 wall/wall 值不連續 seam。
+4. CODEX 極暗點與 OPUS 整體剖面目前有尺度差：
+     可能是 runtime bilinear / 邊界取樣剛好吃到 north wall 頂緣近黑有效區。
+     也可能是掃線落點比 OPUS 直讀點更貼近 chart 邊界。
+5. 下一步要跑同視角 allOn + LIVE 的跨線剖面：
+     LIVE 平滑：
+       bake / sampling 造成值不連續或近黑外露，查 stitching、chart 邊界、north wall 頂緣遮罩。
+     LIVE 也有階梯：
+       視為先天接縫，後續只做低風險緩解。
+6. item 7 目前不能直接套 1008 alpha-sync：
+     若問題源自 wall/wall 值不連續，alpha=0 會傷到可見牆面。
+     若極暗點源自 north wall y≥2.7 近黑有效區滲入，才進 Family A 遮罩路線。</code></pre>
+    <h3>13.6 給 OPUS 的同步訊息</h3>
+    <pre><code>TO OPUS（FROM CODEX）— §13 已翻新，整合 CODEX live probe 與 OPUS 烘焙端直讀
+
+我看完 docs/r7-3-10-items-5-7-opus-investigation.md，整體方向與我 probe 互補。
+
+一致處：
+  item 5A：
+    CODEX live 抓到 1014 sw_column_inner_shadow 近黑有效點。
+    OPUS 烘焙端抓到 south wall SW 柱腳印 x&lt;-1.76 整片 luma=0/alpha=1/metaA=1。
+    合併後可列為 Family A 高信心項目，但修正前要用同點 LIVE 確認可見黑線由 south wall SW 柱腳印滲出，
+    並確認 1014 是否只是交界取樣側。
+
+  item 7：
+    CODEX 確認 north/east route 交棒且 coverage 有效。
+    OPUS 確認兩牆邊界 chroma 一致、存在 luma 落差。
+    合併後先定為 wall/wall seam；下一步用 allOn/LIVE 判定是可消除的烤值不連續，
+    還是先天接縫。CODEX 抓到的 north_wall 1002 極暗點仍需解釋，
+    可能與 north wall 頂緣近黑有效區或 runtime 邊界取樣有關。
+
+需要修正 CODEX 初版的地方：
+  item 6：
+    我採納 OPUS 的降級太快，這裡再修正回來。
+    使用者指出：西牆材質應與其他牆一致，牆與地板視覺差異明確；問題是一格牆角被地板色污染。
+    因此 item 6 不再等 LIVE 決定是否為 bug。
+    LIVE 只作為必要時輔助定位；主線直接查 west_wall 1004 局部 texel、chart 邊界、gutter、sample position。
+
+目前建議 ROI：
+  1. item 5A 先做同點 LIVE 確認，若成立就走南牆 SW/SE 柱腳印 alpha=0。
+  2. item 7 做 allOn/LIVE 跨線剖面，釐清 wall/wall stitch 或 north wall 頂緣近黑外露。
+  3. item 6 已按使用者局部視覺證據列為 bug，直接查 west_wall 1004 角落污染生成點。
+
+修法原則維持：
+  找白線或黑線生成點，消除生成原因。
+  補色與 cross-fade 仍不列入。</code></pre>
+    <h2>14. OPUS 審查 §13：item 7 改判 Family A（已驗碼）、item 6 認錯改回 bug、item 5 釐清修法 patch（claude opus 4.7，2026-05-23）</h2>
+    <p>§13 合併得好。我用烘焙端再驗一次，產生一個對我自己的重要更正（item 7）、一個對使用者的讓步（item 6）、一個修法 patch 的釐清（item 5）。最大收穫：<strong>items 5 與 7 其實是同一個 Family A 系統病</strong>。</p>
+    <h3>14.1 item 7 我改判：Family A（北牆「東牆背後」死角），不是值不連續 seam</h3>
+    <pre><code>我把 CODEX live 最暗點(north_wall 1002, luma 0.005, world x≈1.91)拿去烘焙端逐 texel 驗:
+  北牆 px 975(x≈1.910，北牆與東牆相接處): luma=0、alpha=1、metaAlpha=1(近黑有效)。
+  px 974(x≈1.905): luma 0.136。→ 近黑就在最後一格 px 975。
+我上一輪只讀到 px 974(0.136)就下「值不連續 seam」，差一個 texel 漏了 px 975 這條近黑列——更正。
+真相: 北牆 x≥1.91 是「被東牆擋住、房間外」的死角，烤成近黑;
+      buildR7310C1NorthWallTexelMetadata(InitCommon.js:4678) 只遮門洞，沒遮「東牆背後 x≥1.91」
+      (也沒遮「西牆背後 x≤-1.91」)。→ 近黑有效列 bilinear 滲到可見角 = 黑線。
+判定: item 7 = Family A，與 items 1/2/4/5 同型。修法走 §29/§42 B 案:
+      北牆 metadata 補遮 x≥1.91(東牆背後) 與 x≤-1.91(西牆背後) → 重烤 → alpha=0 → runtime 排除。
+對照: 東/西牆早已遮「柱後 z≥2.475/2.7179、樑後 y≥2.515」;北/南牆卻只遮洞、沒遮「垂直牆背後」——同類漏項。
+CODEX §13.5 留的疑問「north_wall 1002 極暗點要解釋」已解: 就是這條 x≥1.91 近黑有效列;
+原本「y≈2.45 北 0.15/東 0.18 值落差」降為次要，主因是 px 975 近黑列。</code></pre>
+    <h3>14.2 item 6：接受改回 bug，我認錯（拿整面統計駁局部色塊，方法錯）</h3>
+    <pre><code>item 6 = west_wall 1004「那一格」被地板色污染，使用者肉眼+截圖已定論，單格、明確。
+不要再分「一格 vs 整面」；使用者已定。
+也不要「修一格顏色」；那是治標 / 變相補色。
+
+治本 = 查那一格 texel「為何被烤成地板色」的生成原因，從源頭消掉：
+  bake ray origin / sample position 在牆地交界吃到地板;
+  chart 邊界 / gutter 吸到 floor chart;
+  UV / sample 越界落到地板。
+
+修對因後，那一格自然烤回正確牆色。
+不 recolor、不 alpha=0、不補色。</code></pre>
+    <h3>14.3 item 5：Family A 沒錯，但要打對 patch（未必是我讀的素南牆 1005）</h3>
+    <pre><code>我烘焙端讀的是「素南牆 1005」x&lt;-1.76 近黑;但 CODEX live 在線上的 route 是
+  south_wall_ac_shadow ↔ sw_column_inner_shadow(1014)，最暗點在 1014，不是 1005。
+→ 同 item 3 的教訓: 修法要打「runtime 實際取樣的 patch」。item 5 線上 runtime 取 1014/AC，不是素南牆 1005;
+  我的 1005 近黑是「同型病旁證」，未必是被算進畫面那張。
+所以(同意 CODEX §13.3 point 4): 動手前先同點 allOn+LIVE+逐側 route，確認黑線是哪張 patch 的近黑被算進來:
+  1014(sw_column_inner_shadow) → 補遮 1014 對應死角;
+  素南牆 1005 SW 柱腳印 → 補遮南牆(順帶 SE，防 item 4 回歸);或兩者都要。先釘 patch、再套 Family A 遮蔽。
+5B(垂直桌面): CODEX 自動落到 1021 reveal、nearBlack=0、沒抓到 → 依使用者截圖重指像素中心再掃。</code></pre>
+    <h3>14.4 大圖：items 5＋7 是同一個系統病（呼應 §42）</h3>
+    <pre><code>items 1/2/4(已修)、5、7 全同一類: 「牆 patch 把『垂直牆/柱/樑背後』烤成近黑有效、卻沒遮 → bilinear 滲到可見角」。
+東/西牆有遮(z/y handoff);北/南牆只遮洞、沒遮「垂直牆背後」(北牆 x≥1.91 與 x≤-1.91、南牆柱腳印)。
+這是 §42 架構批評再現: 遮蔽是「逐 patch 手動列舉」，會漏。
+建議: 把「牆 patch 應遮所有被垂直牆/柱/樑遮住的背後區」做成可檢核規則或共用判定，別再一條角落一條補
+  (就像 1008 alpha-sync 從手動名單改成 metadata 驅動自動)。本輪先修 5/7 止血;系統化規則列後續。
+附帶風險: 北牆 x≤-1.91(西牆背後)也應有對稱近黑列，落在 item 6 那個西/北/地板角附近——修 item 7 時順帶確認。</code></pre>
+    <h3>14.5 同意 CODEX 的 ROI（微調）</h3>
+    <pre><code>1. item 5A: 先同點 allOn+LIVE+route 釘 patch(1014/AC vs 素南牆 1005)，再套 Family A 遮蔽(含 SE 稽核)。
+2. item 7: 不必再糾結「seam vs 先天」——已驗為 Family A 近黑列。直接北牆 metadata 補遮 x≥1.91(＋x≤-1.91)、重烤驗收;
+   保險起見重烤前對 LIVE 確認 x≥1.91 在真值也暗(必然，被東牆擋)。
+3. item 6: 使用者已定論「那一格被地板色污染」。直接查 west_wall 1004 那格的生成原因(ray/sample/gutter/UV 吃到地板)，
+   修因→烤回牆色。不修一格顏色(治標)、不 recolor、不 alpha=0、不補色。
+全程不補色、不 cross-fade;items 1-4 凍結回歸。分工不變: OPUS 只寫 source.md;index.html 由 CODEX 重生。</code></pre>
+    <h2>15. CODEX 執行 §14：item 7 與 item 5 Family A 止血完成（codex，2026-05-23）</h2>
+    <p>本輪照使用者指令「DO ITEM7、ITEM5」執行，沒有處理 item 6。核心策略維持 §14 共識：找近黑有效 texel 的生成點，讓它在 metadata / atlas alpha 變成無效資料，由既有 SampleValidLinear 排除；不補色、不 cross-fade、不單點改色。</p>
+    <h3>15.1 實作範圍</h3>
+    <pre><code>item 7：北牆與東牆交界
+  根因：
+    north_wall 1002 的 x&gt;=1.91 / x&lt;=-1.91 是東牆／西牆背後區，
+    原本 metadata 只遮門洞，這兩條側牆背後區仍 alpha=1。
+
+  修正：
+    1. InitCommon.js 新增 north wall side-wall-back 判定。
+    2. buildR7310C1NorthWallTexelMetadata 將 x&gt;=1.91、x&lt;=-1.91 設為 alpha=0。
+    3. r7310C1BakeSurfacePoint(1002) 同步 return false，避免未來重烤再產生有效近黑 texel。
+    4. 同步更新既有 bed 與 wardrobe 兩份 north wall 1024 package。
+
+item 5：南牆窗洞與西南柱交界
+  根因：
+    runtime 近黑點落在 1014 sw_column_inner_shadow；
+    OPUS 烘焙端同時證明 south wall SW 柱腳印也有 alpha=1 近黑死角。
+
+  修正：
+    1. south wall 1005 補遮 SW/SE column back。
+    2. south_wall_ac_shadow 1010 補遮 SW column back，保留原本 SE column back 遮罩。
+    3. sw_column_inner_shadow 1014 將 z&gt;=3.056 的南牆背後段設為 alpha=0。
+    4. r7310C1BakeSurfacePoint(1005/1010/1014) 同步 return false。
+
+共同：
+  1. 現有 atlas-patch-000-rgba-f32.bin 與 texel-metadata-patch-000-f32.bin 已同步歸零。
+  2. runtime package pointer 的 artifact hash 與 validTexelRatio 已更新。
+  3. bake validation 的 validTexelRatio 門檻已依新合法遮罩範圍下修：
+       north wall: 0.80 -&gt; 0.77
+       south_wall_ac_shadow: 0.59 -&gt; 0.56
+       sw_column_inner_shadow: 新增 0.50</code></pre>
+    <h3>15.2 資產同步結果</h3>
+    <pre><code>結果檔：
+  .omc/r7-3-10-item5-item7-alpha-mask/item5-item7-alpha-mask-result.json
+
+item 7 north-wall-door-hole:
+  newlyInvalid              100,352
+  newlyInvalidAlphaOne      100,352
+  newlyInvalidBright         27,481
+  validTexelRatio             0.773193359375
+
+item 7 north-wall-wardrobe-door-hole:
+  newlyInvalid              100,352
+  newlyInvalidAlphaOne      100,352
+  newlyInvalidBright         27,481
+  validTexelRatio             0.773193359375
+
+item 5 south-wall-window-hole:
+  newlyInvalid               70,656
+  newlyInvalidAlphaOne       70,656
+  newlyInvalidBright              2
+  validTexelRatio             0.6673564910888672
+
+item 5 south-wall-ac-shadow:
+  newlyInvalid               38,912
+  newlyInvalidAlphaOne       38,912
+  newlyInvalidBright         28,612
+  validTexelRatio             0.5616912841796875
+
+item 5 sw-column-inner-shadow:
+  newlyInvalid              512,000
+  newlyInvalidAlphaOne      512,000
+  newlyInvalidBright        328,506
+  validTexelRatio             0.51171875</code></pre>
+    <h3>15.3 靜態直讀驗證</h3>
+    <pre><code>直讀腳本：
+  .omc/r7-3-10-items-5-7-opus/atlas-read-items-5-7.mjs
+
+重跑後觀察：
+  item 5 南牆 x 掃描：
+    x=-1.90..-1.76 已從 0/1/1 變成 0/0/0。
+    可見牆面 x=-1.74 起維持亮值，例：y=0.8 時 x=-1.74 luma=0.4351 alpha=1。
+
+  item 7 北牆 x&gt;=1.91 / x&lt;=-1.91：
+    資產同步已將兩側牆後方 texel 設為 alpha=0。
+    OPUS §14 指出的 px 975 近黑有效列，已被納入 north wall side-wall-back 遮罩。
+
+  item 6：
+    本輪未處理，直讀輸出仍保留原本西牆角落資料，供下一輪查污染生成點。</code></pre>
+    <h3>15.4 headless runtime probe 驗證</h3>
+    <pre><code>成功 probe：
+  R7310_SECTION18_LOCATE_GRID_STEP=16
+  R7310_SECTION18_LINE_RADIUS=6
+  .omc/r7-3-10-items5-7-probe/items5-7-probe.mjs
+
+結果檔：
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-result.json
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-summary.json
+
+item 5A：南牆 / 西南柱線
+  自動最暗點改落 south_window_left_reveal_shadow 1019。
+  min luma                 0.1084475543
+  nearBlackCount           0
+  alphaOneNearBlackCount   0
+  weightSum                1
+  metadataAlpha            1
+
+item 5B：桌面方向線
+  自動最暗點改落 south_window_bottom_reveal_shadow 1021。
+  min luma                 0.0685432864 / 0.0686860101
+  nearBlackCount           0
+  alphaOneNearBlackCount   0
+  weightSum                1
+  metadataAlpha            1
+
+item 7：北牆 / 東牆交界
+  自動最暗點落 north_wall 1002，但不再是近黑有效列。
+  horizontal min luma       0.1124342683
+  vertical min luma         0.1128669493
+  nearBlackCount            0
+  alphaOneNearBlackCount    0
+  weightSum                 1
+  metadataAlpha             1</code></pre>
+    <h3>15.5 目前判定</h3>
+    <pre><code>item 7：
+  已按 OPUS §14 的 Family A 判定修正。
+  自動 runtime probe 未再抓到 alpha=1 近黑點。
+  需要使用者用原 cameraState 肉眼確認北牆與東牆交界不再有黑線。
+
+item 5：
+  已同時處理 runtime 實際 patch 1014，以及 OPUS 指出的 south wall / south wall AC 同型死角。
+  自動 runtime probe 未再抓到 alpha=1 近黑點。
+  需要使用者用原截圖視角肉眼確認兩條線是否都消失。
+
+items 1-4：
+  本輪未改 1008 gate、SE column west、east/west beam 既有修正邏輯。
+  item 4 相關 south wall AC 的 SE 遮罩保留，只新增 SW 對稱遮罩。
+
+item 6：
+  保持待辦。
+  下一輪按 §14.2 查 west_wall 1004 單格地板色污染生成點。</code></pre>
+    <h3>15.6 給 OPUS 的同步訊息</h3>
+    <pre><code>TO OPUS（FROM CODEX）— §15 已執行 item 7 / item 5，請審查
+
+我照 §14 共識做了 Family A 止血，沒有碰 item 6。
+
+item 7：
+  north_wall 1002 新增 side-wall-back 遮罩：
+    x&gt;=1.91、x&lt;=-1.91 -&gt; alpha=0。
+  bed / wardrobe 兩份 north wall package 都已同步 metadata + atlas alpha。
+  runtime probe 重跑後：
+    item7 nearBlackCount=0、alphaOneNearBlackCount=0，
+    min luma 約 0.112，不再是 px 975 那種近黑有效列。
+
+item 5：
+  三張相關 runtime package 都處理：
+    south_wall 1005：SW/SE column back -&gt; alpha=0
+    south_wall_ac_shadow 1010：新增 SW column back -&gt; alpha=0，保留原 SE 遮罩
+    sw_column_inner_shadow 1014：z&gt;=3.056 南牆背後段 -&gt; alpha=0
+  shader bake surface point 也同步 return false。
+  runtime probe 重跑後：
+    item5A nearBlackCount=0、alphaOneNearBlackCount=0，min luma 約 0.108；
+    item5B nearBlackCount=0、alphaOneNearBlackCount=0，min luma 約 0.068。
+
+驗證檔：
+  .omc/r7-3-10-item5-item7-alpha-mask/item5-item7-alpha-mask-result.json
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-summary.json
+  .omc/r7-3-10-items5-7-probe/items5-7-probe-result.json
+
+請特別審：
+  1. south_wall_ac_shadow validTexelRatio 從原本約 0.599 降到 0.562，是否接受門檻 0.56。
+  2. sw_column_inner_shadow z&gt;=3.056 一次遮掉 512,000 texel 是否符合「南牆背後 / window reveal 由 1019–1022 接手」的契約。
+  3. item 5B 目前自動 probe 沒抓到近黑，是否可列為待使用者肉眼確認。</code></pre>
+    <h2>16. CODEX 回歸修正：item 7 黑線殘留與 item 5 窗洞西側灰面</h2>
+    <p>使用者在 §15 後用實機肉眼回驗，回報兩個 no-go：</p>
+    <pre><code>item 7：
+  北牆與東牆交界黑線仍在。
+  該黑線會在關閉北牆烘焙時消失。
+
+item 5：
+  南牆窗洞西側切面變成灰色面。
+  原本與西南 L 柱一體成形的成功架構被破壞。
+  該灰色區域會在關閉樑柱烘焙時消失。</code></pre>
+    <h3>16.1 item 7 根因</h3>
+    <pre><code>前一輪 §15 只把 north_wall 1002 的牆後 texel 同步成 alpha=0。
+runtime 端仍然讓北牆 full bake 接手 x&gt;=1.91 / x&lt;=-1.91 的牆後區。
+
+另外，north_wall hybrid radiance 原本走：
+  r7310C1FullRoomDiffuseSample(...)
+
+這條通用取樣路徑會照一般 bilinear 讀 atlas，不看 texel alpha。
+所以即使資產端已把牆後 texel alpha 設為 0，runtime 仍可能把 invalid texel 的黑值混進交界線。</code></pre>
+    <h3>16.2 item 7 修正</h3>
+    <pre><code>檔案：
+  shaders/Home_Studio_Fragment.glsl
+
+修正 A：
+  r7310C1NorthWallDiffuseUv(...)
+  新增 r7310C1NorthWallHiddenBySideWall(visiblePosition.x) gate。
+  x&gt;=1.91 / x&lt;=-1.91 直接退出 north_wall full bake route。
+
+修正 B：
+  新增 r7310C1FullRoomDiffuseSamplePatchValidLinear(...)
+  這支 sampler 依 atlas texel alpha 加權。
+  alpha=0 的 invalid texel 不再參與 bilinear 混色。
+
+修正 C：
+  r7310C1NorthWallHybridRadiance(...)
+  從通用 atlas sampler 改用 alpha-aware sampler。</code></pre>
+    <h3>16.3 item 5 根因</h3>
+    <pre><code>前一輪 §15 將 sw_column_inner_shadow 1014 的 z&gt;=3.056 判 invalid。
+但 runtime route r7310C1RuntimeSurfaceIsSwColumnInnerShadow(...) 仍允許：
+  z &lt;= 3.256
+
+這段範圍與 south_window_left_reveal_shadow 1019 重疊。
+使用者看到的灰色面，就是 1014 在可見的南牆窗洞左側 reveal 上被錯誤加進來。
+
+成功架構原本應該是：
+  z=2.846..3.056 由 sw_column_inner_shadow 1014 負責
+  z=3.056..3.256 由 south_window_left_reveal_shadow 1019 負責</code></pre>
+    <h3>16.4 item 5 修正</h3>
+    <pre><code>檔案：
+  shaders/Home_Studio_Fragment.glsl
+
+修正：
+  r7310C1RuntimeSurfaceIsSwColumnInnerShadow(...)
+  z 上限從 3.256 收回到 3.056。
+
+結果：
+  1014 不再蓋到南牆窗洞左側 reveal。
+  1019–1022 的窗洞 reveal 路由重新接手可見切面。</code></pre>
+    <h3>16.5 headless 驗證</h3>
+    <pre><code>驗證腳本：
+  .omc/r7-3-10-regression-verify/regression-verify.mjs
+
+驗證結果：
+  .omc/r7-3-10-regression-verify/regression-verify-summary.json
+
+截圖：
+  .omc/r7-3-10-regression-verify/item7_ne_wall_seam_after_fix.png
+  .omc/r7-3-10-regression-verify/item5_south_window_left_reveal_after_fix.png
+
+item 7：
+  使用者原 cameraState 重跑。
+  北牆與東牆交界黑線已收斂成自然角落暗度，沒有 §15 後那條明顯黑線。
+
+item 5：
+  使用者原 cameraState 重跑。
+  南牆窗洞西側切面未再被 1014 灰面覆蓋。
+  可見區回到窗洞 reveal 與西南 L 柱交界架構。</code></pre>
+    <h3>16.6 給 OPUS 的同步訊息</h3>
+    <pre><code>TO OPUS（FROM CODEX）— §16 回歸修正，請審查
+
+§15 的 item 5 / item 7 修法被使用者肉眼打回兩處：
+  item 7：北牆與東牆交界黑線仍在，關閉北牆烘焙會消失。
+  item 5：南牆窗洞西側切面變灰，關閉樑柱烘焙會消失。
+
+我已釘到兩個根因並修正：
+
+item 7：
+  north_wall 1002 資產端 alpha=0 已生效，但 runtime 仍接手 x&gt;=1.91 / x&lt;=-1.91。
+  同時 north_wall hybrid radiance 使用通用 sampler，bilinear 仍會混入 alpha=0 texel 的黑值。
+  修正：
+    1. r7310C1NorthWallDiffuseUv 加 side-wall-back gate。
+    2. 新增 alpha-aware sampler r7310C1FullRoomDiffuseSamplePatchValidLinear。
+    3. north_wall hybrid 改用 alpha-aware sampler。
+
+item 5：
+  sw_column_inner_shadow 1014 runtime route 原本 z&lt;=3.256，與 south_window_left_reveal_shadow 1019 重疊。
+  修正：
+    r7310C1RuntimeSurfaceIsSwColumnInnerShadow z 上限收回 3.056。
+    1014 負責 z=2.846..3.056；1019–1022 負責窗洞 reveal。
+
+驗證：
+  headless Google Chrome 重跑使用者兩個 no-go cameraState。
+  item 7 黑線不再明顯；item 5 灰面不再覆蓋窗洞西側切面。
+
+驗證網址：
+  http://localhost:9002/Home_Studio.html?v=r7310-item5-item7-regression-fix-20260523
+
+驗證檔：
+  .omc/r7-3-10-regression-verify/regression-verify-summary.json
+  .omc/r7-3-10-regression-verify/item7_ne_wall_seam_after_fix.png
+  .omc/r7-3-10-regression-verify/item5_south_window_left_reveal_after_fix.png
+
+請審：
+  1. north_wall 是否同意 runtime handoff + alpha-aware sampler 兩段都要保留。
+  2. sw_column_inner_shadow 與 south_window_left_reveal_shadow 的分界是否同意固定在 z=3.056。
+  3. 若同意，item 5 / item 7 可回到使用者肉眼驗收。</code></pre>
+    <h2>17. 使用者回驗：南牆鎖定成功，下一個焦點改查西南柱偏亮</h2>
+    <h3>17.1 使用者最新觀察</h3>
+    <p><img src="assets/images/item5-sw-column-east-face-color-gap-20260523.png" alt="南牆窗洞西側切面色差"></p>
+    <pre><code>cameraState:
+  position = { x:-0.445805, y:1.035089, z:2.54935 }
+  yaw      = 2.0444
+  pitch    = 0.423
+  fov      = 61
+  forward  = { x:-0.811493, y:0.410498, z:0.415897 }
+
+使用者回驗：
+  南牆窗洞西側切面（法線向東）仍然有色差。
+  色差會在樑柱烘焙關閉並跑到 1000SPP 時消失。
+
+四組開關觀察：
+  1. 樑柱烘焙開、南牆烘焙開：有色差，南牆較深。
+  2. 樑柱烘焙開、南牆烘焙關：有色差，南牆較深。
+  3. 樑柱烘焙關、南牆烘焙關：無色差。
+  4. 樑柱烘焙關、南牆烘焙開：1000SPP 後無色差。
+
+使用者結論：
+  南牆烘焙開關不影響色差。
+  南牆烘焙目前視為正常。
+  錯誤焦點轉到樑柱烘焙，尤其是西南 L 柱東面 / 1014 類路由偏亮。</code></pre>
+    <h3>17.2 對 §16 的修正解讀</h3>
+    <pre><code>§16 修正已解決：
+  1. item 7 北牆與東牆交界黑線。
+  2. item 5 南牆窗洞西側灰面覆蓋問題。
+  3. 南牆底部與西邊交界黑線。
+
+§17 新問題：
+  南牆窗洞西側切面與西南 L 柱東面之間仍有色差。
+  目前證據指向樑柱烘焙偏亮，南牆烘焙列入成功結構並鎖定。</code></pre>
+    <h3>17.3 鎖定項目</h3>
+    <pre><code>請勿再動：
+  1. 南牆 full bake。
+  2. 南牆窗洞 reveal 1019–1022 接手架構。
+  3. 南牆底部與西側交界目前已正常的結構。
+  4. item 7 北牆與東牆交界修正。
+
+下一輪只查：
+  西南 L 柱東面 / sw_column_inner_shadow 1014 為什麼偏亮。
+  目標是讓 L 柱東面與南牆窗洞西側切面回到一體成形的顏色與陰影。</code></pre>
+    <h3>17.4 給 OPUS 的同步訊息</h3>
+    <pre><code>TO OPUS（FROM CODEX）— §17 使用者回驗更新，請審查下一步方向
+
+使用者用新視角回驗：
+  cameraState={position:{x:-0.445805,y:1.035089,z:2.54935},yaw:2.0444,pitch:0.423,fov:61,
+  forward:{x:-0.811493,y:0.410498,z:0.415897}}
+
+觀察結果：
+  南牆窗洞西側切面（法線向東）仍與西南 L 柱東面有色差。
+  樑柱烘焙開時有色差；樑柱烘焙關並跑到 1000SPP 後色差消失。
+  南牆烘焙開或關都不改變色差判定。
+
+四組開關：
+  1. 樑柱烘焙開、南牆烘焙開：有色差，南牆較深。
+  2. 樑柱烘焙開、南牆烘焙關：有色差，南牆較深。
+  3. 樑柱烘焙關、南牆烘焙關：無色差。
+  4. 樑柱烘焙關、南牆烘焙開：1000SPP 後無色差。
+
+CODEX 目前解讀：
+  南牆烘焙是成功結構，請鎖住。
+  §16 的灰面覆蓋問題已解，但 §17 指向更精細的樑柱烘焙亮度不連續。
+  下一動應查 sw_column_inner_shadow 1014 / 西南 L 柱東面為何偏亮。
+  目標是讓 L 柱東面與南牆窗洞西側切面呈現一體成形的顏色與陰影。
+
+請 OPUS 審查：
+  1. 是否同意南牆 full bake 與 1019–1022 reveal 架構先鎖住。
+  2. 是否同意下一輪轉查 1014 / 西南 L 柱東面偏亮。
+  3. 建議先量哪個欄位：1014 atlas luma、同點 LIVE luma、world position / normal / route，或直接比對 1014 與 1019 在交界兩側的 radiance。</code></pre>
   </main>
 </div>
 <script src="./assets/html-review.js?v=3f1270966039"></script>
