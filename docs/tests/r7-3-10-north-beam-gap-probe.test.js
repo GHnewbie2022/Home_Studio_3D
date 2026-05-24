@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const shader = fs.readFileSync('shaders/Home_Studio_Fragment.glsl', 'utf8');
+const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
+const runner = fs.readFileSync('docs/tools/r7-3-8-c1-bake-capture-runner.mjs', 'utf8');
+
+assert.match(shader, /r7310C1RuntimeProbeMode\s*>\s*30\.5\s*&&\s*r7310C1RuntimeProbeMode\s*<\s*36\.5/);
+assert.match(shader, /r7310NorthBeamRouteId/);
+assert.match(shader, /r7310NorthWallHybridFirstHit[\s\S]*r7310NorthBeamTargetOffset\s*=\s*2\.0/);
+assert.match(shader, /r7310WestBeamInnerShadowHybridFirstHit[\s\S]*r7310NorthBeamTargetOffset\s*=\s*15\.0/);
+assert.match(shader, /r7310WestBeamUnderShadowHybridFirstHit[\s\S]*r7310NorthBeamTargetOffset\s*=\s*16\.0/);
+assert.match(shader, /r7310EastBeamInnerShadowHybridFirstHit[\s\S]*r7310NorthBeamTargetOffset\s*=\s*17\.0/);
+assert.match(shader, /r7310EastBeamUnderShadowHybridFirstHit[\s\S]*r7310NorthBeamTargetOffset\s*=\s*18\.0/);
+assert.match(shader, /r7310C1PatchCoverageProbe\(r7310NorthBeamCoverageUv,\s*uR7310C1RuntimeAtlasPatchResolution,\s*1\.0,\s*1\.0\)/);
+assert.match(shader, /r7310C1PatchCoverageProbe\(r7310NorthBeamCoverageUv,\s*uR7310C1WestBeamInnerShadowResolution,\s*14\.0,\s*2\.0\)/);
+assert.match(shader, /r7310C1PatchCoverageProbe\(r7310NorthBeamCoverageUv,\s*uR7310C1EastBeamUnderShadowResolution,\s*17\.0,\s*5\.0\)/);
+assert.match(shader, /r7310NorthBeamRadiance\s*=\s*r7310C1NorthWallHybridRadiance/);
+assert.match(shader, /r7310NorthBeamRadiance\s*=\s*r7310C1WestBeamInnerShadowHybridRadiance/);
+assert.match(shader, /r7310NorthBeamRadiance\s*=\s*r7310C1EastBeamUnderShadowHybridRadiance/);
+
+assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*31\s*\)\s*return\s*'northBeamRoute'/);
+assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*36\s*\)\s*return\s*'northBeamRadiance'/);
+assert.match(initCommon, /Math\.min\(36,\s*Math\.round\(requestedProbeLevel\)\)/);
+assert.match(initCommon, /north_wall_hybrid/);
+assert.match(initCommon, /west_beam_inner_shadow_hybrid/);
+assert.match(initCommon, /east_beam_under_shadow_hybrid/);
+assert.match(initCommon, /decodeMode === 'northBeamCoverage'/);
+assert.match(initCommon, /decodeMode === 'northBeamRadiance'/);
+
+assert.match(runner, /northBeamGapProbeTest:\s*false/);
+assert.match(runner, /northBeamGapRedLiveProbeTest:\s*false/);
+assert.match(runner, /northWallNormalFidelityProbeTest:\s*false/);
+assert.match(runner, /--r7310-north-beam-gap-probe/);
+assert.match(runner, /--r7310-north-beam-gap-red-live-probe/);
+assert.match(runner, /--r7310-north-wall-normal-fidelity-probe/);
+assert.match(runner, /r7-3-10-north-beam-gap-probe/);
+assert.match(runner, /hybrid-runtime-only/);
+assert.match(runner, /red-live-compare-report\.json/);
+assert.match(runner, /narrowWindows/);
+assert.match(runner, /east_blue_1017_zero_luma/);
+assert.match(runner, /west_blue_1015_1016_north_end/);
+assert.match(runner, /north_wall_alpha_transition/);
+assert.match(runner, /narrowZones/);
+assert.match(runner, /redAlphaBoundarySamples/);
+assert.match(runner, /blueNearBlackSamples/);
+assert.match(runner, /atlasReadback/);
+assert.match(runner, /tapAlphaValues/);
+assert.match(runner, /tapLumaValues/);
+assert.match(runner, /red_B_valid_black_candidate/);
+assert.match(runner, /red_A_alpha_transition_control/);
+assert.match(runner, /live_reference/);
+assert.match(runner, /hybrid_probe_stack/);
+assert.match(runner, /phase1RedLiveComparison/);
+assert.match(runner, /normal-fidelity-step-a-report\.json/);
+assert.match(runner, /normal-north-wall-fidelity-ok-for-sampled-points/);
+assert.match(runner, /typeof renderer !== 'undefined' && renderer && renderer\.domElement/);
+assert.match(runner, /not-measured-do-not-change-this-side/);
+assert.match(runner, /window\.setR7310C1FloorDiffuseRuntimeEnabled\(false\)/);
+assert.match(runner, /window\.setR7310C1CeilingDiffuseRuntimeEnabled\(false\)/);
+assert.match(runner, /for\s*\(\s*const level of \[31,\s*32,\s*33,\s*34,\s*35,\s*36\]\s*\)/);
+assert.match(runner, /northWallCamera:\s*true/);
+assert.match(runner, /structuralCamera:\s*true/);
+
+console.log('R7-3.10 north-beam gap red-blue probe contract passed');

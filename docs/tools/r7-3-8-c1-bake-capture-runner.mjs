@@ -59,6 +59,9 @@ function parseArgs(argv) {
     beamUnderShadowProbeTest: false,
     cameraPoseInfoTest: false,
     eastWallShadowVisualTest: false,
+    northBeamGapProbeTest: false,
+    northBeamGapRedLiveProbeTest: false,
+    northWallNormalFidelityProbeTest: false,
     uiToggleTest: false,
     neFurnitureRuntimeTest: false,
     targetSamples: null,
@@ -113,6 +116,9 @@ function parseArgs(argv) {
     else if (arg === '--r7310-beam-under-shadow-probe') out.beamUnderShadowProbeTest = true;
     else if (arg === '--r7310-camera-pose-info-test') out.cameraPoseInfoTest = true;
     else if (arg === '--r7310-east-wall-shadow-visual-test') out.eastWallShadowVisualTest = true;
+    else if (arg === '--r7310-north-beam-gap-probe') out.northBeamGapProbeTest = true;
+    else if (arg === '--r7310-north-beam-gap-red-live-probe') out.northBeamGapRedLiveProbeTest = true;
+    else if (arg === '--r7310-north-wall-normal-fidelity-probe') out.northWallNormalFidelityProbeTest = true;
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
     else if (arg === '--r7310-ne-furniture-runtime-test') out.neFurnitureRuntimeTest = true;
     else if (arg.startsWith('--target-samples=')) out.targetSamples = Number(arg.slice('--target-samples='.length));
@@ -491,8 +497,9 @@ async function evaluate(cdp, expression, options = {}) {
 
 async function waitForExpression(cdp, expression, timeoutMs) {
   const started = Date.now();
+  const pollTimeoutMs = Math.max(30000, Math.min(120000, timeoutMs));
   while (Date.now() - started < timeoutMs) {
-    const value = await evaluate(cdp, expression, { timeoutMs: 30000 });
+    const value = await evaluate(cdp, expression, { timeoutMs: pollTimeoutMs });
     if (value) return value;
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
@@ -1460,14 +1467,21 @@ async function main() {
     await cdp.connect();
     await cdp.send('Runtime.enable');
     await cdp.send('Page.enable');
-    if (args.beamUnderShadowProbeTest) {
+    if (args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.northWallNormalFidelityProbeTest) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 727,
+        height: 741,
+        deviceScaleFactor: 3.5,
+        mobile: false
+      });
+    } else if (args.beamUnderShadowProbeTest) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: 1458,
         height: 741,
         deviceScaleFactor: 1,
         mobile: false
       });
-    } else if (args.eastWallShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.southWindowSwColumnContinuityProbeTest || args.r7310RuntimeProbeSampleTest) {
+    } else if (args.eastWallShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.southWindowSwColumnContinuityProbeTest || args.r7310RuntimeProbeSampleTest || args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.northWallNormalFidelityProbeTest) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: 1458,
         height: 741,
@@ -1494,7 +1508,7 @@ async function main() {
                 ? 'typeof window.reportR739C1AccurateReflectionAfterSamples === "function"'
                 : args.cameraPoseInfoTest
                   ? 'typeof window.reportR7310CameraPoseInfo === "function"'
-                  : args.runtimeShortCircuitTest || args.northWallRuntimeTest || args.eastWallRuntimeTest || args.westWallRuntimeTest || args.southWallRuntimeTest || args.ceilingRuntimeTest || args.structuralRuntimeTest || args.r7310RuntimeProbeSampleTest || args.beamUnderShadowProbeTest || args.h5BlackLineProbeTest || args.southWindowFrontEdgeVisualTest || args.southRevealCornerVisualTest || args.seColumnShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.eastWallShadowVisualTest || args.uiToggleTest || args.neFurnitureRuntimeTest
+                  : args.runtimeShortCircuitTest || args.northWallRuntimeTest || args.eastWallRuntimeTest || args.westWallRuntimeTest || args.southWallRuntimeTest || args.ceilingRuntimeTest || args.structuralRuntimeTest || args.r7310RuntimeProbeSampleTest || args.beamUnderShadowProbeTest || args.h5BlackLineProbeTest || args.southWindowFrontEdgeVisualTest || args.southRevealCornerVisualTest || args.seColumnShadowVisualTest || args.seColumnNorthShadowVisualTest || args.seColumnWestShadowVisualTest || args.southWallAcShadowVisualTest || args.eastWallBeamShadowVisualTest || args.swColumnNorthShadowVisualTest || args.westWallBeamShadowVisualTest || args.westWallMosaicDiagnostic || args.westJoinSanityProbe || args.westJoinD1Gate || args.eastWallShadowVisualTest || args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.uiToggleTest || args.neFurnitureRuntimeTest
                   ? 'typeof window.reportR7310C1FullRoomDiffuseRuntimeProbe === "function"'
                   : args.r738SproutPasteProbeTest
                     ? 'typeof window.reportR738C1SproutPasteRuntimeProbe === "function"'
@@ -2410,6 +2424,2035 @@ async function main() {
         console.log(`${screenshot.viewName}: screenshot=${screenshot.screenshot} samples=${screenshot.sampleCounter}`);
       }
       console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.northWallNormalFidelityProbeTest) {
+      console.error('[r738-runner] running R7-3.10 north-wall normal fidelity Step A probe');
+      const targetSamples = args.targetSamples || 128;
+      const defaultCameraCases = [
+        {
+          name: 'center_north_wall_clean_reference',
+          side: 'center',
+          cameraState: {
+            position: { x: 0.0, y: 1.62, z: 0.24 },
+            yaw: 0.0,
+            pitch: 0.08,
+            fov: 55,
+            forward: { x: 0.0, y: 0.079915, z: -0.996802 }
+          }
+        },
+        {
+          name: 'west_beam_view_clean_north_wall',
+          side: 'west',
+          cameraState: {
+            position: { x: -1.711693, y: 2.506037, z: -1.819382 },
+            yaw: 1.1408,
+            pitch: 0.427,
+            fov: 55,
+            forward: { x: -0.827353, y: 0.414142, z: -0.379438 }
+          }
+        },
+        {
+          name: 'east_beam_view_clean_north_wall',
+          side: 'east',
+          cameraState: {
+            position: { x: 1.836631, y: 2.511367, z: -1.865359 },
+            yaw: -0.952,
+            pitch: 0.449,
+            fov: 55,
+            forward: { x: 0.733838, y: 0.434065, z: -0.522561 }
+          }
+        }
+      ];
+      const cameraCases = args.cameraState
+        ? [
+          {
+            name: 'custom_north_wall_clean_reference',
+            side: 'custom',
+            cameraState: args.cameraState
+          }
+        ]
+        : defaultCameraCases;
+      const probeReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraCases = ${JSON.stringify(cameraCases)};
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          function hideUi() {
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+          }
+          async function waitForHybridPackages(timeoutMs) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(true);
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeoutMs) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 normal fidelity package error: ' + config.error);
+              if (config.northWallReady &&
+                config.structuralReady &&
+                config.westBeamInnerShadowReady &&
+                config.westBeamUnderShadowReady &&
+                config.eastBeamInnerShadowReady &&
+                config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 normal fidelity hybrid packages did not become ready');
+          }
+          function buildProbeGrid() {
+            const canvas = typeof renderer !== 'undefined' && renderer && renderer.domElement ? renderer.domElement : null;
+            const width = canvas && canvas.clientWidth > 0 ? canvas.clientWidth : window.innerWidth;
+            const height = canvas && canvas.clientHeight > 0 ? canvas.clientHeight : Math.round(window.innerHeight * 0.55);
+            const samplePoints = [];
+            const columns = 25;
+            const rows = 15;
+            for (let row = 0; row < rows; row += 1) {
+              const y = Math.round(height * (0.08 + 0.84 * row / Math.max(1, rows - 1)));
+              for (let column = 0; column < columns; column += 1) {
+                const x = Math.round(width * (0.08 + 0.84 * column / Math.max(1, columns - 1)));
+                samplePoints.push({
+                  role: 'normal_north_wall_candidate_grid',
+                  x,
+                  y,
+                  gridColumn: column,
+                  gridRow: row
+                });
+              }
+            }
+            return { width, height, columns, rows, samplePoints };
+          }
+          function routeNameOf(sample) {
+            return sample && sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+          }
+          function summarizeCase(cameraCase, levelReports, grid) {
+            const routeSamples = levelReports.level31.samplePoints || [];
+            const worldSamples = levelReports.level32.samplePoints || [];
+            const normalSamples = levelReports.level33.samplePoints || [];
+            const hitSamples = levelReports.level34.samplePoints || [];
+            const coverageSamples = levelReports.level35.samplePoints || [];
+            const radianceSamples = levelReports.level36.samplePoints || [];
+            const samples = routeSamples.map((routeSample, index) => ({
+              role: grid.samplePoints[index] ? grid.samplePoints[index].role : null,
+              x: routeSample.x,
+              y: routeSample.y,
+              rtPixel: routeSample.rtPixel,
+              gridColumn: grid.samplePoints[index] ? grid.samplePoints[index].gridColumn : null,
+              gridRow: grid.samplePoints[index] ? grid.samplePoints[index].gridRow : null,
+              route: routeSample.decoded,
+              world: worldSamples[index] ? worldSamples[index].decoded : null,
+              normal: normalSamples[index] ? normalSamples[index].decoded : null,
+              hitObject: hitSamples[index] ? hitSamples[index].decoded : null,
+              coverage: coverageSamples[index] ? coverageSamples[index].decoded : null,
+              radiance: radianceSamples[index] ? radianceSamples[index].decoded : null
+            }));
+            return {
+              cameraCase,
+              grid: { width: grid.width, height: grid.height, columns: grid.columns, rows: grid.rows, sampleCount: samples.length },
+              routeCounts: samples.reduce((counts, sample) => {
+                const key = routeNameOf(sample);
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+              }, {}),
+              samples,
+              status: samples.some((sample) => routeNameOf(sample) === 'north_wall_hybrid') ? 'pass' : 'needs-more-sampling'
+            };
+          }
+          hideUi();
+          const packageConfig = await waitForHybridPackages(${args.timeoutMs});
+          const reports = [];
+          for (const cameraCase of cameraCases) {
+            const grid = buildProbeGrid();
+            const levelReports = {};
+            for (const level of [31, 32, 33, 34, 35, 36]) {
+              levelReports['level' + level] = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs},
+                cameraState: cameraCase.cameraState,
+                northWallCamera: true,
+                structuralCamera: true,
+                probeLevel: level,
+                randomVec2: { x: 0.5, y: 0.5 },
+                samplePoints: grid.samplePoints,
+                samplePointSpace: 'canvasCssPixel'
+              });
+            }
+            reports.push(summarizeCase(cameraCase, levelReports, grid));
+          }
+          return {
+            version: 'r7-3-10-north-wall-normal-fidelity-step-a-probe',
+            architecture: 'hybrid-runtime-route-selection',
+            packageConfig,
+            probeLevels: [31, 32, 33, 34, 35, 36],
+            samplePointSpace: 'canvasCssPixel',
+            reports,
+            status: reports.some((entry) => entry.status === 'pass') ? 'pass' : 'needs-more-sampling'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 180000
+      });
+      function clampNumber(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+      function loadRuntimeAtlasPointer(fileName) {
+        const pointerPath = path.join(repoRoot, 'docs', 'data', fileName);
+        const pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+        const atlasPath = path.join(repoRoot, pointer.packageDir, pointer.artifacts.atlasPatch0);
+        const atlasBuffer = fs.readFileSync(atlasPath);
+        const pixels = new Float32Array(atlasBuffer.buffer, atlasBuffer.byteOffset, atlasBuffer.byteLength / 4);
+        return { pointer, pixels, atlasPath };
+      }
+      const northWallAtlas = loadRuntimeAtlasPointer('r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json');
+      function lumaRgb(r, g, b) {
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+      function atlasTexel(x, y) {
+        const resolution = northWallAtlas.pointer.targetAtlasResolution;
+        const safeX = clampNumber(Math.round(x), 0, resolution - 1);
+        const safeY = clampNumber(Math.round(y), 0, resolution - 1);
+        const offset = (safeY * resolution + safeX) * 4;
+        const r = northWallAtlas.pixels[offset];
+        const g = northWallAtlas.pixels[offset + 1];
+        const b = northWallAtlas.pixels[offset + 2];
+        const a = northWallAtlas.pixels[offset + 3];
+        return { x: safeX, y: safeY, r, g, b, a, luma: lumaRgb(r, g, b) };
+      }
+      function buildNorthWallAtlasReadback(sample) {
+        if (!sample || !sample.world || !sample.route || Math.round(Number(sample.route.targetId)) !== 1002) return null;
+        const b = northWallAtlas.pointer.worldBounds;
+        const uv = {
+          u: (sample.world.x - b.xMin) / Math.max(0.000001, b.xMax - b.xMin),
+          v: (sample.world.y - b.yMin) / Math.max(0.000001, b.yMax - b.yMin)
+        };
+        const resolution = northWallAtlas.pointer.targetAtlasResolution;
+        const pixelX = clampNumber(uv.u * resolution - 0.5, 0, resolution - 1);
+        const pixelY = clampNumber(uv.v * resolution - 0.5, 0, resolution - 1);
+        const p0x = Math.floor(pixelX);
+        const p0y = Math.floor(pixelY);
+        const p1x = Math.min(p0x + 1, resolution - 1);
+        const p1y = Math.min(p0y + 1, resolution - 1);
+        const tx = pixelX - p0x;
+        const ty = pixelY - p0y;
+        const taps = [
+          { name: 'c00', texel: atlasTexel(p0x, p0y), bilinearWeight: (1 - tx) * (1 - ty) },
+          { name: 'c10', texel: atlasTexel(p1x, p0y), bilinearWeight: tx * (1 - ty) },
+          { name: 'c01', texel: atlasTexel(p0x, p1y), bilinearWeight: (1 - tx) * ty },
+          { name: 'c11', texel: atlasTexel(p1x, p1y), bilinearWeight: tx * ty }
+        ].map((tap) => ({
+          ...tap,
+          alphaWeight: tap.bilinearWeight * tap.texel.a
+        }));
+        const weightSum = taps.reduce((sum, tap) => sum + tap.alphaWeight, 0);
+        const weightedRgb = weightSum > 0.000001
+          ? taps.reduce((rgb, tap) => {
+            rgb.r += tap.texel.r * tap.alphaWeight;
+            rgb.g += tap.texel.g * tap.alphaWeight;
+            rgb.b += tap.texel.b * tap.alphaWeight;
+            return rgb;
+          }, { r: 0, g: 0, b: 0 })
+          : null;
+        if (weightedRgb) {
+          weightedRgb.r /= weightSum;
+          weightedRgb.g /= weightSum;
+          weightedRgb.b /= weightSum;
+          weightedRgb.luma = lumaRgb(weightedRgb.r, weightedRgb.g, weightedRgb.b);
+        }
+        return {
+          targetId: 1002,
+          packageDir: northWallAtlas.pointer.packageDir,
+          resolution,
+          uv,
+          pixel: { x: pixelX, y: pixelY, p0: { x: p0x, y: p0y }, p1: { x: p1x, y: p1y }, t: { x: tx, y: ty } },
+          weightSum,
+          nearest: atlasTexel(Math.floor(pixelX + 0.5), Math.floor(pixelY + 0.5)),
+          weightedRgb,
+          tapAlphaValues: taps.map((tap) => tap.texel.a),
+          tapLumaValues: taps.map((tap) => tap.texel.luma),
+          taps
+        };
+      }
+      function routeNameOf(sample) {
+        return sample && sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+      }
+      function isCleanNormalNorthWallSample(sample) {
+        if (!sample || routeNameOf(sample) !== 'north_wall_hybrid') return false;
+        const world = sample.world || {};
+        if (!Number.isFinite(world.x) || !Number.isFinite(world.y) || !Number.isFinite(world.z)) return false;
+        if (Math.abs(world.z + 1.874) > 0.018) return false;
+        if (Math.abs(world.x) > 1.35) return false;
+        if (world.y < 0.85 || world.y > 2.12) return false;
+        const coverage = sample.coverage || {};
+        const weightSum = Number(coverage.weightSum);
+        const validAlpha = Number(coverage.validAlpha);
+        if (!Number.isFinite(weightSum) || weightSum < 0.999) return false;
+        if (!Number.isFinite(validAlpha) || validAlpha <= 0.5) return false;
+        const readback = sample.atlasReadback;
+        if (!readback || readback.targetId !== 1002 || !readback.weightedRgb) return false;
+        if (!Number.isFinite(readback.weightSum) || readback.weightSum < 0.999) return false;
+        const tapAlphas = Array.isArray(readback.tapAlphaValues) ? readback.tapAlphaValues : [];
+        const tapLumas = Array.isArray(readback.tapLumaValues) ? readback.tapLumaValues : [];
+        if (tapAlphas.length !== 4 || tapLumas.length !== 4) return false;
+        if (!tapAlphas.every((value) => Number(value) > 0.5)) return false;
+        if (tapLumas.some((value) => Number(value) <= 0.020)) return false;
+        return true;
+      }
+      function selectCleanSamples(samples, limit) {
+        const candidates = samples
+          .filter(isCleanNormalNorthWallSample)
+          .sort((a, b) => {
+            const ar = a.radiance && Number.isFinite(Number(a.radiance.luma)) ? Number(a.radiance.luma) : 999;
+            const br = b.radiance && Number.isFinite(Number(b.radiance.luma)) ? Number(b.radiance.luma) : 999;
+            const ay = a.world && Number.isFinite(Number(a.world.y)) ? Math.abs(Number(a.world.y) - 1.55) : 999;
+            const by = b.world && Number.isFinite(Number(b.world.y)) ? Math.abs(Number(b.world.y) - 1.55) : 999;
+            return ay - by || Math.abs(ar - 0.12) - Math.abs(br - 0.12);
+          });
+        const selected = [];
+        for (const sample of candidates) {
+          const farEnough = selected.every((existing) => {
+            const dx = Number(existing.x) - Number(sample.x);
+            const dy = Number(existing.y) - Number(sample.y);
+            return Math.sqrt(dx * dx + dy * dy) >= 48;
+          });
+          if (!farEnough) continue;
+          selected.push(sample);
+          if (selected.length >= limit) break;
+        }
+        return selected;
+      }
+      function toRenderPoint(sample, index) {
+        const readback = sample.atlasReadback || {};
+        const weighted = readback.weightedRgb || {};
+        return {
+          role: 'normal_north_wall_clean_control',
+          index,
+          x: sample.x,
+          y: sample.y,
+          gridColumn: sample.gridColumn,
+          gridRow: sample.gridRow,
+          route: sample.route,
+          world: sample.world,
+          coverage: sample.coverage,
+          radiance: sample.radiance,
+          atlasWeightedLuma: Number.isFinite(Number(weighted.luma)) ? Number(weighted.luma) : null,
+          atlasTapLumaValues: readback.tapLumaValues || null,
+          atlasTapAlphaValues: readback.tapAlphaValues || null,
+          atlasPixel: readback.pixel || null,
+          atlasUv: readback.uv || null
+        };
+      }
+      const selectionEntries = [];
+      for (const entry of probeReport.reports || []) {
+        for (const sample of entry.samples || []) {
+          const readback = buildNorthWallAtlasReadback(sample);
+          if (readback) sample.atlasReadback = readback;
+        }
+        const cleanCandidates = (entry.samples || []).filter(isCleanNormalNorthWallSample);
+        const selected = selectCleanSamples(entry.samples || [], 6);
+        selectionEntries.push({
+          cameraCaseName: entry.cameraCase.name,
+          side: entry.cameraCase.side,
+          cameraState: entry.cameraCase.cameraState,
+          routeCounts: entry.routeCounts,
+          cleanCandidateCount: cleanCandidates.length,
+          selectedSamples: selected.map(toRenderPoint),
+          status: selected.length >= 3 ? 'pass' : 'needs-more-sampling'
+        });
+      }
+      const renderRequests = selectionEntries.map((entry) => ({
+        cameraCaseName: entry.cameraCaseName,
+        side: entry.side,
+        cameraState: entry.cameraState,
+        samplePoints: entry.selectedSamples
+      }));
+      const renderReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          const requests = ${JSON.stringify(renderRequests)};
+          const targetSamples = ${targetSamples};
+          const timeoutMs = ${args.timeoutMs};
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          function lumaOfRgb(rgb) {
+            return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+          }
+          function hideUi() {
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+          }
+          function setRuntimeStack(mode) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            const enabled = mode === 'hybrid_probe_stack';
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1SeColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1SeColumnWestShadowRuntimeEnabled(false);
+            window.setR7310C1SouthWallAcShadowRuntimeEnabled(false);
+            window.setR7310C1EastWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(false);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(enabled);
+            if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+              updateR7310C1FullRoomDiffuseRuntimeUniforms();
+          }
+          async function waitForHybridStack(timeout) {
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeout) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 normal fidelity live compare package error: ' + config.error);
+              if (config.northWallReady &&
+                config.structuralReady &&
+                config.westBeamInnerShadowReady &&
+                config.westBeamUnderShadowReady &&
+                config.eastBeamInnerShadowReady &&
+                config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 normal fidelity live compare packages did not become ready');
+          }
+          function normalizePoint(point, readback) {
+            const canvas = typeof renderer !== 'undefined' && renderer && renderer.domElement ? renderer.domElement : null;
+            const dpr = window && Number.isFinite(window.devicePixelRatio) ? window.devicePixelRatio : 1;
+            const canvasHeight = canvas && Number.isFinite(canvas.clientHeight) && canvas.clientHeight > 0
+              ? canvas.clientHeight
+              : readback.height / Math.max(1, dpr);
+            return {
+              x: Math.max(0, Math.min(readback.width - 1, Math.round(Number(point.x) * dpr))),
+              y: Math.max(0, Math.min(readback.height - 1, Math.round((canvasHeight - Number(point.y)) * dpr)))
+            };
+          }
+          function sampleReadback(readback, point, samples) {
+            const pixel = normalizePoint(point, readback);
+            const offset = (pixel.y * readback.width + pixel.x) * 4;
+            const divisor = Math.max(1, Number(samples) || 1);
+            const rgb = {
+              r: readback.pixels[offset] / divisor,
+              g: readback.pixels[offset + 1] / divisor,
+              b: readback.pixels[offset + 2] / divisor
+            };
+            return {
+              rtPixel: pixel,
+              r: rgb.r,
+              g: rgb.g,
+              b: rgb.b,
+              luma: lumaOfRgb(rgb)
+            };
+          }
+          function deterministicRandomPair(sample, salt) {
+            if (typeof r739DeterministicRandomPair === 'function')
+              return r739DeterministicRandomPair(sample, salt);
+            const a = Math.sin((sample + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+            const b = Math.sin((sample + 1) * 93.9898 + salt * 17.233) * 24634.6345;
+            return {
+              x: a - Math.floor(a),
+              y: b - Math.floor(b)
+            };
+          }
+          async function renderAccumulatedReadback(samples, timeout, referenceMode, options) {
+            if (!renderer || !pathTracingRenderTarget || !pathTracingScene || !worldCamera || !screenCopyScene || !orthoCamera || !pathTracingUniforms || !screenCopyUniforms)
+              throw new Error('R7-3.10 normal fidelity Step A missing renderer state');
+            if (typeof createR738FloatRenderTarget !== 'function' || typeof readR738RenderTargetFloatPixels !== 'function')
+              throw new Error('R7-3.10 normal fidelity Step A missing float readback helpers');
+            options = options || {};
+            const width = pathTracingRenderTarget.width;
+            const height = pathTracingRenderTarget.height;
+            const target = createR738FloatRenderTarget(width, height);
+            const previous = createR738FloatRenderTarget(width, height);
+            const savedRenderTarget = renderer.getRenderTarget ? renderer.getRenderTarget() : null;
+            const savedPreviousTexture = pathTracingUniforms.tPreviousTexture ? pathTracingUniforms.tPreviousTexture.value : null;
+            const savedCopySource = screenCopyUniforms.tPathTracedImageTexture ? screenCopyUniforms.tPathTracedImageTexture.value : null;
+            const startedAt = performance.now();
+            let actualSamples = 0;
+            try {
+              if (pathTracingUniforms.tPreviousTexture) pathTracingUniforms.tPreviousTexture.value = previous.texture;
+              if (screenCopyUniforms.tPathTracedImageTexture) screenCopyUniforms.tPathTracedImageTexture.value = target.texture;
+              renderer.setRenderTarget(target);
+              renderer.clear();
+              renderer.setRenderTarget(previous);
+              renderer.clear();
+              if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(true);
+              if (pathTracingUniforms.uFloorRoughness)
+                pathTracingUniforms.uFloorRoughness.value = Number.isFinite(options.floorRoughness) ? options.floorRoughness : 1.0;
+              if (pathTracingUniforms.uR738C1BakeCaptureMode) pathTracingUniforms.uR738C1BakeCaptureMode.value = 0;
+              if (pathTracingUniforms.uR738C1BakePastePreviewMode) pathTracingUniforms.uR738C1BakePastePreviewMode.value = 0.0;
+              if (pathTracingUniforms.uR739C1AccurateReflectionMode) pathTracingUniforms.uR739C1AccurateReflectionMode.value = 0.0;
+              if (pathTracingUniforms.uR739C1ReflectionReady) pathTracingUniforms.uR739C1ReflectionReady.value = 0.0;
+              if (pathTracingUniforms.uR739C1ReflectionSurfaceMaskMode) pathTracingUniforms.uR739C1ReflectionSurfaceMaskMode.value = 0.0;
+              if (pathTracingUniforms.uR739C1ReflectionReferenceMode) pathTracingUniforms.uR739C1ReflectionReferenceMode.value = referenceMode;
+              for (let sample = 1; sample <= samples; sample += 1) {
+                if (performance.now() - startedAt > timeout) break;
+                const jitter = deterministicRandomPair(sample, 0);
+                sampleCounter = sample;
+                frameCounter = sample + 1.0;
+                cameraIsMoving = false;
+                cameraRecentlyMoving = false;
+                pathTracingUniforms.uSampleCounter.value = sampleCounter;
+                pathTracingUniforms.uFrameCounter.value = frameCounter;
+                pathTracingUniforms.uPreviousSampleCount.value = 1.0;
+                pathTracingUniforms.uCameraIsMoving.value = false;
+                pathTracingUniforms.uRandomVec2.value.set(jitter.x, jitter.y);
+                pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
+                if (typeof updateR73QuickPreviewFillUniforms === 'function') updateR73QuickPreviewFillUniforms();
+                renderer.setRenderTarget(target);
+                renderer.render(pathTracingScene, worldCamera);
+                renderer.setRenderTarget(previous);
+                renderer.render(screenCopyScene, orthoCamera);
+                actualSamples = sample;
+                if (sample % 16 === 0)
+                  await wait(0);
+              }
+              if (actualSamples < samples)
+                throw new Error('R7-3.10 normal fidelity Step A timeout before ' + samples + ' samples');
+              return {
+                actualSamples,
+                readback: await readR738RenderTargetFloatPixels(target)
+              };
+            }
+            finally {
+              if (pathTracingUniforms.tPreviousTexture) pathTracingUniforms.tPreviousTexture.value = savedPreviousTexture;
+              if (screenCopyUniforms.tPathTracedImageTexture) screenCopyUniforms.tPathTracedImageTexture.value = savedCopySource;
+              renderer.setRenderTarget(savedRenderTarget);
+              target.dispose();
+              previous.dispose();
+            }
+          }
+          async function renderMode(mode, cameraState, points) {
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(cameraState);
+            setRuntimeStack(mode);
+            if (mode === 'hybrid_probe_stack') await waitForHybridStack(timeoutMs);
+            const rendered = await renderAccumulatedReadback(targetSamples, timeoutMs, 0.0, { floorRoughness: 1.0 });
+            return {
+              mode,
+              actualSamples: rendered.actualSamples,
+              samples: points.map((point) => ({
+                x: point.x,
+                y: point.y,
+                role: point.role,
+                index: point.index,
+                readback: sampleReadback(rendered.readback, point, rendered.actualSamples)
+              }))
+            };
+          }
+          hideUi();
+          const entries = [];
+          for (const request of requests) {
+            const points = Array.isArray(request.samplePoints) ? request.samplePoints : [];
+            if (points.length === 0) {
+              entries.push({
+                cameraCaseName: request.cameraCaseName,
+                side: request.side,
+                targetSamples,
+                sampleCount: 0,
+                samples: [],
+                status: 'needs-more-sampling'
+              });
+              continue;
+            }
+            const live = await renderMode('live_reference', request.cameraState, points);
+            const hybrid = await renderMode('hybrid_probe_stack', request.cameraState, points);
+            const byKey = new Map();
+            for (const sample of live.samples)
+              byKey.set(sample.index, { liveReference: sample.readback });
+            for (const sample of hybrid.samples) {
+              const entry = byKey.get(sample.index) || {};
+              entry.hybridProbeStack = sample.readback;
+              byKey.set(sample.index, entry);
+            }
+            entries.push({
+              cameraCaseName: request.cameraCaseName,
+              side: request.side,
+              targetSamples,
+              actualSamples: {
+                liveReference: live.actualSamples,
+                hybridProbeStack: hybrid.actualSamples
+              },
+              sampleCount: points.length,
+              samples: points.map((point) => {
+                const measured = byKey.get(point.index) || {};
+                return {
+                  ...point,
+                  liveReference: measured.liveReference || null,
+                  hybridProbeStack: measured.hybridProbeStack || null
+                };
+              }),
+              status: 'pass'
+            });
+          }
+          setRuntimeStack('hybrid_probe_stack');
+          return {
+            version: 'r7-3-10-north-wall-normal-fidelity-step-a-render-compare',
+            targetSamples,
+            entries,
+            status: entries.some((entry) => entry.status === 'pass') ? 'pass' : 'needs-more-sampling'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + Math.max(240000, targetSamples * 6000)
+      });
+      function valuesFor(samples, selector) {
+        return samples.map(selector).filter((value) => Number.isFinite(value));
+      }
+      function mean(values) {
+        return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+      }
+      function summarizeFidelitySamples(samples) {
+        const live = valuesFor(samples, (sample) => sample.liveReference && Number(sample.liveReference.luma));
+        const hybrid = valuesFor(samples, (sample) => sample.hybridProbeStack && Number(sample.hybridProbeStack.luma));
+        const atlas = valuesFor(samples, (sample) => Number(sample.atlasWeightedLuma));
+        const deltas = valuesFor(samples, (sample) => {
+          const liveValue = sample.liveReference && Number(sample.liveReference.luma);
+          const hybridValue = sample.hybridProbeStack && Number(sample.hybridProbeStack.luma);
+          return Number.isFinite(liveValue) && Number.isFinite(hybridValue) ? hybridValue - liveValue : NaN;
+        });
+        const ratios = valuesFor(samples, (sample) => {
+          const liveValue = sample.liveReference && Number(sample.liveReference.luma);
+          const hybridValue = sample.hybridProbeStack && Number(sample.hybridProbeStack.luma);
+          return Number.isFinite(liveValue) && liveValue > 0.000001 && Number.isFinite(hybridValue) ? hybridValue / liveValue : NaN;
+        });
+        const underBakeSamples = samples.filter((sample) => {
+          const liveValue = sample.liveReference && Number(sample.liveReference.luma);
+          const hybridValue = sample.hybridProbeStack && Number(sample.hybridProbeStack.luma);
+          if (!Number.isFinite(liveValue) || !Number.isFinite(hybridValue)) return false;
+          return hybridValue < liveValue - Math.max(0.035, liveValue * 0.25);
+        });
+        return {
+          count: samples.length,
+          liveLumaMean: mean(live),
+          liveLumaMin: live.length ? Math.min(...live) : null,
+          liveLumaMax: live.length ? Math.max(...live) : null,
+          hybridLumaMean: mean(hybrid),
+          hybridLumaMin: hybrid.length ? Math.min(...hybrid) : null,
+          hybridLumaMax: hybrid.length ? Math.max(...hybrid) : null,
+          atlasWeightedLumaMean: mean(atlas),
+          deltaHybridMinusLiveMean: mean(deltas),
+          deltaHybridMinusLiveMin: deltas.length ? Math.min(...deltas) : null,
+          deltaHybridMinusLiveMax: deltas.length ? Math.max(...deltas) : null,
+          hybridOverLiveMean: mean(ratios),
+          underBakeLikeCount: underBakeSamples.length,
+          underBakeLikeThreshold: 'hybrid < live - max(0.035, live * 0.25)'
+        };
+      }
+      const renderByName = new Map((renderReport.entries || []).map((entry) => [entry.cameraCaseName, entry]));
+      const finalEntries = selectionEntries.map((selection) => {
+        const rendered = renderByName.get(selection.cameraCaseName) || { samples: [], status: 'needs-more-sampling' };
+        const samples = rendered.samples || [];
+        const summary = summarizeFidelitySamples(samples);
+        const verdict = summary.count >= 3 && summary.underBakeLikeCount >= Math.ceil(summary.count * 0.60)
+          ? 'normal-north-wall-under-bake-candidate'
+          : (summary.count >= 3 ? 'normal-north-wall-fidelity-ok-for-sampled-points' : 'needs-more-sampling');
+        return {
+          ...selection,
+          renderCompare: {
+            targetSamples: rendered.targetSamples || targetSamples,
+            actualSamples: rendered.actualSamples || null,
+            samples,
+            summary,
+            verdict,
+            status: rendered.status || 'needs-more-sampling'
+          }
+        };
+      });
+      const finalReport = {
+        version: 'r7-3-10-north-wall-normal-fidelity-step-a',
+        architecture: 'read-only-full-render-live-vs-hybrid',
+        targetSamples,
+        selectionCriteria: {
+          routeName: 'north_wall_hybrid',
+          worldZ: 'abs(z + 1.874) <= 0.018',
+          worldX: 'abs(x) <= 1.35',
+          worldY: '0.85 <= y <= 2.12',
+          coverage: 'probe weightSum >= 0.999 and validAlpha > 0.5',
+          atlas: 'north-wall taps all alpha > 0.5 and luma > 0.020'
+        },
+        probeReport,
+        renderReport,
+        entries: finalEntries,
+        status: finalEntries.some((entry) => entry.renderCompare.status === 'pass') ? 'pass' : 'needs-more-sampling'
+      };
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      const reportPath = path.join(packageDir, 'normal-fidelity-step-a-report.json');
+      fs.writeFileSync(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`);
+      const summaryLines = [
+        '# R7-3.10 North Wall Normal Fidelity Step A',
+        '',
+        `targetSamples: ${targetSamples}`,
+        `status: ${finalReport.status}`,
+        '',
+        '| camera | selected | liveMean | hybridMean | deltaMean | ratioMean | verdict |',
+        '| --- | ---: | ---: | ---: | ---: | ---: | --- |'
+      ];
+      for (const entry of finalEntries) {
+        const summary = entry.renderCompare.summary || {};
+        const fmt = (value) => value !== null && value !== undefined && Number.isFinite(Number(value)) ? Number(value).toFixed(6) : 'null';
+        summaryLines.push(`| ${entry.cameraCaseName} | ${summary.count || 0} | ${fmt(summary.liveLumaMean)} | ${fmt(summary.hybridLumaMean)} | ${fmt(summary.deltaHybridMinusLiveMean)} | ${fmt(summary.hybridOverLiveMean)} | ${entry.renderCompare.verdict} |`);
+      }
+      summaryLines.push('');
+      summaryLines.push('Selection criteria: clean north-wall route, far from side-wall-back transition and beam/gap bands, full alpha coverage, no valid-black atlas taps.');
+      fs.writeFileSync(path.join(packageDir, 'normal-fidelity-step-a-summary.md'), `${summaryLines.join('\n')}\n`);
+      console.log('R7-3.10 north-wall normal fidelity Step A probe completed');
+      console.log(`status: ${finalReport.status}`);
+      for (const entry of finalEntries) {
+        const summary = entry.renderCompare.summary || {};
+        console.log(`${entry.cameraCaseName}: selected=${summary.count || 0} liveMean=${summary.liveLumaMean} hybridMean=${summary.hybridLumaMean} delta=${summary.deltaHybridMinusLiveMean} verdict=${entry.renderCompare.verdict}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (finalReport.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.northBeamGapRedLiveProbeTest) {
+      console.error('[r738-runner] running R7-3.10 north-wall red LIVE-vs-baked phase-1 probe');
+      const cameraCases = [
+        {
+          name: 'west_beam_north_wall_gap',
+          side: 'west',
+          cameraState: {
+            position: { x: -1.711693, y: 2.506037, z: -1.819382 },
+            yaw: 1.1408,
+            pitch: 0.427,
+            fov: 55,
+            forward: { x: -0.827353, y: 0.414142, z: -0.379438 }
+          },
+          samplePoints: [
+            { role: 'red_B_valid_black_candidate', x: 232, y: 348 },
+            { role: 'red_B_valid_black_candidate', x: 246, y: 344 },
+            { role: 'red_B_valid_black_candidate', x: 264, y: 338 },
+            { role: 'red_B_valid_black_candidate', x: 270, y: 336 },
+            { role: 'red_B_valid_black_candidate', x: 282, y: 332 },
+            { role: 'red_A_alpha_transition_control', x: 148, y: 388 },
+            { role: 'red_A_alpha_transition_control', x: 148, y: 390 },
+            { role: 'red_A_alpha_transition_control', x: 148, y: 392 },
+            { role: 'red_A_alpha_transition_control', x: 148, y: 394 },
+            { role: 'red_A_alpha_transition_control', x: 148, y: 400 }
+          ]
+        },
+        {
+          name: 'east_beam_north_wall_gap',
+          side: 'east',
+          cameraState: {
+            position: { x: 1.836631, y: 2.511367, z: -1.865359 },
+            yaw: -0.952,
+            pitch: 0.449,
+            fov: 55,
+            forward: { x: 0.733838, y: 0.434065, z: -0.522561 }
+          },
+          samplePoints: [
+            { role: 'red_B_valid_black_candidate', x: 190, y: 273 },
+            { role: 'red_B_valid_black_candidate', x: 190, y: 277 },
+            { role: 'red_B_valid_black_candidate', x: 190, y: 279 },
+            { role: 'red_B_valid_black_candidate', x: 190, y: 285 },
+            { role: 'red_B_valid_black_candidate', x: 188, y: 257 },
+            { role: 'red_B_valid_black_candidate', x: 188, y: 265 },
+            { role: 'red_A_alpha_transition_control', x: 300, y: 394 },
+            { role: 'red_A_alpha_transition_control', x: 300, y: 392 },
+            { role: 'red_A_alpha_transition_control', x: 300, y: 396 }
+          ]
+        }
+      ];
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraCases = ${JSON.stringify(cameraCases)};
+          const liveTargetSamples = 8;
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          function lumaOfRgb(rgb) {
+            return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+          }
+          function hideUi() {
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+          }
+          async function waitForHybridPackages(timeoutMs) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(true);
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeoutMs) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 red live compare package error: ' + config.error);
+              if (config.northWallReady &&
+                config.structuralReady &&
+                config.westBeamInnerShadowReady &&
+                config.westBeamUnderShadowReady &&
+                config.eastBeamInnerShadowReady &&
+                config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 red live compare hybrid packages did not become ready');
+          }
+          function setRuntimeStack(mode) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            const enabled = mode === 'hybrid_probe_stack';
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1SeColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1SeColumnWestShadowRuntimeEnabled(false);
+            window.setR7310C1SouthWallAcShadowRuntimeEnabled(false);
+            window.setR7310C1EastWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(false);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(enabled);
+            if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+              updateR7310C1FullRoomDiffuseRuntimeUniforms();
+          }
+          function normalizePoint(point, readback) {
+            const canvas = typeof renderer !== 'undefined' && renderer && renderer.domElement ? renderer.domElement : null;
+            const dpr = window && Number.isFinite(window.devicePixelRatio) ? window.devicePixelRatio : 1;
+            const canvasHeight = canvas && Number.isFinite(canvas.clientHeight) && canvas.clientHeight > 0
+              ? canvas.clientHeight
+              : readback.height / Math.max(1, dpr);
+            return {
+              x: Math.max(0, Math.min(readback.width - 1, Math.round(Number(point.x) * dpr))),
+              y: Math.max(0, Math.min(readback.height - 1, Math.round((canvasHeight - Number(point.y)) * dpr)))
+            };
+          }
+          function sampleReadback(readback, point, samples) {
+            const pixel = normalizePoint(point, readback);
+            const offset = (pixel.y * readback.width + pixel.x) * 4;
+            const divisor = Math.max(1, Number(samples) || 1);
+            const rgb = {
+              r: readback.pixels[offset] / divisor,
+              g: readback.pixels[offset + 1] / divisor,
+              b: readback.pixels[offset + 2] / divisor
+            };
+            return {
+              rtPixel: pixel,
+              r: rgb.r,
+              g: rgb.g,
+              b: rgb.b,
+              luma: lumaOfRgb(rgb)
+            };
+          }
+          async function renderMode(mode, cameraState, samplePoints) {
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(cameraState);
+            setRuntimeStack(mode);
+            if (mode === 'hybrid_probe_stack') await waitForHybridPackages(${args.timeoutMs});
+            if (typeof renderR739MainReadback !== 'function')
+              throw new Error('renderR739MainReadback is not available for R7-3.10 red live compare');
+            const rendered = await renderR739MainReadback(liveTargetSamples, ${args.timeoutMs}, 0.0, { floorRoughness: 1.0 });
+            return {
+              mode,
+              actualSamples: rendered.actualSamples,
+              samples: samplePoints.map((point) => ({
+                x: point.x,
+                y: point.y,
+                role: point.role,
+                readback: sampleReadback(rendered.readback, point, rendered.actualSamples)
+              }))
+            };
+          }
+          function routeNameOf(sample) {
+            return sample && sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+          }
+          function summarizeCase(cameraCase, levelReports) {
+            const routeSamples = levelReports.level31.samplePoints || [];
+            const worldSamples = levelReports.level32.samplePoints || [];
+            const normalSamples = levelReports.level33.samplePoints || [];
+            const hitSamples = levelReports.level34.samplePoints || [];
+            const coverageSamples = levelReports.level35.samplePoints || [];
+            const radianceSamples = levelReports.level36.samplePoints || [];
+            const liveSamples = levelReports.liveReference.samples || [];
+            const hybridSamples = levelReports.hybridProbeStack.samples || [];
+            const samples = routeSamples.map((routeSample, index) => {
+              return {
+                x: routeSample.x,
+                y: routeSample.y,
+                role: cameraCase.samplePoints[index] ? cameraCase.samplePoints[index].role : null,
+                rtPixel: routeSample.rtPixel,
+                route: routeSample.decoded,
+                world: worldSamples[index] ? worldSamples[index].decoded : null,
+                normal: normalSamples[index] ? normalSamples[index].decoded : null,
+                hitObject: hitSamples[index] ? hitSamples[index].decoded : null,
+                coverage: coverageSamples[index] ? coverageSamples[index].decoded : null,
+                radiance: radianceSamples[index] ? radianceSamples[index].decoded : null,
+                liveReference: liveSamples[index] ? liveSamples[index].readback : null,
+                hybridProbeStack: hybridSamples[index] ? hybridSamples[index].readback : null
+              };
+            });
+            return {
+              cameraCase: {
+                name: cameraCase.name,
+                side: cameraCase.side,
+                cameraState: cameraCase.cameraState
+              },
+              sampleCount: samples.length,
+              routeCounts: samples.reduce((counts, sample) => {
+                const key = routeNameOf(sample);
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+              }, {}),
+              samples,
+              liveTargetSamples,
+              actualSamples: {
+                liveReference: levelReports.liveReference.actualSamples,
+                hybridProbeStack: levelReports.hybridProbeStack.actualSamples
+              },
+              status: samples.length > 0 ? 'pass' : 'needs-more-sampling'
+            };
+          }
+          hideUi();
+          const packageConfig = await waitForHybridPackages(${args.timeoutMs});
+          const reports = [];
+          for (const cameraCase of cameraCases) {
+            const levelReports = {};
+            for (const level of [31, 32, 33, 34, 35, 36]) {
+              levelReports['level' + level] = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs},
+                cameraState: cameraCase.cameraState,
+                northWallCamera: true,
+                structuralCamera: true,
+                probeLevel: level,
+                randomVec2: { x: 0.5, y: 0.5 },
+                samplePoints: cameraCase.samplePoints,
+                samplePointSpace: 'canvasCssPixel'
+              });
+            }
+            levelReports.liveReference = await renderMode('live_reference', cameraCase.cameraState, cameraCase.samplePoints);
+            levelReports.hybridProbeStack = await renderMode('hybrid_probe_stack', cameraCase.cameraState, cameraCase.samplePoints);
+            reports.push(summarizeCase(cameraCase, levelReports));
+          }
+          setRuntimeStack('hybrid_probe_stack');
+          return {
+            version: 'r7-3-10-north-wall-red-live-vs-baked-phase1-probe',
+            architecture: 'hybrid-runtime-probe-plus-live-reference',
+            packageConfig,
+            reports,
+            status: reports.every((entry) => entry.status === 'pass') ? 'pass' : 'needs-more-sampling'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 240000
+      });
+      function clampNumber(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+      function loadRuntimeAtlasPointer(fileName) {
+        const pointerPath = path.join(repoRoot, 'docs', 'data', fileName);
+        const pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+        const atlasPath = path.join(repoRoot, pointer.packageDir, pointer.artifacts.atlasPatch0);
+        const atlasBuffer = fs.readFileSync(atlasPath);
+        const pixels = new Float32Array(atlasBuffer.buffer, atlasBuffer.byteOffset, atlasBuffer.byteLength / 4);
+        return { pointer, pixels, atlasPath };
+      }
+      const atlasPointers = new Map();
+      function atlasPointerForTarget(targetId) {
+        const id = Math.round(Number(targetId));
+        if (atlasPointers.has(id)) return atlasPointers.get(id);
+        const pointerFileByTarget = {
+          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json'
+        };
+        const fileName = pointerFileByTarget[id];
+        if (!fileName) return null;
+        const loaded = loadRuntimeAtlasPointer(fileName);
+        atlasPointers.set(id, loaded);
+        return loaded;
+      }
+      function lumaRgb(r, g, b) {
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+      function atlasTexel(loaded, x, y) {
+        const resolution = loaded.pointer.targetAtlasResolution;
+        const safeX = clampNumber(Math.round(x), 0, resolution - 1);
+        const safeY = clampNumber(Math.round(y), 0, resolution - 1);
+        const offset = (safeY * resolution + safeX) * 4;
+        const r = loaded.pixels[offset];
+        const g = loaded.pixels[offset + 1];
+        const b = loaded.pixels[offset + 2];
+        const a = loaded.pixels[offset + 3];
+        return { x: safeX, y: safeY, r, g, b, a, luma: lumaRgb(r, g, b) };
+      }
+      function buildAtlasReadback(sample) {
+        const targetId = sample && sample.route ? Number(sample.route.targetId) : null;
+        const loaded = atlasPointerForTarget(targetId);
+        if (!loaded || !sample.world) return null;
+        const b = loaded.pointer.worldBounds;
+        const uv = {
+          u: (sample.world.x - b.xMin) / Math.max(0.000001, b.xMax - b.xMin),
+          v: (sample.world.y - b.yMin) / Math.max(0.000001, b.yMax - b.yMin)
+        };
+        const resolution = loaded.pointer.targetAtlasResolution;
+        const pixelX = clampNumber(uv.u * resolution - 0.5, 0, resolution - 1);
+        const pixelY = clampNumber(uv.v * resolution - 0.5, 0, resolution - 1);
+        const p0x = Math.floor(pixelX);
+        const p0y = Math.floor(pixelY);
+        const p1x = Math.min(p0x + 1, resolution - 1);
+        const p1y = Math.min(p0y + 1, resolution - 1);
+        const tx = pixelX - p0x;
+        const ty = pixelY - p0y;
+        const taps = [
+          { name: 'c00', texel: atlasTexel(loaded, p0x, p0y), bilinearWeight: (1 - tx) * (1 - ty) },
+          { name: 'c10', texel: atlasTexel(loaded, p1x, p0y), bilinearWeight: tx * (1 - ty) },
+          { name: 'c01', texel: atlasTexel(loaded, p0x, p1y), bilinearWeight: (1 - tx) * ty },
+          { name: 'c11', texel: atlasTexel(loaded, p1x, p1y), bilinearWeight: tx * ty }
+        ].map((tap) => ({
+          ...tap,
+          alphaWeight: tap.bilinearWeight * tap.texel.a
+        }));
+        const weightSum = taps.reduce((sum, tap) => sum + tap.alphaWeight, 0);
+        const weightedRgb = weightSum > 0.000001
+          ? taps.reduce((rgb, tap) => {
+            rgb.r += tap.texel.r * tap.alphaWeight;
+            rgb.g += tap.texel.g * tap.alphaWeight;
+            rgb.b += tap.texel.b * tap.alphaWeight;
+            return rgb;
+          }, { r: 0, g: 0, b: 0 })
+          : null;
+        if (weightedRgb) {
+          weightedRgb.r /= weightSum;
+          weightedRgb.g /= weightSum;
+          weightedRgb.b /= weightSum;
+          weightedRgb.luma = lumaRgb(weightedRgb.r, weightedRgb.g, weightedRgb.b);
+        }
+        return {
+          targetId: Math.round(Number(targetId)),
+          packageDir: loaded.pointer.packageDir,
+          resolution,
+          uv,
+          pixel: { x: pixelX, y: pixelY, p0: { x: p0x, y: p0y }, p1: { x: p1x, y: p1y }, t: { x: tx, y: ty } },
+          weightSum,
+          nearest: atlasTexel(loaded, Math.floor(pixelX + 0.5), Math.floor(pixelY + 0.5)),
+          weightedRgb,
+          tapAlphaValues: taps.map((tap) => tap.texel.a),
+          tapLumaValues: taps.map((tap) => tap.texel.luma),
+          taps
+        };
+      }
+      function sampleHasValidBlackTap(sample) {
+        const readback = sample && sample.atlasReadback;
+        if (!readback || readback.targetId !== 1002) return false;
+        const alphas = readback.tapAlphaValues || [];
+        const lumas = readback.tapLumaValues || [];
+        return alphas.length === 4 &&
+          lumas.length === 4 &&
+          alphas.every((value) => Number(value) > 0.5) &&
+          lumas.some((value) => Number(value) <= 0.000001) &&
+          lumas.some((value) => Number(value) >= 0.12);
+      }
+      function summarizeRole(samples) {
+        const valuesFor = (selector) => samples.map(selector).filter((value) => Number.isFinite(value));
+        const mean = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+        const live = valuesFor((sample) => sample.liveReference && Number(sample.liveReference.luma));
+        const hybrid = valuesFor((sample) => sample.hybridProbeStack && Number(sample.hybridProbeStack.luma));
+        const atlas = valuesFor((sample) => sample.atlasReadback && sample.atlasReadback.weightedRgb && Number(sample.atlasReadback.weightedRgb.luma));
+        const tapMax = valuesFor((sample) => sample.atlasReadback && Array.isArray(sample.atlasReadback.tapLumaValues) ? Math.max(...sample.atlasReadback.tapLumaValues) : NaN);
+        return {
+          count: samples.length,
+          confirmedValidBlackCount: samples.filter(sampleHasValidBlackTap).length,
+          liveLumaMean: mean(live),
+          liveLumaMin: live.length ? Math.min(...live) : null,
+          liveLumaMax: live.length ? Math.max(...live) : null,
+          hybridLumaMean: mean(hybrid),
+          atlasWeightedLumaMean: mean(atlas),
+          atlasLitTapMaxMean: mean(tapMax)
+        };
+      }
+      for (const entry of report.reports || []) {
+        for (const sample of entry.samples || []) {
+          const atlasReadback = buildAtlasReadback(sample);
+          if (atlasReadback) sample.atlasReadback = atlasReadback;
+        }
+        const redB = (entry.samples || []).filter((sample) => sample.role === 'red_B_valid_black_candidate' && sample.route && sample.route.routeName === 'north_wall_hybrid');
+        const redA = (entry.samples || []).filter((sample) => sample.role === 'red_A_alpha_transition_control' && sample.route && sample.route.routeName === 'north_wall_hybrid');
+        const redBSummary = summarizeRole(redB);
+        const redASummary = summarizeRole(redA);
+        const liveLitLike = redBSummary.confirmedValidBlackCount > 0 &&
+          redBSummary.liveLumaMean !== null &&
+          redBSummary.atlasLitTapMaxMean !== null &&
+          redBSummary.liveLumaMean >= Math.max(0.10, redBSummary.atlasLitTapMaxMean * 0.60);
+        const liveContactDarkLike = redBSummary.confirmedValidBlackCount > 0 &&
+          redBSummary.liveLumaMean !== null &&
+          redBSummary.liveLumaMean < 0.07;
+        entry.phase1RedDecision = {
+          redBMeasured: redBSummary.confirmedValidBlackCount > 0,
+          redBSummary,
+          redASummary,
+          suggestedRedBFixClass: redBSummary.confirmedValidBlackCount === 0
+            ? 'not-measured-do-not-change-this-side'
+            : (liveLitLike ? 'metadata-invalidation-or-rebake-lit-reference' : (liveContactDarkLike ? 'rebake-contact-dark-reference' : 'ambiguous-needs-review'))
+        };
+      }
+      report.phase1RedSummary = {
+        version: 'r7-3-10-north-wall-red-live-vs-baked-phase1-summary',
+        entries: (report.reports || []).map((entry) => ({
+          cameraCaseName: entry.cameraCase.name,
+          side: entry.cameraCase.side,
+          phase1RedDecision: entry.phase1RedDecision
+        })),
+        status: report.status
+      };
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'red-live-compare-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 north-wall red LIVE-vs-baked phase-1 probe completed');
+      console.log(`status: ${report.status}`);
+      for (const entry of report.reports) {
+        const decision = entry.phase1RedDecision || {};
+        const redB = decision.redBSummary || {};
+        console.log(`${entry.cameraCase.name}: redBMeasured=${decision.redBMeasured} liveMean=${redB.liveLumaMean} atlasMean=${redB.atlasWeightedLumaMean} class=${decision.suggestedRedBFixClass}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.northBeamGapProbeTest) {
+      console.error('[r738-runner] running R7-3.10 north-wall / east-west beam red-blue hybrid probe');
+      const cameraCases = [
+        {
+          name: 'west_beam_north_wall_gap',
+          side: 'west',
+          focusSamplePoints: [
+            { role: 'west_red_vertical_arc_center', x: 558, y: 117 },
+            { role: 'west_red_lower_gap_curve_center', x: 442, y: 303 },
+            { role: 'west_blue_ellipse_center', x: 577, y: 244 },
+            { role: 'west_blue_ellipse_left_edge', x: 522, y: 244 },
+            { role: 'west_blue_ellipse_right_edge', x: 625, y: 244 }
+          ],
+          narrowWindows: [
+            { zone: 'west_blue_1015_1016_north_end', xMin: 232, xMax: 306, yMin: 300, yMax: 350, step: 2 },
+            { zone: 'west_red_north_wall_alpha_transition', xMin: 120, xMax: 210, yMin: 330, yMax: 395, step: 2 }
+          ],
+          cameraState: {
+            position: { x: -1.711693, y: 2.506037, z: -1.819382 },
+            yaw: 1.1408,
+            pitch: 0.427,
+            fov: 55,
+            forward: { x: -0.827353, y: 0.414142, z: -0.379438 }
+          }
+        },
+        {
+          name: 'east_beam_north_wall_gap',
+          side: 'east',
+          focusSamplePoints: [
+            { role: 'east_red_vertical_arc_center', x: 350, y: 137 },
+            { role: 'east_red_lower_gap_curve_center', x: 491, y: 332 },
+            { role: 'east_blue_ellipse_center', x: 451, y: 273 },
+            { role: 'east_blue_ellipse_left_edge', x: 411, y: 273 },
+            { role: 'east_blue_ellipse_right_edge', x: 532, y: 273 }
+          ],
+          narrowWindows: [
+            { zone: 'east_blue_1017_zero_luma', xMin: 184, xMax: 234, yMin: 338, yMax: 356, step: 1 },
+            { zone: 'east_red_north_wall_alpha_transition', xMin: 160, xMax: 220, yMin: 225, yMax: 285, step: 2 }
+          ],
+          cameraState: {
+            position: { x: 1.836631, y: 2.511367, z: -1.865359 },
+            yaw: -0.952,
+            pitch: 0.449,
+            fov: 55,
+            forward: { x: 0.733838, y: 0.434065, z: -0.522561 }
+          }
+        }
+      ];
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const cameraCases = ${JSON.stringify(cameraCases)};
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          function hideUi() {
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+          }
+          async function waitForHybridPackages(timeoutMs) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(true);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(true);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(true);
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeoutMs) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 north-beam gap package error: ' + config.error);
+              if (config.northWallReady &&
+                config.structuralReady &&
+                config.westBeamInnerShadowReady &&
+                config.westBeamUnderShadowReady &&
+                config.eastBeamInnerShadowReady &&
+                config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 north-beam gap hybrid packages did not become ready');
+          }
+          function buildProbeGrid(cameraCase) {
+            const canvas = typeof renderer !== 'undefined' && renderer && renderer.domElement ? renderer.domElement : null;
+            const width = canvas && canvas.clientWidth > 0 ? canvas.clientWidth : window.innerWidth;
+            const height = canvas && canvas.clientHeight > 0 ? canvas.clientHeight : Math.round(window.innerHeight * 0.55);
+            const samplePoints = [];
+            const columns = 121;
+            const rows = 69;
+            for (let row = 0; row < rows; row += 1) {
+              const y = Math.round(height * (0.02 + 0.96 * row / Math.max(1, rows - 1)));
+              for (let column = 0; column < columns; column += 1) {
+                const x = Math.round(width * (0.02 + 0.96 * column / Math.max(1, columns - 1)));
+                samplePoints.push({ x, y, gridColumn: column, gridRow: row });
+              }
+            }
+            if (Array.isArray(cameraCase.focusSamplePoints)) {
+              for (const point of cameraCase.focusSamplePoints) {
+                samplePoints.push({
+                  x: point.x,
+                  y: point.y,
+                  role: point.role,
+                  gridColumn: null,
+                  gridRow: null
+                });
+                for (const dy of [-8, -4, 0, 4, 8]) {
+                  for (const dx of [-8, -4, 0, 4, 8]) {
+                    if (dx === 0 && dy === 0) continue;
+                    samplePoints.push({
+                      x: point.x + dx,
+                      y: point.y + dy,
+                      role: point.role + '_neighborhood',
+                      anchorRole: point.role,
+                      gridColumn: null,
+                      gridRow: null
+                    });
+                  }
+                }
+              }
+            }
+            if (Array.isArray(cameraCase.narrowWindows)) {
+              for (const windowDef of cameraCase.narrowWindows) {
+                const step = Math.max(1, Math.round(Number(windowDef.step) || 1));
+                for (let y = windowDef.yMin; y <= windowDef.yMax; y += step) {
+                  for (let x = windowDef.xMin; x <= windowDef.xMax; x += step) {
+                    samplePoints.push({
+                      x,
+                      y,
+                      zone: windowDef.zone,
+                      gridColumn: null,
+                      gridRow: null
+                    });
+                  }
+                }
+              }
+            }
+            return { width, height, columns, rows, samplePoints };
+          }
+          function lumaOf(sample) {
+            const radiance = sample && sample.radiance;
+            return radiance && Number.isFinite(radiance.luma) ? radiance.luma : null;
+          }
+          function routeNameOf(sample) {
+            return sample && sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+          }
+          function routeIsExpectedBeam(sample, side) {
+            const route = routeNameOf(sample);
+            if (side === 'west')
+              return route === 'west_beam_inner_shadow_hybrid' || route === 'west_beam_under_shadow_hybrid';
+            return route === 'east_beam_inner_shadow_hybrid' || route === 'east_beam_under_shadow_hybrid';
+          }
+          function routeIsSideStructuralBeam(sample, side) {
+            const route = sample && sample.route;
+            if (!route || route.routeName !== 'structural_beam_column_only') return false;
+            const islandId = Number(route.structuralIslandId);
+            return side === 'west'
+              ? islandId === 1 || islandId === 2
+              : islandId === 3 || islandId === 4;
+          }
+          function inSideBand(world, side) {
+            if (!world) return false;
+            if (!Number.isFinite(world.x) || !Number.isFinite(world.y) || !Number.isFinite(world.z)) return false;
+            const sideOk = side === 'west'
+              ? world.x >= -2.06 && world.x <= -1.62
+              : world.x >= 1.62 && world.x <= 2.06;
+            return sideOk && world.y >= 2.43 && world.y <= 2.93 && Math.abs(world.z + 1.874) <= 0.060;
+          }
+          function summarizeSet(samples) {
+            const lumas = samples.map(lumaOf).filter((value) => Number.isFinite(value));
+            const weightSums = samples.map((sample) => sample.coverage && Number(sample.coverage.weightSum)).filter((value) => Number.isFinite(value));
+            const validAlphas = samples.map((sample) => sample.coverage && Number(sample.coverage.validAlpha)).filter((value) => Number.isFinite(value));
+            const sum = (values) => values.reduce((total, value) => total + value, 0);
+            return {
+              count: samples.length,
+              luma: {
+                count: lumas.length,
+                min: lumas.length ? Math.min(...lumas) : null,
+                max: lumas.length ? Math.max(...lumas) : null,
+                mean: lumas.length ? sum(lumas) / lumas.length : null,
+                darkCountBelow003: lumas.filter((value) => value < 0.03).length,
+                darkCountBelow005: lumas.filter((value) => value < 0.05).length
+              },
+              coverage: {
+                weightSumMin: weightSums.length ? Math.min(...weightSums) : null,
+                weightSumMax: weightSums.length ? Math.max(...weightSums) : null,
+                validAlphaMin: validAlphas.length ? Math.min(...validAlphas) : null,
+                validAlphaMax: validAlphas.length ? Math.max(...validAlphas) : null,
+                validAlphaOnCount: validAlphas.filter((value) => value > 0.5).length,
+                validAlphaOffCount: validAlphas.filter((value) => value <= 0.5).length
+              },
+              darkest: samples.slice().sort((a, b) => {
+                const la = lumaOf(a);
+                const lb = lumaOf(b);
+                return (Number.isFinite(la) ? la : 999) - (Number.isFinite(lb) ? lb : 999);
+              }).slice(0, 12)
+            };
+          }
+          function summarizeCase(cameraCase, levelReports, grid) {
+            const routeSamples = levelReports.level31.samplePoints || [];
+            const worldSamples = levelReports.level32.samplePoints || [];
+            const normalSamples = levelReports.level33.samplePoints || [];
+            const hitSamples = levelReports.level34.samplePoints || [];
+            const coverageSamples = levelReports.level35.samplePoints || [];
+            const radianceSamples = levelReports.level36.samplePoints || [];
+            const samples = routeSamples.map((routeSample, index) => {
+              return {
+                x: routeSample.x,
+                y: routeSample.y,
+                rtPixel: routeSample.rtPixel,
+                gridColumn: grid.samplePoints[index] ? grid.samplePoints[index].gridColumn : null,
+                gridRow: grid.samplePoints[index] ? grid.samplePoints[index].gridRow : null,
+                role: grid.samplePoints[index] ? grid.samplePoints[index].role : null,
+                anchorRole: grid.samplePoints[index] ? grid.samplePoints[index].anchorRole : null,
+                zone: grid.samplePoints[index] ? grid.samplePoints[index].zone : null,
+                route: routeSample.decoded,
+                world: worldSamples[index] ? worldSamples[index].decoded : null,
+                normal: normalSamples[index] ? normalSamples[index].decoded : null,
+                hitObject: hitSamples[index] ? hitSamples[index].decoded : null,
+                coverage: coverageSamples[index] ? coverageSamples[index].decoded : null,
+                radiance: radianceSamples[index] ? radianceSamples[index].decoded : null
+              };
+            });
+            const routeCounts = {};
+            for (const sample of samples) {
+              const key = routeNameOf(sample);
+              routeCounts[key] = (routeCounts[key] || 0) + 1;
+            }
+            const sideSamples = samples.filter((sample) => inSideBand(sample.world, cameraCase.side));
+            const redNorthWallSamples = sideSamples.filter((sample) => routeNameOf(sample) === 'north_wall_hybrid');
+            const blueBeamSamples = sideSamples.filter((sample) => routeIsExpectedBeam(sample, cameraCase.side) || routeIsSideStructuralBeam(sample, cameraCase.side));
+            const blueDedicatedSamples = blueBeamSamples.filter((sample) => routeIsExpectedBeam(sample, cameraCase.side));
+            const blueStructuralSamples = blueBeamSamples.filter((sample) => routeIsSideStructuralBeam(sample, cameraCase.side));
+            const redAlphaBoundarySamples = redNorthWallSamples.filter((sample) => {
+              const coverage = sample.coverage || {};
+              const weightSum = Number(coverage.weightSum);
+              const validAlpha = Number(coverage.validAlpha);
+              return (Number.isFinite(weightSum) && weightSum < 0.999) ||
+                (Number.isFinite(validAlpha) && validAlpha <= 0.5);
+            }).sort((a, b) => {
+              const aw = a.coverage && Number.isFinite(Number(a.coverage.weightSum)) ? Number(a.coverage.weightSum) : 999;
+              const bw = b.coverage && Number.isFinite(Number(b.coverage.weightSum)) ? Number(b.coverage.weightSum) : 999;
+              return aw - bw;
+            }).slice(0, 24);
+            const blueNearBlackSamples = blueBeamSamples.filter((sample) => {
+              const luma = lumaOf(sample);
+              return Number.isFinite(luma) && luma < 0.03;
+            }).sort((a, b) => lumaOf(a) - lumaOf(b)).slice(0, 32);
+            const narrowZones = samples.filter((sample) => sample.zone).reduce((zones, sample) => {
+              if (!zones[sample.zone]) zones[sample.zone] = [];
+              zones[sample.zone].push(sample);
+              return zones;
+            }, {});
+            const narrowZoneSummaries = {};
+            for (const zoneName of Object.keys(narrowZones)) {
+              const zoneSamples = narrowZones[zoneName];
+              const alphaBoundarySamples = zoneSamples.filter((sample) => {
+                const coverage = sample.coverage || {};
+                const weightSum = Number(coverage.weightSum);
+                const validAlpha = Number(coverage.validAlpha);
+                return (Number.isFinite(weightSum) && weightSum < 0.999) ||
+                  (Number.isFinite(validAlpha) && validAlpha <= 0.5);
+              }).sort((a, b) => {
+                const aw = a.coverage && Number.isFinite(Number(a.coverage.weightSum)) ? Number(a.coverage.weightSum) : 999;
+                const bw = b.coverage && Number.isFinite(Number(b.coverage.weightSum)) ? Number(b.coverage.weightSum) : 999;
+                return aw - bw;
+              });
+              narrowZoneSummaries[zoneName] = {
+                sampleCount: zoneSamples.length,
+                routeCounts: zoneSamples.reduce((counts, sample) => {
+                  const key = routeNameOf(sample);
+                  counts[key] = (counts[key] || 0) + 1;
+                  return counts;
+                }, {}),
+                targetCounts: zoneSamples.reduce((counts, sample) => {
+                  const targetId = sample.route && Number.isFinite(Number(sample.route.targetId))
+                    ? String(Math.round(Number(sample.route.targetId)))
+                    : 'none';
+                  counts[targetId] = (counts[targetId] || 0) + 1;
+                  return counts;
+                }, {}),
+                summary: summarizeSet(zoneSamples),
+                alphaBoundarySamples: alphaBoundarySamples.slice(0, 16),
+                darkSamplesBelow003: zoneSamples.filter((sample) => {
+                  const luma = lumaOf(sample);
+                  return Number.isFinite(luma) && luma < 0.03;
+                }).slice(0, 24)
+              };
+            }
+            return {
+              cameraCase,
+              grid: { width: grid.width, height: grid.height, columns: grid.columns, rows: grid.rows, sampleCount: samples.length },
+              routeCounts,
+              sideBandCount: sideSamples.length,
+              redNorthWall: summarizeSet(redNorthWallSamples),
+              blueBeam: summarizeSet(blueBeamSamples),
+              blueDedicated: summarizeSet(blueDedicatedSamples),
+              blueStructural: summarizeSet(blueStructuralSamples),
+              structuralIslandCountsInSideBand: sideSamples.reduce((counts, sample) => {
+                const route = sample.route || {};
+                if (route.routeName === 'structural_beam_column_only') {
+                  const key = String(route.structuralIslandId);
+                  counts[key] = (counts[key] || 0) + 1;
+                }
+                return counts;
+              }, {}),
+              routeCountsInSideBand: sideSamples.reduce((counts, sample) => {
+                const key = routeNameOf(sample);
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+              }, {}),
+              samplesOfInterest: {
+                redDarkest: summarizeSet(redNorthWallSamples).darkest,
+                redAlphaBoundarySamples,
+                blueDarkest: summarizeSet(blueBeamSamples).darkest,
+                blueNearBlackSamples,
+                focusSamples: samples.filter((sample) => sample.role && !sample.anchorRole),
+                focusNeighborhoodDarkest: summarizeSet(samples.filter((sample) => sample.role && sample.anchorRole)).darkest,
+                narrowZones: narrowZoneSummaries
+              },
+              status: redNorthWallSamples.length > 0 && blueBeamSamples.length > 0 ? 'pass' : 'needs-more-sampling'
+            };
+          }
+          hideUi();
+          const packageConfig = await waitForHybridPackages(${args.timeoutMs});
+          const reports = [];
+          for (const cameraCase of cameraCases) {
+            const grid = buildProbeGrid(cameraCase);
+            const levelReports = {};
+            for (const level of [31, 32, 33, 34, 35, 36]) {
+              levelReports['level' + level] = await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs},
+                cameraState: cameraCase.cameraState,
+                northWallCamera: true,
+                structuralCamera: true,
+                probeLevel: level,
+                randomVec2: { x: 0.5, y: 0.5 },
+                samplePoints: grid.samplePoints,
+                samplePointSpace: 'canvasCssPixel'
+              });
+            }
+            reports.push(summarizeCase(cameraCase, levelReports, grid));
+          }
+          return {
+            version: 'r7-3-10-north-beam-gap-red-blue-probe',
+            architecture: 'hybrid-runtime-only',
+            note: 'Probe enables north-wall + structural/dedicated beam hybrid runtime and leaves floor/ceiling off during sampling.',
+            packageConfig,
+            probeLevels: [31, 32, 33, 34, 35, 36],
+            samplePointSpace: 'canvasCssPixel',
+            reports,
+            status: reports.every((entry) => entry.status === 'pass') ? 'pass' : 'needs-more-sampling'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 180000
+      });
+      function clampNumber(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+      function loadRuntimeAtlasPointer(fileName) {
+        const pointerPath = path.join(repoRoot, 'docs', 'data', fileName);
+        const pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+        const atlasPath = path.join(repoRoot, pointer.packageDir, pointer.artifacts.atlasPatch0);
+        const atlasBuffer = fs.readFileSync(atlasPath);
+        const pixels = new Float32Array(atlasBuffer.buffer, atlasBuffer.byteOffset, atlasBuffer.byteLength / 4);
+        return { pointer, pixels, atlasPath };
+      }
+      const atlasPointers = new Map();
+      function atlasPointerForTarget(targetId) {
+        const id = Math.round(Number(targetId));
+        if (atlasPointers.has(id)) return atlasPointers.get(id);
+        const pointerFileByTarget = {
+          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json',
+          1015: 'r7-3-10-c1-west-beam-inner-shadow-runtime-package.json',
+          1016: 'r7-3-10-c1-west-beam-under-shadow-runtime-package.json',
+          1017: 'r7-3-10-c1-east-beam-inner-shadow-runtime-package.json',
+          1018: 'r7-3-10-c1-east-beam-under-shadow-runtime-package.json'
+        };
+        const fileName = pointerFileByTarget[id];
+        if (!fileName) return null;
+        const loaded = loadRuntimeAtlasPointer(fileName);
+        atlasPointers.set(id, loaded);
+        return loaded;
+      }
+      function localUvForTarget(targetId, world, pointer) {
+        if (!world || !pointer || !pointer.worldBounds) return null;
+        const id = Math.round(Number(targetId));
+        const b = pointer.worldBounds;
+        if (id === 1002)
+          return {
+            u: (world.x - b.xMin) / Math.max(0.000001, b.xMax - b.xMin),
+            v: (world.y - b.yMin) / Math.max(0.000001, b.yMax - b.yMin)
+          };
+        if (id === 1015 || id === 1017)
+          return {
+            u: (world.z - b.zMin) / Math.max(0.000001, b.zMax - b.zMin),
+            v: (world.y - b.yMin) / Math.max(0.000001, b.yMax - b.yMin)
+          };
+        if (id === 1016 || id === 1018)
+          return {
+            u: (world.z - b.zMin) / Math.max(0.000001, b.zMax - b.zMin),
+            v: (world.x - b.xMin) / Math.max(0.000001, b.xMax - b.xMin)
+          };
+        return null;
+      }
+      function lumaRgb(r, g, b) {
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+      function atlasTexel(loaded, x, y) {
+        const resolution = loaded.pointer.targetAtlasResolution;
+        const safeX = clampNumber(Math.round(x), 0, resolution - 1);
+        const safeY = clampNumber(Math.round(y), 0, resolution - 1);
+        const offset = (safeY * resolution + safeX) * 4;
+        const r = loaded.pixels[offset];
+        const g = loaded.pixels[offset + 1];
+        const b = loaded.pixels[offset + 2];
+        const a = loaded.pixels[offset + 3];
+        return {
+          x: safeX,
+          y: safeY,
+          r,
+          g,
+          b,
+          a,
+          luma: lumaRgb(r, g, b)
+        };
+      }
+      function buildAtlasReadback(sample) {
+        const targetId = sample && sample.route ? Number(sample.route.targetId) : null;
+        const loaded = atlasPointerForTarget(targetId);
+        if (!loaded) return null;
+        const uv = localUvForTarget(targetId, sample.world, loaded.pointer);
+        if (!uv) return null;
+        const resolution = loaded.pointer.targetAtlasResolution;
+        const pixelX = clampNumber(uv.u * resolution - 0.5, 0, resolution - 1);
+        const pixelY = clampNumber(uv.v * resolution - 0.5, 0, resolution - 1);
+        const p0x = Math.floor(pixelX);
+        const p0y = Math.floor(pixelY);
+        const p1x = Math.min(p0x + 1, resolution - 1);
+        const p1y = Math.min(p0y + 1, resolution - 1);
+        const tx = pixelX - p0x;
+        const ty = pixelY - p0y;
+        const c00 = atlasTexel(loaded, p0x, p0y);
+        const c10 = atlasTexel(loaded, p1x, p0y);
+        const c01 = atlasTexel(loaded, p0x, p1y);
+        const c11 = atlasTexel(loaded, p1x, p1y);
+        const taps = [
+          { name: 'c00', texel: c00, bilinearWeight: (1 - tx) * (1 - ty) },
+          { name: 'c10', texel: c10, bilinearWeight: tx * (1 - ty) },
+          { name: 'c01', texel: c01, bilinearWeight: (1 - tx) * ty },
+          { name: 'c11', texel: c11, bilinearWeight: tx * ty }
+        ].map((tap) => ({
+          ...tap,
+          alphaWeight: tap.bilinearWeight * tap.texel.a
+        }));
+        const weightSum = taps.reduce((sum, tap) => sum + tap.alphaWeight, 0);
+        const nearest = atlasTexel(loaded, Math.floor(pixelX + 0.5), Math.floor(pixelY + 0.5));
+        const weightedRgb = weightSum > 0.000001
+          ? taps.reduce((rgb, tap) => {
+            rgb.r += tap.texel.r * tap.alphaWeight;
+            rgb.g += tap.texel.g * tap.alphaWeight;
+            rgb.b += tap.texel.b * tap.alphaWeight;
+            return rgb;
+          }, { r: 0, g: 0, b: 0 })
+          : null;
+        if (weightedRgb) {
+          weightedRgb.r /= weightSum;
+          weightedRgb.g /= weightSum;
+          weightedRgb.b /= weightSum;
+          weightedRgb.luma = lumaRgb(weightedRgb.r, weightedRgb.g, weightedRgb.b);
+        }
+        return {
+          targetId: Math.round(Number(targetId)),
+          packageDir: loaded.pointer.packageDir,
+          mapping: loaded.pointer.mapping,
+          resolution,
+          uv,
+          pixel: { x: pixelX, y: pixelY, p0: { x: p0x, y: p0y }, p1: { x: p1x, y: p1y }, t: { x: tx, y: ty } },
+          weightSum,
+          nearest,
+          weightedRgb,
+          tapAlphaValues: taps.map((tap) => tap.texel.a),
+          tapLumaValues: taps.map((tap) => tap.texel.luma),
+          taps
+        };
+      }
+      function enrichNorthBeamSample(sample) {
+        if (!sample || typeof sample !== 'object') return sample;
+        const atlasReadback = buildAtlasReadback(sample);
+        if (atlasReadback) sample.atlasReadback = atlasReadback;
+        return sample;
+      }
+      function enrichNorthBeamSamples(samples) {
+        if (!Array.isArray(samples)) return samples;
+        for (const sample of samples) enrichNorthBeamSample(sample);
+        return samples;
+      }
+      for (const entry of report.reports || []) {
+        const interest = entry.samplesOfInterest || {};
+        enrichNorthBeamSamples(interest.redDarkest);
+        enrichNorthBeamSamples(interest.redAlphaBoundarySamples);
+        enrichNorthBeamSamples(interest.blueDarkest);
+        enrichNorthBeamSamples(interest.blueNearBlackSamples);
+        enrichNorthBeamSamples(interest.focusSamples);
+        enrichNorthBeamSamples(interest.focusNeighborhoodDarkest);
+        for (const zone of Object.values(interest.narrowZones || {})) {
+          if (zone.summary) enrichNorthBeamSamples(zone.summary.darkest);
+          enrichNorthBeamSamples(zone.alphaBoundarySamples);
+          enrichNorthBeamSamples(zone.darkSamplesBelow003);
+        }
+      }
+      function northBeamRouteName(sample) {
+        return sample && sample.route && sample.route.routeName ? sample.route.routeName : 'none';
+      }
+      function northBeamSampleKey(sample) {
+        return [
+          sample && sample.x,
+          sample && sample.y,
+          sample && sample.zone || '',
+          northBeamRouteName(sample)
+        ].join(':');
+      }
+      function uniqueNorthBeamSamples(samples) {
+        const out = [];
+        const seen = new Set();
+        for (const sample of samples) {
+          if (!sample || !sample.world) continue;
+          const key = northBeamSampleKey(sample);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push(sample);
+        }
+        return out;
+      }
+      function collectNorthBeamInterestSamples(entry) {
+        const interest = entry.samplesOfInterest || {};
+        const samples = [];
+        for (const key of [
+          'redDarkest',
+          'redAlphaBoundarySamples',
+          'blueDarkest',
+          'blueNearBlackSamples',
+          'focusSamples',
+          'focusNeighborhoodDarkest'
+        ]) {
+          if (Array.isArray(interest[key])) samples.push(...interest[key]);
+        }
+        for (const zone of Object.values(interest.narrowZones || {})) {
+          if (zone && zone.summary && Array.isArray(zone.summary.darkest)) samples.push(...zone.summary.darkest);
+          if (zone && Array.isArray(zone.alphaBoundarySamples)) samples.push(...zone.alphaBoundarySamples);
+          if (zone && Array.isArray(zone.darkSamplesBelow003)) samples.push(...zone.darkSamplesBelow003);
+        }
+        return uniqueNorthBeamSamples(samples);
+      }
+      function sampleHasValidBlackTap(sample) {
+        const readback = sample && sample.atlasReadback;
+        if (!readback || readback.targetId !== 1002) return false;
+        const alphas = Array.isArray(readback.tapAlphaValues) ? readback.tapAlphaValues : [];
+        const lumas = Array.isArray(readback.tapLumaValues) ? readback.tapLumaValues : [];
+        return alphas.length === 4 &&
+          lumas.length === 4 &&
+          alphas.every((value) => Number(value) > 0.5) &&
+          lumas.some((value) => Number(value) <= 0.000001) &&
+          lumas.some((value) => Number(value) >= 0.12);
+      }
+      function sampleIsRedBCandidate(sample, side) {
+        const world = sample && sample.world;
+        if (!world || northBeamRouteName(sample) !== 'north_wall_hybrid') return false;
+        if (!sampleHasValidBlackTap(sample)) return false;
+        if (!Number.isFinite(world.x) || !Number.isFinite(world.y) || !Number.isFinite(world.z)) return false;
+        if (Math.abs(world.z + 1.874) > 0.010) return false;
+        if (world.y < 2.500 || world.y > 2.540) return false;
+        return side === 'west'
+          ? world.x > -1.91 && world.x < -1.70
+          : world.x > 1.70 && world.x < 1.91;
+      }
+      function sampleIsRedAControl(sample, side) {
+        const world = sample && sample.world;
+        if (!world || northBeamRouteName(sample) !== 'north_wall_hybrid') return false;
+        const coverage = sample.coverage || {};
+        const weightSum = Number(coverage.weightSum);
+        const validAlpha = Number(coverage.validAlpha);
+        const alphaTransition = (Number.isFinite(weightSum) && weightSum < 0.999) ||
+          (Number.isFinite(validAlpha) && validAlpha <= 0.5);
+        if (!alphaTransition) return false;
+        if (!Number.isFinite(world.x) || !Number.isFinite(world.y) || !Number.isFinite(world.z)) return false;
+        if (Math.abs(world.z + 1.874) > 0.080) return false;
+        return side === 'west' ? world.x <= -1.88 : world.x >= 1.88;
+      }
+      function summarizeLiveCompareSamples(samples) {
+        const lumas = samples.map((sample) => sample && sample.liveReference && Number(sample.liveReference.luma)).filter((value) => Number.isFinite(value));
+        const hybridLumas = samples.map((sample) => sample && sample.hybridProbeStack && Number(sample.hybridProbeStack.luma)).filter((value) => Number.isFinite(value));
+        const atlasWeightedLumas = samples.map((sample) => sample && sample.atlasWeightedLuma).filter((value) => Number.isFinite(value));
+        const atlasLitTapMax = samples.map((sample) => sample && sample.atlasLitTapMax).filter((value) => Number.isFinite(value));
+        const mean = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+        return {
+          count: samples.length,
+          liveLumaMean: mean(lumas),
+          liveLumaMin: lumas.length ? Math.min(...lumas) : null,
+          liveLumaMax: lumas.length ? Math.max(...lumas) : null,
+          hybridLumaMean: mean(hybridLumas),
+          atlasWeightedLumaMean: mean(atlasWeightedLumas),
+          atlasLitTapMaxMean: mean(atlasLitTapMax)
+        };
+      }
+      function buildLiveCompareRequests(entry) {
+        const side = entry && entry.cameraCase ? entry.cameraCase.side : 'unknown';
+        const samples = collectNorthBeamInterestSamples(entry);
+        const redB = samples
+          .filter((sample) => sampleIsRedBCandidate(sample, side))
+          .sort((a, b) => {
+            const aw = a.atlasReadback && a.atlasReadback.weightedRgb ? Number(a.atlasReadback.weightedRgb.luma) : 999;
+            const bw = b.atlasReadback && b.atlasReadback.weightedRgb ? Number(b.atlasReadback.weightedRgb.luma) : 999;
+            return aw - bw;
+          })
+          .slice(0, 12);
+        const redA = samples
+          .filter((sample) => sampleIsRedAControl(sample, side))
+          .sort((a, b) => {
+            const aw = a.coverage && Number.isFinite(Number(a.coverage.weightSum)) ? Number(a.coverage.weightSum) : 999;
+            const bw = b.coverage && Number.isFinite(Number(b.coverage.weightSum)) ? Number(b.coverage.weightSum) : 999;
+            return aw - bw;
+          })
+          .slice(0, 8);
+        const toRequest = (sample, role) => {
+          const readback = sample.atlasReadback || {};
+          const weighted = readback.weightedRgb || {};
+          const tapLumas = Array.isArray(readback.tapLumaValues) ? readback.tapLumaValues.map((value) => Number(value)) : [];
+          return {
+            role,
+            x: sample.x,
+            y: sample.y,
+            zone: sample.zone || null,
+            route: sample.route || null,
+            world: sample.world || null,
+            coverage: sample.coverage || null,
+            atlasWeightedLuma: Number.isFinite(Number(weighted.luma)) ? Number(weighted.luma) : null,
+            atlasLitTapMax: tapLumas.length ? Math.max(...tapLumas) : null,
+            atlasTapLumaValues: tapLumas,
+            atlasTapAlphaValues: readback.tapAlphaValues || null,
+            atlasPixel: readback.pixel || null,
+            atlasUv: readback.uv || null
+          };
+        };
+        return {
+          cameraCaseName: entry.cameraCase.name,
+          side,
+          cameraState: entry.cameraCase.cameraState,
+          samplePoints: redB.map((sample) => toRequest(sample, 'red_B_valid_black_candidate'))
+            .concat(redA.map((sample) => toRequest(sample, 'red_A_alpha_transition_control')))
+        };
+      }
+      const liveCompareRequests = (report.reports || []).map(buildLiveCompareRequests);
+      const liveCompareReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          const requests = ${JSON.stringify(liveCompareRequests)};
+          const targetSamples = 8;
+          const timeoutMs = ${args.timeoutMs};
+          function lumaOfRgb(rgb) {
+            return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+          }
+          function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+          }
+          function hideUi() {
+            [
+              'ui-container',
+              'snapshot-controls',
+              'top-right-group',
+              'bottom-right-group',
+              'cameraInfo',
+              'cameraPoseInfo',
+              'copyCameraPoseInfo'
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+          }
+          function setRuntimeStack(mode) {
+            if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+            const enabled = mode === 'hybrid_probe_stack';
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(false);
+            window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+            window.setR7310C1CeilingDiffuseRuntimeEnabled(false);
+            window.setR7310C1EastWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1WestWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1SouthWallDiffuseRuntimeEnabled(false);
+            window.setR7310C1NorthWallDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1StructuralDiffuseRuntimeEnabled(enabled);
+            window.setR7310C1SeColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1SeColumnWestShadowRuntimeEnabled(false);
+            window.setR7310C1SouthWallAcShadowRuntimeEnabled(false);
+            window.setR7310C1EastWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnNorthShadowRuntimeEnabled(false);
+            window.setR7310C1WestWallBeamShadowRuntimeEnabled(false);
+            window.setR7310C1SwColumnInnerShadowRuntimeEnabled(false);
+            window.setR7310C1WestBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1WestBeamUnderShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamInnerShadowRuntimeEnabled(enabled);
+            window.setR7310C1EastBeamUnderShadowRuntimeEnabled(enabled);
+            if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+              updateR7310C1FullRoomDiffuseRuntimeUniforms();
+          }
+          async function waitForHybridStack(timeout) {
+            const startedAt = performance.now();
+            while (performance.now() - startedAt < timeout) {
+              const config = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+              if (config.error)
+                throw new Error('R7-3.10 live compare package error: ' + config.error);
+              if (config.northWallReady &&
+                config.structuralReady &&
+                config.westBeamInnerShadowReady &&
+                config.westBeamUnderShadowReady &&
+                config.eastBeamInnerShadowReady &&
+                config.eastBeamUnderShadowReady)
+                return config;
+              await wait(100);
+            }
+            throw new Error('R7-3.10 live compare hybrid packages did not become ready');
+          }
+          function normalizePoint(point, readback) {
+            const canvas = window.renderer && window.renderer.domElement ? window.renderer.domElement : null;
+            const dpr = window && Number.isFinite(window.devicePixelRatio) ? window.devicePixelRatio : 1;
+            const canvasHeight = canvas && Number.isFinite(canvas.clientHeight) && canvas.clientHeight > 0
+              ? canvas.clientHeight
+              : readback.height / Math.max(1, dpr);
+            return {
+              x: Math.max(0, Math.min(readback.width - 1, Math.round(Number(point.x) * dpr))),
+              y: Math.max(0, Math.min(readback.height - 1, Math.round((canvasHeight - Number(point.y)) * dpr)))
+            };
+          }
+          function sampleReadback(readback, point, samples) {
+            const pixel = normalizePoint(point, readback);
+            const offset = (pixel.y * readback.width + pixel.x) * 4;
+            const divisor = Math.max(1, Number(samples) || 1);
+            const rgb = {
+              r: readback.pixels[offset] / divisor,
+              g: readback.pixels[offset + 1] / divisor,
+              b: readback.pixels[offset + 2] / divisor
+            };
+            return {
+              rtPixel: pixel,
+              r: rgb.r,
+              g: rgb.g,
+              b: rgb.b,
+              luma: lumaOfRgb(rgb)
+            };
+          }
+          async function renderMode(mode, cameraState, points) {
+            if (typeof window.setR739Config1ValidationCameraState === 'function')
+              window.setR739Config1ValidationCameraState(cameraState);
+            setRuntimeStack(mode);
+            if (mode === 'hybrid_probe_stack') await waitForHybridStack(timeoutMs);
+            if (typeof renderR739MainReadback !== 'function')
+              throw new Error('renderR739MainReadback is not available for R7-3.10 live comparison');
+            const rendered = await renderR739MainReadback(targetSamples, timeoutMs, 0.0, { floorRoughness: 1.0 });
+            return {
+              mode,
+              actualSamples: rendered.actualSamples,
+              samples: points.map((point) => ({
+                x: point.x,
+                y: point.y,
+                role: point.role,
+                readback: sampleReadback(rendered.readback, point, rendered.actualSamples)
+              }))
+            };
+          }
+          hideUi();
+          const entries = [];
+          for (const request of requests) {
+            const points = Array.isArray(request.samplePoints) ? request.samplePoints : [];
+            if (points.length === 0) {
+              entries.push({
+                cameraCaseName: request.cameraCaseName,
+                side: request.side,
+                sampleCount: 0,
+                note: 'no red B or A candidate points selected for live comparison',
+                status: 'needs-more-sampling'
+              });
+              continue;
+            }
+            const live = await renderMode('live_reference', request.cameraState, points);
+            const hybrid = await renderMode('hybrid_probe_stack', request.cameraState, points);
+            const byKey = new Map();
+            for (const sample of live.samples)
+              byKey.set(sample.x + ':' + sample.y + ':' + sample.role, { liveReference: sample.readback });
+            for (const sample of hybrid.samples) {
+              const key = sample.x + ':' + sample.y + ':' + sample.role;
+              const entry = byKey.get(key) || {};
+              entry.hybridProbeStack = sample.readback;
+              byKey.set(key, entry);
+            }
+            entries.push({
+              cameraCaseName: request.cameraCaseName,
+              side: request.side,
+              targetSamples,
+              actualSamples: {
+                liveReference: live.actualSamples,
+                hybridProbeStack: hybrid.actualSamples
+              },
+              samples: points.map((point) => {
+                const measured = byKey.get(point.x + ':' + point.y + ':' + point.role) || {};
+                return {
+                  ...point,
+                  liveReference: measured.liveReference || null,
+                  hybridProbeStack: measured.hybridProbeStack || null
+                };
+              }),
+              status: 'pass'
+            });
+          }
+          setRuntimeStack('hybrid_probe_stack');
+          return {
+            version: 'r7-3-10-north-beam-gap-red-live-vs-baked',
+            targetSamples,
+            entries,
+            status: entries.every((entry) => entry.status === 'pass' || entry.sampleCount === 0) ? 'pass' : 'needs-more-sampling'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 240000
+      });
+      report.liveComparison = liveCompareReport;
+      report.phase1RedLiveComparison = {
+        version: 'r7-3-10-north-wall-red-live-vs-baked-summary',
+        entries: (liveCompareReport.entries || []).map((entry) => {
+          const redB = (entry.samples || []).filter((sample) => sample.role === 'red_B_valid_black_candidate');
+          const redA = (entry.samples || []).filter((sample) => sample.role === 'red_A_alpha_transition_control');
+          const redBSummary = summarizeLiveCompareSamples(redB);
+          const redASummary = summarizeLiveCompareSamples(redA);
+          const liveLitLike = redBSummary.count > 0 &&
+            redBSummary.liveLumaMean !== null &&
+            redBSummary.atlasLitTapMaxMean !== null &&
+            redBSummary.liveLumaMean >= Math.max(0.10, redBSummary.atlasLitTapMaxMean * 0.60);
+          const liveContactDarkLike = redBSummary.count > 0 &&
+            redBSummary.liveLumaMean !== null &&
+            redBSummary.liveLumaMean < 0.07;
+          return {
+            cameraCaseName: entry.cameraCaseName,
+            side: entry.side,
+            redBMeasured: redB.length > 0,
+            redBSummary,
+            redASummary,
+            suggestedRedBFixClass: redB.length === 0
+              ? 'not-measured-do-not-change-this-side'
+              : (liveLitLike ? 'metadata-invalidation-or-rebake-lit-reference' : (liveContactDarkLike ? 'rebake-contact-dark-reference' : 'ambiguous-needs-review')),
+            sampleCount: entry.samples ? entry.samples.length : 0
+          };
+        }),
+        status: liveCompareReport.status
+      };
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'red-blue-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 north-wall / beam red-blue hybrid probe completed');
+      console.log(`status: ${report.status}`);
+      for (const entry of report.reports) {
+        console.log(`${entry.cameraCase.name}: red=${entry.redNorthWall.count} blue=${entry.blueBeam.count} dedicated=${entry.blueDedicated.count} structural=${entry.blueStructural.count}`);
+        console.log(`${entry.cameraCase.name}: redDark=${entry.redNorthWall.luma.darkCountBelow003}/${entry.redNorthWall.luma.count} blueDark=${entry.blueBeam.luma.darkCountBelow003}/${entry.blueBeam.luma.count}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
       if (report.status !== 'pass') process.exitCode = 1;
       completed = true;
       return;

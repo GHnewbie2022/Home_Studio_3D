@@ -5389,10 +5389,10 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
-			if (bounces == 0 &&
-				r7310C1RuntimeProbeMode > 26.5 &&
-				r7310C1RuntimeProbeMode < 30.5)
-			{
+				if (bounces == 0 &&
+					r7310C1RuntimeProbeMode > 26.5 &&
+					r7310C1RuntimeProbeMode < 30.5)
+				{
 				float r7310EastJoinRouteId = 0.0;
 				float r7310EastJoinTargetOffset = 0.0;
 				float r7310EastJoinStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
@@ -5483,12 +5483,116 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310JoinRadiance = r7310C1SwColumnInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
 					accumCol = clamp(r7310JoinRadiance, vec3(0.0), vec3(1.0));
 				}
-				break;
-			}
-			if (bounces == 0 &&
-				r7310C1RuntimeProbeMode > 10.5 &&
-				r7310C1RuntimeProbeMode < 14.5)
-			{
+					break;
+				}
+				if (bounces == 0 &&
+					r7310C1RuntimeProbeMode > 30.5 &&
+					r7310C1RuntimeProbeMode < 36.5)
+				{
+					float r7310NorthBeamRouteId = 0.0;
+					float r7310NorthBeamTargetOffset = 0.0;
+					float r7310NorthBeamStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+					if (r7310NorthWallHybridFirstHit)
+					{
+						r7310NorthBeamRouteId = 1.0;
+						r7310NorthBeamTargetOffset = 2.0;
+					}
+					else if (r7310WestBeamInnerShadowHybridFirstHit)
+					{
+						r7310NorthBeamRouteId = 2.0;
+						r7310NorthBeamTargetOffset = 15.0;
+					}
+					else if (r7310WestBeamUnderShadowHybridFirstHit)
+					{
+						r7310NorthBeamRouteId = 3.0;
+						r7310NorthBeamTargetOffset = 16.0;
+					}
+					else if (r7310EastBeamInnerShadowHybridFirstHit)
+					{
+						r7310NorthBeamRouteId = 4.0;
+						r7310NorthBeamTargetOffset = 17.0;
+					}
+					else if (r7310EastBeamUnderShadowHybridFirstHit)
+					{
+						r7310NorthBeamRouteId = 5.0;
+						r7310NorthBeamTargetOffset = 18.0;
+					}
+					else if (r7310NorthBeamStructuralIslandId > 0.5)
+					{
+						r7310NorthBeamRouteId = 6.0;
+						r7310NorthBeamTargetOffset = 6.0;
+					}
+
+					if (r7310C1RuntimeProbeMode > 30.5 && r7310C1RuntimeProbeMode < 31.5)
+						accumCol = vec3(r7310NorthBeamRouteId / 255.0, r7310NorthBeamStructuralIslandId / 255.0, r7310NorthBeamTargetOffset / 255.0);
+					else if (r7310C1RuntimeProbeMode > 31.5 && r7310C1RuntimeProbeMode < 32.5)
+						accumCol = vec3(
+							clamp((x.x + 2.2) / 4.4, 0.0, 1.0),
+							clamp((x.y + 0.1) / 3.2, 0.0, 1.0),
+							clamp((x.z + 2.1) / 5.4, 0.0, 1.0)
+						);
+					else if (r7310C1RuntimeProbeMode > 32.5 && r7310C1RuntimeProbeMode < 33.5)
+						accumCol = nl * 0.5 + 0.5;
+					else if (r7310C1RuntimeProbeMode > 33.5 && r7310C1RuntimeProbeMode < 34.5)
+					{
+						float h = float(hitType);
+						float oid = hitObjectID;
+						accumCol = vec3(
+							clamp(h / 255.0, 0.0, 1.0),
+							clamp(mod(oid, 256.0) / 255.0, 0.0, 1.0),
+							clamp(floor(oid / 256.0) / 255.0, 0.0, 1.0)
+						);
+					}
+					else if (r7310C1RuntimeProbeMode > 34.5 && r7310C1RuntimeProbeMode < 35.5)
+					{
+						vec2 r7310NorthBeamCoverageUv = vec2(0.0);
+						if (r7310NorthWallHybridFirstHit &&
+							r7310C1NorthWallDiffuseUv(x, r7310NorthBeamCoverageUv))
+							accumCol = r7310C1PatchCoverageProbe(r7310NorthBeamCoverageUv, uR7310C1RuntimeAtlasPatchResolution, 1.0, 1.0);
+						else if (r7310WestBeamInnerShadowHybridFirstHit &&
+							r7310C1WestBeamInnerShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310NorthBeamCoverageUv))
+							accumCol = r7310C1PatchCoverageProbe(r7310NorthBeamCoverageUv, uR7310C1WestBeamInnerShadowResolution, 14.0, 2.0);
+						else if (r7310WestBeamUnderShadowHybridFirstHit &&
+							r7310C1WestBeamUnderShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310NorthBeamCoverageUv))
+							accumCol = r7310C1PatchCoverageProbe(r7310NorthBeamCoverageUv, uR7310C1WestBeamUnderShadowResolution, 15.0, 3.0);
+						else if (r7310EastBeamInnerShadowHybridFirstHit &&
+							r7310C1EastBeamInnerShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310NorthBeamCoverageUv))
+							accumCol = r7310C1PatchCoverageProbe(r7310NorthBeamCoverageUv, uR7310C1EastBeamInnerShadowResolution, 16.0, 4.0);
+						else if (r7310EastBeamUnderShadowHybridFirstHit &&
+							r7310C1EastBeamUnderShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310NorthBeamCoverageUv))
+							accumCol = r7310C1PatchCoverageProbe(r7310NorthBeamCoverageUv, uR7310C1EastBeamUnderShadowResolution, 17.0, 5.0);
+						else if (r7310NorthBeamStructuralIslandId > 0.5)
+							accumCol = r7310C1FullAtlasCoverageProbe(6.0);
+						else
+							accumCol = vec3(0.0);
+					}
+					else
+					{
+						vec3 r7310NorthBeamRadiance = vec3(0.0);
+						if (r7310NorthWallHybridFirstHit)
+							r7310NorthBeamRadiance = r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x);
+						else if (r7310WestBeamInnerShadowHybridFirstHit)
+							r7310NorthBeamRadiance = r7310C1WestBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+						else if (r7310WestBeamUnderShadowHybridFirstHit)
+							r7310NorthBeamRadiance = r7310C1WestBeamUnderShadowHybridRadiance(hitType, hitObjectID, nl, x);
+						else if (r7310EastBeamInnerShadowHybridFirstHit)
+							r7310NorthBeamRadiance = r7310C1EastBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
+						else if (r7310EastBeamUnderShadowHybridFirstHit)
+							r7310NorthBeamRadiance = r7310C1EastBeamUnderShadowHybridRadiance(hitType, hitObjectID, nl, x);
+						else if (r7310NorthBeamStructuralIslandId > 0.5)
+						{
+							vec2 r7310NorthBeamStructuralUv = vec2(0.0);
+							if (r7310C1StructuralBeamColumnDiffuseUv(hitType, hitObjectID, nl, x, r7310NorthBeamStructuralUv))
+								r7310NorthBeamRadiance = r7310C1FullRoomDiffuseSampleRectLinear(r7310NorthBeamStructuralUv, 6.0, r7310C1StructuralBeamColumnAtlasRectForPoint(r7310NorthBeamStructuralIslandId, x));
+						}
+						accumCol = clamp(r7310NorthBeamRadiance, vec3(0.0), vec3(1.0));
+					}
+					break;
+				}
+				if (bounces == 0 &&
+					r7310C1RuntimeProbeMode > 10.5 &&
+					r7310C1RuntimeProbeMode < 14.5)
+				{
 				float r7310BeamUnderRouteId = 0.0;
 				float r7310BeamUnderTargetOffset = 0.0;
 				float r7310BeamUnderStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);

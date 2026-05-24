@@ -223,6 +223,24 @@ assert.deepEqual(contract.c1NorthWallBatch.invalidTexelRegions.doorHole, {
   yMin: 0.0,
   yMax: 2.03
 });
+assert.deepEqual(contract.c1NorthWallBatch.invalidTexelRegions.sideWallBacks, {
+  westXMax: -1.91,
+  eastXMin: 1.91
+});
+assert.deepEqual(contract.c1NorthWallBatch.invalidTexelRegions.beamGapSlivers, {
+  west: {
+    xMin: -1.908,
+    xMax: -1.752,
+    yMin: 2.525,
+    yMax: 2.905
+  },
+  east: {
+    xMin: 1.85,
+    xMax: 1.908,
+    yMin: 2.516,
+    yMax: 2.905
+  }
+});
 assert.equal(contract.c1NorthWallBatch.invalidTexelRegions.wardrobeContact, undefined);
 assert.deepEqual(contract.c1EastWallBatch.worldBounds, {
   zMin: -1.874,
@@ -738,6 +756,8 @@ assert.match(shader, /vec2 r7310RuntimeProbeAtlasUv = vec2\(0\.0\)/);
 assert.doesNotMatch(shader, /r7310C1SouthWallWindowRevealDiffuseUv\(x, nl, atlasUv\)/);
 assert.doesNotMatch(initCommon, /R7310_C1_FLOOR_INVALID_TEXEL_REGIONS/);
 assert.doesNotMatch(initCommon, /R7310_C1_NORTH_WALL_STATIC_CONTACT_REGIONS/);
+assert.match(initCommon, /R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS/);
+assert.match(initCommon, /r7310C1NorthWallHiddenByBeamGap/);
 assert.doesNotMatch(initCommon, /R7310_C1_EAST_WALL_INVALID_TEXEL_REGIONS/);
 assert.doesNotMatch(initCommon, /maskR7310C1FloorAtlasPixels/);
 assert.doesNotMatch(initCommon, /maskR7310C1EastWallAtlasPixels/);

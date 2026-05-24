@@ -28,7 +28,7 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "b13b8248c0b5250c3cc37dac04a29816019c6caf6881d6fbc7bc1936037d0279",
+    "atlasPatch0Sha256": "c9a196a5e6acf2153f338d1034971f9e20a986139f2d4c332cc377d6551933ca",
     "texelMetadataPatch0Sha256": "1f0e87cb722df68786a016e941f12c5dd3e4aceb15832f4f9b08ba848ad31c1d"
   },
   "validation": {

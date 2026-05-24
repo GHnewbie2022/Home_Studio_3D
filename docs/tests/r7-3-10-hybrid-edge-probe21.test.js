@@ -19,7 +19,7 @@ assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*27\s*\)\s*return\s*'eastJ
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*28\s*\)\s*return\s*'joinCoverage'/);
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*29\s*\)\s*return\s*'joinCutawayFlags'/);
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*30\s*\)\s*return\s*'joinIndirectRadiance'/);
-assert.match(initCommon, /Math\.min\(30,\s*Math\.round\(requestedProbeLevel\)\)/);
+assert.match(initCommon, /Math\.min\(36,\s*Math\.round\(requestedProbeLevel\)\)/);
 assert.match(initCommon, /se_column_north_shadow_hybrid/);
 assert.match(initCommon, /east_wall_beam_shadow_hybrid/);
 assert.match(initCommon, /west_wall_beam_shadow_hybrid/);

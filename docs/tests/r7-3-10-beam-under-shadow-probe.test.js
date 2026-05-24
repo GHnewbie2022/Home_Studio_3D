@@ -24,7 +24,7 @@ assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*13\s*\)\s*return\s*'beamU
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*14\s*\)\s*return\s*'beamUnderHitObject'/);
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*15\s*\)\s*return\s*'beamUnderDirectLight'/);
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*16\s*\)\s*return\s*'beamUnderDirectFacing'/);
-assert.match(initCommon, /Math\.min\(16,\s*Math\.round\(requestedProbeLevel\)\)/);
+assert.match(initCommon, /Math\.min\(36,\s*Math\.round\(requestedProbeLevel\)\)/);
 assert.match(initCommon, /decodeMode\s*===\s*'beamUnderRoute'/);
 assert.match(initCommon, /decodeMode\s*===\s*'beamUnderNormal'/);
 assert.match(initCommon, /decodeMode\s*===\s*'beamUnderWorldPosition'/);
