@@ -10,7 +10,7 @@
     "c1_west_beam_under_shadow": 1
   },
   "dilationAppliedBySurface": {
-    "c1_west_beam_under_shadow": false
+    "c1_west_beam_under_shadow": true
   },
   "atlasPathBySurface": {
     "c1_west_beam_under_shadow": "atlas-patch-000-rgba-f32.bin"

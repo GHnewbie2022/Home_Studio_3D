@@ -1332,6 +1332,20 @@ const R7310_C1_NORTH_WALL_SIDE_WALL_BACKS = Object.freeze({
 	westXMax: -1.91,
 	eastXMin: 1.91
 });
+const R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS = Object.freeze({
+	west: Object.freeze({
+		xMin: -1.908,
+		xMax: -1.752,
+		yMin: 2.525,
+		yMax: 2.905
+	}),
+	east: Object.freeze({
+		xMin: 1.850,
+		xMax: 1.908,
+		yMin: 2.516,
+		yMax: 2.905
+	})
+});
 const R7310_C1_EAST_WALL_TARGET_ID = 1003;
 const R7310_C1_EAST_WALL_SURFACE_NAME = 'c1_east_wall';
 const R7310_C1_EAST_WALL_WORLD_BOUNDS = Object.freeze({
@@ -1608,6 +1622,11 @@ function r7310C1NorthWallHiddenBySideWall(x)
 {
 	return x <= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.westXMax ||
 		x >= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.eastXMin;
+}
+function r7310C1NorthWallHiddenByBeamGap(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west) ||
+		r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.east);
 }
 function r7310C1SouthWallHiddenBySideColumn(x, y)
 {
@@ -4742,7 +4761,8 @@ function buildR7310C1NorthWallTexelMetadata(size)
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
 			var isDoorHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
 			var isSideWallBack = r7310C1NorthWallHiddenBySideWall(worldX);
-			var isValid = !isDoorHole && !isSideWallBack;
+			var isBeamGapInvalid = r7310C1NorthWallHiddenByBeamGap(worldX, worldY);
+			var isValid = !isDoorHole && !isSideWallBack && !isBeamGapInvalid;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = worldY;
@@ -6493,7 +6513,9 @@ window.reportR7310C1NorthWallDiffuseBakeAfterSamples = async function(targetSamp
 			runtimeArchitecture: 'single_full_north_wall_first_hit_hybrid',
 			worldBounds: R7310_C1_NORTH_WALL_WORLD_BOUNDS,
 			invalidTexelRegions: {
-				doorHole: R7310_C1_NORTH_WALL_DOOR_HOLE
+				doorHole: R7310_C1_NORTH_WALL_DOOR_HOLE,
+				sideWallBacks: R7310_C1_NORTH_WALL_SIDE_WALL_BACKS,
+				beamGapSlivers: R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS
 			},
 			rawHdrSummary: rawHdrSummary,
 			surfaceClassSummary: surfaceClassSummary,
@@ -9058,6 +9080,12 @@ function r7310C1RuntimeProbeDecodeModeForLevel(probeLevel)
 	if (probeLevel === 28) return 'joinCoverage';
 	if (probeLevel === 29) return 'joinCutawayFlags';
 	if (probeLevel === 30) return 'joinIndirectRadiance';
+	if (probeLevel === 31) return 'northBeamRoute';
+	if (probeLevel === 32) return 'northBeamWorldPosition';
+	if (probeLevel === 33) return 'northBeamNormal';
+	if (probeLevel === 34) return 'northBeamHitObject';
+	if (probeLevel === 35) return 'northBeamCoverage';
+	if (probeLevel === 36) return 'northBeamRadiance';
 	return 'surfaceClass';
 }
 
@@ -9264,6 +9292,64 @@ function decodeR7310C1RuntimeProbeSample(r, g, b, decodeMode)
 			b: b,
 			luma: 0.2126 * r + 0.7152 * g + 0.0722 * b
 		};
+	if (decodeMode === 'northBeamRoute')
+	{
+		var northBeamRouteId = Math.round(r * 255);
+		var northBeamStructuralIslandId = Math.round(g * 255);
+		var northBeamTargetOffset = Math.round(b * 255);
+		var northBeamRouteNames = {
+			0: 'none',
+			1: 'north_wall_hybrid',
+			2: 'west_beam_inner_shadow_hybrid',
+			3: 'west_beam_under_shadow_hybrid',
+			4: 'east_beam_inner_shadow_hybrid',
+			5: 'east_beam_under_shadow_hybrid',
+			6: 'structural_beam_column_only'
+		};
+		return {
+			routeId: northBeamRouteId,
+			routeName: northBeamRouteNames[northBeamRouteId] || 'unknown',
+			structuralIslandId: northBeamStructuralIslandId,
+			targetId: northBeamTargetOffset > 0 ? 1000 + northBeamTargetOffset : null
+		};
+	}
+	if (decodeMode === 'northBeamWorldPosition')
+		return { x: r * 4.4 - 2.2, y: g * 3.2 - 0.1, z: b * 5.4 - 2.1 };
+	if (decodeMode === 'northBeamNormal')
+		return { x: r * 2 - 1, y: g * 2 - 1, z: b * 2 - 1 };
+	if (decodeMode === 'northBeamHitObject')
+	{
+		var northBeamHitType = Math.round(r * 255);
+		var northBeamObjectIdLow = Math.round(g * 255);
+		var northBeamObjectIdHigh = Math.round(b * 255);
+		return { hitType: northBeamHitType, objectID: northBeamObjectIdHigh * 256 + northBeamObjectIdLow };
+	}
+	if (decodeMode === 'northBeamCoverage')
+	{
+		var northBeamCoverageRouteId = Math.round(b * 255);
+		var northBeamCoverageRouteNames = {
+			0: 'none',
+			1: 'north_wall_hybrid',
+			2: 'west_beam_inner_shadow_hybrid',
+			3: 'west_beam_under_shadow_hybrid',
+			4: 'east_beam_inner_shadow_hybrid',
+			5: 'east_beam_under_shadow_hybrid',
+			6: 'structural_beam_column_only'
+		};
+		return {
+			weightSum: r,
+			validAlpha: g,
+			routeId: northBeamCoverageRouteId,
+			routeName: northBeamCoverageRouteNames[northBeamCoverageRouteId] || 'unknown'
+		};
+	}
+	if (decodeMode === 'northBeamRadiance')
+		return {
+			r: r,
+			g: g,
+			b: b,
+			luma: 0.2126 * r + 0.7152 * g + 0.0722 * b
+		};
 	return { r: r, g: g, b: b };
 }
 
@@ -9302,7 +9388,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 	options = options || {};
 	var requestedProbeLevel = Number(options.probeLevel);
 	var probeLevel = Number.isFinite(requestedProbeLevel)
-		? Math.max(1, Math.min(30, Math.round(requestedProbeLevel)))
+		? Math.max(1, Math.min(36, Math.round(requestedProbeLevel)))
 		: 1;
 	var samplePointSpace = options.samplePointSpace === 'canvasCssPixel' ? 'canvasCssPixel' : 'renderTargetPixel';
 	var decodeMode = typeof options.decodeMode === 'string'

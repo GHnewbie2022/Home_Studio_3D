@@ -11,7 +11,7 @@
     "c1_west_wall"
   ],
   "validTexelRatioBySurface": {
-    "c1_north_wall": 0.773193359375
+    "c1_north_wall": 0.7665081024169922
   },
   "dilationAppliedBySurface": {
     "c1_north_wall": false

@@ -77,7 +77,7 @@ assert.deepEqual(contract.c1SouthWallAcShadowBatch.invalidTexelRegions.seColumnB
 });
 
 assert.match(initCommon, /R7310_C1_SOUTH_WALL_AC_SHADOW_SE_COLUMN_BACK/);
-assert.match(initCommon, /isSeColumnBack/);
-assert.match(initCommon, /!isWindowHole && !isSeColumnBack/);
+assert.match(initCommon, /isSideColumnBack/);
+assert.match(initCommon, /!isWindowHole && !isSideColumnBack/);
 
 console.log('R7-3.10 south wall AC shadow contract passed');
