@@ -204,7 +204,7 @@ uniform vec3 uTrackEmission[4];
 uniform vec3 uTrackWideEmission[2];
 uniform float uR3EmissionGate;   // R3-1 起預留；R3-3 S3b 翻 1.0
 // R6-3 Phase 1C：Cloud rod analytic 1/4 arc emitter meta。
-uniform float uCloudObjIdBase;   // R3-3 fix01：= objectCount(0) + CLOUD_BOX_IDX_BASE(71) + 1 = 72（sceneBoxes 陣列 index，非註解邏輯 ID）
+uniform float uCloudObjIdBase;   // R3-3 fix01：= objectCount(0) + CLOUD_BOX_IDX_BASE(72) + 1 = 73（sceneBoxes 陣列 index，非註解邏輯 ID）
 uniform float uCloudFaceArea[4]; // [0]=E [1]=W [2]=S [3]=N，A_face = 0.016 × rodLength
 uniform float uEmissiveClamp;    // R3-3 firefly clamp（median×30 估算；預設 50）
 // 每 rod 存世界空間 center + 完整半邊 (halfX, halfY, halfZ)；NEE / hit 由此重建 1/4 圓弧面。
@@ -308,6 +308,9 @@ vec3 hitObjPos;     // 旋轉物件的物件空間命中點
 vec3 hitObjHalf;    // 旋轉物件的 half-size
 vec2 hitUV;
 float hitObjectID;
+float hitBoxIndex;
+float hitBoxCullable;
+float hitBoxFixtureGroup;
 int hitType = -100;
 float hitMeta;
 // R2-18 命中材質
@@ -1108,6 +1111,18 @@ vec3 r7310C1FullAtlasCoverageProbe(float routeId)
 {
 	return vec3(1.0, 1.0, clamp(routeId / 255.0, 0.0, 1.0));
 }
+void r7310HybridOwnerAdd(bool isActive, float targetOffset, float maskLowBit, float maskHighBit, inout float ownerCount, inout float maskLow, inout float maskHigh, inout float firstTargetOffset, inout float secondTargetOffset)
+{
+	if (!isActive)
+		return;
+	if (firstTargetOffset < 0.5)
+		firstTargetOffset = targetOffset;
+	else if (secondTargetOffset < 0.5)
+		secondTargetOffset = targetOffset;
+	ownerCount += 1.0;
+	maskLow += maskLowBit;
+	maskHigh += maskHighBit;
+}
 vec3 r7310C1FullRoomDiffuseSampleRectLinear(vec2 atlasUv, float patchSlot, vec4 rect)
 {
 	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
@@ -1185,7 +1200,35 @@ bool r7310C1RuntimeSurfaceIsTrueFloor(int visibleHitType, float visibleObjectID,
 {
 	return visibleObjectID < 1.5 &&
 		visibleNormal.y > 0.5 &&
+		visiblePosition.y >= -0.0005 &&
 		visiblePosition.y <= 0.025;
+}
+bool r7310C1FloorDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
+{
+	return r7310C1BakePastePreviewUv(visiblePosition, atlasUv);
+}
+bool r7310C1FloorHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1FloorDiffuseMode > 0.5 &&
+		uR7310C1FullRoomDiffuseReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsTrueFloor(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1FloorDiffuseUv(visiblePosition, atlasUv);
+}
+vec3 r7310C1FloorHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1FloorDiffuseUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, 0.0);
+}
+bool r7310C1FloorIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1001 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
 }
 bool r7310C1RuntimeSurfaceIsNorthWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
@@ -2001,12 +2044,8 @@ bool r7310C1RuntimeSurfaceIsSouthWindowBottomRevealShadow(int visibleHitType, fl
 bool r7310C1RuntimeSurfaceIsSouthWindowTopRevealShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
-		((visibleNormal.y < -0.5 &&
-			visiblePosition.y >= 2.895 && visiblePosition.y <= 2.915 &&
-			visiblePosition.x >= -1.75 && visiblePosition.x <= 0.69 &&
-			visiblePosition.z >= 3.056 && visiblePosition.z <= 3.256) ||
-		(r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 3.5 &&
-			r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 4.5));
+		r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) > 3.5 &&
+		r7310C1SouthWindowFrontEdgeNearestReveal(visiblePosition, visibleNormal) < 4.5;
 }
 bool r7310C1SouthWindowLeftRevealShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
@@ -2262,17 +2301,6 @@ bool r7310C1SouthWallWindowRevealDiffuseUv(vec3 visiblePosition, vec3 visibleNor
 		);
 		return true;
 	}
-	if (visibleNormal.y < -0.5 &&
-		visiblePosition.y >= 2.895 && visiblePosition.y <= 2.915 &&
-		visiblePosition.x >= -1.75 && visiblePosition.x <= 0.69)
-	{
-		revealT = (visiblePosition.z - 3.056) / (3.256 - 3.056);
-		atlasUv = r7310C1SouthWallAtlasUvFromPackedPoint(
-			r7310C1SouthWallClampPackedX(mix(-1.52, 0.46, (visiblePosition.x + 1.75) / (0.69 + 1.75)), -1.52, 0.46),
-			r7310C1SouthWallClampPackedY(mix(2.675, 2.845, revealT), 2.675, 2.845)
-		);
-		return true;
-	}
 	atlasUv = vec2(0.0);
 	return false;
 }
@@ -2308,6 +2336,29 @@ bool r7310C1CeilingDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 		(visiblePosition.z + 2.074) / 5.33
 	);
 	return true;
+}
+bool r7310C1CeilingHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1CeilingDiffuseMode > 0.5 &&
+		uR7310C1FullRoomDiffuseReady > 0.5 &&
+		r7310C1RuntimeSurfaceIsCeiling(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
+		r7310C1CeilingDiffuseUv(visiblePosition, atlasUv);
+}
+vec3 r7310C1CeilingHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1CeilingDiffuseUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, 5.0);
+}
+bool r7310C1CeilingIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1006 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
 }
 bool r7310C1StructuralBeamColumnDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
@@ -3765,6 +3816,9 @@ float SceneIntersect( )
 	hitRoughness = 1.0;
 	hitMetalness = 0.0;
 	hitRotateUV90 = 0.0;
+	hitBoxIndex = -1.0;
+	hitBoxCullable = -1.0;
+	hitBoxFixtureGroup = -1.0;
 	hitIsRayExiting = FALSE;
 
 	// R2-11 光源幾何由圓柱承載（見下方區塊 5），ceilingLampQuad 僅作為 importance sampling PDF 目標
@@ -3814,9 +3868,9 @@ float SceneIntersect( )
 					hitColor = boxColor;
 					if (r7310C1WestBeamSwColumnLUnionWallFace(boxIdx, n, boxMin, boxMax))
 						hitColor = r7310C1DynamicSouthWallBaseColor();
-					// R2-UI（fix19）：對所有結構表面（地板/天花板/牆/樑/柱，陣列索引 0..31）套用 uWallAlbedo，家具（索引 32+）與貼圖物件不受影響
+					// R2-UI（fix19）：對所有結構表面（地板/天花板/牆/樑/柱，陣列索引 0..32）套用 uWallAlbedo，家具（索引 33+）與貼圖物件不受影響
 					// 歷史：原寫 index 1..15，但 fix10 地板/天花板重切後陣列索引重排，導致僅 2a/2b 被套用 albedo 而 3a 起不受影響，造成木門西側 asymmetric 暗化
-					if (boxIdx <= 31) hitColor *= uWallAlbedo;
+					if (boxIdx <= 32) hitColor *= uWallAlbedo;
 					hitType = boxType;
 					hitMeta = boxMeta;
 					hitRoughness = boxRoughness;
@@ -3825,10 +3879,13 @@ float SceneIntersect( )
 					hitIsRayExiting = isRayExiting;
 					hitBoxMin = boxMin;
 					hitBoxMax = boxMax;
-					// fix20：結構性 box（索引 0..31：地板/天花板/牆/樑/柱）統一 objectID=1，使邊界間 fwidth(objectID)=0，
+					hitBoxIndex = float(boxIdx);
+					hitBoxCullable = boxCullable;
+					hitBoxFixtureGroup = boxFixtureGroup;
+					// fix20：結構性 box（索引 0..32：地板/天花板/牆/樑/柱）統一 objectID=1，使邊界間 fwidth(objectID)=0，
 					// 避免 PathTracingCommon.js main() 之 objectDifference>=1.0 觸發 pixelSharpness=1 而於共邊永保 raw noise
-					// 傢俱與貼圖物件（索引 32+）保留各自獨特 ID（+1 讓最小為 33 避免與結構組撞）；確保 wall-furniture 邊緣仍受 edge 保護
-					hitObjectID = float(objectCount + (boxIdx <= 31 ? 1 : boxIdx + 1));
+					// 傢俱與貼圖物件（索引 33+）保留各自獨特 ID（+1 讓最小為 34 避免與結構組撞）；確保 wall-furniture 邊緣仍受 edge 保護
+					hitObjectID = float(objectCount + (boxIdx <= 32 ? 1 : boxIdx + 1));
 				}
 			}
 		} else {
@@ -5226,6 +5283,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				continue;
 			}
 			vec3 r7310BakedRadiance = vec3(0.0);
+			bool r7310FloorHybridFirstHit = bounces == 0 &&
+				hitIsRayExiting != TRUE &&
+				r7310C1FloorHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310CeilingHybridFirstHit = bounces == 0 &&
+				hitIsRayExiting != TRUE &&
+				r7310C1CeilingHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310NorthWallHybridFirstHit = bounces == 0 &&
 				r7310C1NorthWallHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310SeColumnNorthHybridFirstHit = bounces == 0 &&
@@ -5265,6 +5328,25 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				r7310C1SouthWindowBottomRevealShadowHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310SouthWindowTopRevealShadowHybridFirstHit = bounces == 0 &&
 				r7310C1SouthWindowTopRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310DedicatedCeilingHybridFirstHit =
+				r7310SeColumnNorthHybridFirstHit ||
+				r7310SeColumnWestHybridFirstHit ||
+				r7310SouthWallAcHybridFirstHit ||
+				r7310EastWallBeamHybridFirstHit ||
+				r7310SwColumnNorthHybridFirstHit ||
+				r7310WestWallBeamHybridFirstHit ||
+				r7310SwColumnInnerShadowHybridFirstHit ||
+				r7310WestBeamInnerShadowHybridFirstHit ||
+				r7310WestBeamUnderShadowHybridFirstHit ||
+				r7310EastBeamInnerShadowHybridFirstHit ||
+				r7310EastBeamUnderShadowHybridFirstHit ||
+				r7310SouthWindowLeftRevealShadowHybridFirstHit ||
+				r7310SouthWindowRightRevealShadowHybridFirstHit ||
+				r7310SouthWindowBottomRevealShadowHybridFirstHit ||
+				r7310SouthWindowTopRevealShadowHybridFirstHit;
+			r7310CeilingHybridFirstHit = r7310CeilingHybridFirstHit && !r7310DedicatedCeilingHybridFirstHit;
+			bool r7310FloorHybridGuard = !r7310FloorHybridFirstHit;
+			bool r7310CeilingHybridGuard = !r7310CeilingHybridFirstHit;
 			bool r7310NorthWallHybridGuard = !r7310NorthWallHybridFirstHit;
 			bool r7310SeColumnNorthHybridGuard = !r7310SeColumnNorthHybridFirstHit;
 			bool r7310SeColumnWestHybridGuard = !r7310SeColumnWestHybridFirstHit;
@@ -5283,6 +5365,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310SouthWindowRightRevealShadowHybridGuard = !r7310SouthWindowRightRevealShadowHybridFirstHit;
 			bool r7310SouthWindowBottomRevealShadowHybridGuard = !r7310SouthWindowBottomRevealShadowHybridFirstHit;
 			bool r7310SouthWindowTopRevealShadowHybridGuard = !r7310SouthWindowTopRevealShadowHybridFirstHit;
+			bool r7310FloorIndirectBakeFirstHit = r7310C1FloorIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310CeilingIndirectBakeFirstHit = r7310C1CeilingIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310NorthWallIndirectBakeFirstHit = r7310C1NorthWallIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310EastWallIndirectBakeFirstHit = r7310C1EastWallIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SeColumnNorthIndirectBakeFirstHit = r7310C1SeColumnNorthShadowIndirectBakeFirstHit(bounces, diffuseCount);
@@ -5302,6 +5386,158 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowBottomRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SouthWindowTopRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowTopRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
+			float r7310HybridOwnerCount = 0.0;
+			float r7310HybridOwnerMaskLow = 0.0;
+			float r7310HybridOwnerMaskHigh = 0.0;
+			float r7310HybridOwnerFirstTargetOffset = 0.0;
+			float r7310HybridOwnerSecondTargetOffset = 0.0;
+			r7310HybridOwnerAdd(r7310FloorHybridFirstHit, 1.0, 1.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310CeilingHybridFirstHit, 6.0, 2.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310NorthWallHybridFirstHit, 2.0, 4.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310EastWallHybridFirstHit, 3.0, 8.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310WestWallHybridFirstHit, 4.0, 16.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit, 17.0, 32.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit, 15.0, 64.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SouthWindowTopRevealShadowHybridFirstHit, 22.0, 128.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SeColumnNorthHybridFirstHit, 8.0, 0.0, 1.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SeColumnWestHybridFirstHit, 9.0, 0.0, 2.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SouthWallAcHybridFirstHit, 10.0, 0.0, 4.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310EastWallBeamHybridFirstHit, 11.0, 0.0, 8.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SwColumnNorthHybridFirstHit, 12.0, 0.0, 16.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310WestWallBeamHybridFirstHit, 13.0, 0.0, 32.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SwColumnInnerShadowHybridFirstHit, 14.0, 0.0, 64.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit, 19.0, 0.0, 128.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 36.5 &&
+				r7310C1RuntimeProbeMode < 41.5)
+			{
+				if (r7310C1RuntimeProbeMode < 37.5)
+				{
+					accumCol = vec3(
+						clamp(r7310HybridOwnerCount / 255.0, 0.0, 1.0),
+						clamp(r7310HybridOwnerMaskLow / 255.0, 0.0, 1.0),
+						clamp(r7310HybridOwnerMaskHigh / 255.0, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 38.5)
+				{
+					accumCol = vec3(
+						clamp(r7310HybridOwnerFirstTargetOffset / 255.0, 0.0, 1.0),
+						clamp(r7310HybridOwnerSecondTargetOffset / 255.0, 0.0, 1.0),
+						clamp(r7310HybridOwnerCount / 255.0, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 39.5)
+				{
+					vec2 r7310HybridOwnerCoverageUv = vec2(0.0);
+					if (r7310CeilingHybridFirstHit && r7310C1CeilingDiffuseUv(x, r7310HybridOwnerCoverageUv))
+						accumCol = r7310C1PatchCoverageProbe(r7310HybridOwnerCoverageUv, uR7310C1RuntimeAtlasPatchResolution, 5.0, 6.0);
+					else if (r7310FloorHybridFirstHit && r7310C1FloorDiffuseUv(x, r7310HybridOwnerCoverageUv))
+						accumCol = r7310C1PatchCoverageProbe(r7310HybridOwnerCoverageUv, uR7310C1RuntimeAtlasPatchResolution, 0.0, 1.0);
+					else if (r7310SouthWindowTopRevealShadowHybridFirstHit && r7310C1SouthWindowTopRevealShadowDiffuseUv(hitType, hitObjectID, nl, x, r7310HybridOwnerCoverageUv))
+						accumCol = r7310C1PatchCoverageProbe(r7310HybridOwnerCoverageUv, uR7310C1SouthWindowTopRevealShadowResolution, 21.0, 22.0);
+					else if (r7310WestWallHybridFirstHit)
+						accumCol = r7310C1FullAtlasCoverageProbe(4.0);
+					else
+						accumCol = vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode < 40.5)
+				{
+					vec3 r7310HybridOwnerRadiance = vec3(0.0);
+					if (r7310FloorHybridFirstHit)
+						r7310HybridOwnerRadiance += r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
+					if (r7310CeilingHybridFirstHit)
+						r7310HybridOwnerRadiance += r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
+					if (r7310SouthWindowTopRevealShadowHybridFirstHit)
+						r7310HybridOwnerRadiance += r7310C1SouthWindowTopRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+					if (r7310WestWallHybridFirstHit)
+						r7310HybridOwnerRadiance += r7310C1WestWallHybridRadiance(hitType, hitObjectID, nl, x);
+					accumCol = clamp(r7310HybridOwnerRadiance, vec3(0.0), vec3(1.0));
+				}
+				else
+				{
+					accumCol = vec3(
+						hitIsRayExiting == TRUE ? 1.0 : 0.0,
+						clamp((x.y + 0.05) / 0.10, 0.0, 1.0),
+						clamp(rayDirection.y * 0.5 + 0.5, 0.0, 1.0)
+					);
+				}
+				break;
+			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 41.5 &&
+				r7310C1RuntimeProbeMode < 48.5)
+			{
+				vec3 r7310ProbeBoxCenter = (hitBoxMin + hitBoxMax) * 0.5;
+				vec3 r7310ProbeRoomCenter = (uRoomMin + uRoomMax) * 0.5;
+				bool r7310ProbeCamSouth = uCamPos.z > uRoomMax.z + uCullEpsilon;
+				bool r7310ProbeThinSouthCull =
+					hitBoxCullable >= 0.5 &&
+					hitBoxCullable < 1.5 &&
+					hitBoxMin.z > uRoomMax.z - uCullThreshold;
+				bool r7310ProbeLargeSouthCull =
+					hitBoxCullable >= 1.5 &&
+					hitBoxCullable < 2.5 &&
+					r7310ProbeBoxCenter.z > r7310ProbeRoomCenter.z;
+				bool r7310ProbeSingleAxisCullable = hitBoxCullable >= 2.5;
+				bool r7310ProbeSouthWouldCull =
+					uXrayEnabled > 0.5 &&
+					r7310ProbeCamSouth &&
+					(r7310ProbeThinSouthCull || r7310ProbeLargeSouthCull);
+				if (r7310C1RuntimeProbeMode < 42.5)
+				{
+					accumCol = vec3(
+						clamp((hitBoxIndex + 1.0) / 255.0, 0.0, 1.0),
+						clamp((hitBoxCullable + 1.0) / 8.0, 0.0, 1.0),
+						clamp(float(hitType) / 255.0, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 43.5)
+				{
+					accumCol = vec3(
+						clamp((hitBoxMin.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((hitBoxMin.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((hitBoxMin.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 44.5)
+				{
+					accumCol = vec3(
+						clamp((hitBoxMax.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((hitBoxMax.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((hitBoxMax.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 45.5)
+				{
+					accumCol = vec3(
+						clamp((x.x + 2.2) / 4.4, 0.0, 1.0),
+						clamp((x.y + 0.1) / 3.2, 0.0, 1.0),
+						clamp((x.z + 2.1) / 5.4, 0.0, 1.0)
+					);
+				}
+				else if (r7310C1RuntimeProbeMode < 46.5)
+				{
+					accumCol = nl * 0.5 + 0.5;
+				}
+				else if (r7310C1RuntimeProbeMode < 47.5)
+				{
+					accumCol = vec3(
+						uXrayEnabled > 0.5 ? 1.0 : 0.0,
+						r7310ProbeCamSouth ? 1.0 : 0.0,
+						r7310ProbeSouthWouldCull ? 1.0 : 0.0
+					);
+				}
+				else
+				{
+					accumCol = vec3(
+						r7310ProbeThinSouthCull ? 1.0 : 0.0,
+						r7310ProbeLargeSouthCull ? 1.0 : 0.0,
+						r7310ProbeSingleAxisCullable ? 1.0 : 0.0
+					);
+				}
+				break;
+			}
 			if (bounces == 0 &&
 				r7310C1RuntimeProbeMode > 21.5 &&
 				r7310C1RuntimeProbeMode < 26.5)
@@ -5729,6 +5965,18 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 0.5 &&
+				r7310C1RuntimeProbeMode < 1.5 &&
+				(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit))
+			{
+				accumCol = r7310CeilingHybridFirstHit ? vec3(1.0, 1.0, 1.0) : vec3(0.0, 1.0, 0.0);
+				break;
+			}
+			if (r7310FloorHybridFirstHit)
+				accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310CeilingHybridFirstHit)
+				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310NorthWallHybridFirstHit)
 				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310EastWallHybridFirstHit)
@@ -5814,7 +6062,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					accumCol = vec3(0.0);
 				break;
 			}
-			if (!(r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+			if (!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
 				bounces == 0 &&
 				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, r7310BakedRadiance))
 			{
@@ -5915,7 +6163,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			rayOrigin = x + nl * uEPS_intersect;
 
         if (float(diffuseCount) < uMaxBounces &&
-				!(r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+				!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+				r7310FloorHybridGuard &&
+				r7310CeilingHybridGuard &&
 				r7310NorthWallHybridGuard &&
 				r7310EastWallHybridGuard &&
 				r7310SeColumnNorthHybridGuard &&
@@ -5940,6 +6190,32 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				diffuseBounceRayDirection = randomCosWeightedDirectionInHemisphere(nl);
 				misBsdfBounceNl = nl; misBsdfBounceOrigin = x; misPBsdfStashed = cosWeightedPdf(diffuseBounceRayDirection, nl); // R3-6 Phase-3: cache BSDF-bounce state for MIS indirect-hit
 				willNeedDiffuseBounceRay = TRUE;
+			}
+			if (r7310FloorIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310CeilingIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
 			}
 			if (r7310NorthWallIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
 			{

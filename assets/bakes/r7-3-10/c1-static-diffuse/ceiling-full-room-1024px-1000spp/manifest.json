@@ -1,6 +1,7 @@
 {
   "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
   "config": 1,
+  "northeastFurnitureMode": null,
   "batch": "ceiling",
   "targetId": 1006,
   "surfaceName": "c1_ceiling",
@@ -11,8 +12,8 @@
     "zMax": 3.256,
     "y": 2.905
   },
-  "createdAt": "2026-05-16T15:56:11.111Z",
-  "branch": "codex/r7-3-10-ceiling-bake-expansion",
+  "createdAt": "2026-05-25T13:21:52.240Z",
+  "branch": "codex/r7-3-10-floor-ceiling-hybrid-plan",
   "commit": "WORKTREE_DIRTY",
   "smokeTest": false,
   "targetAtlasResolution": 1024,

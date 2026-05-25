@@ -20,7 +20,7 @@ function computeCloudRadiance(lm_total, kelvin, faceArea) {
 }
 // ========== 函式本體副本結束 ==========
 
-const CLOUD_BOX_IDX_BASE = 71;  // R3-3 fix01：sceneBoxes 陣列 index（非註解邏輯 ID 55）
+const CLOUD_BOX_IDX_BASE = 72;  // R3-3 fix01：sceneBoxes 陣列 index（非註解邏輯 ID 55）
 const CLOUD_ARC_AREA_SCALE = Math.PI * 0.5;
 const CLOUD_ARC_RADIUS = 0.016;
 const ROD_LENGTH    = [2.368, 2.368, 1.768, 1.768];
@@ -69,9 +69,9 @@ else fail('5600K 單調性破', `r4000=${r4000} r5600=${r5600} r6500=${r6500}`);
 
 // [E] objectIdBase 計算契約：uCloudObjIdBase = CLOUD_BOX_IDX_BASE + 1
 console.log('\n[E] objectIdBase 計算契約:');
-// shader 端 hitObjectID = objectCount(0) + boxIdx + 1；boxIdx=71 → 72
+// shader 端 hitObjectID = objectCount(0) + boxIdx + 1；boxIdx=72 → 73
 const objIdBase = CLOUD_BOX_IDX_BASE + 1;
-if (objIdBase === 72) pass('CLOUD_BOX_IDX_BASE + 1 === 72');
+if (objIdBase === 73) pass('CLOUD_BOX_IDX_BASE + 1 === 73');
 else fail('uCloudObjIdBase 常量錯', `got=${objIdBase}`);
 
 console.log(`\n=== 結果：${failed === 0 ? 'PASS' : `FAIL (${failed})`} ===`);

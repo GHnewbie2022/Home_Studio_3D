@@ -301,7 +301,11 @@ assert.deepEqual(contract.c1CeilingBatch.worldBounds, {
 assert.equal(contract.c1CeilingBatch.surfaceName, 'c1_ceiling');
 assert.equal(contract.c1CeilingBatch.targetId, 1006);
 assert.equal(contract.c1CeilingBatch.mapping, 'planar_xz');
-assert.equal(contract.c1CeilingBatch.invalidTexelRegions, undefined);
+assert.deepEqual(contract.c1CeilingBatch.invalidTexelRegions.southWallSolidBehindCeiling, {
+  zMinExclusive: 3.056,
+  xOutsideWindowMin: -1.75,
+  xOutsideWindowMaxInclusive: 0.69
+});
 assert.equal(contract.c1StructuralBeamColumnBatch.targetId, 1007);
 assert.equal(contract.c1StructuralBeamColumnBatch.surfaceName, 'c1_structural_beams_columns');
 assert.equal(contract.c1StructuralBeamColumnBatch.surfaceClass, 'structural');
@@ -376,10 +380,17 @@ assert.equal(
   true
 );
 assert.equal(r7310.packageStatus, 'architecture_probe');
-assert.equal(r7310.runtimeScope, 'c1_floor_full_room_diffuse_short_circuit');
+assert.equal(r7310.runtimeScope, 'c1_floor_full_room_first_hit_hybrid');
 assert.equal(r7310.runtimeEnabledDefault, true);
 assert.equal(r7310.targetId, 1001);
 assert.equal(r7310.requestedSamples, 1000);
+assert.equal(r7310.surfaceName, 'c1_floor_full_room');
+assert.equal(r7310.runtimeAtlasSlot, 0);
+assert.equal(r7310.bakedRadianceKind, 'indirect_diffuse_radiance');
+assert.equal(r7310.directLightAlreadyIncluded, false);
+assert.equal(r7310.addDirectLightAfterBakeLookup, true);
+assert.equal(r7310.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
+assert.equal(r7310.runtimeArchitecture, 'single_full_floor_first_hit_hybrid');
 assert.equal(r7310.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.equal(r7310NorthWall.packageStatus, 'architecture_probe');
 assert.equal(r7310NorthWall.runtimeScope, 'c1_north_wall_first_hit_hybrid');
@@ -424,11 +435,17 @@ assert.equal(r7310SouthWall.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin
 assert.deepEqual(r7310SouthWall.invalidTexelRegions.windowHole, contract.c1SouthWallBatch.invalidTexelRegions.windowHole);
 assert.deepEqual(r7310SouthWall.windowRevealAtlasRegions, contract.c1SouthWallBatch.windowRevealAtlasRegions);
 assert.equal(r7310Ceiling.packageStatus, 'architecture_probe');
-assert.equal(r7310Ceiling.runtimeScope, 'c1_ceiling_diffuse_short_circuit');
+assert.equal(r7310Ceiling.runtimeScope, 'c1_ceiling_first_hit_hybrid');
 assert.equal(r7310Ceiling.runtimeEnabledDefault, true);
 assert.equal(r7310Ceiling.targetId, 1006);
 assert.equal(r7310Ceiling.requestedSamples, 1000);
 assert.equal(r7310Ceiling.surfaceName, 'c1_ceiling');
+assert.equal(r7310Ceiling.runtimeAtlasSlot, 5);
+assert.equal(r7310Ceiling.bakedRadianceKind, 'indirect_diffuse_radiance');
+assert.equal(r7310Ceiling.directLightAlreadyIncluded, false);
+assert.equal(r7310Ceiling.addDirectLightAfterBakeLookup, true);
+assert.equal(r7310Ceiling.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
+assert.equal(r7310Ceiling.runtimeArchitecture, 'single_full_ceiling_first_hit_hybrid');
 assert.equal(r7310Ceiling.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 if (r7310StructuralPointerExists)
 {

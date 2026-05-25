@@ -66,9 +66,11 @@ for (const surface of surfaces) {
 assert.match(shader, /bool r7310NorthWallHybridFirstHit\s*=\s*bounces == 0[\s\S]{0,160}r7310C1NorthWallHybridActive/);
 assert.match(shader, /bool r7310EastWallHybridFirstHit\s*=\s*bounces == 0 &&\s*!r7310EastWallBeamHybridFirstHit[\s\S]{0,160}r7310C1EastWallHybridActive/);
 
-const fullDiffuseGuardStart = shader.indexOf('if (!(r7310NorthWallHybridFirstHit');
-assert.notEqual(fullDiffuseGuardStart, -1, 'full diffuse guard must start with north/east wall hybrid routes');
+const fullDiffuseGuardStart = shader.indexOf('if (!(r7310FloorHybridFirstHit');
+assert.notEqual(fullDiffuseGuardStart, -1, 'full diffuse guard must include floor/ceiling and north/east wall hybrid routes');
 const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, fullDiffuseGuardStart + 900);
+assert.match(fullDiffuseGuard, /r7310FloorHybridFirstHit/);
+assert.match(fullDiffuseGuard, /r7310CeilingHybridFirstHit/);
 assert.match(fullDiffuseGuard, /r7310NorthWallHybridFirstHit/);
 assert.match(fullDiffuseGuard, /r7310EastWallHybridFirstHit/);
 assert.match(fullDiffuseGuard, /r7310C1FullRoomDiffuseShortCircuit/);

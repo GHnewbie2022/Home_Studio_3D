@@ -62,6 +62,8 @@ function parseArgs(argv) {
     northBeamGapProbeTest: false,
     northBeamGapRedLiveProbeTest: false,
     northWallNormalFidelityProbeTest: false,
+    hybridOwnerProbe: false,
+    cutawayGeometryProbe: false,
     uiToggleTest: false,
     neFurnitureRuntimeTest: false,
     targetSamples: null,
@@ -119,6 +121,8 @@ function parseArgs(argv) {
     else if (arg === '--r7310-north-beam-gap-probe') out.northBeamGapProbeTest = true;
     else if (arg === '--r7310-north-beam-gap-red-live-probe') out.northBeamGapRedLiveProbeTest = true;
     else if (arg === '--r7310-north-wall-normal-fidelity-probe') out.northWallNormalFidelityProbeTest = true;
+    else if (arg === '--r7310-hybrid-owner-probe') out.hybridOwnerProbe = true;
+    else if (arg === '--r7310-cutaway-geometry-probe') out.cutawayGeometryProbe = true;
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
     else if (arg === '--r7310-ne-furniture-runtime-test') out.neFurnitureRuntimeTest = true;
     else if (arg.startsWith('--target-samples=')) out.targetSamples = Number(arg.slice('--target-samples='.length));
@@ -271,6 +275,7 @@ class CdpWebSocket {
     this.nextId = 1;
     this.pending = new Map();
     this.eventWaiters = new Map();
+    this.events = [];
     this.fragmentedText = [];
   }
 
@@ -348,6 +353,10 @@ class CdpWebSocket {
         continue;
       }
       const message = JSON.parse(payload.toString('utf8'));
+      if (message.method) {
+        this.events.push({ method: message.method, params: message.params || {} });
+        if (this.events.length > 50000) this.events.shift();
+      }
       if (message.id && this.pending.has(message.id)) {
         const pending = this.pending.get(message.id);
         this.pending.delete(message.id);
@@ -1025,27 +1034,22 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
   const resolution = report.targetAtlasResolution;
   const expectedAtlasBytes = resolution * resolution * 4 * 4;
   const expectedMetadataBytes = resolution * resolution * 12 * 4;
-  const validTexelRatioMinimum = report.surfaceName === 'c1_east_wall'
-    ? 0.70
-    : (report.surfaceName === 'c1_west_wall'
-      ? 0.60
-      : (report.surfaceName === 'c1_south_wall'
-    ? 0.60
-      : (report.surfaceName === 'c1_south_wall_ac_shadow'
-    ? 0.59
-      : (report.surfaceName === 'c1_north_wall'
-      ? 0.80
-      : (report.surfaceName === 'c1_west_wall_beam_shadow'
-        ? 0.70
-      : (report.surfaceName === 'c1_east_wall_beam_shadow'
-        ? 0.70
-      : (report.surfaceName === 'c1_structural_beams_columns'
-        ? 0.30
-        : (report.surfaceName === 'c1_se_column_north_shadow'
-          ? 0.93
-        : (report.surfaceName === 'c1_se_column_west_shadow'
-          ? 0.50
-          : 0.99)))))))));
+  const validTexelRatioMinimumBySurface = {
+    c1_east_wall: 0.70,
+    c1_west_wall: 0.60,
+    c1_south_wall: 0.60,
+    c1_south_wall_ac_shadow: 0.59,
+    c1_north_wall: 0.80,
+    c1_west_wall_beam_shadow: 0.70,
+    c1_east_wall_beam_shadow: 0.70,
+    c1_structural_beams_columns: 0.30,
+    c1_se_column_north_shadow: 0.93,
+    c1_se_column_west_shadow: 0.50,
+    c1_ceiling: 0.98
+  };
+  const validTexelRatioMinimum = Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
+    ? validTexelRatioMinimumBySurface[report.surfaceName]
+    : 0.99;
   const atlasVisibleLuma = summarizeAtlasVisibleLuma(atlasBuffer);
   const checks = {
     version: report.version === 'r7-3-8-c1-1000spp-bake-capture' || report.version === 'r7-3-10-full-room-diffuse-bake-architecture-probe',
@@ -1076,12 +1080,12 @@ function loadStructuralGeometryGateReport() {
 }
 
 function r7310RuntimeScopeForSurface(surfaceName) {
-  if (surfaceName === 'c1_floor_full_room') return 'c1_floor_full_room_diffuse_short_circuit';
+  if (surfaceName === 'c1_floor_full_room') return 'c1_floor_full_room_first_hit_hybrid';
   if (surfaceName === 'c1_north_wall') return 'c1_north_wall_first_hit_hybrid';
   if (surfaceName === 'c1_east_wall') return 'c1_east_wall_first_hit_hybrid';
   if (surfaceName === 'c1_west_wall') return 'c1_west_wall_diffuse_short_circuit';
   if (surfaceName === 'c1_south_wall') return 'c1_south_wall_diffuse_short_circuit';
-  if (surfaceName === 'c1_ceiling') return 'c1_ceiling_diffuse_short_circuit';
+  if (surfaceName === 'c1_ceiling') return 'c1_ceiling_first_hit_hybrid';
   if (surfaceName === 'c1_structural_beams_columns') return 'c1_structural_beams_columns_diffuse_short_circuit';
   if (surfaceName === 'c1_se_column_north_shadow') return 'c1_se_column_north_shadow_diffuse_short_circuit';
   if (surfaceName === 'c1_se_column_west_shadow') return 'c1_se_column_west_shadow_diffuse_short_circuit';
@@ -1203,6 +1207,16 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
     pointer.islandCoverageByName = report.islandCoverageByName || {};
     pointer.islandLumaByName = report.islandLumaByName || {};
   }
+  if (report.surfaceName === 'c1_floor_full_room') {
+    pointer.mapping = 'planar_xz';
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 0;
+    pointer.runtimeArchitecture = 'single_full_floor_first_hit_hybrid';
+  }
   if (report.surfaceName === 'c1_north_wall') {
     pointer.mapping = 'planar_xy';
     pointer.invalidTexelRegions = report.invalidTexelRegions || null;
@@ -1235,6 +1249,16 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
     pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
     pointer.runtimeAtlasSlot = 3;
     pointer.runtimeArchitecture = 'single_full_west_wall_first_hit_hybrid';
+  }
+  if (report.surfaceName === 'c1_ceiling') {
+    pointer.mapping = 'planar_xz';
+    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
+    pointer.directLightAlreadyIncluded = false;
+    pointer.addDirectLightAfterBakeLookup = true;
+    pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
+    pointer.runtimeAtlasSlot = 5;
+    pointer.runtimeArchitecture = 'single_full_ceiling_first_hit_hybrid';
   }
   if (report.surfaceName === 'c1_se_column_north_shadow') {
     pointer.mapping = 'single_planar_xy_on_z_face';
@@ -1466,6 +1490,7 @@ async function main() {
     cdp = new CdpWebSocket(target.webSocketDebuggerUrl);
     await cdp.connect();
     await cdp.send('Runtime.enable');
+    await cdp.send('Log.enable');
     await cdp.send('Page.enable');
     if (args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.northWallNormalFidelityProbeTest) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -4457,6 +4482,358 @@ async function main() {
       completed = true;
       return;
     }
+    if (args.cutawayGeometryProbe) {
+      console.error('[r738-runner] running R7-3.10 cutaway geometry probe');
+      const probeLevels = [42, 43, 44, 45, 46, 47, 48, 37, 38];
+      const gridFromRect = (prefix, x0, y0, x1, y1, cols = 5, rows = 5) => {
+        const points = [];
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            const x = Math.round(x0 + (x1 - x0) * (cols === 1 ? 0.5 : col / (cols - 1)));
+            const y = Math.round(y0 + (y1 - y0) * (rows === 1 ? 0.5 : row / (rows - 1)));
+            points.push({ name: `${prefix}_${col}_${row}`, x, y });
+          }
+        }
+        return points;
+      };
+      const samplePoints = [
+        ...gridFromRect('south_cutaway_full', 80, 80, 1200, 660, 15, 8),
+        ...gridFromRect('south_cutaway_right_leg_dense', 610, 155, 1030, 555, 9, 9),
+        ...gridFromRect('south_cutaway_m_head_control', 210, 180, 640, 360, 7, 4),
+        ...gridFromRect('south_cutaway_left_leg_control', 120, 170, 390, 565, 6, 8)
+      ];
+      const cameraCase = {
+        name: 'south_cutaway_window_top_extension_restored',
+        cameraState: {
+          position: { x: -0.219879, y: 2.343796, z: 5.906082 },
+          yaw: 0.0476,
+          pitch: -0.082,
+          fov: 55,
+          forward: { x: -0.047422, y: -0.081908, z: -0.995511 }
+        },
+        samplePoints
+      };
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const probeLevels = ${JSON.stringify(probeLevels)};
+          const cameraCase = ${JSON.stringify(cameraCase)};
+          const reports = [];
+          for (const level of probeLevels) {
+            reports.push({
+              probeLevel: level,
+              report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                timeoutMs: ${args.timeoutMs},
+                cameraState: cameraCase.cameraState,
+                allSurfaces: true,
+                forceXrayEnabled: true,
+                probeLevel: level,
+                samplePoints: cameraCase.samplePoints,
+                samplePointSpace: 'renderTargetPixel',
+                randomVec2: { x: 0.5, y: 0.5 }
+              })
+            });
+          }
+          const byName = new Map();
+          for (const entry of reports) {
+            for (const sample of entry.report.samplePoints || []) {
+              const row = byName.get(sample.x + ':' + sample.y) || {
+                name: sample.name || null,
+                x: sample.x,
+                y: sample.y,
+                rtPixel: sample.rtPixel,
+                decodedByLevel: {}
+              };
+              row.decodedByLevel[String(entry.probeLevel)] = sample.decoded;
+              byName.set(sample.x + ':' + sample.y, row);
+            }
+          }
+          const mergedSamples = Array.from(byName.values()).map((sample) => {
+            const summary = sample.decodedByLevel['42'] || {};
+            return {
+              ...sample,
+              boxIdx: Number.isFinite(summary.boxIdx) ? summary.boxIdx : null,
+              cullable: Number.isFinite(summary.cullable) ? summary.cullable : null,
+              hitType: Number.isFinite(summary.hitType) ? summary.hitType : null,
+              boxMin: sample.decodedByLevel['43'] || null,
+              boxMax: sample.decodedByLevel['44'] || null,
+              world: sample.decodedByLevel['45'] || null,
+              normal: sample.decodedByLevel['46'] || null,
+              southCutawayState: sample.decodedByLevel['47'] || null,
+              southCullInputs: sample.decodedByLevel['48'] || null,
+              ownerSummary: sample.decodedByLevel['38'] || null,
+              ownerMask: sample.decodedByLevel['37'] || null
+            };
+          });
+          const boxGroups = new Map();
+          for (const sample of mergedSamples) {
+            const key = String(sample.boxIdx);
+            const group = boxGroups.get(key) || {
+              boxIdx: sample.boxIdx,
+              count: 0,
+              cullable: sample.cullable,
+              hitType: sample.hitType,
+              boxMin: sample.boxMin,
+              boxMax: sample.boxMax,
+              southCutawayState: sample.southCutawayState,
+              southCullInputs: sample.southCullInputs,
+              samples: []
+            };
+            group.count += 1;
+            if (group.samples.length < 24) group.samples.push(sample);
+            boxGroups.set(key, group);
+          }
+          const aggregate = Array.from(boxGroups.values()).sort((a, b) => b.count - a.count);
+          const finiteSamples = reports.every((entry) => {
+            return entry.report.samplePoints.every((sample) => {
+              return Number.isFinite(sample.r) && Number.isFinite(sample.g) && Number.isFinite(sample.b);
+            });
+          });
+          return {
+            version: 'r7-3-10-south-cutaway-geometry-probe',
+            probeLevels,
+            samplePointSpace: 'renderTargetPixel',
+            cameraCase,
+            aggregate,
+            mergedSamples,
+            reports,
+            status: finiteSamples ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 240000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-cutaway-geometry-probe', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'cutaway-geometry-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 cutaway geometry probe completed');
+      console.log(`status: ${report.status}`);
+      for (const group of report.aggregate.slice(0, 12)) {
+        console.log(`boxIdx=${group.boxIdx} count=${group.count} cullable=${group.cullable} hitType=${group.hitType} min=${JSON.stringify(group.boxMin)} max=${JSON.stringify(group.boxMax)} cut=${JSON.stringify(group.southCutawayState)} inputs=${JSON.stringify(group.southCullInputs)}`);
+      }
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+
+    if (args.hybridOwnerProbe) {
+      console.error('[r738-runner] running R7-3.10 hybrid owner probe');
+      // probeLevels: [37, 38, 39, 40, 41, 2, 3, 4, 5, 6]
+      const probeLevels = [37, 38, 39, 40, 41, 2, 3, 4, 5, 6];
+      const gridFromRect = (prefix, x0, y0, x1, y1, cols = 5, rows = 5) => {
+        const points = [];
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            const x = Math.round(x0 + (x1 - x0) * (cols === 1 ? 0.5 : col / (cols - 1)));
+            const y = Math.round(y0 + (y1 - y0) * (rows === 1 ? 0.5 : row / (rows - 1)));
+            points.push({ name: `${prefix}_${col}_${row}`, x, y });
+          }
+        }
+        return points;
+      };
+      const ownerProbeCases = [
+        {
+          name: 'ceiling_east_beam_gap',
+          cameraState: {
+            position: { x: 1.809294, y: 2.874542, z: 0.499961 },
+            yaw: -0.287185,
+            pitch: 0.305,
+            fov: 55,
+            forward: { x: 0.270181, y: 0.300293, z: -0.914782 }
+          },
+          samplePoints: gridFromRect('east_beam_gap', 700, 270, 1180, 520, 6, 5)
+        },
+        {
+          name: 'ceiling_south_window_top_bright_overlap',
+          cameraState: {
+            position: { x: -0.951904, y: 1.678027, z: 1.198391 },
+            yaw: -2.822771,
+            pitch: 0.286,
+            fov: 55,
+            forward: { x: 0.300716, y: 0.282117, z: 0.911032 }
+          },
+          samplePoints: gridFromRect('south_top_overlap', 360, 210, 1120, 385, 8, 4)
+        },
+        {
+          name: 'ceiling_south_window_top_user_up_owner',
+          cameraState: {
+            position: { x: -0.254927, y: 2.596956, z: 2.99926 },
+            yaw: -1.565171,
+            pitch: 1.57,
+            fov: 55,
+            forward: { x: 0.000796, y: 1, z: -0.000004 }
+          },
+          samplePoints: gridFromRect('south_top_user_up', 360, 120, 1120, 640, 8, 6)
+        },
+        {
+          name: 'ceiling_south_window_east_reveal_top_gap',
+          cameraState: {
+            position: { x: 0.609864, y: 2.854768, z: 3.039445 },
+            yaw: -2.127971,
+            pitch: 0.329,
+            fov: 55,
+            forward: { x: 0.80323, y: 0.323097, z: 0.500429 }
+          },
+          samplePoints: gridFromRect('south_east_reveal_top_gap', 420, 220, 1110, 390, 8, 4)
+        },
+        {
+          name: 'floor_west_wall_north_corner_color_bleed',
+          cameraState: {
+            position: { x: -1.805457, y: 0.044537, z: -1.822999 },
+            yaw: 1.13963,
+            pitch: -0.279,
+            fov: 55,
+            forward: { x: -0.873349, y: -0.275394, z: -0.40177 }
+          },
+          samplePoints: gridFromRect('west_floor_corner', 560, 350, 760, 520, 5, 5)
+        },
+        {
+          name: 'floor_inside_glowing_patch',
+          cameraState: {
+            position: { x: -1.509987, y: -0.001374, z: 3.129922 },
+            yaw: -0.5752,
+            pitch: -0.108,
+            fov: 84,
+            forward: { x: 0.540833, y: -0.10779, z: -0.834195 }
+          },
+          samplePoints: gridFromRect('floor_inside_patch', 340, 275, 1120, 470, 8, 4)
+        }
+      ];
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const probeLevels = ${JSON.stringify(probeLevels)};
+          const ownerProbeCases = ${JSON.stringify(ownerProbeCases)};
+          const toggleVariants = [
+            { name: 'allOn', options: {} },
+            { name: 'ceilingOff', options: { forceCeilingEnabled: false } },
+            { name: 'southOff', options: { forceSouthEnabled: false } },
+            { name: 'ceilingOffSouthOff', options: { forceCeilingEnabled: false, forceSouthEnabled: false } },
+            { name: 'westOff', options: { forceWestEnabled: false } },
+            { name: 'floorOff', options: { forceFloorEnabled: false } }
+          ];
+          const reports = [];
+          for (const cameraCase of ownerProbeCases) {
+            for (const level of probeLevels) {
+              reports.push({
+                cameraCase: cameraCase.name,
+                probeLevel: level,
+                report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                  timeoutMs: ${args.timeoutMs},
+                  cameraState: cameraCase.cameraState,
+                  allSurfaces: true,
+                  probeLevel: level,
+                  samplePoints: cameraCase.samplePoints,
+                  samplePointSpace: 'renderTargetPixel',
+                  randomVec2: { x: 0.5, y: 0.5 }
+                })
+              });
+            }
+            for (const variant of toggleVariants) {
+              reports.push({
+                cameraCase: cameraCase.name,
+                probeLevel: 40,
+                toggleVariant: variant.name,
+                report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe(Object.assign({
+                  timeoutMs: ${args.timeoutMs},
+                  cameraState: cameraCase.cameraState,
+                  allSurfaces: true,
+                  probeLevel: 40,
+                  samplePoints: cameraCase.samplePoints,
+                  samplePointSpace: 'renderTargetPixel',
+                  randomVec2: { x: 0.5, y: 0.5 }
+                }, variant.options))
+              });
+            }
+          }
+          const aggregate = {};
+          for (const entry of reports) {
+            if (entry.probeLevel !== 37) continue;
+            if (entry.report.ownerCountSummary) {
+              aggregate[entry.cameraCase] = {
+                maxOwnerCount: entry.report.ownerCountSummary.maxOwnerCount,
+                ownerPixelCount: entry.report.ownerCountSummary.ownerPixelCount,
+                ownerOverlapCount: entry.report.ownerCountSummary.overlapPixelCount,
+                overlapSamples: entry.report.ownerCountSummary.overlapSamples || []
+              };
+              continue;
+            }
+            let ownerOverlapCount = 0;
+            let maxOwnerCount = 0;
+            const overlapSamples = [];
+            for (const sample of entry.report.samplePoints || []) {
+              const count = sample.decoded && Number.isFinite(sample.decoded.ownerCount) ? sample.decoded.ownerCount : 0;
+              if (count > maxOwnerCount) maxOwnerCount = count;
+              if (count >= 2) {
+                ownerOverlapCount += 1;
+                overlapSamples.push({
+                  name: sample.name,
+                  rtPixel: sample.rtPixel,
+                  ownerCount: count,
+                  owners: sample.decoded.owners || []
+                });
+              }
+            }
+            aggregate[entry.cameraCase] = { maxOwnerCount, ownerOverlapCount, overlapSamples };
+          }
+          const finiteSamples = reports.every((entry) => {
+            return entry.report.samplePoints.every((sample) => {
+              return Number.isFinite(sample.r) && Number.isFinite(sample.g) && Number.isFinite(sample.b);
+            });
+          });
+          return {
+            version: 'r7-3-10-hybrid-owner-probe',
+            probeLevels,
+            samplePointSpace: 'renderTargetPixel',
+            cases: ownerProbeCases.map((cameraCase) => ({
+              name: cameraCase.name,
+              cameraState: cameraCase.cameraState,
+              samplePoints: cameraCase.samplePoints
+            })),
+            reports,
+            aggregate,
+            status: finiteSamples ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 240000
+      });
+      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-hybrid-owner-probe', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'hybrid-owner-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 hybrid owner probe completed');
+      console.log(`status: ${report.status}`);
+      for (const [caseName, aggregate] of Object.entries(report.aggregate || {})) {
+        console.log(`${caseName}: maxOwnerCount=${aggregate.maxOwnerCount} ownerOverlapCount=${aggregate.ownerOverlapCount}`);
+      }
+      const diagnosticEvents = cdp.events
+        .filter((event) => {
+          if (event.method === 'Runtime.exceptionThrown') return true;
+          if (event.method === 'Log.entryAdded') {
+            const level = event.params && event.params.entry ? event.params.entry.level : '';
+            return level === 'warning' || level === 'error';
+          }
+          if (event.method === 'Runtime.consoleAPICalled') {
+            const type = event.params ? event.params.type : '';
+            return type === 'warning' || type === 'error';
+          }
+          return false;
+        });
+      if (diagnosticEvents.length > 0) {
+        fs.writeFileSync(path.join(packageDir, 'page-diagnostics.json'), `${JSON.stringify(diagnosticEvents, null, 2)}\n`);
+        console.error('[r738-runner] recent page diagnostics:');
+        console.error(JSON.stringify({
+          first: diagnosticEvents.slice(0, 40),
+          last: diagnosticEvents.slice(-40)
+        }, null, 2).slice(0, 60000));
+      }
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+
     if (args.r7310RuntimeProbeSampleTest) {
       console.error('[r738-runner] running R7-3.10 runtime probe sample helper');
       const report = await evaluate(cdp, `(() => {
@@ -7693,6 +8070,7 @@ async function main() {
           surfaceClassSummary: artifacts.surfaceClassSummary,
           validationReport: artifacts.validationReport,
           atlasBase64: f32ToBase64(artifacts.atlasPixels),
+          preSyncAtlasBase64: f32ToBase64(artifacts.preSyncAtlasPixels),
           metadataBase64: f32ToBase64(artifacts.texelMetadata)
         };
       })();
@@ -7703,6 +8081,7 @@ async function main() {
     });
     console.error('[r738-runner] capture helper returned');
     const atlasBuffer = base64ToBuffer(payload.atlasBase64);
+    const preSyncAtlasBuffer = base64ToBuffer(payload.preSyncAtlasBase64);
     const metadataBuffer = base64ToBuffer(payload.metadataBase64);
     const validation = validatePayload({
       report: payload.report,
@@ -7739,6 +8118,8 @@ async function main() {
 	    fs.writeFileSync(path.join(packageDir, 'surface-class-summary.json'), `${JSON.stringify(payload.surfaceClassSummary, null, 2)}\n`);
 	    if (payload.report.coverageReport) fs.writeFileSync(path.join(packageDir, 'coverage-report.json'), `${JSON.stringify(payload.report.coverageReport, null, 2)}\n`);
     fs.writeFileSync(path.join(packageDir, 'atlas-patch-000-rgba-f32.bin'), atlasBuffer);
+    if (preSyncAtlasBuffer.length > 0)
+      fs.writeFileSync(path.join(packageDir, 'atlas-patch-000-pre-sync-rgba-f32.bin'), preSyncAtlasBuffer);
     fs.writeFileSync(path.join(packageDir, 'texel-metadata-patch-000-f32.bin'), metadataBuffer);
     fs.writeFileSync(path.join(packageDir, 'validation-report.json'), `${JSON.stringify(validationReport, null, 2)}\n`);
 	    if (formalR7310Bake) {

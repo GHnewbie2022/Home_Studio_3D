@@ -7,7 +7,7 @@
   ],
   "missingSurfaceNames": [],
   "validTexelRatioBySurface": {
-    "c1_ceiling": 1
+    "c1_ceiling": 0.984344482421875
   },
   "dilationAppliedBySurface": {
     "c1_ceiling": false

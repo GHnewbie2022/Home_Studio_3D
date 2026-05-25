@@ -18,17 +18,17 @@
     "reprojectionRecorded": true
   },
   "reprojectionStatus": "fail",
-  "medianRelativeLumaError": 0.2548346962763877,
-  "p90RelativeLumaError": 0.3715218984752089,
+  "medianRelativeLumaError": 0.42094688216513115,
+  "p90RelativeLumaError": 0.612555724861856,
   "reprojectionComparisons": 17,
   "rawHdrPixels": 921600,
   "atlasFloatCount": 4194304,
   "metadataFloatCount": 12582912,
   "atlasVisibleLuma": {
     "texels": 1048576,
-    "nonzeroTexels": 763601,
-    "meanLuma": 0.28591789090398806,
-    "maxLuma": 0.616704265276591
+    "nonzeroTexels": 656993,
+    "meanLuma": 0.0774890623700509,
+    "maxLuma": 0.20751203099886575
   },
   "browserValidationStatus": "pass",
   "runnerStatus": "pass",
@@ -60,6 +60,18 @@
     "uR7310C1WestWallDiffuseMode": 0,
     "uR7310C1SouthWallDiffuseMode": 0,
     "uR7310C1CeilingDiffuseMode": 0,
+    "uR7310C1StructuralDiffuseMode": 0,
+    "uR7310C1SeColumnNorthShadowMode": 0,
+    "uR7310C1SeColumnWestShadowMode": 0,
+    "uR7310C1SouthWallAcShadowMode": 0,
+    "uR7310C1EastWallBeamShadowMode": 0,
+    "uR7310C1SwColumnNorthShadowMode": 0,
+    "uR7310C1WestWallBeamShadowMode": 0,
+    "uR7310C1SwColumnInnerShadowMode": 0,
+    "uR7310C1WestBeamInnerShadowMode": 0,
+    "uR7310C1WestBeamUnderShadowMode": 0,
+    "uR7310C1EastBeamInnerShadowMode": 0,
+    "uR7310C1EastBeamUnderShadowMode": 0,
     "uR738C1BakeCaptureMode": 2
   }
 }

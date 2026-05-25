@@ -91,6 +91,18 @@
     "targetId": 1001,
     "surfaceName": "c1_floor_full_room",
     "surfaceClass": "floor",
+    "mapping": "planar_xz",
+    "runtimeAtlasSlot": 0,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "runtimeArchitecture": "single_full_floor_first_hit_hybrid",
     "worldBounds": {
       "xMin": -2.11,
       "xMax": 2.11,
@@ -325,12 +337,30 @@
     "surfaceName": "c1_ceiling",
     "surfaceClass": "ceiling",
     "mapping": "planar_xz",
+    "runtimeAtlasSlot": 5,
+    "requestedSamples": 1000,
+    "targetAtlasResolution": 1024,
+    "diffuseOnly": true,
+    "upscaled": false,
+    "bakedRadianceKind": "indirect_diffuse_radiance",
+    "directLightAlreadyIncluded": false,
+    "addDirectLightAfterBakeLookup": true,
+    "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+    "referenceForAcceptance": "live_path_tracing_same_camera",
+    "runtimeArchitecture": "single_full_ceiling_first_hit_hybrid",
     "worldBounds": {
       "xMin": -2.11,
       "xMax": 2.11,
       "zMin": -2.074,
       "zMax": 3.256,
       "y": 2.905
+    },
+    "invalidTexelRegions": {
+      "southWallSolidBehindCeiling": {
+        "zMinExclusive": 3.056,
+        "xOutsideWindowMin": -1.75,
+        "xOutsideWindowMaxInclusive": 0.69
+      }
     }
   },
   "c1StructuralBeamColumnBatch": {

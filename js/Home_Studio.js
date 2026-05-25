@@ -62,7 +62,7 @@ function autoAssignMaterial(color, type, fixtureGroup, boxIdx) {
     if (type === 11 || type === 12 || type === 13 || type === 14) return { roughness: 0.85, metalness: 0.0 }; // OUTLET / LAMP_SHELL / TRACK / CLOUD_LIGHT
     if (type === 1) {
         if (_colorEq(color, C_WOOD) || _colorEq(color, C_DARK_WOOD)) return { roughness: 0.7, metalness: 0.0 };
-        if (boxIdx <= 31) return { roughness: 0.9, metalness: 0.0 };               // 結構組（floor/ceiling/wall/beam/pillar）
+        if (boxIdx <= 32) return { roughness: 0.9, metalness: 0.0 };               // 結構組（floor/ceiling/wall/beam/pillar）
         return { roughness: 0.8, metalness: 0.0 };                                  // 其他家具白色系（櫃體、冷氣、通風口）
     }
     return { roughness: 0.8, metalness: 0.0 }; // 保底
@@ -90,7 +90,7 @@ addBox([1.91,  MIN_Y, 3.056],  [MAX_X, 0.0, MAX_Z],  z3, C_FLOOR, 1, 0, 1);     
 addBox([MIN_X, 2.905, MIN_Z],  [-1.91, MAX_Y, -1.874], z3, C_WALL, 1, 0, 1);        // 1a 天花板 NW corner
 addBox([1.91,  2.905, MIN_Z],  [MAX_X, MAX_Y, -1.874], z3, C_WALL, 1, 0, 1);        // 1c 天花板 NE corner
 addBox([MIN_X, 2.905, -1.874], [-1.91, MAX_Y, 3.056],  z3, C_WALL, 1, 0, 1);        // 1d 天花板 W edge
-addBox([-1.91, 2.905, -1.874], [1.91,  MAX_Y, MAX_Z],  z3, C_WALL, 1);              // 1e 天花板 Center（fix21：bmin.z→-1.874；r3-6-fix05：bmax.z→MAX_Z 延伸至南牆外邊界，補 fix23 留下的中央 x=[-1.91,1.91] z=[3.056,MAX_Z] 缺口；1g/1i 仍覆蓋兩側角柱區）
+addBox([-1.91, 2.905, -1.874], [1.91,  MAX_Y, 3.056],  z3, C_WALL, 1);              // 1e 天花板 Center（R7-3.10：收回到南牆內面；南窗上方水平面由 1h 明確承接）
 addBox([1.91,  2.905, -1.874], [MAX_X, MAX_Y, 3.056],  z3, C_WALL, 1, 0, 1);        // 1f 天花板 E edge
 addBox([MIN_X, 2.905, 3.056],  [-1.91, MAX_Y, MAX_Z],  z3, C_WALL, 1, 0, 1);        // 1g 天花板 SW corner
 addBox([1.91,  2.905, 3.056],  [MAX_X, MAX_Y, MAX_Z],  z3, C_WALL, 1, 0, 1);        // 1i 天花板 SE corner
@@ -116,6 +116,7 @@ addBox([-1.91, 2.525, -1.874], [-1.75, 2.905, 2.848], z3, C_BEAM, 1, 0, 1);     
 addBox([1.85, 2.515, -1.874], [MAX_X, 2.905, 3.056], z3, C_BEAM, 1, 0, 1);          // 13 東牆橫樑（fix21：bmin.z→-1.874；fix23：bmax.z 由 MAX_Z 縮至 3.056，含效 revert fix13 南延）
 addBox([-1.91, 0.0, 2.846], [-1.75, 2.905, 3.056], z3, C_BEAM, 1, 0, 3);            // 14 西南角柱（R7-3.10：北面與西樑底面重疊 2mm，關閉貼牆斜視角漏光縫；fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
 addBox([1.78, 0.0, 2.49], [1.91, 2.905, 3.056], z3, C_BEAM, 1, 0, 3);               // 15 東南角柱（x 縮為純內凸 [1.78,1.91]；r3-6-fix06：cullable=3 單軸 X-only，只跟東牆連動剝離；fix23：bmax.z 由 MAX_Z 縮至 3.056 對齊南牆內面）
+addBox([-1.75, 2.905, 3.056], [0.69, MAX_Y, MAX_Z], z3, C_WALL, 1);                 // 1h 南窗上方水平面（只承接窗洞上方；不再讓 1e Center 整片延伸到南牆外側）
 
 // R2-4 傢俱 (index 16-20)
 addBox([1.35, 0.0, -1.874], [1.91, 1.955, -0.703], z3, C_WOOD, 1);            // 16 東牆櫃子
@@ -186,10 +187,10 @@ addBox([ 0.3, 2.669,  0.498], [ 0.9, 2.787, 1.698], z3, C_GIK, 10, 1, 1, 3);  //
 // R2-17 Cloud 漫射燈條（4 支矩形長柱，type 14 CLOUD_LIGHT；R3-3 接為真光源）
 // 真實可見幾何依舊專案 line 514-515 type 9：1.6cm × 1.6cm × 240cm（非 SOP 誤抄之採樣體積 15×5cm）
 // y 中心 2.795（底 2.787 貼死 Cloud 頂、頂 2.803）；fixtureGroup=4 受 uCloudLightEnabled 切換；cullable=1 隨 Cloud 板頂向剝離
-// R3-3 fix01：sceneBoxes 陣列 index 71-74 連續 = E/W/S/N，順序對應 uCloudEmission[0..3] + uCloudFaceArea[0..3]。
-// shader 端 hitObjectID = objectCount(0) + boxIdx + 1（見 Home_Studio_Fragment.glsl L516），boxIdx 即 sceneBoxes index；故 uCloudObjIdBase = 71+1 = 72。
+// R3-3 fix01：sceneBoxes 陣列 index 72-75 連續 = E/W/S/N，順序對應 uCloudEmission[0..3] + uCloudFaceArea[0..3]。
+// shader 端 hitObjectID = objectCount(0) + boxIdx + 1，boxIdx 即 sceneBoxes index；故 uCloudObjIdBase = 72+1 = 73。
 // 註：原 R3-3 plan 誤把註解「55 東燈條」邏輯編號當成 sceneBoxes.length，忽略複合 ID（0a/0c/2a/2b 等）每個子塊各 push 一次。
-const CLOUD_BOX_IDX_BASE = 71;
+const CLOUD_BOX_IDX_BASE = 72;
 if (sceneBoxes.length !== CLOUD_BOX_IDX_BASE) {
     throw new Error('[R3-3] Cloud boxIdx base mismatch: expected ' + CLOUD_BOX_IDX_BASE + ', got ' + sceneBoxes.length);
 }
@@ -226,7 +227,7 @@ const CLOUD_ARC_AREA_SCALE = Math.PI * 0.5;
 const CLOUD_ARC_THETA_MAX = Math.PI * 0.5;
 
 // R6-3 Phase 1C: Cloud 1/4 arc stochastic NEE
-// sceneBoxes 71(E)/72(W)/73(S)/74(N)；中心與半邊由 addBox min/max 推導
+// sceneBoxes 72(E)/73(W)/74(S)/75(N)；中心與半邊由 addBox min/max 推導
 // E/W 沿 z 長 2.368m；S/N 沿 x 長 1.768m；外框厚度 16mm，發光弧面半徑 16mm。
 // E/W 頭尾各退 16mm，讓四角形成非發光 corner relief，避免與 S/N arc 端點重疊。
 const CLOUD_ROD_CENTER = [
@@ -244,7 +245,7 @@ const CLOUD_ROD_HALF_EXTENT = [
 
 // R2-8 吸音板
 const BASE_BOX_COUNT = 85; // base 83 + 2026-05-20 西牆開關面板/按鈕二件
-const NE_FURNITURE_MAIN_BOX_IDX = 32; // 實際 sceneBoxes index：R2-4 東北家具主 box
+const NE_FURNITURE_MAIN_BOX_IDX = 33; // 實際 sceneBoxes index：R2-4 東北家具主 box
 const C2_NE_FURNITURE_LAYOUTS = {
     wardrobe: {
         main: { min: [1.35, 0.0, -1.874], max: [1.91, 1.955, -0.703], color: C_WOOD, type: 1 }
@@ -969,29 +970,29 @@ let trackWideTiltNorth   = -30;    // 廣角燈北側傾斜角 deg（R4-4-fix03 
 let trackWideZ           = 0.20;   // 廣角燈距 Cloud 邊距 m（R4-4-fix03 甜蜜點：0.40→0.20，貼近 Cloud 邊緣）
 
 // sceneBoxes 具名索引：避免硬編碰撞既有 base 幾何與未來新增幾何
-// R4-4 fix：原誤寫 37/41/45/47（邏輯 ID，對應舊 plan 註解）→ 實際 sceneBoxes index 為 53/57/61/63
+// R4-4 fix：原誤寫 37/41/45/47（邏輯 ID，對應舊 plan 註解）→ 實際 sceneBoxes index 為 54/58/62/64
 // 錯因：plan 註解「37 西軌底座北半」屬邏輯編號，但 addBox 實押 sceneBoxes index 受複合物件影響
 //       （0a/0c/0d.. 地面 7 片、1a/1c/1d.. 天花板 7 片、2a/2b 北牆裂塊、6a/6b 南牆裂塊等每子塊各 push 一次）
 // 實證計數（見本檔 L76-197 addBox 序列）：
 //   idx [0..6]   地面 7 片        idx [7..13]  天花板 7 片
 //   idx [14..18] 北牆 5 片         idx [19]     東牆
 //   idx [20..24] 南牆 5 片         idx [25..27] 西牆 3 片
-//   idx [28..31] 樑 / 角柱 4 片    idx [32..36] 傢俱 5 片
-//   idx [37..40] 西南抽屜 4 格     idx [41..43] 門 + 窗景 3 片
-//   idx [44]     KH750 超低音      idx [45..50] 插座 6 片
-//   idx [51..52] 冷氣 2 片
-//   idx [53..56] 投射燈軌道底座（fixtureGroup=1）→ TRACK_BASE_IDX = 53
-//   idx [57..60] 投射燈支架（fixtureGroup=1）    → TRACK_STAND_IDX = 57
-//   idx [61..62] 廣角燈軌道（fixtureGroup=2）    → TRACK_WIDE_BASE_IDX = 61
-//   idx [63..64] 廣角燈支架（fixtureGroup=2）    → TRACK_WIDE_STAND_IDX = 63
-//   idx [65..70] Cloud 吸音板 6 片
-//   idx [71..74] Cloud 燈條 4 支 ← CLOUD_BOX_IDX_BASE = 71 之基準
-//   idx [75..82] Cloud 鋁槽不發光鋁板 8 片
-//   idx [83..84] 西牆開關面板 / 按鈕
-const TRACK_BASE_IDX       = 53;
-const TRACK_STAND_IDX      = 57;
-const TRACK_WIDE_BASE_IDX  = 61;
-const TRACK_WIDE_STAND_IDX = 63;
+//   idx [28..31] 樑 / 角柱 4 片    idx [32]     南窗上方水平面
+//   idx [33..37] 傢俱 5 片         idx [38..41] 西南抽屜 4 格
+//   idx [42..44] 門 + 窗景 3 片    idx [45]     KH750 超低音
+//   idx [46..51] 插座 6 片         idx [52..53] 冷氣 2 片
+//   idx [54..57] 投射燈軌道底座（fixtureGroup=1）→ TRACK_BASE_IDX = 54
+//   idx [58..61] 投射燈支架（fixtureGroup=1）    → TRACK_STAND_IDX = 58
+//   idx [62..63] 廣角燈軌道（fixtureGroup=2）    → TRACK_WIDE_BASE_IDX = 62
+//   idx [64..65] 廣角燈支架（fixtureGroup=2）    → TRACK_WIDE_STAND_IDX = 64
+//   idx [66..71] Cloud 吸音板 6 片
+//   idx [72..75] Cloud 燈條 4 支 ← CLOUD_BOX_IDX_BASE = 72 之基準
+//   idx [76..83] Cloud 鋁槽不發光鋁板 8 片
+//   idx [84..85] 西牆開關面板 / 按鈕
+const TRACK_BASE_IDX       = 54;
+const TRACK_STAND_IDX      = 58;
+const TRACK_WIDE_BASE_IDX  = 62;
+const TRACK_WIDE_STAND_IDX = 64;
 // throw-first assertion：任何未來新增幾何插入中段時索引錯位立即爆炸（對齊 L187 CLOUD_BOX_IDX_BASE 守護模式）
 if (sceneBoxes[TRACK_BASE_IDX].fixtureGroup !== 1) {
     throw new Error('[R4-4] TRACK_BASE_IDX 錯位；sceneBoxes[' + TRACK_BASE_IDX + '] 期望 Track 底座 fixtureGroup=1，實得 ' + sceneBoxes[TRACK_BASE_IDX].fixtureGroup);
@@ -5327,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-phase2b-west-wall-strict-ready-v1';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-cutaway-right-leg-v3';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5705,7 +5706,7 @@ function initSceneData() {
     pathTracingUniforms.uTrackEmission      = { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] };
     pathTracingUniforms.uTrackWideEmission  = { value: [new THREE.Vector3(), new THREE.Vector3()] };
     pathTracingUniforms.uR3EmissionGate     = { value: 1.0 };   // R3-3 S3b：Cloud emissive 開，Track / TrackWide 仍為 0 向量故不發光
-    // R3-3 fix01：Cloud hitObjectID 基準 = objectCount(0) + CLOUD_BOX_IDX_BASE(71) + 1 = 72（見 shader L516）
+    // R3-3 fix01：Cloud hitObjectID 基準 = objectCount(0) + CLOUD_BOX_IDX_BASE(72) + 1 = 73
     pathTracingUniforms.uCloudObjIdBase     = { value: CLOUD_BOX_IDX_BASE + 1 };
     // R6-3 Phase 1C：4 rod A_face [0]=E [1]=W [2]=S [3]=N；shader 端乘 π/2 得 A_arc。
     pathTracingUniforms.uCloudFaceArea      = { value: CLOUD_ROD_FACE_AREA.slice() };
@@ -6305,7 +6306,7 @@ function recomputeWideGeometry() {
  * 範圍 v=0.05~1.15：v=0.40 預設對應 +2.098/-1.102；v=1.15 上界 → 北軌 z=-1.852 距北牆 22mm。
  */
 function recomputeWidePositions() {
-    // 護欄：防止未來新增幾何把索引推飄時誤改 Cloud 幾何（71-82）
+    // 護欄：防止未來新增幾何把索引推飄時誤改 Cloud 幾何（72-83）
     if (sceneBoxes[TRACK_WIDE_BASE_IDX].fixtureGroup !== 2) {
         throw new Error('[R4-4] recomputeWidePositions: TRACK_WIDE_BASE_IDX drift, expected fg=2');
     }
