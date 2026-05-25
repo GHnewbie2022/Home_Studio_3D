@@ -51,7 +51,7 @@ function _colorEq(c1, c2) {
 }
 function autoAssignMaterial(color, type, fixtureGroup, boxIdx) {
     // R2-18 Y 方案（scalar roughness mix + metalness）：依 type/color/fixtureGroup 推預設
-    // 結構（地板/天花板/牆/樑/柱，index 0..31）= 0.9；木系傢俱 = 0.7；其他白色傢俱 = 0.8；貼圖金屬 = 依 type
+    // 結構（地板/天花板/牆/樑/柱，index 0..32）= 0.9；木系傢俱 = 0.7；其他白色傢俱 = 0.8；貼圖金屬 = 依 type
     if (type === 8) return { roughness: 0.3, metalness: 1.0 };                    // IRON_DOOR
     if (type === 7) return { roughness: 0.9, metalness: 0.0 };                    // WOOD_DOOR（plan 表 0.9，類 Lambertian）
     if (type === 6) return { roughness: 0.4, metalness: 0.0 };                    // SPEAKER（KH150）

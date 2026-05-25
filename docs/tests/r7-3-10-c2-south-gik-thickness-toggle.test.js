@@ -20,7 +20,7 @@ assert.ok(js.includes('window.reportC2SouthGikThicknessMode = reportC2SouthGikTh
 assert.ok(html.includes('id="c2-south-gik-thickness-controls"'));
 assert.ok(html.includes('id="btnC2SouthGikStandard"'));
 assert.ok(html.includes('id="btnC2SouthGikSpot"'));
-assert.ok(html.includes('r7310-default-bed-south-spot-v1'));
+assert.ok(html.includes('r7310-floor-ceiling-cutaway-right-leg-v3'));
 
 const eastStandard = { minX: 1.792, maxX: 1.91 };
 const westStandard = { minX: -1.91, maxX: -1.792 };

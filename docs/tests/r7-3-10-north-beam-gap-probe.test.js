@@ -21,7 +21,7 @@ assert.match(shader, /r7310NorthBeamRadiance\s*=\s*r7310C1EastBeamUnderShadowHyb
 
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*31\s*\)\s*return\s*'northBeamRoute'/);
 assert.match(initCommon, /if\s*\(\s*probeLevel\s*===\s*36\s*\)\s*return\s*'northBeamRadiance'/);
-assert.match(initCommon, /Math\.min\(36,\s*Math\.round\(requestedProbeLevel\)\)/);
+assert.match(initCommon, /Math\.min\(48,\s*Math\.round\(requestedProbeLevel\)\)/);
 assert.match(initCommon, /north_wall_hybrid/);
 assert.match(initCommon, /west_beam_inner_shadow_hybrid/);
 assert.match(initCommon, /east_beam_under_shadow_hybrid/);

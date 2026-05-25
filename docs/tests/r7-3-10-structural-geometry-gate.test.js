@@ -37,7 +37,6 @@ for (const name of [
 	'east_beam_under_y_wall_overlap',
 	'east_beam_se_column_overlap_x',
 	'east_beam_se_column_overlap_under_y',
-	'west_beam_sw_column_overlap_under_y',
 	'sw_column_upper_north_z',
 	'sw_column_upper_inner_coplanar_x',
 	'se_column_north_z_full_face'
@@ -64,10 +63,9 @@ assert.deepEqual(
 assert.equal(checkedByName.get('east_beam_under_y_wall_overlap').decision, 'hidden');
 assert.equal(checkedByName.get('east_beam_se_column_overlap_x').decision, 'hidden');
 assert.equal(checkedByName.get('east_beam_se_column_overlap_under_y').decision, 'hidden');
-assert.equal(checkedByName.get('west_beam_sw_column_overlap_under_y').decision, 'hidden');
 assert.equal(checkedByName.get('sw_column_upper_north_z').decision, 'hidden');
 assert.equal(checkedByName.get('sw_column_upper_inner_coplanar_x').decision, 'visible');
-assert.equal(checkedByName.get('sw_column_upper_inner_coplanar_x').ownerIsland, 'west_beam_inner_x');
+assert.equal(checkedByName.get('sw_column_upper_inner_coplanar_x').ownerIsland, 'sw_column_inner_x');
 assert.equal(checkedByName.get('se_column_north_z_full_face').decision, 'mixed');
 assert.equal(checkedByName.get('se_column_north_z_full_face').ownerIsland, 'se_column_north_z');
 assert.deepEqual(

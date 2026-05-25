@@ -4502,101 +4502,159 @@ async function main() {
         ...gridFromRect('south_cutaway_m_head_control', 210, 180, 640, 360, 7, 4),
         ...gridFromRect('south_cutaway_left_leg_control', 120, 170, 390, 565, 6, 8)
       ];
-      const cameraCase = {
-        name: 'south_cutaway_window_top_extension_restored',
-        cameraState: {
-          position: { x: -0.219879, y: 2.343796, z: 5.906082 },
-          yaw: 0.0476,
-          pitch: -0.082,
-          fov: 55,
-          forward: { x: -0.047422, y: -0.081908, z: -0.995511 }
+      const cameraCases = [
+        {
+          name: 'south_cutaway_m_right_leg_visible_controls',
+          cameraState: {
+            position: { x: 0.197551, y: 2.068943, z: 4.147993 },
+            yaw: -0.814,
+            pitch: 0.151,
+            fov: 55,
+            forward: { x: 0.718766, y: 0.150427, z: -0.678783 }
+          },
+          samplePoints,
+          expectedVisibleBoxIdxs: [19, 29, 31, 52, 53]
         },
-        samplePoints
-      };
+        {
+          name: 'south_cutaway_window_top_extension_restored',
+          cameraState: {
+            position: { x: -0.219879, y: 2.343796, z: 5.906082 },
+            yaw: 0.0476,
+            pitch: -0.082,
+            fov: 55,
+            forward: { x: -0.047422, y: -0.081908, z: -0.995511 }
+          },
+          samplePoints,
+          expectedVisibleBoxIdxs: [32],
+          expectedCeilingBox10MaxZ: 3.056
+        }
+      ];
       const report = await evaluate(cdp, `(() => {
         return (async () => {
           const probeLevels = ${JSON.stringify(probeLevels)};
-          const cameraCase = ${JSON.stringify(cameraCase)};
-          const reports = [];
-          for (const level of probeLevels) {
-            reports.push({
-              probeLevel: level,
-              report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
-                timeoutMs: ${args.timeoutMs},
-                cameraState: cameraCase.cameraState,
-                allSurfaces: true,
-                forceXrayEnabled: true,
-                probeLevel: level,
-                samplePoints: cameraCase.samplePoints,
-                samplePointSpace: 'renderTargetPixel',
-                randomVec2: { x: 0.5, y: 0.5 }
-              })
-            });
-          }
-          const byName = new Map();
-          for (const entry of reports) {
-            for (const sample of entry.report.samplePoints || []) {
-              const row = byName.get(sample.x + ':' + sample.y) || {
-                name: sample.name || null,
-                x: sample.x,
-                y: sample.y,
-                rtPixel: sample.rtPixel,
-                decodedByLevel: {}
+          const cameraCases = ${JSON.stringify(cameraCases)};
+          function aggregateCase(cameraCase, reports) {
+            const byName = new Map();
+            for (const entry of reports) {
+              for (const sample of entry.report.samplePoints || []) {
+                const row = byName.get(sample.x + ':' + sample.y) || {
+                  name: sample.name || null,
+                  x: sample.x,
+                  y: sample.y,
+                  rtPixel: sample.rtPixel,
+                  decodedByLevel: {}
+                };
+                row.decodedByLevel[String(entry.probeLevel)] = sample.decoded;
+                byName.set(sample.x + ':' + sample.y, row);
+              }
+            }
+            const mergedSamples = Array.from(byName.values()).map((sample) => {
+              const summary = sample.decodedByLevel['42'] || {};
+              return {
+                ...sample,
+                boxIdx: Number.isFinite(summary.boxIdx) ? summary.boxIdx : null,
+                cullable: Number.isFinite(summary.cullable) ? summary.cullable : null,
+                hitType: Number.isFinite(summary.hitType) ? summary.hitType : null,
+                boxMin: sample.decodedByLevel['43'] || null,
+                boxMax: sample.decodedByLevel['44'] || null,
+                world: sample.decodedByLevel['45'] || null,
+                normal: sample.decodedByLevel['46'] || null,
+                southCutawayState: sample.decodedByLevel['47'] || null,
+                southCullInputs: sample.decodedByLevel['48'] || null,
+                ownerSummary: sample.decodedByLevel['38'] || null,
+                ownerMask: sample.decodedByLevel['37'] || null
               };
-              row.decodedByLevel[String(entry.probeLevel)] = sample.decoded;
-              byName.set(sample.x + ':' + sample.y, row);
+            });
+            const boxGroups = new Map();
+            for (const sample of mergedSamples) {
+              const key = String(sample.boxIdx);
+              const group = boxGroups.get(key) || {
+                boxIdx: sample.boxIdx,
+                count: 0,
+                cullable: sample.cullable,
+                hitType: sample.hitType,
+                boxMin: sample.boxMin,
+                boxMax: sample.boxMax,
+                southCutawayState: sample.southCutawayState,
+                southCullInputs: sample.southCullInputs,
+                samples: []
+              };
+              group.count += 1;
+              if (group.samples.length < 24) group.samples.push(sample);
+              boxGroups.set(key, group);
+            }
+            const aggregate = Array.from(boxGroups.values()).sort((a, b) => b.count - a.count);
+            return { cameraCase, aggregate, mergedSamples, reports };
+          }
+          const caseReports = [];
+          for (const cameraCase of cameraCases) {
+            const reports = [];
+            for (const level of probeLevels) {
+              reports.push({
+                cameraCase: cameraCase.name,
+                probeLevel: level,
+                report: await window.reportR7310C1FullRoomDiffuseRuntimeProbe({
+                  timeoutMs: ${args.timeoutMs},
+                  cameraState: cameraCase.cameraState,
+                  allSurfaces: true,
+                  forceXrayEnabled: true,
+                  probeLevel: level,
+                  samplePoints: cameraCase.samplePoints,
+                  samplePointSpace: 'renderTargetPixel',
+                  randomVec2: { x: 0.5, y: 0.5 }
+                })
+              });
+            }
+            caseReports.push(aggregateCase(cameraCase, reports));
+          }
+          const expectedFailures = [];
+          for (const caseReport of caseReports) {
+            const aggregate = caseReport.aggregate || [];
+            const hitBoxes = new Set(aggregate
+              .filter((group) => Number.isFinite(group.boxIdx) && group.boxIdx >= 0 && group.hitType === 1 && group.count > 0)
+              .map((group) => group.boxIdx));
+            for (const expectedBoxIdx of (caseReport.cameraCase.expectedVisibleBoxIdxs || [])) {
+              if (!hitBoxes.has(expectedBoxIdx)) {
+                expectedFailures.push({
+                  cameraCase: caseReport.cameraCase.name,
+                  kind: 'missing-visible-box',
+                  boxIdx: expectedBoxIdx
+                });
+              }
+            }
+            if (Number.isFinite(caseReport.cameraCase.expectedCeilingBox10MaxZ)) {
+              const ceilingGroup = aggregate.find((group) => group.boxIdx === 10);
+              const actualMaxZ = ceilingGroup && ceilingGroup.boxMax ? ceilingGroup.boxMax.z : NaN;
+              if (!Number.isFinite(actualMaxZ) || Math.abs(actualMaxZ - caseReport.cameraCase.expectedCeilingBox10MaxZ) > 0.002) {
+                expectedFailures.push({
+                  cameraCase: caseReport.cameraCase.name,
+                  kind: 'ceiling-box10-max-z-drift',
+                  expected: caseReport.cameraCase.expectedCeilingBox10MaxZ,
+                  actual: actualMaxZ
+                });
+              }
             }
           }
-          const mergedSamples = Array.from(byName.values()).map((sample) => {
-            const summary = sample.decodedByLevel['42'] || {};
-            return {
-              ...sample,
-              boxIdx: Number.isFinite(summary.boxIdx) ? summary.boxIdx : null,
-              cullable: Number.isFinite(summary.cullable) ? summary.cullable : null,
-              hitType: Number.isFinite(summary.hitType) ? summary.hitType : null,
-              boxMin: sample.decodedByLevel['43'] || null,
-              boxMax: sample.decodedByLevel['44'] || null,
-              world: sample.decodedByLevel['45'] || null,
-              normal: sample.decodedByLevel['46'] || null,
-              southCutawayState: sample.decodedByLevel['47'] || null,
-              southCullInputs: sample.decodedByLevel['48'] || null,
-              ownerSummary: sample.decodedByLevel['38'] || null,
-              ownerMask: sample.decodedByLevel['37'] || null
-            };
-          });
-          const boxGroups = new Map();
-          for (const sample of mergedSamples) {
-            const key = String(sample.boxIdx);
-            const group = boxGroups.get(key) || {
-              boxIdx: sample.boxIdx,
-              count: 0,
-              cullable: sample.cullable,
-              hitType: sample.hitType,
-              boxMin: sample.boxMin,
-              boxMax: sample.boxMax,
-              southCutawayState: sample.southCutawayState,
-              southCullInputs: sample.southCullInputs,
-              samples: []
-            };
-            group.count += 1;
-            if (group.samples.length < 24) group.samples.push(sample);
-            boxGroups.set(key, group);
-          }
-          const aggregate = Array.from(boxGroups.values()).sort((a, b) => b.count - a.count);
-          const finiteSamples = reports.every((entry) => {
-            return entry.report.samplePoints.every((sample) => {
-              return Number.isFinite(sample.r) && Number.isFinite(sample.g) && Number.isFinite(sample.b);
+          const finiteSamples = caseReports.every((caseReport) => {
+            return caseReport.reports.every((entry) => {
+              return entry.report.samplePoints.every((sample) => {
+                return Number.isFinite(sample.r) && Number.isFinite(sample.g) && Number.isFinite(sample.b);
+              });
             });
           });
+          const primaryCase = caseReports.find((entry) => entry.cameraCase.name === 'south_cutaway_window_top_extension_restored') || caseReports[0];
           return {
             version: 'r7-3-10-south-cutaway-geometry-probe',
             probeLevels,
             samplePointSpace: 'renderTargetPixel',
-            cameraCase,
-            aggregate,
-            mergedSamples,
-            reports,
-            status: finiteSamples ? 'pass' : 'fail'
+            cameraCases,
+            cameraCase: primaryCase.cameraCase,
+            aggregate: primaryCase.aggregate,
+            mergedSamples: primaryCase.mergedSamples,
+            reports: primaryCase.reports,
+            caseReports,
+            expectedFailures,
+            status: finiteSamples && expectedFailures.length === 0 ? 'pass' : 'fail'
           };
         })();
       })()`, {
@@ -4608,6 +4666,9 @@ async function main() {
       fs.writeFileSync(path.join(packageDir, 'cutaway-geometry-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 cutaway geometry probe completed');
       console.log(`status: ${report.status}`);
+      if (report.expectedFailures && report.expectedFailures.length) {
+        console.log(`expectedFailures: ${JSON.stringify(report.expectedFailures)}`);
+      }
       for (const group of report.aggregate.slice(0, 12)) {
         console.log(`boxIdx=${group.boxIdx} count=${group.count} cullable=${group.cullable} hitType=${group.hitType} min=${JSON.stringify(group.boxMin)} max=${JSON.stringify(group.boxMax)} cut=${JSON.stringify(group.southCutawayState)} inputs=${JSON.stringify(group.southCullInputs)}`);
       }

@@ -125,7 +125,7 @@ mark.html-review-rose { background: var(--rose); }
 <body>
 <div class="shell">
   <main class="review-doc" data-review-root>
-    <p class="meta">2026-05-26 · Home_Studio_3D R7-3.10 floor and ceiling hybrid review</p>
+    <p class="meta">2026-05-26 · local HTML review</p>
     <h1>R7-3.10 floor / ceiling hybrid OPUS review</h1>
     <h1>R7-3.10 Floor / Ceiling Hybrid 下一階段共識確認（OPUS 審查版）</h1>
     <h2>1. 本頁目的</h2>
@@ -3287,7 +3287,7 @@ validation status = fail
 回答不了「這塊幾何為什麼沒隨南牆剝離」——後者才是 ㄇ 薄板的核心。
 
 必須補的 geometry-cull 欄位（最高優先）：
-  1. 命中的 boxIdx（box 陣列索引；0..31 = 結構，32+ = 家具）。
+  1. 命中的 boxIdx（box 陣列索引；0..32 = 結構，33+ = 家具）。
   2. 該 box 的 boxCullable 等級（0 / 1 / 2 / 3）。
   3. 該 box 的 boxMin / boxMax / boxNormal / boxType。
   4. 使用者視角下 isBoxCulled 的回傳值，以及是哪個 tier 分支決定的。
@@ -3821,7 +3821,16 @@ probe package：
   git diff --check
 
 本機網址：
-  http://localhost:9002/Home_Studio.html?v=r7310-cutaway-right-leg-v3</code></pre>
+  http://localhost:9002/Home_Studio.html?v=r7310-cutaway-right-leg-v3
+
+全套件紅測揭露：
+  PR tip c0b852b 全套件實測紅 17。
+  main 同一套全套件實測紅 10。
+  PR 新增 7 紅，逐項核實後都屬於 brittle coupling：
+    - 3 支 probe 測試 pin 舊 runtime probe 上限 36；PR 新增 42-48 probe level 後字串落後。
+    - 2 支 UI 測試 pin 舊 cache token r7310-default-bed-south-spot-v1；PR cache-buster 已前進。
+    - 2 支 se-column 測試 pin 舊 full-room dispatch 文字；PR 加入 floor / ceiling hybrid dispatch 後 regex 落後。
+  以上 7 紅沒有對應到功能回歸，已排入下一分支首批清債。</code></pre>
     <h3>36.3 下一分支目標</h3>
     <pre><code>下一分支建議名稱：
   codex/r7-3-10-ceiling-east-beam-se-column-gap
@@ -3842,6 +3851,214 @@ probe package：
   在新分支先量測 ceiling_east_beam_gap 與 ceiling_se_column_top_gap。
   先查 atlas tap / coverage / owner / live 對照。
   鎖定是 ceiling metadata 少遮、edge padding 問題，或 sampler / owner 換手問題後再修。</code></pre>
+    <h2>37. OPUS 九次審查：PR #6 乾淨回復點審查（claude opus 4.7，2026-05-26）</h2>
+    <p>OPUS 親跑全測試套件、比對 main、逐一分類失敗、核實 index shift 一致性後裁示。本節只寫 source.md；index.html 重生交給 CODEX。</p>
+    <h3>37.0 結論摘要</h3>
+    <pre><code>判定：PR #6 可作為 floor / ceiling hybrid 的「功能性」乾淨回復點，建議放行 merge，附跟進建議（非阻擋）。
+
+「乾淨」的精確含意：
+  功能面乾淨 = hybrid 遷移自洽、核心防呆全綠、box index shift 一致、無死碼、使用者已肉眼驗收。
+  非「全套件全綠」= 全套件在 PR tip 紅 17（main 本來就紅 10，PR 新增 7）。
+  逐一核實後：7 個新紅全部是「測試 pin 了 PR 合法移動的字串 / 數字」的脆弱耦合，無一是功能回歸。</code></pre>
+    <h3>37.1 Q1 乾淨回復點：功能面 YES（附證據）</h3>
+    <pre><code>核心 hybrid 防呆在 PR tip (c0b852b) 全綠（OPUS 親跑）：
+  r7-3-10-floor-ceiling-hybrid            PASS
+  r7-3-10-hybrid-owner-probe              PASS
+  r7-3-10-valid-black-boundary-regression PASS
+  r7-3-10-edge-border-audit               PASS（+ docs/tools/r7-3-10-edge-border-audit.cjs PASS）
+  r7-3-10-full-room-diffuse-bake-contract PASS
+  r7-3-10-north-east-wall-hybrid          PASS
+  r7-3-10-east-wall-beam-shadow           PASS
+  r3-3-cloud-radiance                     PASS
+
+最高風險的「1h 插入 + box index 整體後移」一致性，逐點核實通過：
+  glsl:3873 結構切點 boxIdx &lt;= 31 → 已改 boxIdx &lt;= 32（含新 1h）。
+  家具 objectID 由 32+ → 33+（glsl:3871 / 3885 註解與邏輯一致）。
+  r3-3-cloud-radiance.test.js CLOUD_BOX_IDX_BASE 71 → 72、objIdBase 72 → 73（家具 +1，反向佐證一致）。
+  beam / column 在插入點之前，boxIdx==28 / 30 維持不動（glsl:3735 / 3743，正確）。
+  §34.3 probe 冷氣 51 → 52 與 +1 一致。
+  審查當時唯一陳舊：glsl:33 註解仍寫「0..31」沒同步成「0..32」（純註解，非功能 bug；CODEX §38 已修）。
+
+死碼檢查：
+  §34 / §35 移除的 r7310C1HiddenSouthCutawayEastUpperReturnFace /
+  HiddenSouthCutawayWindowTopCeilingExtension 已完全不在 shader（grep 0 命中）。
+
+幾何鎖：
+  docs/tools/r7-3-10-structural-geometry-gate.mjs（工具）status=pass，鎖結構 box AABB 與面解析。
+
+作為「回復點」（出事可回到這裡）：此狀態自洽、hybrid 可運作、功能面不劣於 main，合格。</code></pre>
+    <h3>37.2 全套件實測與 7 個新紅分類（核心證據）</h3>
+    <pre><code>親跑 docs/tests/*.test.js 全套件，比對 main：
+  main (58e2442)：紅 10。
+  PR tip (c0b852b)：紅 17。PR 新增 7。
+
+main 本來就紅的 10（既有測試債，非 PR 造成）：
+  cache-token / 既有耦合 8：r6-3-cloud-facing-diagnostic、r6-3-cloud-mis-weight-probe、
+    r6-3-cloud-sampling-budget-diagnostic、r6-3-cloud-visibility-probe、r6-3-v20-movement-protection、
+    r7-1-blue-noise-sampling、r7-2-light-importance-sampling、r7-3-quick-preview-fill。
+  r7-3-10-phase2b-continuity（probe-level 上限耦合）。
+  r7-3-10-structural-geometry-gate（嚴格幾何契約，main 已紅，見 37.4 缺口 2）。
+
+PR 新增 7，逐一核實錯誤行，全部是 source-string / number 耦合：
+  probe-level 上限 regex /Math.min(36,...)/（PR 加 probe level 42-48 抬高上限）：
+    r7-3-10-beam-under-shadow-probe、r7-3-10-north-beam-gap-probe、r7-3-10-hybrid-edge-probe21。
+  cache-token includes(&#x27;r7310-default-bed-south-spot-v1&#x27;)（PR 改 cache-buster 為 ...-right-leg-v3）：
+    r7-3-10-c2-ne-furniture-toggle（test:48）、r7-3-10-c2-south-gik-thickness-toggle（test:23）。
+  shader 表達式 regex /!(r7310NorthWallHybridFirstHit.../（PR 重構 hybrid dispatch 加 floor/ceiling）：
+    r7-3-10-se-column-north-shadow、r7-3-10-se-column-west-shadow。
+
+判定：7 個新紅都讀「原始碼字串 / 數字」、無一讀 runtime 行為，故無一能代表功能回歸；
+  它們只代表「測試 pin 的內部細節被 PR 合法移動」。
+  cache-buster 每個 feature PR 必改（CLAUDE.md 紀律），這類 pin 死 token 的測試本就每次都會紅。
+
+兩點誠實標記：
+  1. c2 兩測在 cache-token assert（早期行）就 abort，後段（可能含家具 index 斷言）未被執行；
+     更新 token 後須重跑，確認後段也綠，才完全排除 index 殘留問題。
+  2. se-column 兩測只在跨切面 dispatch regex 失敗；
+     因 hybrid-owner-probe / floor-ceiling-hybrid / north-east-wall-hybrid 行為契約全綠，dispatch 行為研判完好。</code></pre>
+    <h3>37.3 Q2 §36 邊界：清楚，但要補揭露 test debt</h3>
+    <pre><code>§36 收斂範圍（36.0）與下一分支邊界（36.3）清楚：
+  下一分支起點 c0b852b、分支名、任務（east beam / SE column 頂端縫）、
+  判定它是 §20.2 / §22.2 舊 P1、室內視角 z=2.43、未觸發南側 cutaway → 非 v2/v3 churn 造成，邊界推理成立。
+
+缺口：§36.2「已跑驗證」只列 curated 通過子集，未揭露全套件 17 紅。
+  對「乾淨回復點」交接，建議 §36 補一段：明列既有 10 紅 + PR 新增 7 紅、註明全屬脆弱耦合非功能回歸，
+  讓接手者 / 未來 reviewer 不被紅燈誤導，也避免「全綠」的錯誤印象。</code></pre>
+    <h3>37.4 Q3 防呆充分性：核心守得住，三個缺口</h3>
+    <pre><code>守得住（強）：
+  floor / ceiling hybrid 遷移本身由 floor-ceiling-hybrid / valid-black / edge-border / hybrid-owner-probe /
+  full-room-bake-contract 五項 contract 守住，全綠。這是 §16-§19 建立的防呆，對「搬 hybrid」主軸足夠。
+
+缺口 1（cutaway 可見性無自動鎖，最該補）：
+  §33→§34→§35 來回三次的「南側 cutaway 下哪些物件可見」是本 PR 最易反覆的部分，
+  目前只有手動 --r7310-cutaway-geometry-probe（probe level 42-48）驗過，沒有 assertion 測試鎖。
+  最終態已移除所有南側特例規則（回到 base cutaway），風險較低，
+  但未來若有人再加過寬規則，無測試會擋。建議把 cutaway-geometry-probe 的關鍵 boxIdx 命中 / 不命中落成 assertion。
+
+缺口 2（structural-geometry-gate.test.js 在 main 與 PR 都紅）：
+  這支嚴格幾何契約（鎖 8 island、各面 decision / interval；本輪失敗在
+  west_beam_sw_column_overlap_under_y 不在 checkedFaces）目前是紅的。
+  PR 只改 .mjs 工具、沒同步這支 .test.js → 嚴格幾何契約實際上沒在守。
+  本 PR 的 1h / index shift 正是它該守的範圍。建議盡快更新此 .test.js 對齊新幾何，讓 gate 真正生效。
+
+缺口 3（cache-token / 字串 pin 型測試脆弱）：
+  大量測試以 grep 原始碼 token 為斷言，cache-buster 一改就紅，造成 17 紅噪音，會掩蓋真實回歸（狼來了）。
+  建議改成讀「版本是否前進」而非 pin 死特定 token。</code></pre>
+    <h3>37.5 裁示與下一動</h3>
+    <pre><code>放行：PR #6 可作為 floor / ceiling hybrid 的功能性乾淨回復點，可 merge。
+  依據：核心 hybrid 防呆全綠、index shift 一致、無死碼、幾何工具鎖通過、使用者已肉眼驗收、
+  7 個新紅經核實全屬脆弱耦合非功能回歸。
+
+跟進建議（非阻擋，建議排進下一分支首批）：
+  1. 更新 PR 新增 7 紅的耦合測試（probe-cap、cache-token、shader 表達式 regex）對齊新內部值，
+     並重跑 c2 兩測確認 cache-token 後段也綠。
+  2. 修 structural-geometry-gate.test.js 對齊新幾何（讓嚴格幾何契約恢復生效）。
+  3. 補 cutaway 可見性 assertion 鎖（缺口 1）。
+  4. §36.2 補揭露全套件紅燈現況與其性質。
+  5. 既有 10 紅（cache-token 噪音）另案清理，改成版本前進判定。
+
+下一分支（east beam / SE column 頂端縫）獨立於上述跟進，可並行。
+OPUS 已完成 PR #6 審查；待使用者決定 merge 與跟進排程。</code></pre>
+    <h2>38. CODEX 接收 OPUS §37 後清債紀錄（2026-05-26）</h2>
+    <h3>38.1 已處理項目</h3>
+    <pre><code>本段在新分支處理：
+  codex/r7-3-10-ceiling-east-beam-se-column-gap
+
+處理範圍：
+  OPUS §37.5 的非阻擋跟進項，先清掉 PR #6 新增的 7 個 brittle coupling 紅測，
+  再補 cutaway 可見性 assertion，讓下一個「天花板 x 東樑 / 東南扁柱頂端縫」工作有乾淨測試地面。
+
+1. probe 上限耦合測試已更新：
+  docs/tests/r7-3-10-beam-under-shadow-probe.test.js
+  docs/tests/r7-3-10-north-beam-gap-probe.test.js
+  docs/tests/r7-3-10-hybrid-edge-probe21.test.js
+
+  內容：
+    舊期望 Math.min(36, ...)
+    已對齊 runner 現值 Math.min(48, ...)
+
+2. cache-token 耦合測試已更新，且後段已重跑通過：
+  docs/tests/r7-3-10-c2-ne-furniture-toggle.test.js
+  docs/tests/r7-3-10-c2-south-gik-thickness-toggle.test.js
+
+  內容：
+    舊 token r7310-default-bed-south-spot-v1
+    已對齊 Home_Studio.html 現值 r7310-floor-ceiling-cutaway-right-leg-v3
+
+3. shader dispatch regex 耦合測試已更新：
+  docs/tests/r7-3-10-se-column-north-shadow.test.js
+  docs/tests/r7-3-10-se-column-west-shadow.test.js
+
+  內容：
+    full-room fallback guard 的 regex 已納入 floor / ceiling hybrid first-hit dispatch。
+
+4. structural geometry gate test 已同步工具現況：
+  docs/tests/r7-3-10-structural-geometry-gate.test.js
+
+  內容：
+    移除已不在 checkedFaces 的 west_beam_sw_column_overlap_under_y 舊期望。
+    sw_column_upper_inner_coplanar_x ownerIsland 對齊工具現況 sw_column_inner_x。
+    測試已恢復 pass。
+
+5. cutaway 可見性 assertion 已補：
+  docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  docs/tests/r7-3-10-cutaway-geometry-probe.test.js
+
+  內容：
+    --r7310-cutaway-geometry-probe 現在會跑兩個南側 cutaway 視角。
+    south_cutaway_m_right_leg_visible_controls：
+      要命中 boxIdx 19、29、31、52、53。
+    south_cutaway_window_top_extension_restored：
+      要命中 boxIdx 32。
+      並鎖 boxIdx 10 的 max.z 約等於 3.056。
+    任一預期命中消失，或 ceiling center z 尺寸漂移，probe status 會 fail。
+
+6. §36.2 已補揭露：
+  明列全套件 PR tip 17 紅、main 既有 10 紅、PR 新增 7 紅的分類。
+  註明 PR 新增 7 紅皆為 brittle coupling，沒有對應功能回歸。
+
+7. 純註解債已修：
+  js/Home_Studio.js 與 shaders/Home_Studio_Fragment.glsl 的結構索引註解已同步為 0..32。</code></pre>
+    <h3>38.2 已跑驗證</h3>
+    <pre><code>改動測試：
+  node docs/tests/r7-3-10-beam-under-shadow-probe.test.js
+    pass
+  node docs/tests/r7-3-10-north-beam-gap-probe.test.js
+    pass
+  node docs/tests/r7-3-10-hybrid-edge-probe21.test.js
+    pass
+  node docs/tests/r7-3-10-c2-ne-furniture-toggle.test.js
+    pass
+  node docs/tests/r7-3-10-c2-south-gik-thickness-toggle.test.js
+    pass
+  node docs/tests/r7-3-10-se-column-north-shadow.test.js
+    pass
+  node docs/tests/r7-3-10-se-column-west-shadow.test.js
+    pass
+  node docs/tests/r7-3-10-structural-geometry-gate.test.js
+    pass
+  node docs/tests/r7-3-10-cutaway-geometry-probe.test.js
+    pass
+
+實際 cutaway runner：
+  node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-cutaway-geometry-probe --timeout-ms=180000
+    status = pass
+    package = .omc/r7-3-10-cutaway-geometry-probe/20260526-042101
+
+runner 輸出確認：
+  boxIdx=19 命中
+  boxIdx=29 / 31 / 52 / 53 在第一個 cutaway 視角命中，並由 expectedVisibleBoxIdxs assertion 守住。
+  boxIdx=32 在第二個 cutaway 視角命中。
+  boxIdx=10 max.z = 3.055999875068665，通過 3.056 尺寸鎖。</code></pre>
+    <h3>38.3 下一步邊界</h3>
+    <pre><code>下一個功能修正仍是 §36.3：
+  天花板在東樑、東南扁柱頂端的交界處有縫隙。
+
+這次 §38 只清理 PR #6 的審查跟進與測試鎖。
+它不改地板 / 天花板 package，也不改 east beam / SE column gap 的實際畫面。
+下一步可以在目前分支開始量測該縫：
+  ceiling_east_beam_gap
+  ceiling_se_column_top_gap</code></pre>
   </main>
 </div>
 <script src="./assets/html-review.js?v=3f1270966039"></script>

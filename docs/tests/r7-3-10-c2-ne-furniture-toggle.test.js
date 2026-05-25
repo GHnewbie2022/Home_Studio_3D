@@ -45,7 +45,7 @@ assert.ok(js.includes("window.reportC2NortheastFurnitureLayout = reportC2Northea
 assert.equal(js.includes("addC2NortheastBedHeadboardIfNeeded(config);"), false);
 assert.ok(html.includes('id="btnC2NeWardrobe"'));
 assert.ok(html.includes('id="btnC2NeBed"'));
-assert.ok(html.includes('r7310-default-bed-south-spot-v1'));
+assert.ok(html.includes('r7310-floor-ceiling-cutaway-right-leg-v3'));
 assert.ok(css.includes('.config-furniture-controls'));
 assert.ok(css.includes('.config-furniture-actions'));
 

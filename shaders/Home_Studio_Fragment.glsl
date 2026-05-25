@@ -30,7 +30,7 @@ uniform vec3 uCeilingLampPos;
 uniform float uCeilingLampRadius;
 uniform float uCeilingLampHalfH;
 
-uniform float uWallAlbedo; // R2-UI：結構表面反射率（地板/天花板/牆/樑/柱，陣列索引 0..31；fix19 修正原 1..15 漏蓋多數牆段之索引錯誤）
+uniform float uWallAlbedo; // R2-UI：結構表面反射率（地板/天花板/牆/樑/柱，陣列索引 0..32；fix19 修正原 1..15 漏蓋多數牆段之索引錯誤）
 uniform float uMaxBounces; // R2-UI：最大反彈次數 1~14，runtime 可調，硬性編譯期上限 14
 uniform sampler2D tBorrowTexture; // R6 LGG-r16 J3：1/8 res 14 彈借光 buffer，主 pass 在 terminal 採樣
 uniform float uBorrowStrength;    // R6 LGG-r16 J3：借光強度 0~1，0=關（不跑借光 pass）
