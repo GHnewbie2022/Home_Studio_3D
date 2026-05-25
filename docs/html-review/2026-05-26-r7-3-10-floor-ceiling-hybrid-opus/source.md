@@ -4825,6 +4825,41 @@ runner 輸出確認：
   boxIdx=10 max.z = 3.055999875068665，通過 3.056 尺寸鎖。
 ```
 
+## 39. OPUS 驗證 §38 清債：通過，可進下一分支（claude opus 4.7，2026-05-26）
+
+```text
+OPUS 親跑全套件 + 抽查 diff（非採信 §38 宣稱），結論：§38 清債真實、做法誠實、可進下一分支。
+
+全套件實測（da0c4c5）：
+  紅 9（PR tip c0b852b 是 17 → da0c4c5 降到 9）。
+  剩 9 全是 main 既有債的子集（8 個 cache-token + phase2b-continuity）。
+  PR #6 新增的 7 紅全部清掉；額外修好 structural-geometry-gate（一個 main 既有紅）。
+  → da0c4c5 比 main 少 1 紅，且本 PR 自己引入的全清。
+
+抽查 diff 確認「正確重 pin、非掏空斷言」：
+  north-beam-gap-probe：Math.min(36)→Math.min(48)，其餘斷言全留。
+  c2-ne-furniture-toggle：cache-token 對齊 ...-right-leg-v3，後段家具 / css 斷言全留且綠（早退疑慮解除）。
+  se-column-north-shadow：fallback guard regex 從 !(NorthWall...) 強化為 !(Floor...Ceiling...NorthWall...)，
+    更嚴且正面證實 hybrid dispatch 已正確納入 floor / ceiling。
+
+新 cutaway assertion 實質有效（補上 §37.4 缺口 1）：
+  runner 跑兩個南側 cutaway 視角，expectedVisibleBoxIdxs [19,29,31,52,53] / [32]、
+  ceiling box10 max.z=3.056 鎖、fail 機制（missing-visible-box / box10-max-z-drift）。
+  實跑 status=pass，box10 max.z=3.055999875，命中符合最終 v3 收斂狀態。
+
+runner +221 純加（無刪除行），不動既有 probe 行為。§38 / §36.2 揭露已寫入。working tree 乾淨。
+
+殘留註記（皆非阻擋）：
+  1. structural-geometry-gate.test.js 是「對齊工具現況」轉綠（移除 west_beam_sw_column_overlap_under_y、
+     owner→sw_column_inner_x）。owner 改動方向更正確、工具 status=pass，§38 也誠實標明是 sync-to-tool。
+     惟未獨立證明被移除的 overlap 面「幾何上本就該不存在」。
+     若日後質疑西樑 / 西南柱重疊幾何，需重推該面是否該存在。
+  2. 仍紅的 9 個是 main 既有債（cache-token + phase2b-continuity）。
+     phase2b 與已修的 3 個同屬 probe-cap 型，可順手納入「另案：改版本前進判定」一起清。
+
+放行：§38 清債通過。可開始量測「天花板 x 東樑 / 東南扁柱頂端縫」（下一分支既定任務）。
+```
+
 ### 38.3 下一步邊界
 
 ```text
