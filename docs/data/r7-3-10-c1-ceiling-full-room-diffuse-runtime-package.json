@@ -1,15 +1,19 @@
 {
   "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
   "packageStatus": "architecture_probe",
-  "runtimeScope": "c1_ceiling_diffuse_short_circuit",
+  "runtimeScope": "c1_ceiling_first_hit_hybrid",
   "runtimeEnabledDefault": true,
   "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/ceiling-full-room-1024px-1000spp",
   "batch": "ceiling",
+  "northeastFurnitureMode": null,
   "targetId": 1006,
   "surfaceName": "c1_ceiling",
   "requestedSamples": 1000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
   "upscaled": false,
   "worldBounds": {
     "xMin": -2.11,
@@ -23,5 +27,20 @@
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "coverageReport": "coverage-report.json",
     "validationReport": "validation-report.json"
-  }
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "8ed471d83dd78fc392cd5732c262f9d261e1e07fa535b62d041c361bb028b734",
+    "texelMetadataPatch0Sha256": "7f0db14b346c8adb63e6f19626bb62cdad89cd1ab98f249ba7212f8e7ea86a29"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 0.984344482421875
+  },
+  "mapping": "planar_xz",
+  "referenceForAcceptance": "live_path_tracing_same_camera",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+  "runtimeAtlasSlot": 5,
+  "runtimeArchitecture": "single_full_ceiling_first_hit_hybrid"
 }

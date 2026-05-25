@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -6,7 +7,12 @@ const META_STRIDE = 12;
 const VALID_META_OFFSET = 7;
 const LUMA_EPSILON = 0.000001;
 const SAMPLE_LIMIT = 8;
-const step3PendingFullRoomTargetIds = new Set([1001, 1006]);
+const step3PendingFullRoomTargetIds = new Set([]);
+const require = createRequire(import.meta.url);
+const {
+  auditEdgeBorderBaseline,
+  EDGE_BORDER_BASELINE_PATH
+} = require('../tools/r7-3-10-edge-border-audit.cjs');
 
 const pointerPaths = fs
   .readdirSync('docs/data')
@@ -30,6 +36,25 @@ const boundaryRegionsByTargetId = new Map([
         xMin: 961,
         xMax: 974,
         yMin: 887,
+        yMax: 1023
+      }
+    ]
+  ],
+  [
+    1006,
+    [
+      {
+        name: 'south_wall_solid_behind_window_east_ceiling_dead_zone',
+        xMin: 679,
+        xMax: 1023,
+        yMin: 986,
+        yMax: 1023
+      },
+      {
+        name: 'south_wall_solid_behind_window_west_ceiling_dead_zone',
+        xMin: 0,
+        xMax: 86,
+        yMin: 986,
         yMax: 1023
       }
     ]
@@ -158,7 +183,18 @@ assert.ok(pointerPaths.length > 0, 'R7-3.10 runtime package pointers must exist'
 
 for (const pointerPath of pointerPaths) {
   const pkg = loadRuntimePackage(pointerPath);
-  if (!step3PendingFullRoomTargetIds.has(pkg.pointer.targetId)) {
+  const pendingStep3 = step3PendingFullRoomTargetIds.has(pkg.pointer.targetId);
+  if (pendingStep3) {
+    const allowedPending =
+      pkg.pointer.bakedRadianceKind === undefined &&
+      ((pkg.pointer.targetId === 1001 && pkg.pointer.runtimeScope === 'c1_floor_full_room_diffuse_short_circuit') ||
+        (pkg.pointer.targetId === 1006 && pkg.pointer.runtimeScope === 'c1_ceiling_diffuse_short_circuit'));
+    assert.equal(
+      allowedPending,
+      true,
+      `${packageLabel(pointerPath, pkg.pointer)} may stay excluded only while it is the old floor/ceiling short-circuit package`
+    );
+  } else {
     const invalidBad = collectValidBlackDeclaredInvalidTexels(pkg);
     assert.deepEqual(
       invalidBad,
@@ -177,5 +213,26 @@ for (const pointerPath of pointerPaths) {
     );
   }
 }
+
+const edgeBorderAudit = auditEdgeBorderBaseline({
+  baselinePath: EDGE_BORDER_BASELINE_PATH,
+  pointerPaths
+});
+
+assert.deepEqual(
+  edgeBorderAudit.hashMismatches,
+  [],
+  'R7-3.10 edge-border baseline hashes must match reviewed packages'
+);
+assert.deepEqual(
+  edgeBorderAudit.missingBaselineEntries,
+  [],
+  'R7-3.10 indirect diffuse packages must have edge-border baseline entries'
+);
+assert.deepEqual(
+  edgeBorderAudit.newEdgeBlackTexels,
+  [],
+  'R7-3.10 edge-border regression must not introduce alpha-valid black coordinates outside reviewed baseline'
+);
 
 console.log('R7-3.10 valid-black boundary regression passed');

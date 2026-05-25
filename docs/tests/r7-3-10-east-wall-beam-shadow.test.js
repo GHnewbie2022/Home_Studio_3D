@@ -42,9 +42,9 @@ assert.doesNotMatch(shortCircuitBody, /uR7310C1EastWallBeamShadowMode/, 'east wa
 assert.match(shader, /r7310C1EastWallBeamShadowHybridActive\(hitType, hitObjectID, nl, x\)/);
 assert.match(shader, /!r7310EastWallBeamHybridFirstHit/);
 assert.match(shader, /r7310C1EastWallBeamShadowIndirectBakeFirstHit\(bounces, diffuseCount\)/);
-const fullDiffuseGuardStart = shader.indexOf('if (!(r7310NorthWallHybridFirstHit');
+const fullDiffuseGuardStart = shader.indexOf('if (!(r7310FloorHybridFirstHit');
 assert.notEqual(fullDiffuseGuardStart, -1, 'full-diffuse first-hit guard missing');
-const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, fullDiffuseGuardStart + 700);
+const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, fullDiffuseGuardStart + 1300);
 assert.match(fullDiffuseGuard, /r7310EastWallBeamHybridFirstHit/, 'east wall beam hybrid first hit must not fall through into the old full-diffuse route');
 
 assert.match(homeStudio, /tR7310C1EastWallBeamShadowTexture/);

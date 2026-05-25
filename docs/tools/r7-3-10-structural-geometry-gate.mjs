@@ -213,11 +213,11 @@ assertBox(boxes[28], { min: { x: -1.91, y: 2.525, z: -1.874 }, max: { x: -1.75, 
 assertBox(boxes[29], { min: { x: 1.85, y: 2.515, z: -1.874 }, max: { x: 2.11, y: 2.905, z: 3.056 } }, 'east_beam');
 assertBox(boxes[30], { min: { x: -1.91, y: 0.0, z: 2.846 }, max: { x: -1.75, y: 2.905, z: 3.056 } }, 'southwest_column');
 assertBox(boxes[31], { min: { x: 1.78, y: 0.0, z: 2.49 }, max: { x: 1.91, y: 2.905, z: 3.056 } }, 'southeast_column');
-assertBox(boxes[35], { min: { x: 1.02, y: 0.0, z: 2.73 }, max: { x: 1.78, y: 2.04, z: 3.056 } }, 'southeast_bookshelf');
+assertBox(boxes[36], { min: { x: 1.02, y: 0.0, z: 2.73 }, max: { x: 1.78, y: 2.04, z: 3.056 } }, 'southeast_bookshelf');
 
 const shellBlockers = boxes.slice(0, 28).map((box) => Object.assign({ name: `sceneBox_${box.index}` }, box));
 const furnitureContactBlockers = [
-	Object.assign({ name: 'southeast_bookshelf' }, boxes[35])
+	Object.assign({ name: 'southeast_bookshelf' }, boxes[36])
 ];
 const blockers = shellBlockers.concat(furnitureContactBlockers, structuralBoxes);
 
