@@ -125,8 +125,9 @@ for (const surface of surfaces) {
   assert.equal(batch.uniformContractAlias, `tR7310C1${surface.camel}Texture`);
 }
 
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 22\.0 \}/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasGridColumns = \{ value: 6\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\s*=\s*6/);
 assert.match(shader, /uniform float uR7310C1RuntimeAtlasGridColumns/);

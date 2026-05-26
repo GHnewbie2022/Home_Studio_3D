@@ -34,14 +34,15 @@ assert.match(shader, /r7310C1SeColumnWestShadowIndirectBakeFirstHit\(bounces, di
 const fullRoomFallbackIndex = shader.indexOf('r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x');
 assert.ok(fullRoomFallbackIndex > 0, 'full-room fallback call missing');
 const fullRoomFallbackGuard = shader.slice(Math.max(0, fullRoomFallbackIndex - 1100), fullRoomFallbackIndex + 180);
-assert.match(fullRoomFallbackGuard, /!\(r7310FloorHybridFirstHit[\s\S]*r7310CeilingHybridFirstHit[\s\S]*r7310NorthWallHybridFirstHit[\s\S]*r7310SeColumnWestHybridFirstHit[\s\S]*r7310SouthWindowTopRevealShadowHybridFirstHit\)/);
+assert.match(fullRoomFallbackGuard, /!\(r7310FloorHybridFirstHit[\s\S]*r7310CeilingHybridFirstHit[\s\S]*r7310NorthWallHybridFirstHit[\s\S]*r7310SeColumnWestHybridFirstHit[\s\S]*r7310SouthWindowTopRevealShadowHybridFirstHit[\s\S]*r7310IronDoorRevealHybridFirstHit\)/);
 assert.match(fullRoomFallbackGuard, /bounces\s*==\s*0/);
 assert.match(fullRoomFallbackGuard, /r7310C1FullRoomDiffuseShortCircuit/);
 
 assert.match(homeStudio, /tR7310C1SeColumnWestShadowTexture/);
 assert.match(homeStudio, /uR7310C1SeColumnWestShadowMode/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 22\.0 \}/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 
 assert.match(runner, /--r7310-se-column-west-shadow-visual-test/);
 assert.match(runner, /c1_se_column_west_shadow/);
