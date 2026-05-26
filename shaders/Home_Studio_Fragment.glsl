@@ -59,6 +59,7 @@ uniform sampler2D tR7310C1SouthWindowLeftRevealShadowTexture;
 uniform sampler2D tR7310C1SouthWindowRightRevealShadowTexture;
 uniform sampler2D tR7310C1SouthWindowBottomRevealShadowTexture;
 uniform sampler2D tR7310C1SouthWindowTopRevealShadowTexture;
+uniform sampler2D tR7310C1IronDoorRevealTexture;
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -114,6 +115,9 @@ uniform float uR7310C1SouthWindowBottomRevealShadowResolution;
 uniform float uR7310C1SouthWindowTopRevealShadowMode;
 uniform float uR7310C1SouthWindowTopRevealShadowReady;
 uniform float uR7310C1SouthWindowTopRevealShadowResolution;
+uniform float uR7310C1IronDoorRevealMode;
+uniform float uR7310C1IronDoorRevealReady;
+uniform float uR7310C1IronDoorRevealResolution;
 uniform float uR7310C1RuntimeProbeMode;
 uniform float uR7310C1RuntimeAtlasPatchResolution;
 uniform float uR7310C1RuntimeAtlasPatchCount;
@@ -648,6 +652,10 @@ bool r7310C1SouthWallAcShadowHiddenBySeColumn(float x, float y)
 		y >= 0.0 &&
 		y <= 2.905;
 }
+// R7-3.10 iron-door reveal guard-band contract constants (single source of truth; Phase 3 metadata builder MUST reuse).
+const float IRON_DOOR_REVEAL_BAND_H = 0.25;                                                   // 4 faces -> 4 v-bands
+const float IRON_DOOR_REVEAL_GUARD_V = 0.04;                                                  // guard each side of every band (atlas-v)
+const float IRON_DOOR_REVEAL_CORE_H = IRON_DOOR_REVEAL_BAND_H - 2.0 * IRON_DOOR_REVEAL_GUARD_V; // 0.17 usable core per band
 bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out vec3 normal, out int hitType, out float objectID)
 {
 	vec2 uv = clamp(texelUv, vec2(0.0), vec2(1.0));
@@ -987,6 +995,39 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 		float z = mix(3.056, 3.256, uv.y);
 		position = vec3(x, 2.905, z);
 		normal = vec3(0.0, -1.0, 0.0);
+		hitType = 1;
+		objectID = 0.0;
+		return true;
+	}
+	if (patchId == 1023)
+	{
+		float band = min(3.0, floor(uv.y / IRON_DOOR_REVEAL_BAND_H));
+		float vLocal = uv.y - band * IRON_DOOR_REVEAL_BAND_H;
+		if (vLocal < IRON_DOOR_REVEAL_GUARD_V || vLocal > (IRON_DOOR_REVEAL_BAND_H - IRON_DOOR_REVEAL_GUARD_V))
+			return false;
+		float depth = (vLocal - IRON_DOOR_REVEAL_GUARD_V) / IRON_DOOR_REVEAL_CORE_H;
+		float x = -1.96 + depth * 0.05;
+		float along = uv.x;
+		if (band < 0.5)
+		{
+			position = vec3(x, 2.04, -1.874 + along * 0.890);
+			normal = vec3(0.0, -1.0, 0.0);
+		}
+		else if (band < 1.5)
+		{
+			position = vec3(x, 0.09, -1.874 + along * 0.890);
+			normal = vec3(0.0, 1.0, 0.0);
+		}
+		else if (band < 2.5)
+		{
+			position = vec3(x, 0.09 + along * 1.950, -1.874);
+			normal = vec3(0.0, 0.0, 1.0);
+		}
+		else
+		{
+			position = vec3(x, 0.09 + along * 1.950, -0.984);
+			normal = vec3(0.0, 0.0, -1.0);
+		}
 		hitType = 1;
 		objectID = 0.0;
 		return true;
@@ -2216,6 +2257,67 @@ vec3 r7310C1SouthWindowTopRevealShadowHybridRadiance(int visibleHitType, float v
 	if (!r7310C1SouthWindowTopRevealShadowDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return vec3(0.0);
 	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowTopRevealShadowResolution), 21.0);
+}
+// R7-3.10 iron-door opening reveal (OPUS 2026-05-26) — ONE combined dedicated surface (atlas slot 22, target 1023).
+// The iron door (box26 x[-2.00,-1.96]) is recessed 5cm behind the west wall inner face (x=-1.91), so the opening
+// has 4 reveal/jamb faces inside the recess x[-1.96,-1.91]. All 4 are currently live: top/bottom/south-jamb have no
+// owner; the north jamb sits on the north-wall plane but NorthWallHiddenBySideWall(x<=-1.91) excludes it from the
+// north-wall bake. This surface bakes all 4 into 4 horizontal atlas bands (v: top 0-.25 / bottom .25-.5 / north .5-.75 / south .75-1).
+bool r7310C1RuntimeSurfaceIsIronDoorReveal(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	if (visibleObjectID >= 1.5 || visiblePosition.x < -1.965 || visiblePosition.x > -1.91)
+		return false;
+	bool topFace    = visibleNormal.y < -0.5 && visiblePosition.y >= 2.03 && visiblePosition.y <= 2.05 && visiblePosition.z >= -1.874 && visiblePosition.z <= -0.984;
+	bool bottomFace = visibleNormal.y > 0.5 && visiblePosition.y >= 0.08 && visiblePosition.y <= 0.10 && visiblePosition.z >= -1.874 && visiblePosition.z <= -0.984;
+	bool northJamb  = visibleNormal.z > 0.5 && visiblePosition.z >= -1.884 && visiblePosition.z <= -1.864 && visiblePosition.y >= 0.09 && visiblePosition.y <= 2.04;
+	bool southJamb  = visibleNormal.z < -0.5 && visiblePosition.z >= -0.994 && visiblePosition.z <= -0.974 && visiblePosition.y >= 0.09 && visiblePosition.y <= 2.04;
+	return topFace || bottomFace || northJamb || southJamb;
+}
+bool r7310C1IronDoorRevealDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsIronDoorReveal(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	// GUARD-BAND CONTRACT (CODEX Phase 1 review, hard constraint): the 4 faces share one atlas in 4 horizontal
+	// 0.25 v-bands. To stop valid-linear bilinear from bleeding across a band boundary into the neighbouring
+	// face, each band reserves IRON_DOOR_REVEAL_GUARD_V (=0.04, atlas-v) on each side as guard; the shader maps
+	// the sample only into the band CORE (height 0.25-2*GUARD=0.17), and the Phase 3 metadata builder MUST mark
+	// those guard rows invalid (alpha=0) using the SAME bands+GUARD (round(GUARD*resolution) rows). Keep in sync.
+	// u (along the face's long axis) needs no inter-face guard: each band is one face spanning full u; the atlas
+	// outer ring (u≈0/1, v≈0/1) is handled by fillR7310C1AtlasEdgeFromNearestInterior.
+	float depth = clamp((visiblePosition.x + 1.96) / 0.05, 0.0, 1.0); // door face x=-1.96 -> wall inner face x=-1.91
+	float bandV = IRON_DOOR_REVEAL_GUARD_V + depth * IRON_DOOR_REVEAL_CORE_H; // map into band CORE (skip guard rows)
+	float along; float bandBase;
+	if (visibleNormal.y < -0.5)      { along = clamp((visiblePosition.z + 1.874) / 0.890, 0.0, 1.0); bandBase = IRON_DOOR_REVEAL_BAND_H * 0.0; }
+	else if (visibleNormal.y > 0.5)  { along = clamp((visiblePosition.z + 1.874) / 0.890, 0.0, 1.0); bandBase = IRON_DOOR_REVEAL_BAND_H * 1.0; }
+	else if (visibleNormal.z > 0.5)  { along = clamp((visiblePosition.y - 0.09) / 1.950, 0.0, 1.0); bandBase = IRON_DOOR_REVEAL_BAND_H * 2.0; }
+	else                             { along = clamp((visiblePosition.y - 0.09) / 1.950, 0.0, 1.0); bandBase = IRON_DOOR_REVEAL_BAND_H * 3.0; }
+	atlasUv = vec2(along, bandBase + bandV);
+	return true;
+}
+bool r7310C1IronDoorRevealHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1IronDoorRevealMode > 0.5 &&
+		uR7310C1IronDoorRevealReady > 0.5 &&
+		r7310C1IronDoorRevealDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1IronDoorRevealHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1IronDoorRevealDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1IronDoorRevealResolution), 22.0);
+}
+bool r7310C1IronDoorRevealIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
+{
+	return uR738C1BakeCaptureMode == 2 &&
+		uR738C1BakePatchId == 1023 &&
+		bounceIndex == 0 &&
+		diffuseIndex == 0;
 }
 bool r7310C1SouthWindowLeftRevealShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
 {
@@ -5362,6 +5464,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				r7310C1SouthWindowBottomRevealShadowHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310SouthWindowTopRevealShadowHybridFirstHit = bounces == 0 &&
 				r7310C1SouthWindowTopRevealShadowHybridActive(hitType, hitObjectID, nl, x);
+			bool r7310IronDoorRevealHybridFirstHit = bounces == 0 &&
+				r7310C1IronDoorRevealHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310DedicatedCeilingHybridFirstHit =
 				r7310SeColumnNorthHybridFirstHit ||
 				r7310SeColumnWestHybridFirstHit ||
@@ -5377,7 +5481,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				r7310SouthWindowLeftRevealShadowHybridFirstHit ||
 				r7310SouthWindowRightRevealShadowHybridFirstHit ||
 				r7310SouthWindowBottomRevealShadowHybridFirstHit ||
-				r7310SouthWindowTopRevealShadowHybridFirstHit;
+				r7310SouthWindowTopRevealShadowHybridFirstHit ||
+				r7310IronDoorRevealHybridFirstHit;
 			r7310CeilingHybridFirstHit = r7310CeilingHybridFirstHit && !r7310DedicatedCeilingHybridFirstHit;
 			bool r7310FloorHybridGuard = !r7310FloorHybridFirstHit;
 			bool r7310CeilingHybridGuard = !r7310CeilingHybridFirstHit;
@@ -5399,6 +5504,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310SouthWindowRightRevealShadowHybridGuard = !r7310SouthWindowRightRevealShadowHybridFirstHit;
 			bool r7310SouthWindowBottomRevealShadowHybridGuard = !r7310SouthWindowBottomRevealShadowHybridFirstHit;
 			bool r7310SouthWindowTopRevealShadowHybridGuard = !r7310SouthWindowTopRevealShadowHybridFirstHit;
+			bool r7310IronDoorRevealHybridGuard = !r7310IronDoorRevealHybridFirstHit;
 			bool r7310FloorIndirectBakeFirstHit = r7310C1FloorIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310CeilingIndirectBakeFirstHit = r7310C1CeilingIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310NorthWallIndirectBakeFirstHit = r7310C1NorthWallIndirectBakeFirstHit(bounces, diffuseCount);
@@ -5419,6 +5525,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310SouthWindowRightRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowRightRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowBottomRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SouthWindowTopRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowTopRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
+			bool r7310IronDoorRevealIndirectBakeFirstHit = r7310C1IronDoorRevealIndirectBakeFirstHit(bounces, diffuseCount);
 			float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
 			float r7310HybridOwnerCount = 0.0;
 			float r7310HybridOwnerMaskLow = 0.0;
@@ -5433,6 +5540,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			r7310HybridOwnerAdd(r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit, 17.0, 32.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit, 15.0, 64.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SouthWindowTopRevealShadowHybridFirstHit, 22.0, 128.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+			r7310HybridOwnerAdd(r7310IronDoorRevealHybridFirstHit, 23.0, 0.0, 0.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SeColumnNorthHybridFirstHit, 8.0, 0.0, 1.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SeColumnWestHybridFirstHit, 9.0, 0.0, 2.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SouthWallAcHybridFirstHit, 10.0, 0.0, 4.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
@@ -6047,6 +6155,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				accumCol += mask * r7310C1SouthWindowBottomRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310SouthWindowTopRevealShadowHybridFirstHit)
 				accumCol += mask * r7310C1SouthWindowTopRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
+			if (r7310IronDoorRevealHybridFirstHit)
+				accumCol += mask * r7310C1IronDoorRevealHybridRadiance(hitType, hitObjectID, nl, x);
 			if (bounces == 0 &&
 				r7310C1RuntimeProbeMode > 14.5 &&
 				r7310C1RuntimeProbeMode < 16.5)
@@ -6096,7 +6206,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					accumCol = vec3(0.0);
 				break;
 			}
-			if (!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+			if (!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
 				bounces == 0 &&
 				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, r7310BakedRadiance))
 			{
@@ -6197,7 +6307,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			rayOrigin = x + nl * uEPS_intersect;
 
         if (float(diffuseCount) < uMaxBounces &&
-				!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit) &&
+				!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
 				r7310FloorHybridGuard &&
 				r7310CeilingHybridGuard &&
 				r7310NorthWallHybridGuard &&
@@ -6217,7 +6327,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				r7310SouthWindowLeftRevealShadowHybridGuard &&
 				r7310SouthWindowRightRevealShadowHybridGuard &&
 				r7310SouthWindowBottomRevealShadowHybridGuard &&
-				r7310SouthWindowTopRevealShadowHybridGuard)
+				r7310SouthWindowTopRevealShadowHybridGuard &&
+				r7310IronDoorRevealHybridGuard)
         {
 				diffuseBounceMask = mask;
 				diffuseBounceRayOrigin = rayOrigin;
@@ -6436,7 +6547,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			if ((r7310SouthWindowLeftRevealShadowIndirectBakeFirstHit ||
 				r7310SouthWindowRightRevealShadowIndirectBakeFirstHit ||
 				r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit ||
-				r7310SouthWindowTopRevealShadowIndirectBakeFirstHit) &&
+				r7310SouthWindowTopRevealShadowIndirectBakeFirstHit ||
+				r7310IronDoorRevealIndirectBakeFirstHit) &&
 				willNeedDiffuseBounceRay == TRUE)
 			{
 				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);

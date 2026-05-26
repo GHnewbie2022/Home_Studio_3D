@@ -29,16 +29,17 @@ const inventory = [
   { key: 'c1SouthWindowLeftRevealShadowBatch', constName: 'SOUTH_WINDOW_LEFT_REVEAL_SHADOW', loaderName: 'SouthWindowLeftRevealShadow', captureName: 'SouthWindowLeftRevealShadow', reportName: 'SouthWindowLeftRevealShadow', surfaceName: 'c1_south_window_left_reveal_shadow', cliName: 'south-window-left-reveal-shadow', targetId: 1019, slot: 18, pointer: 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json' },
   { key: 'c1SouthWindowRightRevealShadowBatch', constName: 'SOUTH_WINDOW_RIGHT_REVEAL_SHADOW', loaderName: 'SouthWindowRightRevealShadow', captureName: 'SouthWindowRightRevealShadow', reportName: 'SouthWindowRightRevealShadow', surfaceName: 'c1_south_window_right_reveal_shadow', cliName: 'south-window-right-reveal-shadow', targetId: 1020, slot: 19, pointer: 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json' },
   { key: 'c1SouthWindowBottomRevealShadowBatch', constName: 'SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW', loaderName: 'SouthWindowBottomRevealShadow', captureName: 'SouthWindowBottomRevealShadow', reportName: 'SouthWindowBottomRevealShadow', surfaceName: 'c1_south_window_bottom_reveal_shadow', cliName: 'south-window-bottom-reveal-shadow', targetId: 1021, slot: 20, pointer: 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json' },
-  { key: 'c1SouthWindowTopRevealShadowBatch', constName: 'SOUTH_WINDOW_TOP_REVEAL_SHADOW', loaderName: 'SouthWindowTopRevealShadow', captureName: 'SouthWindowTopRevealShadow', reportName: 'SouthWindowTopRevealShadow', surfaceName: 'c1_south_window_top_reveal_shadow', cliName: 'south-window-top-reveal-shadow', targetId: 1022, slot: 21, pointer: 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json' }
+  { key: 'c1SouthWindowTopRevealShadowBatch', constName: 'SOUTH_WINDOW_TOP_REVEAL_SHADOW', loaderName: 'SouthWindowTopRevealShadow', captureName: 'SouthWindowTopRevealShadow', reportName: 'SouthWindowTopRevealShadow', surfaceName: 'c1_south_window_top_reveal_shadow', cliName: 'south-window-top-reveal-shadow', targetId: 1022, slot: 21, pointer: 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json' },
+  { key: 'c1IronDoorRevealBatch', constName: 'IRON_DOOR_REVEAL', loaderName: 'IronDoorReveal', captureName: 'IronDoorReveal', reportName: 'IronDoorReveal', surfaceName: 'c1_iron_door_reveal', cliName: 'iron-door-reveal', targetId: 1023, slot: 22, pointer: 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json' }
 ];
 
-assert.equal(inventory.length, 22);
+assert.equal(inventory.length, 23);
 assert.equal(new Set(inventory.map((surface) => surface.targetId)).size, inventory.length);
 assert.equal(new Set(inventory.map((surface) => surface.surfaceName)).size, inventory.length);
-assert.deepEqual([...new Set(inventory.map((surface) => surface.slot))].sort((a, b) => a - b), Array.from({ length: 22 }, (_, index) => index));
+assert.deepEqual([...new Set(inventory.map((surface) => surface.slot))].sort((a, b) => a - b), Array.from({ length: 23 }, (_, index) => index));
 
-const combinedSlotBlock = initCommon.match(/function buildR7310C1CombinedDiffuseRuntimeTexture[\s\S]*?var patchCount = 22;/)?.[0] || '';
-assert.match(combinedSlotBlock, /var slots = \[[\s\S]*floorPixels[\s\S]*northWallPixels[\s\S]*eastWallPixels[\s\S]*westWallPixels[\s\S]*southWallPixels[\s\S]*ceilingPixels[\s\S]*structuralPixels[\s\S]*seColumnNorthShadowPixels[\s\S]*seColumnWestShadowPixels[\s\S]*southWallAcShadowPixels[\s\S]*eastWallBeamShadowPixels[\s\S]*swColumnNorthShadowPixels[\s\S]*westWallBeamShadowPixels[\s\S]*swColumnInnerShadowPixels[\s\S]*westBeamInnerShadowPixels[\s\S]*westBeamUnderShadowPixels[\s\S]*eastBeamInnerShadowPixels[\s\S]*eastBeamUnderShadowPixels[\s\S]*southWindowLeftRevealShadowPixels[\s\S]*southWindowRightRevealShadowPixels[\s\S]*southWindowBottomRevealShadowPixels[\s\S]*southWindowTopRevealShadowPixels[\s\S]*\]/);
+const combinedSlotBlock = initCommon.match(/function buildR7310C1CombinedDiffuseRuntimeTexture[\s\S]*?var patchCount = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT;/)?.[0] || '';
+assert.match(combinedSlotBlock, /var slots = \[[\s\S]*floorPixels[\s\S]*northWallPixels[\s\S]*eastWallPixels[\s\S]*westWallPixels[\s\S]*southWallPixels[\s\S]*ceilingPixels[\s\S]*structuralPixels[\s\S]*seColumnNorthShadowPixels[\s\S]*seColumnWestShadowPixels[\s\S]*southWallAcShadowPixels[\s\S]*eastWallBeamShadowPixels[\s\S]*swColumnNorthShadowPixels[\s\S]*westWallBeamShadowPixels[\s\S]*swColumnInnerShadowPixels[\s\S]*westBeamInnerShadowPixels[\s\S]*westBeamUnderShadowPixels[\s\S]*eastBeamInnerShadowPixels[\s\S]*eastBeamUnderShadowPixels[\s\S]*southWindowLeftRevealShadowPixels[\s\S]*southWindowRightRevealShadowPixels[\s\S]*southWindowBottomRevealShadowPixels[\s\S]*southWindowTopRevealShadowPixels[\s\S]*ironDoorRevealPixels[\s\S]*\]/);
 
 for (const surface of inventory) {
   const batch = contract[surface.key];
@@ -59,12 +60,13 @@ for (const surface of inventory) {
   assert.equal(fs.existsSync(surface.pointer), true, `${surface.pointer} missing`);
 }
 
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 22\.0 \}/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
-assert.match(initCommon, /runtimeAtlasPatchCount: 22/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
+assert.match(initCommon, /runtimeAtlasPatchCount: R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasGridColumns = \{ value: 6\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\s*=\s*6/);
-assert.match(initCommon, /runtimeAtlasGridRows: Math\.ceil\(22 \/ R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\)/);
+assert.match(initCommon, /runtimeAtlasGridRows: Math\.ceil\(R7310_C1_RUNTIME_ATLAS_PATCH_COUNT \/ R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\)/);
 assert.match(shader, /ceil\s*\(\s*patchCount\s*\/\s*columns\s*\)/);
 
 console.log('R7-3.10 bake gap debug-map inventory contract passed');

@@ -5328,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-cutaway-right-leg-v3';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-iron-door-reveal-v3';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5611,6 +5611,7 @@ function initSceneData() {
     pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
+    pathTracingUniforms.tR7310C1IronDoorRevealTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5666,9 +5667,12 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady = { value: 0.0 };
 	pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1IronDoorRevealMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorRevealReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorRevealResolution = { value: 1024.0 };
 	pathTracingUniforms.uR7310C1RuntimeProbeMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution = { value: 512.0 };
-	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 22.0 };
+	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 23.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
     pathTracingUniforms.uR738C1BakePastePreviewMode = { value: 0.0 };
     pathTracingUniforms.uR738C1BakePastePreviewReady = { value: 0.0 };
@@ -6124,6 +6128,15 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '樑柱漫射使用 R7-3.10 1024 bake；套件未產生時保持 pending'
 			: '樑柱回到 live path tracing';
 	}
+	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
+	var ironDoorActive = !!(report && report.ironDoorRevealEnabled);
+	if (ironDoorBtn) {
+		ironDoorBtn.textContent = ironDoorActive ? '鐵門開口烘焙：開' : '鐵門開口烘焙：關';
+		ironDoorBtn.classList.toggle('glow-white', ironDoorActive);
+		ironDoorBtn.title = ironDoorActive
+			? '鐵門開口 4 面使用 R7-3.10 1024 bake'
+			: '鐵門開口回到 live path tracing';
+	}
 }
 
 function bindR7310FullFloorDiffuseControls() {
@@ -6134,7 +6147,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var southBtn = document.getElementById('btn-r7310-south-wall-diffuse');
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
 	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
-	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn) return;
+	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
+	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -6154,6 +6168,7 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(southBtn, 'southWallEnabled', 'setR7310C1SouthWallDiffuseRuntimeEnabled');
 	bindButton(ceilingBtn, 'ceilingEnabled', 'setR7310C1CeilingDiffuseRuntimeEnabled');
 	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
+	bindButton(ironDoorBtn, 'ironDoorRevealEnabled', 'setR7310C1IronDoorRevealRuntimeEnabled');
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());
 }

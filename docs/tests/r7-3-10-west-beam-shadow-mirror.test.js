@@ -87,8 +87,9 @@ assert.match(
 
 assert.match(homeStudio, /tR7310C1SwColumnNorthShadowTexture/);
 assert.match(homeStudio, /tR7310C1WestWallBeamShadowTexture/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 22\.0 \}/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 
 assert.match(runner, /sw-column-north-shadow/);
 assert.match(runner, /west-wall-beam-shadow/);

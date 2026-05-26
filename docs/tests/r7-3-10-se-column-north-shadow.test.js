@@ -49,7 +49,7 @@ assert.match(shader, /r7310C1SeColumnNorthShadowIndirectBakeFirstHit\(bounces, d
 const fullRoomFallbackIndex = shader.indexOf('r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x');
 assert.ok(fullRoomFallbackIndex > 0, 'full-room fallback call missing');
 const fullRoomFallbackGuard = shader.slice(Math.max(0, fullRoomFallbackIndex - 900), fullRoomFallbackIndex + 180);
-assert.match(fullRoomFallbackGuard, /!\(r7310FloorHybridFirstHit[\s\S]*r7310CeilingHybridFirstHit[\s\S]*r7310NorthWallHybridFirstHit[\s\S]*r7310SeColumnNorthHybridFirstHit[\s\S]*r7310SouthWindowTopRevealShadowHybridFirstHit\)/);
+assert.match(fullRoomFallbackGuard, /!\(r7310FloorHybridFirstHit[\s\S]*r7310CeilingHybridFirstHit[\s\S]*r7310NorthWallHybridFirstHit[\s\S]*r7310SeColumnNorthHybridFirstHit[\s\S]*r7310SouthWindowTopRevealShadowHybridFirstHit[\s\S]*r7310IronDoorRevealHybridFirstHit\)/);
 assert.match(fullRoomFallbackGuard, /bounces\s*==\s*0/);
 assert.match(fullRoomFallbackGuard, /r7310C1FullRoomDiffuseShortCircuit/);
 const structuralLookup = shader.indexOf('uR7310C1StructuralDiffuseMode', shortCircuitStart);

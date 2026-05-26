@@ -130,7 +130,7 @@ function parseArgs(argv) {
     else if (arg.startsWith('--r7310-west-join-d1-override-zmax=')) out.westJoinD1OverrideZMax = Number(arg.slice('--r7310-west-join-d1-override-zmax='.length));
   }
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
-  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   for (const key of ['samples', 'atlasResolution', 'timeoutMs', 'httpPort', 'cdpPort']) {
     if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
@@ -1045,7 +1045,8 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     c1_structural_beams_columns: 0.30,
     c1_se_column_north_shadow: 0.93,
     c1_se_column_west_shadow: 0.50,
-    c1_ceiling: 0.98
+    c1_ceiling: 0.98,
+    c1_iron_door_reveal: 0.60
   };
   const validTexelRatioMinimum = Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
     ? validTexelRatioMinimumBySurface[report.surfaceName]
@@ -1102,6 +1103,7 @@ function r7310RuntimeScopeForSurface(surfaceName) {
   if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'c1_south_window_right_reveal_shadow_diffuse_short_circuit';
   if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'c1_south_window_bottom_reveal_shadow_diffuse_short_circuit';
   if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'c1_south_window_top_reveal_shadow_diffuse_short_circuit';
+  if (surfaceName === 'c1_iron_door_reveal') return 'c1_iron_door_reveal_diffuse_short_circuit';
   return 'unknown';
 }
 
@@ -1131,6 +1133,7 @@ function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed')
   if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
   if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
   if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
+  if (surfaceName === 'c1_iron_door_reveal') return 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json';
   return null;
 }
 
@@ -1161,6 +1164,7 @@ function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = '
   if (surfaceName === 'c1_south_window_right_reveal_shadow') return path.join(root, 'south-window-right-reveal-shadow-1024px-1000spp');
   if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return path.join(root, 'south-window-bottom-reveal-shadow-1024px-1000spp');
   if (surfaceName === 'c1_south_window_top_reveal_shadow') return path.join(root, 'south-window-top-reveal-shadow-1024px-1000spp');
+  if (surfaceName === 'c1_iron_door_reveal') return path.join(root, 'iron-door-reveal-1024px-1000spp');
   return null;
 }
 
@@ -1370,6 +1374,11 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
       mapping: 'single_planar_xz_on_y_face',
       runtimeAtlasSlot: 21,
       uniformContractAlias: 'tR7310C1SouthWindowTopRevealShadowTexture'
+    },
+    c1_iron_door_reveal: {
+      mapping: 'iron_door_reveal_four_band_combined',
+      runtimeAtlasSlot: 22,
+      uniformContractAlias: 'tR7310C1IronDoorRevealTexture'
     }
   };
   if (dedicatedBeamColumnShadow[report.surfaceName]) {
@@ -8103,7 +8112,8 @@ async function main() {
 	      'south-window-left-reveal-shadow': 'reportR7310C1SouthWindowLeftRevealShadowBakeAfterSamples',
 	      'south-window-right-reveal-shadow': 'reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples',
 	      'south-window-bottom-reveal-shadow': 'reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples',
-	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples'
+	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples',
+	      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples'
 	    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
 	    const expression = `(() => {

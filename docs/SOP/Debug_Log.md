@@ -11069,3 +11069,125 @@ validation_url: http://localhost:9002/Home_Studio.html?v=r7310-ne-furniture-east
 next:
   - User visual check should use the provided camera and switch northeast furniture to bed; east wall should no longer keep the wardrobe-shaped shadow residue.
 ```
+
+## R7-3.10 鐵門 reveal 實烤 fail：runner validTexelRatio 門檻缺鐵門條目（2026-05-27）
+```text
+symptom:
+  Phase 5 實烤 status:fail / runnerFailedChecks:["validTexelRatio"]，runtime package 未寫出。
+  烤出的資料本身正確：validTexelRatio=0.6796875（=guard-band 預期）、污染 guard 全 0、atlas 1024、metadata 1024x12。
+root_cause:
+  validTexelRatio 門檻在程式裡有「兩份」、服務不同 gate：
+    - 頁內 js/InitCommon.js r7310C1ValidTexelRatioMinimumForSurface（browser 驗證＝runtime 是否啟用顯示；已含鐵門 0.60）
+    - runner docs/tools/r7-3-8-c1-bake-capture-runner.mjs validTexelRatioMinimumBySurface（烤圖是否夠格發布）
+  runner 那份「缺 c1_iron_door_reveal」→ 落到預設 0.99 → (0.6797>=0.99)=false → 唯一失敗 check → runnerStatus fail → package 不寫。
+  南窗等「單面」reveal validTexelRatio≈1.0≥0.99 從未踩雷；鐵門是首個「guard-band 合併面」(0.68) 才暴露此缺口。
+  兩份門檻「刻意不同」(north 0.77 vs 0.80、south_ac 0.56 vs 0.59…) → 不可鎖等；正解＝兩份各自都要有鐵門條目。
+  附帶（皆非 gate、留 Phase 6 肉眼）：reprojectionStatus:fail（median 相對亮度誤差 0.25/4 點，reveal 面偏暗相對誤差天生大）、atlasVisibleLuma.maxLuma=45.82（單點 firefly）。
+fix:
+  runner validTexelRatioMinimumBySurface += c1_iron_door_reveal: 0.60（與頁內一致、與 west/south_wall 同級）。
+verification:
+  重烤 status:pass；docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json 寫出（targetAtlasResolution 1024 / runtimeAtlasSlot 22 / targetId 1023）。
+  node --check（InitCommon / Home_Studio.js / runner）、check-r7310-iron-door-reveal-consts、check-r7310-runtime-atlas-patch-count、git diff --check 全過。
+lesson:
+  新增「首見類型」surface（如首個 guard-band 合併面）時，凡是「per-surface 門檻/設定」要全庫搜出「所有副本」一起補；
+  單面 surface 因數值落在預設安全區，往往掩蓋重複設定缺口，到首個越界類型才爆。
+```
+
+## R7-3.10 鐵門 reveal 顯示開關 0 變化：Home_Studio.js 漏註冊 shader uniform（2026-05-27）
+```text
+symptom:
+  鐵門開口烘焙開 / 關切換，畫面 0 變化。
+  實烤 package 已產出且 status:pass；顯示路徑仍永遠走 live。
+root_cause:
+  shaders/Home_Studio_Fragment.glsl 已宣告鐵門 reveal 的 4 個顯示用 uniform。
+  js/InitCommon.js 也已接 per-frame setter。
+  但 js/Home_Studio.js 的 pathTracingUniforms 物件漏註冊：
+    tR7310C1IronDoorRevealTexture
+    uR7310C1IronDoorRevealMode
+    uR7310C1IronDoorRevealReady
+    uR7310C1IronDoorRevealResolution
+  InitCommon setter 都有 if (pathTracingUniforms.uX) 守衛；entry 不存在時會靜默跳過。
+  結果 shader 端 Mode / Ready 維持 0，r7310C1IronDoorRevealHybridActive 永遠 false。
+why_bake_still_passed:
+  bake capture 走 uR738C1BakeCaptureMode / uR738C1BakePatchId=1023。
+  這條路不依賴鐵門 reveal 的 display uniform，所以會出現「烤圖成功、顯示無效」。
+fix:
+  在 js/Home_Studio.js 鏡像南窗 top reveal，補齊 4 個 pathTracingUniforms entry。
+  Home_Studio.html 只 bump Home_Studio.js cache-buster 到 r7310-iron-door-reveal-v3。
+  擴充 docs/tools/check-r7310-iron-door-reveal-consts.cjs，檢查 4 個 display uniform 註冊。
+verification:
+  node --check js/Home_Studio.js
+  node --check js/InitCommon.js
+  node docs/tools/check-r7310-iron-door-reveal-consts.cjs
+  node docs/tools/check-r7310-runtime-atlas-patch-count.cjs
+  git diff --check
+lesson:
+  新增首見類型 surface 時，shader uniform、InitCommon setter、Home_Studio.js pathTracingUniforms 三處要同時列入契約。
+  只接 shader 與 setter 仍可能被 if 守衛靜默略過；契約測試要直接掃 Home_Studio.js 的 uniform 註冊。
+```
+
+## R7-3.10 鐵門 reveal atlas 壓入相機畫面：r7310C1BakeSurfacePoint 缺 patchId 1023（2026-05-27）
+```text
+symptom:
+  鐵門開口烘焙已生效，但 4 面 reveal 的烘焙內容錯誤。
+  使用者截圖顯示像「視角 1 的相機畫面被壓扁塞進門洞切面」，四面屬同一 target 1023 / slot 22，判定同組問題。
+root_cause:
+  bake capture mode=2 時，js/PathTracingCommon.js 會呼叫 shader 的 r7310C1BakeSurfacePoint(patchId, uv, ...)
+  來決定每個 atlas texel 要從哪個世界座標與法線發射 bake ray。
+  鐵門 reveal 的 InitCommon metadata builder 已有 patchId 1023，但 shader r7310C1BakeSurfacePoint 原本只寫到 1022。
+  因此 patchId=1023 回 false，PathTracingCommon.js 沒有改寫 rayOrigin / rayDirection，實烤繼續使用一般相機光線。
+  結果 atlas 寫進當時相機看到的畫面，而非門洞四面本身。
+fix:
+  將 IRON_DOOR_REVEAL_BAND_H / GUARD_V / CORE_H 提前到 r7310C1BakeSurfacePoint 可見的位置。
+  在 r7310C1BakeSurfacePoint 新增 patchId==1023 branch，鏡像 display DiffuseUv 與 InitCommon metadata builder：
+    band0 top(-Y), band1 bottom(+Y), band2 north jamb(+Z), band3 south jamb(-Z)
+    guard rows return false，核心列輸出世界座標與法線。
+  擴充 docs/tools/check-r7310-iron-door-reveal-consts.cjs：
+    檢查 shader bake surface point 必須處理 patchId 1023，且使用 iron-door reveal band/guard constants。
+  重烤 iron-door-reveal 1024px / 1000spp。
+verification:
+  重烤 status:pass；samples=1000；atlasResolution=1024。
+  新 atlas sha256=ad0ed125b61ab5028b7d76bf67825f552298f6452b00958207e375777057ac0e。
+  atlasVisibleLuma.maxLuma=0.2894869049（舊 package 曾有 45.82，已消失）。
+  node --check js/Home_Studio.js
+  node --check js/InitCommon.js
+  node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+  node --check docs/tools/check-r7310-iron-door-reveal-consts.cjs
+  node --check docs/tools/check-r7310-runtime-atlas-patch-count.cjs
+  node docs/tools/check-r7310-iron-door-reveal-consts.cjs
+  node docs/tools/check-r7310-runtime-atlas-patch-count.cjs
+  git diff --check
+lesson:
+  新增 dedicated baked surface 時要同步三張表：
+    1. InitCommon metadata builder（atlas texel 記錄）
+    2. shader display DiffuseUv（runtime 取樣）
+    3. shader r7310C1BakeSurfacePoint（實烤 ray 起點）
+  少第 3 張表時，package 仍可能 status:pass，但內容會變成相機畫面。
+  合約測試要直接鎖 patchId 的 bake surface-point mapping。
+```
+
+## R7-3.10 鐵門 reveal 北邊亮條：X 範圍越過北牆所有權邊界（2026-05-27）
+```text
+symptom:
+  鐵門 reveal 四面已有三面正常。
+  北牆那一面出現一條亮線，而且亮線只到門高度。
+root_cause:
+  北牆 hybrid 的所有權邊界是 r7310C1NorthWallHiddenBySideWall(x)，其中西側 x <= -1.91 交給側牆 / reveal 類面處理。
+  鐵門 reveal 顯示判定原本接受 visiblePosition.x <= -1.905。
+  因此 x ∈ (-1.91, -1.905] 這條窄區同時被北牆 hybrid 與鐵門 reveal hybrid 認領。
+  shader accum 會各自加上兩份 radiance，形成只沿門高出現的亮條。
+fix:
+  將 r7310C1RuntimeSurfaceIsIronDoorReveal 的 X 右界收回 -1.91。
+  這讓鐵門 reveal 只認領北牆遮罩已讓出的區域，北牆從 x > -1.91 開始認領。
+  沒有重烤；package 內容正確，問題在 runtime surface ownership。
+verification:
+  擴充 docs/tools/check-r7310-iron-door-reveal-consts.cjs：
+    鐵門 reveal 的 ironDoorXMax 必須等於北牆 west boundary -1.91。
+  node --check js/Home_Studio.js / js/InitCommon.js / runner / 兩支 check tool。
+  node docs/tools/check-r7310-iron-door-reveal-consts.cjs。
+  node docs/tools/check-r7310-runtime-atlas-patch-count.cjs。
+  git diff --check。
+lesson:
+  新增 dedicated reveal 時，要同時鎖「烤圖座標」與「runtime surface 所有權」。
+  atlas 正確仍可能因兩個 surface 同時認領同一條空間而變亮。
+```

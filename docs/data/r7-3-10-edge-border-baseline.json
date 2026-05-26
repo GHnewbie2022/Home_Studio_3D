@@ -186,6 +186,18 @@
       "allowedEdgeBlackRuns": []
     },
     {
+      "pointerPath": "docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json",
+      "targetId": 1023,
+      "surfaceName": "c1_iron_door_reveal",
+      "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/iron-door-reveal-1024px-1000spp",
+      "bakedRadianceKind": "indirect_diffuse_radiance",
+      "targetAtlasResolution": 1024,
+      "atlasSha256": "ad0ed125b61ab5028b7d76bf67825f552298f6452b00958207e375777057ac0e",
+      "metadataSha256": "459647102f185e78d9fcf59adc65ae5a9c78cdbd68836336e28605139ccd4cdb",
+      "allowedEdgeBlackCount": 0,
+      "allowedEdgeBlackRuns": []
+    },
+    {
       "pointerPath": "docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json",
       "targetId": 1002,
       "surfaceName": "c1_north_wall",

@@ -1304,6 +1304,7 @@ const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data
 const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
 const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
 const R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS = 6;
+const R7310_C1_RUNTIME_ATLAS_PATCH_COUNT = 23; // R7-3.10: 22 base slots (0-21) + iron-door reveal slot 22. All 4 sync points MUST use this const; locked by docs/tools/check-r7310-runtime-atlas-patch-count.cjs.
 const R7310_C1_FLOOR_TARGET_ID = 1001;
 const R7310_C1_FLOOR_SURFACE_NAME = 'c1_floor_full_room';
 const R7310_C1_FLOOR_WORLD_BOUNDS = Object.freeze({
@@ -1609,6 +1610,23 @@ const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS = Object.freeze({
 	zMin: 3.056,
 	zMax: 3.256,
 	y: 2.905
+});
+// R7-3.10 iron-door reveal — ONE combined dedicated surface (4 opening reveal faces packed into 4 atlas v-bands).
+// Guard-band contract (CODEX): BAND_H / GUARD_V MUST equal the shader consts (IRON_DOOR_REVEAL_BAND_H / _GUARD_V);
+// the metadata builder marks each band's guard rows invalid and the atlas->world core mapping mirrors the shader UV.
+const R7310_C1_IRON_DOOR_REVEAL_TARGET_ID = 1023;
+const R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME = 'c1_iron_door_reveal';
+const R7310_C1_IRON_DOOR_REVEAL_ATLAS_SLOT = 22;
+const R7310_C1_IRON_DOOR_REVEAL_BAND_H = 0.25;   // MUST match shader IRON_DOOR_REVEAL_BAND_H
+const R7310_C1_IRON_DOOR_REVEAL_GUARD_V = 0.04;  // MUST match shader IRON_DOOR_REVEAL_GUARD_V
+const R7310_C1_IRON_DOOR_REVEAL_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json?v=r7310-iron-door-reveal-bakepoint-v2';
+const R7310_C1_IRON_DOOR_REVEAL_WORLD_BOUNDS = Object.freeze({
+	xMin: -1.96,
+	xMax: -1.91,
+	yMin: 0.09,
+	yMax: 2.04,
+	zMin: -1.874,
+	zMax: -0.984
 });
 function r7310C1InsideRectZY(z, y, rect)
 {
@@ -1917,6 +1935,14 @@ let r7310C1SouthWindowTopRevealShadowRuntimePackage = null;
 let r7310C1SouthWindowTopRevealShadowRuntimeTexture = null;
 let r7310C1SouthWindowTopRevealShadowRuntimeDataTexture = null;
 let r7310C1SouthWindowTopRevealShadowRuntimeError = null;
+let r7310C1IronDoorRevealRuntimeEnabled = true;
+let r7310C1IronDoorRevealRuntimePending = true;
+let r7310C1IronDoorRevealRuntimeReady = false;
+let r7310C1IronDoorRevealRuntimeLoadPromise = null;
+let r7310C1IronDoorRevealRuntimePackage = null;
+let r7310C1IronDoorRevealRuntimeTexture = null;
+let r7310C1IronDoorRevealRuntimeDataTexture = null;
+let r7310C1IronDoorRevealRuntimeError = null;
 let r739C1AccurateReflectionEnabled = false;
 let r739C1AccurateReflectionReady = false;
 let r739C1AccurateReflectionLoadPromise = null;
@@ -2160,7 +2186,12 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		!r7310C1SouthWindowTopRevealShadowRuntimePending &&
 		configAllowed &&
 		captureMode === 0;
-	var applied = floorApplied || northWallApplied || eastWallApplied || westWallApplied || southWallApplied || ceilingApplied || structuralApplied || seColumnNorthShadowApplied || seColumnWestShadowApplied || southWallAcShadowApplied || eastWallBeamShadowApplied || swColumnNorthShadowApplied || westWallBeamShadowApplied || swColumnInnerShadowApplied || westBeamInnerShadowApplied || westBeamUnderShadowApplied || eastBeamInnerShadowApplied || eastBeamUnderShadowApplied || southWindowLeftRevealShadowApplied || southWindowRightRevealShadowApplied || southWindowBottomRevealShadowApplied || southWindowTopRevealShadowApplied;
+	var ironDoorRevealApplied = r7310C1IronDoorRevealRuntimeEnabled &&
+		r7310C1IronDoorRevealRuntimeReady &&
+		!r7310C1IronDoorRevealRuntimePending &&
+		configAllowed &&
+		captureMode === 0;
+	var applied = floorApplied || northWallApplied || eastWallApplied || westWallApplied || southWallApplied || ceilingApplied || structuralApplied || seColumnNorthShadowApplied || seColumnWestShadowApplied || southWallAcShadowApplied || eastWallBeamShadowApplied || swColumnNorthShadowApplied || westWallBeamShadowApplied || swColumnInnerShadowApplied || westBeamInnerShadowApplied || westBeamUnderShadowApplied || eastBeamInnerShadowApplied || eastBeamUnderShadowApplied || southWindowLeftRevealShadowApplied || southWindowRightRevealShadowApplied || southWindowBottomRevealShadowApplied || southWindowTopRevealShadowApplied || ironDoorRevealApplied;
 	if (pathTracingUniforms.uR7310C1FullRoomDiffuseMode)
 		pathTracingUniforms.uR7310C1FullRoomDiffuseMode.value = applied ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR7310C1FullRoomDiffuseReady)
@@ -2239,6 +2270,10 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowMode.value = southWindowTopRevealShadowApplied ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady)
 		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowReady.value = r7310C1SouthWindowTopRevealShadowRuntimeReady ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1IronDoorRevealMode)
+		pathTracingUniforms.uR7310C1IronDoorRevealMode.value = ironDoorRevealApplied ? 1.0 : 0.0;
+	if (pathTracingUniforms.uR7310C1IronDoorRevealReady)
+		pathTracingUniforms.uR7310C1IronDoorRevealReady.value = r7310C1IronDoorRevealRuntimeReady ? 1.0 : 0.0;
 	if (r7310C1FullRoomDiffuseRuntimeTexture && pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture)
 		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture.value = r7310C1FullRoomDiffuseRuntimeTexture;
 	if (r7310C1SeColumnNorthShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture)
@@ -2335,10 +2370,14 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		pathTracingUniforms.uR7310C1SouthWindowTopRevealShadowResolution.value = r7310C1SouthWindowTopRevealShadowRuntimePackage && r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution
 			? r7310C1SouthWindowTopRevealShadowRuntimePackage.targetAtlasResolution
 			: 1024;
+	if (pathTracingUniforms.uR7310C1IronDoorRevealResolution)
+		pathTracingUniforms.uR7310C1IronDoorRevealResolution.value = r7310C1IronDoorRevealRuntimePackage && r7310C1IronDoorRevealRuntimePackage.targetAtlasResolution
+			? r7310C1IronDoorRevealRuntimePackage.targetAtlasResolution
+			: 1024;
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution)
 		pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution.value = r7310C1RuntimeAtlasResolution();
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount)
-		pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount.value = 22.0;
+		pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT;
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns)
 		pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns.value = R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS;
 	if (r7310C1FullRoomDiffuseRuntimePackage && r7310C1FullRoomDiffuseRuntimePackage.worldBounds && pathTracingUniforms.uR7310C1BakeFloorWorldBounds)
@@ -2546,7 +2585,7 @@ function createR7310C1StandaloneRuntimeTexture(pixels, resolution)
 	return texture;
 }
 
-function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels, eastWallPixels, westWallPixels, southWallPixels, ceilingPixels, structuralPixels, seColumnNorthShadowPixels, seColumnWestShadowPixels, southWallAcShadowPixels, eastWallBeamShadowPixels, swColumnNorthShadowPixels, westWallBeamShadowPixels, swColumnInnerShadowPixels, westBeamInnerShadowPixels, westBeamUnderShadowPixels, eastBeamInnerShadowPixels, eastBeamUnderShadowPixels, southWindowLeftRevealShadowPixels, southWindowRightRevealShadowPixels, southWindowBottomRevealShadowPixels, southWindowTopRevealShadowPixels, resolution)
+function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels, eastWallPixels, westWallPixels, southWallPixels, ceilingPixels, structuralPixels, seColumnNorthShadowPixels, seColumnWestShadowPixels, southWallAcShadowPixels, eastWallBeamShadowPixels, swColumnNorthShadowPixels, westWallBeamShadowPixels, swColumnInnerShadowPixels, westBeamInnerShadowPixels, westBeamUnderShadowPixels, eastBeamInnerShadowPixels, eastBeamUnderShadowPixels, southWindowLeftRevealShadowPixels, southWindowRightRevealShadowPixels, southWindowBottomRevealShadowPixels, southWindowTopRevealShadowPixels, ironDoorRevealPixels, resolution)
 {
 	var slots = [
 		floorPixels,
@@ -2570,9 +2609,10 @@ function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels,
 		southWindowLeftRevealShadowPixels,
 		southWindowRightRevealShadowPixels,
 		southWindowBottomRevealShadowPixels,
-		southWindowTopRevealShadowPixels
+		southWindowTopRevealShadowPixels,
+		ironDoorRevealPixels
 	];
-	var patchCount = 22;
+	var patchCount = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT;
 	var atlasColumns = R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS;
 	var atlasRows = Math.ceil(patchCount / atlasColumns);
 	var combined = new Float32Array(resolution * atlasColumns * resolution * atlasRows * 4);
@@ -2686,6 +2726,9 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 	var southWindowTopRevealShadowPixels = r7310C1SouthWindowTopRevealShadowRuntimeTexture instanceof Float32Array
 		? r7310C1SouthWindowTopRevealShadowRuntimeTexture
 		: createR7310C1BlackRuntimeSlot(resolution);
+	var ironDoorRevealPixels = r7310C1IronDoorRevealRuntimeTexture instanceof Float32Array
+		? r7310C1IronDoorRevealRuntimeTexture
+		: createR7310C1BlackRuntimeSlot(resolution);
 	if (floorPixels.length !== expectedLength)
 		floorPixels = createR7310C1BlackRuntimeSlot(resolution);
 	if (northWallPixels.length !== expectedLength)
@@ -2730,6 +2773,8 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		southWindowBottomRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
 	if (southWindowTopRevealShadowPixels.length !== expectedLength)
 		southWindowTopRevealShadowPixels = createR7310C1BlackRuntimeSlot(resolution);
+	if (ironDoorRevealPixels.length !== expectedLength)
+		ironDoorRevealPixels = createR7310C1BlackRuntimeSlot(resolution);
 	r7310C1FullRoomDiffuseRuntimeTexture = buildR7310C1CombinedDiffuseRuntimeTexture(
 		floorPixels,
 		northWallPixels,
@@ -2753,6 +2798,7 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		southWindowRightRevealShadowPixels,
 		southWindowBottomRevealShadowPixels,
 		southWindowTopRevealShadowPixels,
+		ironDoorRevealPixels,
 		resolution
 	);
 	return true;
@@ -4356,6 +4402,28 @@ async function loadR7310C1SouthWindowTopRevealShadowRuntimePackage()
 	});
 }
 
+async function loadR7310C1IronDoorRevealRuntimePackage()
+{
+	return loadR7310C1DedicatedBeamColumnShadowRuntimePackage({
+		getLoadPromise: function() { return r7310C1IronDoorRevealRuntimeLoadPromise; },
+		setLoadPromise: function(value) { r7310C1IronDoorRevealRuntimeLoadPromise = value; },
+		packageUrl: R7310_C1_IRON_DOOR_REVEAL_RUNTIME_PACKAGE_URL,
+		runtimeScope: 'c1_iron_door_reveal_diffuse_short_circuit',
+		targetId: R7310_C1_IRON_DOOR_REVEAL_TARGET_ID,
+		surfaceName: R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME,
+		stepName: 'ironDoorReveal',
+		pendingKey: 'ironDoorRevealPending',
+		label: 'iron door reveal',
+		wakeReason: 'r7-3-10-c1-iron-door-reveal-runtime-ready',
+		setPending: function(value) { r7310C1IronDoorRevealRuntimePending = value; },
+		setReady: function(value) { r7310C1IronDoorRevealRuntimeReady = value; },
+		setPackage: function(value) { r7310C1IronDoorRevealRuntimePackage = value; },
+		setTexture: function(value) { r7310C1IronDoorRevealRuntimeTexture = value; },
+		setDataTexture: function(value) { r7310C1IronDoorRevealRuntimeDataTexture = value; },
+		setError: function(value) { r7310C1IronDoorRevealRuntimeError = value; }
+	});
+}
+
 function captureR738BakeState()
 {
 	return {
@@ -5509,6 +5577,56 @@ function buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, bounds, normalY
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
+function buildR7310C1IronDoorRevealTexelMetadata(size)
+{
+	// Mirrors shader r7310C1IronDoorRevealDiffuseUv (guard-band contract). 4 faces -> 4 v-bands; each band's
+	// guard rows (GUARD_V*size each side) stay invalid; core rows carry world pos + normal. atlas(u,v)->world
+	// is the exact inverse of the shader world->atlas mapping — keep both in sync (BAND_H / GUARD_V are shared consts).
+	var metadata = new Float32Array(size * size * 12);
+	var BAND_H = R7310_C1_IRON_DOOR_REVEAL_BAND_H;   // 0.25
+	var GUARD_V = R7310_C1_IRON_DOOR_REVEAL_GUARD_V; // 0.04
+	var CORE_H = BAND_H - 2.0 * GUARD_V;             // 0.17
+	var valid = 0;
+	for (var py = 0; py < size; py += 1)
+	{
+		for (var px = 0; px < size; px += 1)
+		{
+			var u = (px + 0.5) / size;
+			var v = (py + 0.5) / size;
+			var offset = (py * size + px) * 12;
+			var band = Math.floor(v / BAND_H);
+			if (band > 3) band = 3;
+			var vLocal = v - band * BAND_H;                                  // 0..0.25
+			var isCore = vLocal >= GUARD_V && vLocal <= (BAND_H - GUARD_V);   // core [GUARD_V, BAND_H-GUARD_V]
+			var wx = 0.0, wy = 0.0, wz = 0.0, nx = 0.0, ny = 0.0, nz = 0.0, isValid = false;
+			if (isCore)
+			{
+				var depth = (vLocal - GUARD_V) / CORE_H;   // 0..1 (door face x=-1.96 -> wall inner face x=-1.91)
+				var along = u;                              // face long axis 0..1
+				wx = -1.96 + depth * 0.05;
+				if (band === 0) { wz = -1.874 + along * 0.890; wy = 2.04; ny = -1.0; isValid = true; }   // top (過樑底)   -Y
+				else if (band === 1) { wz = -1.874 + along * 0.890; wy = 0.09; ny = 1.0; isValid = true; } // bottom (門檻頂) +Y
+				else if (band === 2) { wy = 0.09 + along * 1.950; wz = -1.874; nz = 1.0; isValid = true; } // north jamb (北門樘) +Z
+				else { wy = 0.09 + along * 1.950; wz = -0.984; nz = -1.0; isValid = true; }                // south jamb (南門樘) -Z
+			}
+			metadata[offset] = wx;
+			metadata[offset + 1] = wy;
+			metadata[offset + 2] = wz;
+			metadata[offset + 3] = nx;
+			metadata[offset + 4] = ny;
+			metadata[offset + 5] = nz;
+			metadata[offset + 6] = 6.0;
+			metadata[offset + 7] = isValid ? 1.0 : 0.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (isValid) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+}
+
 function buildR7310C1SouthWindowLeftRevealShadowTexelMetadata(size)
 {
 	return buildR7310C1SouthWindowXRevealShadowTexelMetadata(size, R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_WORLD_BOUNDS, 1.0);
@@ -5745,6 +5863,8 @@ function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 		return 0.50;
 	if (surfaceName === R7310_C1_SW_COLUMN_INNER_SHADOW_SURFACE_NAME)
 		return 0.50;
+	if (surfaceName === R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME)
+		return 0.60;
 	return 0.99;
 }
 
@@ -5928,6 +6048,7 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 			else if (patchId === R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowRightRevealShadowTexelMetadata(size);
 			else if (patchId === R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowBottomRevealShadowTexelMetadata(size);
 			else if (patchId === R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size);
+			else if (patchId === R7310_C1_IRON_DOOR_REVEAL_TARGET_ID) metadataResult = buildR7310C1IronDoorRevealTexelMetadata(size);
 			if (shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult))
 				syncR7310C1AtlasAlphaToTexelMetadata(averaged.pixels, metadataResult.metadata, size);
 			if (patchId === R7310_C1_FLOOR_TARGET_ID || patchId === R7310_C1_CEILING_TARGET_ID)
@@ -6232,6 +6353,17 @@ async function captureR7310C1SouthWindowTopRevealShadowAtlas(targetSamples, time
 	});
 }
 window.captureR7310C1SouthWindowTopRevealShadowAtlas = captureR7310C1SouthWindowTopRevealShadowAtlas;
+async function captureR7310C1IronDoorRevealAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		patchId: R7310_C1_IRON_DOOR_REVEAL_TARGET_ID,
+		surfaceName: R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME,
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+	});
+}
+window.captureR7310C1IronDoorRevealAtlas = captureR7310C1IronDoorRevealAtlas;
 
 function buildR738ValidationReport(report, rawHdrReadback, atlasPixels, texelMetadata, reprojection)
 {
@@ -6524,6 +6656,18 @@ window.reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples = function(target
 		worldBounds: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS,
 		mapping: 'single_planar_xz_on_y_face',
 		captureAtlas: captureR7310C1SouthWindowTopRevealShadowAtlas
+	});
+};
+
+window.reportR7310C1IronDoorRevealBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'iron_door_reveal',
+		targetId: R7310_C1_IRON_DOOR_REVEAL_TARGET_ID,
+		surfaceName: R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME,
+		worldBounds: R7310_C1_IRON_DOOR_REVEAL_WORLD_BOUNDS,
+		mapping: 'iron_door_reveal_four_band_combined',
+		captureAtlas: captureR7310C1IronDoorRevealAtlas
 	});
 };
 
@@ -8714,6 +8858,8 @@ function ensureR7310C1FullRoomDiffuseRuntimeLoading()
 		loadR7310C1SouthWindowBottomRevealShadowRuntimePackage().catch(function() {});
 	if (r7310C1SouthWindowTopRevealShadowRuntimeEnabled && (r7310C1SouthWindowTopRevealShadowRuntimePending || !r7310C1SouthWindowTopRevealShadowRuntimeReady))
 		loadR7310C1SouthWindowTopRevealShadowRuntimePackage().catch(function() {});
+	if (r7310C1IronDoorRevealRuntimeEnabled && (r7310C1IronDoorRevealRuntimePending || !r7310C1IronDoorRevealRuntimeReady))
+		loadR7310C1IronDoorRevealRuntimePackage().catch(function() {});
 	if (!r7310C1AnyFullRoomDiffuseSurfaceEnabled())
 		resetR738MainAccumulation();
 }
@@ -8858,6 +9004,17 @@ window.setR7310C1StructuralDiffuseRuntimeEnabled = function(enabled)
 	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
 };
 
+window.setR7310C1IronDoorRevealRuntimeEnabled = function(enabled)
+{
+	r7310C1IronDoorRevealRuntimeEnabled = !!enabled;
+	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	updateR738C1BakePastePreviewUniforms();
+	ensureR7310C1FullRoomDiffuseRuntimeLoading();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-c1-iron-door-reveal-runtime-toggle');
+	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+};
+
 window.setR7310C1SeColumnNorthShadowRuntimeEnabled = function(enabled)
 {
 	r7310C1SeColumnNorthShadowRuntimeEnabled = !!enabled;
@@ -8996,6 +9153,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 	var sproutPasteApplied = updateR738C1BakePastePreviewUniforms();
 	return {
 		version: 'r7-3-10-c1-full-room-diffuse-runtime',
+		ironDoorRevealEnabled: r7310C1IronDoorRevealRuntimeEnabled,
 		enabled: r7310C1AnyFullRoomDiffuseSurfaceEnabled(),
 		northeastFurnitureRuntimeMode: r7310C1NortheastFurnitureRuntimeMode,
 		eastWallEnabled: r7310C1EastWallDiffuseRuntimeEnabled,
@@ -9092,9 +9250,9 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		targetAtlasResolution: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.targetAtlasResolution : null,
 		requestedSamples: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.requestedSamples : null,
 		diffuseOnly: r7310C1FullRoomDiffuseRuntimePackage ? r7310C1FullRoomDiffuseRuntimePackage.diffuseOnly === true : null,
-		runtimeAtlasPatchCount: 22,
+		runtimeAtlasPatchCount: R7310_C1_RUNTIME_ATLAS_PATCH_COUNT,
 		runtimeAtlasGridColumns: R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS,
-		runtimeAtlasGridRows: Math.ceil(22 / R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS),
+		runtimeAtlasGridRows: Math.ceil(R7310_C1_RUNTIME_ATLAS_PATCH_COUNT / R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS),
 		northWallPackageDir: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().packageDir : null,
 		northWallTargetId: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().targetId : null,
 		northWallSurfaceName: r7310C1NorthWallActiveDiffuseRuntimePackage() ? r7310C1NorthWallActiveDiffuseRuntimePackage().surfaceName : null,

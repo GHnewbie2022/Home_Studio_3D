@@ -49,8 +49,9 @@ assert.match(fullDiffuseGuard, /r7310EastWallBeamHybridFirstHit/, 'east wall bea
 
 assert.match(homeStudio, /tR7310C1EastWallBeamShadowTexture/);
 assert.match(homeStudio, /uR7310C1EastWallBeamShadowMode/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 22\.0 \}/);
-assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = 22\.0/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 
 assert.match(runner, /east-wall-beam-shadow/);
 assert.match(runner, /c1_east_wall_beam_shadow/);
