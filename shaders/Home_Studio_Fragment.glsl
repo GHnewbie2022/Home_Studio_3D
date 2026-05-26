@@ -1286,6 +1286,39 @@ bool r7310C1RuntimeSurfaceIsSouthWallAcShadow(int visibleHitType, float visibleO
 	return r7310C1RuntimeSurfaceIsSouthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		!r7310C1SouthWallWindowHolePoint(visiblePosition);
 }
+bool r7310C1CeilingOccluderTopFootprint(vec3 visiblePosition)
+{
+	// R7-3.10 ceiling x occluder-top seam/glow ROOT CAUSE (OPUS 2026-05-26)
+	// The SE column (x>=1.78, z[2.49,3.056]) and east beam (x>=1.85, z[-1.874,2.49]) rise flush
+	// to the ceiling plane (y=2.905). Their footprint ceiling texels bake black because the
+	// occluder blocks the downward hemisphere during the bake. That produced two distinct artifacts:
+	//   (1) SEAM - valid-linear averaged those black texels into the adjacent lit ceiling. Handled
+	//              by the InitCommon buildR7310C1CeilingTexelMetadata atlas valid-mask, which marks
+	//              the footprint texels invalid so the sampler skips them on the lit (x<1.78) side.
+	//   (2) GLOW - even masked-invalid, while the ceiling hybrid still OWNED the footprint the
+	//              valid-linear sampler (line ~1077) re-normalizes over valid taps only, so a masked
+	//              texel one texel from the lit region returned the lit value at FULL brightness -> a
+	//              bright fringe at the occluder edge (the glow seen from inside the column).
+	// Fix: exclude the occluder-top footprint from ceiling ownership so it LIVE-TRACES, matching the
+	// "ceiling bake off" appearance the user accepts. Excluding it inside RuntimeSurfaceIsCeiling
+	// covers BOTH ceiling-claiming paths: r7310CeilingHybridFirstHit (carve at 5347) AND the
+	// r7310C1FullRoomDiffuseShortCircuit re-claim (~line 2762). Bounds MIRROR the InitCommon
+	// buildR7310C1CeilingTexelMetadata east+west occluder mask - the two MUST stay in sync;
+	// changing one without the other reopens the seam/glow.
+	// East/SE handled because the user reported it; West/SW handled PROACTIVELY - the baked atlas
+	// scan confirmed the identical valid-but-black defect there (west beam 72147 + SW column 7814
+	// valid-black texels). The four inward-protruding beams/columns (Home_Studio.js boxes 12/13/14/15)
+	// rise flush to y=2.905; the outer wall tops are NOT listed here because the atlas edge-padding
+	// (fillR7310C1AtlasEdgeFromNearestInterior) already re-lights the outer ring.
+	if (visiblePosition.z > 3.056 || visiblePosition.z < -1.874)
+		return false;
+	// East side: SE column inner face x=1.78 (box 15), east beam inner face x=1.85 (box 13).
+	bool seColumnTop = visiblePosition.z >= 2.49 && visiblePosition.x >= 1.78;
+	bool eastBeamTop = visiblePosition.z < 2.49 && visiblePosition.x >= 1.85;
+	// West side: west beam (box 12) and SW column (box 14) share inner face x=-1.75 across z[-1.874,3.056].
+	bool westOccluderTop = visiblePosition.x <= -1.75;
+	return seColumnTop || eastBeamTop || westOccluderTop;
+}
 bool r7310C1RuntimeSurfaceIsCeiling(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
@@ -1295,7 +1328,8 @@ bool r7310C1RuntimeSurfaceIsCeiling(int visibleHitType, float visibleObjectID, v
 		visiblePosition.x >= -2.11 &&
 		visiblePosition.x <= 2.11 &&
 		visiblePosition.z >= -2.074 &&
-		visiblePosition.z <= 3.256;
+		visiblePosition.z <= 3.256 &&
+		!r7310C1CeilingOccluderTopFootprint(visiblePosition);
 }
 float r7310C1StructuralBeamColumnIslandId(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {

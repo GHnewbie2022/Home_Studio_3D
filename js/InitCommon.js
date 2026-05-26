@@ -5033,6 +5033,31 @@ function buildR7310C1CeilingTexelMetadata(size)
 	var southWallZ = 3.056;
 	var southWindowXMin = -1.75;
 	var southWindowXMax = 0.69;
+	// R7-3.10 east-beam / SE-column-top gap (OPUS measured 2026-05-26):
+	// The ceiling along the east edge is occluded during the bake by the east wall + east
+	// beam (z < 2.49) and the SE column (z in [2.49, 3.056]), leaving a valid-black dead
+	// zone (x[1.85,1.90] z[-1.874,2.49] measured 10068/10068 luma=0). The valid-linear
+	// sampler bleeds those black texels into the visible ceiling x east-beam / SE-column-top
+	// junction, producing a dark seam. Mark the dead zone invalid so the sampler skips it.
+	// Mirrors isBehindSolidSouthWall. z > 3.056 stays owned by the south rule above.
+	// Bounds tuned by dry-validation against the baked atlas (maskedLitInterior=0):
+	//   beam band starts at z=-1.874 (beam's north end; north of it the x[1.85,1.90] ceiling
+	//   is genuinely lit open ceiling, must NOT be invalidated);
+	//   SE column band uses x>=1.78 = the SE column box x-min (Home_Studio.js:118
+	//   addBox([1.78,0,2.49],[1.91,2.905,3.056])); x<1.78 is genuinely lit open ceiling
+	//   WEST of the column (the "lit sliver" at x[1.770,1.778] seen in dry-validation), must NOT be masked.
+	//   (Earlier x>=1.79 was wrong: it left the column-occluded x[1.78,1.79] unmasked -> SE column-top seam.)
+	// The atlas outer ring re-lights via fillR7310C1AtlasEdgeFromNearestInterior after alpha sync,
+	// so the east edge column (x~2.11) inside this mask is harmless.
+	var eastBeamWallX = 1.85;
+	var seColumnX = 1.78;
+	var seColumnZMin = 2.49;
+	var eastBeamZMin = -1.874;
+	// West side handled symmetrically (OPUS 2026-05-26 root-cause elimination + whack-a-mole prevention):
+	// west beam (Home_Studio.js box 12) and SW column (box 14) share inner face x=-1.75 across
+	// z[-1.874,3.056]; the baked atlas scan confirmed 72147 (beam) + 7814 (SW column) valid-but-black
+	// texels there - the IDENTICAL defect as east. Mirror the shader r7310C1CeilingOccluderTopFootprint.
+	var westOccluderX = -1.75;
 	for (var y = 0; y < size; y += 1)
 	{
 		for (var x = 0; x < size; x += 1)
@@ -5044,7 +5069,15 @@ function buildR7310C1CeilingTexelMetadata(size)
 			var isBehindSolidSouthWall =
 				worldZ > southWallZ &&
 				(worldX < southWindowXMin || worldX >= southWindowXMax);
-			var isValid = !isBehindSolidSouthWall;
+			var isBehindEastOccluder =
+				worldZ <= southWallZ &&
+				((worldZ >= seColumnZMin && worldX >= seColumnX) ||
+					(worldZ >= eastBeamZMin && worldZ < seColumnZMin && worldX >= eastBeamWallX));
+			var isBehindWestOccluder =
+				worldZ <= southWallZ &&
+				worldZ >= eastBeamZMin &&
+				worldX <= westOccluderX;
+			var isValid = !isBehindSolidSouthWall && !isBehindEastOccluder && !isBehindWestOccluder;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = b.y;

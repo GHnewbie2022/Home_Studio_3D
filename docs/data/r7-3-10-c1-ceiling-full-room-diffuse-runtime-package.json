@@ -29,14 +29,14 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "8ed471d83dd78fc392cd5732c262f9d261e1e07fa535b62d041c361bb028b734",
-    "texelMetadataPatch0Sha256": "7f0db14b346c8adb63e6f19626bb62cdad89cd1ab98f249ba7212f8e7ea86a29"
+    "atlasPatch0Sha256": "6ac5611fb6a7a08f655da2dd52a565c9d0b1c03ed2049e499f45abfd02ad41f4",
+    "texelMetadataPatch0Sha256": "23c10ec3daf38f67c6e920cd3ee9cd94e3115a46c1b24fefdebd8c720e6c992e"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
     "actualSamples": 1000,
-    "validTexelRatio": 0.984344482421875
+    "validTexelRatio": 0.8469648361206055
   },
   "mapping": "planar_xz",
   "referenceForAcceptance": "live_path_tracing_same_camera",

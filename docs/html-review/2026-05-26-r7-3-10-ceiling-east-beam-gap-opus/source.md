@@ -1,0 +1,286 @@
+# R7-3.10 天花板 × 樑柱頂端交界：縫隙＋發光邊界 根因剷除（OPUS 自主實作，2026-05-26）
+
+## 1. 本頁目的與任務
+
+```text
+分支：codex/r7-3-10-ceiling-east-beam-se-column-gap（從 main / PR #6 合併後的乾淨點分出）。
+
+本輪由 OPUS 直接實作（非審查）。這是「第二輪」：
+  第一輪（v1，使用者已測）：用 atlas 遮罩修「天花板×東樑」黑縫 → 使用者確認東樑修好。
+  使用者回報 v1 仍有兩個異常（都在東南扁柱）：
+    異常1：東南扁柱頂端 × 天花板交界「還是有縫隙」。
+    異常2：視角鑽進柱子內部，還看得到「發光的邊界」。
+    關鍵線索：這兩個異常「都在關閉天花板烘焙後消失」。
+  使用者指令：用指定視角做視覺驗證、修到好為止、不得治標不治本、找出根本原因並剷除、
+              預防避免未來重蹈覆轍打地鼠；做完寫 MD、白話文、給 CODEX 的乾淨訊息。
+
+本頁記錄：根因（兩個不同機制）、修法（兩段）、SE 修正、西側預防性延伸、實作、驗證、人工 gate、心得、交接。
+```
+
+## 2. 根因：兩個「不同機制」的異常（皆有程式碼為證，非臆測）
+
+```text
+天花板 hybrid 的取樣是「valid-linear」：對 atlas 做雙線性內插，但只用「有效(alpha=1)」的 texel
+（shaders/Home_Studio_Fragment.glsl 約 line 1066-1086）。核心三行：
+  w = (1-tx)(1-ty) * c.a   // alpha 即 valid 旗標(0/1)
+  weightSum = w00+w10+w01+w11
+  if (weightSum>0) return Σ(rgb*w)/weightSum   // 只用有效格「再正規化」
+
+東樑/東南柱/西樑/西南柱「頂端與天花板齊平(y=2.905)」，烘焙時它們擋住天花板向下的半球
+→ 那塊腳印天花板 texel 烤成「valid + luma=0」（黑）。由此衍生兩個不同異常：
+
+異常1（縫隙 / SEAM）：
+  腳印的黑 texel 被標 valid → valid-linear 把黑「平均」進旁邊的亮天花板（柱西側 x<1.78）
+  → 亮天花板邊緣被拉暗 → 一條黑縫。
+  ← 第一輪的 atlas 遮罩（標無效）就是修這個：取樣器跳過黑格，亮側不再被汙染。
+
+異常2（發光邊界 / GLOW）：
+  把腳印標無效後，「天花板 hybrid 仍然認領」這塊腳印並繼續取樣。
+  valid-linear 只用有效格再正規化 → 一個「無效」腳印格只要鄰域裡有一格「有效亮格」(x<1.78)，
+  weightSum 由那格撐起、回傳值＝該亮格的「全亮」值（約 100-180/255）。
+  → 柱緣一圈無效格回傳全亮 ＝ 你從柱內看到的「發光邊界」。再往內全無效 → weightSum=0 → 黑。
+  ← 第一輪沒處理這個，所以遮罩後 glow 仍在（甚至是遮罩「製造出 valid/invalid 邊界」才出現的）。
+
+兩條認領路徑都要堵（讀碼確認）：
+  A. r7310CeilingHybridFirstHit（加性疊加 line ~5979）。
+  B. r7310C1FullRoomDiffuseShortCircuit（line ~2762）：當某點沒有任何 hybrid owner 時，
+     會「再次」用 RuntimeSurfaceIsCeiling 認領天花板、回傳烤值（line ~6153）。
+  只扣 A 不扣 B，被扣的點會掉進 B 被重新認領 → 等於白扣。
+```
+
+## 3. 修法：兩段，對應兩個機制（缺一不可）
+
+```text
+第一段（修縫隙）＝ atlas valid 遮罩（沿用 §27 成案）：
+  在 ceiling metadata 把樑柱頂端腳印標 invalid，取樣器跳過 → 亮側不被黑汙染。
+  落點：js/InitCommon.js buildR7310C1CeilingTexelMetadata。
+
+第二段（修發光，本輪新增的根因剷除）＝ 把腳印「從天花板認領中排除」：
+  新增 r7310C1CeilingOccluderTopFootprint(vec3)，並在「共用判定」r7310C1RuntimeSurfaceIsCeiling
+  尾端 && !r7310C1CeilingOccluderTopFootprint(...)。
+  改共用判定 → A、B 兩條認領路徑「同時」失效 → 腳印改走 live-trace。
+  live-trace 的結果＝「關閉天花板烘焙」的外觀（使用者已接受為正解）→ 無發光、與鄰接連續。
+  這沿用專案既有的 r7310DedicatedCeilingHybridFirstHit（line ~5347）「把某塊從天花板扣除」的正規手法。
+
+為何兩段都要：
+  只遮罩不排除 → 殘留發光（valid-linear 邊界全亮）。
+  只排除不遮罩 → 亮側(x<1.78)雙線性仍會把腳印黑格平均進來 → 縫隙回來。
+  兩段邊界「完全一致」（單一真相），InitCommon 遮罩與 shader 判定式互為鏡像，改一個沒改另一個就會重開縫/光。
+```
+
+## 4. SE 修正：seColumnX 1.79 → 1.78（修使用者回報的 SE 殘縫）
+
+```text
+v1 用 seColumnX=1.79 太保守，把「柱遮蔽的 x[1.78,1.79]」漏在遮罩外 → SE 柱頂殘縫。
+東南柱 box（Home_Studio.js:118）：addBox([1.78,0,2.49],[1.91,2.905,3.056]) → 內面 x=1.78。
+改 seColumnX=1.78＝柱內面（幾何驅動，非打地鼠）。dry-validation：maskedLitInterior=0，多抓 218 死格。
+```
+
+## 5. 西側預防性延伸：剷除同類根因、避免未來打地鼠（本輪重點）
+
+```text
+使用者要「找出根本原因並剷除、預防避免未來打地鼠」。根因類別＝「天花板認領了齊頂遮蔽物腳印」。
+只修東側＝留著一模一樣的西側地雷＝違背指示。於是「用證據」檢查西側：
+
+直讀 baked atlas（掃描 x<0 半邊）：
+  西樑帶 x≤-1.74 z[-1.874,2.49]：validBlack = 72147（有效但全黑）。
+  西南柱帶 x≤-1.74 z[2.49,3.056]：validBlack = 7814。
+  → 與東側「完全相同」的 valid-black 缺陷，只是西側「還沒被遮罩」，所以目前是潛在縫隙（黑被平均進亮側），
+    還沒變成發光（發光要先遮罩、產生 valid/invalid 邊界才會出現）。使用者還沒從那個角度看而已。
+
+西側幾何（Home_Studio.js）：
+  box12 西樑 x[-1.91,-1.75] y[2.525,2.905] z[-1.874,2.848]，內面 x=-1.75。
+  box14 西南柱 x[-1.91,-1.75] y[0,2.905] z[2.846,3.056]，內面 x=-1.75。
+  box11 西牆 x[-2.11,-1.91] 頂端齊天花板（腳印也黑，但屬最外圈→edge-padding 會重補亮，無害）。
+  → 西側遮蔽腳印 = x ≤ -1.75、z ∈ [-1.874, 3.056]（單一矩形，兩個內面同 x=-1.75，比東側更乾淨）。
+
+外牆頂為何不列入：天花板四周「外牆頂」腳印也黑，但它們在 atlas「最外圈」，
+  fillR7310C1AtlasEdgeFromNearestInterior 會在 sync 後重補亮 → 不會成縫。
+  只有「向室內凸出」的四根樑/柱（box 12/13/14/15）凸進最外圈以內 → 才需 mask+排除。
+```
+
+## 6. 實作落點（東西兩側對稱）
+
+```text
+shaders/Home_Studio_Fragment.glsl：
+  新增 r7310C1CeilingOccluderTopFootprint(vec3)（東：SE柱 x≥1.78 z[2.49,3.056]、東樑 x≥1.85 z<2.49；
+    西：x≤-1.75 z[-1.874,3.056]；z>3.056 / z<-1.874 交給南規則與 edge-padding）。
+  r7310C1RuntimeSurfaceIsCeiling 尾端 && !r7310C1CeilingOccluderTopFootprint(visiblePosition)。
+
+js/InitCommon.js buildR7310C1CeilingTexelMetadata：
+  isBehindEastOccluder（seColumnX=1.78, eastBeamWallX=1.85, seColumnZMin=2.49, eastBeamZMin=-1.874）
+  + 新增 isBehindWestOccluder（westOccluderX=-1.75, z[-1.874,3.056]）。
+  邊界理由寫進註解＋互為鏡像聲明（避免日後被「簡化」重新挖暗）。
+
+assets/.../ceiling-full-room-1024px-1000spp/ bins：node-patch 重生（東+西遮罩）。
+docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json：hash + validTexelRatio 同步。
+Home_Studio.html：cache-buster → r7310-ceiling-occluder-top-carveout-v2。
+```
+
+## 7. node-patch（為何不走 canonical 瀏覽器重烤；忠實度論證）
+
+```text
+canonical 重烤關卡（沿用第一輪結論）：軟體 GL 太慢 timeout、metal 重烤 validation 失敗仍覆寫 bins、
+  ceiling validTexelRatio 門檻 0.98（runner + browser 兩處）。為不冒覆寫風險，改 node-patch。
+
+node-patch 流程（/tmp/ceiling_node_patch.cjs，逐行複製 canonical 後處理）：
+  讀已 commit 的 ceiling atlas（RGB 已烤好；死區本就黑）
+  → 用 metadata 內存 worldX/worldZ + 東西遮罩重算 valid（與 builder 公式逐位元一致）
+  → syncR7310C1AtlasAlphaToTexelMetadata（invalid→RGBA 0）
+  → fillR7310C1AtlasEdgeFromNearestInterior（最外圈補亮）。
+  再次跑於「已套東側遮罩的 bins」上是正確且冪等的：valid 由穩定的 worldX/worldZ 重算，
+  亮格 RGB 永遠保留原烤值，只有無效格被清零。
+
+忠實度：只改「無效格 alpha 1→0」+「最外圈重補亮」，不動亮區 RGB、不動死區 RGB（本就黑）。
+  canonical 重烤對亮區得同一收斂值、對死區仍黑 → 對「本修法」與重烤等價。
+  InitCommon builder 已同步改好 → 未來 canonical 重烤會自然保留此修法。
+```
+
+## 8. 成果：數值與雜湊
+
+```text
+東側腳印（x[1.85,2.10] z[-1.874,2.49]）：interior alpha>0.5 = 0（全遮，只剩東緣 edge-pad ring）。
+西側腳印（x[-2.10,-1.75] z[-1.874,3.056]）：interior alpha>0.5 = 0（全遮，西側修法生效）。
+對照開放天花板（x[-0.5,0.5] z[-0.5,0.5]）：meanLuma 0.469、全 alpha>0.5（完全未動）。
+新 validTexelRatio = 0.8469648361206055（validCount 888107 / 1048576；東~61577 + 西~80000 死格遮罩）。
+
+bins（assets，已覆寫、未 commit）：
+  atlas    4e88b7fa…（東 only）→ 6ac5611fb6a7a08f655da2dd52a565c9d0b1c03ed2049e499f45abfd02ad41f4
+  metadata cb3b9bdb…（東 only）→ 23c10ec3daf38f67c6e920cd3ee9cd94e3115a46c1b24fefdebd8c720e6c992e
+pointer JSON：atlasPatch0Sha256 / texelMetadataPatch0Sha256 / validation.validTexelRatio 三欄已同步。
+pointer 的 validation.status 仍為原烤的 "pass"（node-patch 未跑 runner 驗證）— 已知限制，見 §10。
+```
+
+## 9. 驗證（OPUS 自主、瀏覽器實渲，非僅臆測）
+
+```text
+工具限制與作法：headless 預覽分頁 visibilityState=hidden → requestAnimationFrame 被節流，
+  且 WebGL canvas preserveDrawingBuffer=false → 分開的截圖讀到清空後的黑緩衝。
+  作法：用專案自有的 renderR739CurrentViewExactSamples（自有逐幀驅動、不靠 rAF）渲到 1000spp，
+  凍結 animate 防重置，手動跑 screenOutput 顯示 pass + gl.readPixels 取 tonemap 後像素做量化判讀。
+
+已確認：
+  1. GLSL 編譯無誤（console 無 error）。
+  2. 天花板 hybrid 在新 ratio 0.847 仍啟用：ceilingMode=1、fullRoomReady=1、bakeCaptureMode=0。
+     → 西側遮罩把 ratio 從 0.9256 壓到 0.847「沒有」關掉天花板 atlas【安全關鍵；0.98 門檻是烘焙期，runtime 不擋】。
+  3. atlas dry-validation：東 61577 + 西 80580 腳印格全標無效；開放天花板對照 meanLuma 0.469 全亮（未誤殺）。
+  4. cam2（使用者的發光視角 x=1.7838,y=2.855,z=2.5137,yaw=-1.7632,pitch=1.282,fov=56，鑽在柱內，1000spp）：
+     修後「全圖最亮像素 luma = 9.353/255」、平均 0.0048、結構是極暗的「細幾何邊線」。
+     舊版 valid-linear 全亮邊緣應為約 100-180/255 → 亮發光邊界已消除（亮度降至 ~1/13 以下，僅剩暗輪廓）。
+
+未取得（誠實標註）：
+  從房間正常視角看交界的「漂亮全景圖」未取得——盲設自由相機 forward 角度退化成正對上方(gimbal)，
+  在受限的 headless 路徑下逐次試角成本過高。SEAM（異常1）這輪未直接截圖，
+  但其機制＝atlas 遮罩（東樑已由使用者於 v1 確認修好、SE/西側用「完全相同」機制），加上 dry-validation 已證腳印全遮、亮區未動。
+  → 建議使用者於自己瀏覽器（GPU、可見分頁）做最終全品質肉眼驗收（見 §12）。
+```
+
+## 10. 待人工 gate 的項目（OPUS 刻意未自動做）
+
+```text
+依 §15.1 Q2 規矩「hash 不符 → 紅 → 人工核可後才更新 baseline，禁止自動寫回」：
+  1. edge-border baseline 的 ceiling entry：atlas hash 變 6ac5611f → audit 會紅；人工複核「新東+西緣為預期」後重生。
+  2. valid-black boundary regression：ceiling hash 待人工複核後同步。
+  3. canonical 重烤路線（若要回正規 pipeline）：ceiling validTexelRatio 門檻 0.98 → ~0.84
+     （runner validTexelRatioMinimumBySurface + browser r7310C1ValidTexelRatioMinimumForSurface 兩處），
+     反映東+西真實遮擋（其他面門檻本就 0.30~0.93）。屬判斷，留使用者拍板。
+  4. pointer validation.status 重烤後應由 runner 重新蓋章。
+
+預期性變紅（設計內、非破壞）：baseline/門檻 gate 前，edge-border / valid-black / full-room bake contract 對 ceiling hash 會紅，正是 §15.1 人工 gate 的設計行為。
+```
+
+## 11. 取捨與心得（預防打地鼠）
+
+```text
+取捨：日後若隱藏東/西牆，這兩條緣會變黑洞 —— 已接受的取捨（與 §31 一致），非新問題。
+
+心得：
+  1. 兩個症狀、兩個機制：縫隙＝valid-black 平均汙染（atlas 遮罩）；發光＝valid-linear 在遮罩邊界「全亮再正規化」
+     （shader 認領排除）。同一個視覺位置卻是兩條程式碼路徑，只修一個會以為修好其實沒。
+  2. 根因剷除而非打地鼠：根因類別＝「天花板認領齊頂遮蔽物腳印」。改「共用判定」RuntimeSurfaceIsCeiling 一處，
+     同時堵 hybrid-owner 與 short-circuit 兩條認領路徑；並用證據把同類缺陷的西側一起剷除。
+  3. 預防機制：InitCommon 遮罩與 shader 判定式「邊界完全一致、互為鏡像」，註解寫明「改一個必改另一個」；
+     四根向內凸樑柱(box12/13/14/15)為清單，外牆頂交給 edge-padding。未來新增遮蔽物 → 兩處同步加界＝固定配方。
+  4. 動刀前讀碼擋下一次白工：原本只想在 5347 扣 hybrid-owner，讀碼發現 short-circuit(2762) 會重新認領 → 改共用判定才完整。
+  5. 守住人工 gate（§15.1 Q2）：使用者睡著時不自動改 hash-bound baseline，只做「描述 bins 現況」的事實更新。
+```
+
+## 12. 驗收與下一動
+
+```text
+主審查網址（v2，bins 已換，請硬重載）：
+  http://localhost:9002/Home_Studio.html?v=r7310-ceiling-occluder-top-carveout-v2
+  Cmd+Shift+R 硬重載（package bins URL 未帶 query，需硬重載確保載入新 ceiling package）。
+
+請肉眼確認三處（全品質）：
+  1. cam2（你給的視角，鑽進東南柱）：發光邊界應消失（量測最亮已從~全亮降到 9/255）。
+  2. 東南柱頂端 × 天花板交界：黑縫應消失（seColumnX 1.78 修正）。
+  3. 西樑、西南柱頂端 × 天花板交界：本輪「預防性」同步修了，請順便確認沒有新縫/光、開放天花板正常。
+  對照組：可按「天花板烘焙：關」比對 —— 修後 ON 在這些交界處應與 OFF 一致（你原本的判據）。
+
+CODEX 交接：
+  1. 重生本頁 index.html（OPUS 只寫 source.md）。
+  2. 人工 gate 後更新 edge-border / valid-black baseline 的 ceiling hash（複核新東+西緣為預期）。
+  3. 若回 canonical pipeline：下調 ceiling validTexelRatio 門檻（runner+browser 兩處 → ~0.84），
+     再用 --r7310-full-room-diffuse-bake --r7310-surface=ceiling --atlas-resolution=1024 --angle=metal 重烤，
+     確認 hash 與 node-patch 一致或更新 baseline，並讓 runner 重蓋 validation.status。
+  4. baseline / 門檻 gate 後跑防呆全套確認綠。
+
+OPUS 不自行 commit；所有改動留工作樹給使用者/CODEX 決定提交。
+```
+
+## 13. CODEX gate 紀錄（2026-05-26）
+
+```text
+CODEX 接手項目：
+  1. 重生本頁 HTML Review。
+  2. 反向審查 OPUS 的 package / shader / metadata / baseline gate。
+  3. 更新人工 gate 後可接受的 ceiling edge-border baseline hash。
+  4. 跑防呆測試，確認這次 carveout 沒把既有紅藍、南牆、SE column、structural gate 打壞。
+
+CODEX 核對結果：
+  1. shader 與 InitCommon 的判定式對齊 OPUS 描述。
+     - shader：r7310C1CeilingOccluderTopFootprint(...) 排除齊頂遮蔽物腳印。
+     - InitCommon：ceiling metadata 同步遮東 SE 柱、東樑、西側遮蔽物腳印。
+  2. pointer JSON 的新 hash 對上目前 bins：
+     - atlas = 6ac5611fb6a7a08f655da2dd52a565c9d0b1c03ed2049e499f45abfd02ad41f4
+     - metadata = 23c10ec3daf38f67c6e920cd3ee9cd94e3115a46c1b24fefdebd8c720e6c992e
+  3. edge-border audit 在更新 baseline 前只剩 ceiling hash mismatch；
+     metadataMismatches = []、missingBaselineEntries = []、newEdgeBlackTexels = []。
+     這表示新 package 沒新增邊框黑點，符合人工 gate 的更新條件。
+  4. baseline 更新只換 ceiling 的 atlas/metadata hash；
+     allowedEdgeBlackCount 維持 0，allowedEdgeBlackRuns 維持 []，沒有放寬黑點座標。
+
+已處理：
+  1. docs/data/r7-3-10-edge-border-baseline.json 的 ceiling entry 已更新到新 hash。
+  2. docs/html-review/2026-05-26-r7-3-10-ceiling-east-beam-gap-opus/index.html 已重生。
+  3. source.md 中一個混入字元的「pass」已修正。
+
+保留項：
+  canonical 重烤尚未執行。
+  原因：OPUS 這輪是 node-patch 方案，且使用者已肉眼確認修好；直接重烤會覆蓋目前已驗證的 bins。
+  若之後要回 canonical pipeline，再照 §12 第 3 點下調 ceiling validTexelRatio 門檻並重烤。
+
+CODEX 驗證：
+  node --check js/InitCommon.js ................................................ pass
+  node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs ..................... pass
+  node --check docs/html-review/.../assets/html-review.js ....................... pass
+  node docs/tools/r7-3-10-edge-border-audit.cjs ................................. pass
+  node docs/tests/r7-3-10-edge-border-audit.test.js ............................. pass
+  node docs/tests/r7-3-10-valid-black-boundary-regression.test.js ............... pass
+  node docs/tests/r7-3-10-floor-ceiling-hybrid.test.js .......................... pass
+  node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js ............... pass
+  node docs/tests/r7-3-10-hybrid-owner-probe.test.js ............................ pass
+  node docs/tests/r7-3-10-north-east-wall-hybrid.test.js ........................ pass
+  node docs/tests/r7-3-10-east-wall-beam-shadow.test.js ......................... pass
+  node docs/tests/r7-3-10-se-column-north-shadow.test.js ........................ pass
+  node docs/tests/r7-3-10-se-column-west-shadow.test.js ......................... pass
+  node docs/tests/r7-3-10-south-wall-ac-shadow.test.js .......................... pass
+  node docs/tests/r7-3-10-structural-geometry-gate.test.js ...................... pass
+  node docs/tests/r3-3-cloud-radiance.test.js ................................... pass
+  git diff --check .............................................................. pass
+
+CODEX 結論：
+  OPUS 這輪修法可採用；baseline gate 已補上；防呆測試綠。
+  下一步是使用者肉眼複核主網址，通過後可 commit / PR。
+```
