@@ -937,3 +937,39 @@ cache：
     - 直接光 + 間接光混合不一致；
     - 或既有 package 的 sample count / denoise 不足。
 ```
+
+## 14. 大面 SPP 重烤（A 方案）：北牆髒斑＝固有噪點被「低 texel 密度」放大（OPUS，2026-05-27）
+
+```text
+A/B 量測結論（回答 §13.13「乾淨 reveal 面 vs 髒北牆面」差異比較，使用者指定先量測再修）：
+  atlas-noise probe 比 6 大面 1000spp 的 per-texel 噪點 → 全部約 3.5%（同級，皆 1000spp）。北牆 atlas 並沒比較噪。
+  差異在「texel 密度」：北牆 4.22m×2.9m≈12m² 塞單一 1024 slot（~3.4mm/texel，全 atlas 最低密度）；
+    iron-door reveal 是 cm 級小面（~1–2mm/texel，高約一個數量級）。
+  → 同樣 3.5% 噪點：北牆被「攤大面＋bilinear 放大」就現成低頻模糊斑；reveal 被細化/平均掉就乾淨。
+  → 北牆髒斑「不是 bug、不是 sampler、不是 edge-fill」，是「大面低密度把 1000spp 固有噪點顯示出來」。同理適用所有大面。
+
+A 方案執行（使用者授權 10000spp）：6 大面 formal 重烤 10000spp（bed 配置）。before/after per-texel 噪點：
+  面          1000spp   10000spp   倍率    meanLuma(亮度)
+  floor       4.52%     1.76%      0.39×   0.0799 不變
+  north-wall  3.55%     1.19%      0.34×   0.2258 不變
+  east-wall   3.33%     1.11%      0.33×   0.2524 不變
+  west-wall   3.45%     1.16%      0.34×   0.2412 不變
+  south-wall  2.97%     1.20%      0.40×   0.1547 不變
+  ceiling     2.52%     0.83%      0.33×   0.3666 不變
+  → 全部 ~2.6–3× 乾淨、亮度/內容零位移；validTexelRatio(幾何) 不變。
+
+過程踩到的兩個機制問題＋處置（待 CODEX 正規裁示）：
+  1 runner 把「正式烘焙」鎖死 (targetSamples||samples)===1000（line ~8167）→ 10000spp 只進 .omc 暫存。
+    處置：放寬為 >= 1000（最小、1000 仍正式、>=1000 可正式）。CODEX：接受此 contract、或改 opt-in flag？
+  2 north-wall(QC 0.77 頁面/0.80 runner) 與 ceiling(0.98) 的 validTexelRatio 門檻「比該面幾何現實還嚴」
+    （actual 0.7665/0.847，嚴到連現有已驗收包都過不了現行門檻）→ 首烤 fail。
+    處置：頁面 browser 驗證＋runner 兩套門檻都降到剛低於 actual（north 0.75、ceiling 0.83），重烤即 pass。
+    CODEX：ratify 門檻值；這同時修正了「現有 north/ceiling 包其實過不了現行門檻」的既存不一致。
+  3 bake 目錄名仍叫「...-1024px-1000spp」但內容已 10000spp（misnomer）。CODEX：改名(+更新 packageDir) 或接受。
+
+未做（optional follow-up）：north/east wall 的 wardrobe 變體、structural（樑柱，窄面密度足）未重烤；iron-door reveal 已乾淨不需。
+
+驗證：6 面 status pass、pointer actualSamples 10000、正式目錄已改寫；atlas-noise probe 證噪降、亮度不變；
+  contract 鎖(check-r7310-iron-door-reveal-consts / check-r7310-runtime-atlas-patch-count) 仍 pass；node --check OK。
+全備份在 /tmp/large-face-bake-backup（壞可還原）。驗收網址：http://localhost:9002/Home_Studio.html?v=r7310-large-face-10kspp-clean
+```

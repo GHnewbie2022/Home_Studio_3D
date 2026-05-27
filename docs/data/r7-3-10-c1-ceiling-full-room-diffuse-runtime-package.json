@@ -8,7 +8,7 @@
   "northeastFurnitureMode": null,
   "targetId": 1006,
   "surfaceName": "c1_ceiling",
-  "requestedSamples": 1000,
+  "requestedSamples": 10000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
   "bakedRadianceKind": "indirect_diffuse_radiance",
@@ -29,13 +29,13 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "6ac5611fb6a7a08f655da2dd52a565c9d0b1c03ed2049e499f45abfd02ad41f4",
+    "atlasPatch0Sha256": "944eff6892b20ca8cd3db768012b433ed9bf036d14dae11d2b9eb8eb2205a97a",
     "texelMetadataPatch0Sha256": "23c10ec3daf38f67c6e920cd3ee9cd94e3115a46c1b24fefdebd8c720e6c992e"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
-    "actualSamples": 1000,
+    "actualSamples": 10000,
     "validTexelRatio": 0.8469648361206055
   },
   "mapping": "planar_xz",

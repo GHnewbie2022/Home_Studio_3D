@@ -26,9 +26,9 @@
   "metadataFloatCount": 12582912,
   "atlasVisibleLuma": {
     "texels": 1048576,
-    "nonzeroTexels": 854262,
-    "meanLuma": 0.2989832226224339,
-    "maxLuma": 0.5430506865183512
+    "nonzeroTexels": 852699,
+    "meanLuma": 0.2989653212265078,
+    "maxLuma": 0.507108082373937
   },
   "browserValidationStatus": "pass",
   "runnerStatus": "pass",

@@ -5,11 +5,15 @@
   "runtimeEnabledDefault": true,
   "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/south-wall-window-hole-1024px-1000spp",
   "batch": "south_wall",
+  "northeastFurnitureMode": null,
   "targetId": 1005,
   "surfaceName": "c1_south_wall",
-  "requestedSamples": 1000,
+  "requestedSamples": 10000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
+  "bakedRadianceKind": null,
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": false,
   "upscaled": false,
   "worldBounds": {
     "xMin": -2.11,
@@ -18,54 +22,6 @@
     "yMax": 2.905,
     "z": 3.056
   },
-  "invalidTexelRegions": {
-    "windowHole": {
-      "xMin": -1.75,
-      "xMax": 0.69,
-      "yMin": 1.04,
-      "yMax": 2.905
-    },
-    "sideColumnBacks": {
-      "swColumnBack": {
-        "xMin": -1.91,
-        "xMax": -1.75,
-        "yMin": 0,
-        "yMax": 2.905
-      },
-      "seColumnBack": {
-        "xMin": 1.78,
-        "xMax": 1.91,
-        "yMin": 0,
-        "yMax": 2.905
-      }
-    }
-  },
-  "windowRevealAtlasRegions": {
-    "leftReveal": {
-      "xMin": -1.69,
-      "xMax": -1.52,
-      "yMin": 1.1,
-      "yMax": 2.845
-    },
-    "rightReveal": {
-      "xMin": 0.46,
-      "xMax": 0.63,
-      "yMin": 1.1,
-      "yMax": 2.845
-    },
-    "bottomReveal": {
-      "xMin": -1.52,
-      "xMax": 0.46,
-      "yMin": 1.1,
-      "yMax": 1.27
-    },
-    "topReveal": {
-      "xMin": -1.52,
-      "xMax": 0.46,
-      "yMin": 2.675,
-      "yMax": 2.845
-    }
-  },
   "artifacts": {
     "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
@@ -73,13 +29,13 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "c76a602050b5cbe962a4ca1318ce548e63b6273fa3bff5f51dce50b718539229",
+    "atlasPatch0Sha256": "53ea858edce23679f093b2f6fb65f1f22367585fb06e5f5d79747aa2094d82b4",
     "texelMetadataPatch0Sha256": "08e22d6d6c8179b5998bd9d4a172450cfebb45e243a576526334ae89d729f153"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
-    "actualSamples": 1000,
+    "actualSamples": 10000,
     "validTexelRatio": 0.6673564910888672
   }
 }

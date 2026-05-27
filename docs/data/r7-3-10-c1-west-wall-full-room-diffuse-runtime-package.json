@@ -8,7 +8,7 @@
   "northeastFurnitureMode": null,
   "targetId": 1004,
   "surfaceName": "c1_west_wall",
-  "requestedSamples": 1000,
+  "requestedSamples": 10000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
   "bakedRadianceKind": "indirect_diffuse_radiance",
@@ -29,13 +29,13 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "8149316530032e860394d3f3b7f8e2acfd94899e693506b71dfee502b2adaebc",
+    "atlasPatch0Sha256": "a43308d0b1109d27388733c6bce95921701d6fdc04acb03c93fd4d57618a9655",
     "texelMetadataPatch0Sha256": "596ed043e8179429546770cc15314f78a587d890de70dd18c78e23288409940d"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
-    "actualSamples": 1000,
+    "actualSamples": 10000,
     "validTexelRatio": 0.6857900619506836
   },
   "mapping": "planar_zy",

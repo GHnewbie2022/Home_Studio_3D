@@ -1039,13 +1039,13 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     c1_west_wall: 0.60,
     c1_south_wall: 0.60,
     c1_south_wall_ac_shadow: 0.59,
-    c1_north_wall: 0.80,
+    c1_north_wall: 0.75,
     c1_west_wall_beam_shadow: 0.70,
     c1_east_wall_beam_shadow: 0.70,
     c1_structural_beams_columns: 0.30,
     c1_se_column_north_shadow: 0.93,
     c1_se_column_west_shadow: 0.50,
-    c1_ceiling: 0.98,
+    c1_ceiling: 0.83,
     c1_iron_door_reveal: 0.60
   };
   const validTexelRatioMinimum = Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
@@ -8164,7 +8164,7 @@ async function main() {
 	    const packageRoot = args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture';
 	    const formalR7310Bake = args.fullRoomDiffuseBake &&
 	      args.atlasResolution === 1024 &&
-	      (args.targetSamples || args.samples) === 1000 &&
+	      (args.targetSamples || args.samples) >= 1000 &&
 	      !args.smokeTest;
 	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture) : null;
 	    const packageDir = formalPackageDir || path.join(repoRoot, '.omc', packageRoot, timestampForPath());

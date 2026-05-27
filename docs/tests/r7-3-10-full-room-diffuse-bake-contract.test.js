@@ -88,6 +88,14 @@ function assertMaskedAtlasTexel(pointer, col, row, message)
 	assert.equal(atlasAlphaAt(pointer, col, row), 0, `${message}: alpha`);
 }
 
+function assertLargeFaceSamples(pointer, label)
+{
+	assert.ok(
+		pointer.requestedSamples >= 1000,
+		`${label} runtime package must accept upgraded samples, actual=${pointer.requestedSamples}`
+	);
+}
+
 function southWallAtlasColumn(x)
 {
 	return Math.round(((x + 2.11) / 4.22) * (r7310SouthWall.targetAtlasResolution - 1));
@@ -149,6 +157,30 @@ const r7310RuntimeLoader = initCommon.slice(
   initCommon.indexOf('async function loadR7310C1FullRoomDiffuseRuntimePackage'),
   initCommon.indexOf('async function loadR7310C1NorthWallDiffuseRuntimePackage')
 );
+function runtimeLoaderBlock(functionName, nextFunctionName)
+{
+  const start = initCommon.indexOf(`async function ${functionName}`);
+  const end = nextFunctionName
+    ? initCommon.indexOf(`async function ${nextFunctionName}`)
+    : initCommon.indexOf('function r7310C1DedicatedBeamColumnShadowConfig');
+  assert.ok(start >= 0, `${functionName} must exist`);
+  assert.ok(end > start, `${functionName} block must end before ${nextFunctionName || 'dedicated config'}`);
+  return initCommon.slice(start, end);
+}
+function assertLargeFaceLoaderAcceptsUpgradedSamples(functionName, nextFunctionName)
+{
+  const block = runtimeLoaderBlock(functionName, nextFunctionName);
+  assert.doesNotMatch(
+    block,
+    /requestedSamples\s*!==\s*1000/,
+    `${functionName} must not reject 10000spp large-face packages with a hard 1000spp equality check`
+  );
+  assert.match(
+    block,
+    /requestedSamples\s*<\s*1000/,
+    `${functionName} must keep a minimum 1000spp guard`
+  );
+}
 const bakeCaptureBlock = pathTracingCommon.match(/if \(uR738C1BakeCaptureMode == 2\)[\s\S]*?SetupScene\(\);/)?.[0] || '';
 const pasteUniformBlock = initCommon.match(/function updateR738C1BakePastePreviewUniforms\(\)[\s\S]*?function r7310C1FullRoomDiffuseRuntimeConfigAllowed/)?.[0] || '';
 const fullRuntimeUniformBlock = initCommon.match(/function updateR7310C1FullRoomDiffuseRuntimeUniforms\(\)[\s\S]*?function buildR7310C1CombinedDiffuseRuntimeTexture/)?.[0] || '';
@@ -383,7 +415,7 @@ assert.equal(r7310.packageStatus, 'architecture_probe');
 assert.equal(r7310.runtimeScope, 'c1_floor_full_room_first_hit_hybrid');
 assert.equal(r7310.runtimeEnabledDefault, true);
 assert.equal(r7310.targetId, 1001);
-assert.equal(r7310.requestedSamples, 1000);
+assertLargeFaceSamples(r7310, 'floor');
 assert.equal(r7310.surfaceName, 'c1_floor_full_room');
 assert.equal(r7310.runtimeAtlasSlot, 0);
 assert.equal(r7310.bakedRadianceKind, 'indirect_diffuse_radiance');
@@ -396,7 +428,7 @@ assert.equal(r7310NorthWall.packageStatus, 'architecture_probe');
 assert.equal(r7310NorthWall.runtimeScope, 'c1_north_wall_first_hit_hybrid');
 assert.equal(r7310NorthWall.runtimeEnabledDefault, true);
 assert.equal(r7310NorthWall.targetId, 1002);
-assert.equal(r7310NorthWall.requestedSamples, 1000);
+assertLargeFaceSamples(r7310NorthWall, 'north wall');
 assert.equal(r7310NorthWall.surfaceName, 'c1_north_wall');
 assert.equal(r7310NorthWall.runtimeAtlasSlot, 1);
 assert.equal(r7310NorthWall.bakedRadianceKind, 'indirect_diffuse_radiance');
@@ -409,7 +441,7 @@ assert.equal(r7310EastWall.packageStatus, 'architecture_probe');
 assert.equal(r7310EastWall.runtimeScope, 'c1_east_wall_first_hit_hybrid');
 assert.equal(r7310EastWall.runtimeEnabledDefault, true);
 assert.equal(r7310EastWall.targetId, 1003);
-assert.equal(r7310EastWall.requestedSamples, 1000);
+assertLargeFaceSamples(r7310EastWall, 'east wall');
 assert.equal(r7310EastWall.surfaceName, 'c1_east_wall');
 assert.equal(r7310EastWall.runtimeAtlasSlot, 2);
 assert.equal(r7310EastWall.bakedRadianceKind, 'indirect_diffuse_radiance');
@@ -422,14 +454,14 @@ assert.equal(r7310WestWall.packageStatus, 'architecture_probe');
 assert.equal(r7310WestWall.runtimeScope, 'c1_west_wall_diffuse_short_circuit');
 assert.equal(r7310WestWall.runtimeEnabledDefault, true);
 assert.equal(r7310WestWall.targetId, 1004);
-assert.equal(r7310WestWall.requestedSamples, 1000);
+assertLargeFaceSamples(r7310WestWall, 'west wall');
 assert.equal(r7310WestWall.surfaceName, 'c1_west_wall');
 assert.equal(r7310WestWall.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.equal(r7310SouthWall.packageStatus, 'architecture_probe');
 assert.equal(r7310SouthWall.runtimeScope, 'c1_south_wall_diffuse_short_circuit');
 assert.equal(r7310SouthWall.runtimeEnabledDefault, true);
 assert.equal(r7310SouthWall.targetId, 1005);
-assert.equal(r7310SouthWall.requestedSamples, 1000);
+assertLargeFaceSamples(r7310SouthWall, 'south wall');
 assert.equal(r7310SouthWall.surfaceName, 'c1_south_wall');
 assert.equal(r7310SouthWall.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
 assert.deepEqual(r7310SouthWall.invalidTexelRegions.windowHole, contract.c1SouthWallBatch.invalidTexelRegions.windowHole);
@@ -438,7 +470,7 @@ assert.equal(r7310Ceiling.packageStatus, 'architecture_probe');
 assert.equal(r7310Ceiling.runtimeScope, 'c1_ceiling_first_hit_hybrid');
 assert.equal(r7310Ceiling.runtimeEnabledDefault, true);
 assert.equal(r7310Ceiling.targetId, 1006);
-assert.equal(r7310Ceiling.requestedSamples, 1000);
+assertLargeFaceSamples(r7310Ceiling, 'ceiling');
 assert.equal(r7310Ceiling.surfaceName, 'c1_ceiling');
 assert.equal(r7310Ceiling.runtimeAtlasSlot, 5);
 assert.equal(r7310Ceiling.bakedRadianceKind, 'indirect_diffuse_radiance');
@@ -447,6 +479,12 @@ assert.equal(r7310Ceiling.addDirectLightAfterBakeLookup, true);
 assert.equal(r7310Ceiling.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
 assert.equal(r7310Ceiling.runtimeArchitecture, 'single_full_ceiling_first_hit_hybrid');
 assert.equal(r7310Ceiling.artifacts.atlasPatch0, 'atlas-patch-000-rgba-f32.bin');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1FullRoomDiffuseRuntimePackage', 'loadR7310C1NorthWallDiffuseRuntimePackage');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1NorthWallDiffuseRuntimePackage', 'loadR7310C1EastWallDiffuseRuntimePackage');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1EastWallDiffuseRuntimePackage', 'loadR7310C1NorthWallWardrobeDiffuseRuntimePackage');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1WestWallDiffuseRuntimePackage', 'loadR7310C1SouthWallDiffuseRuntimePackage');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1SouthWallDiffuseRuntimePackage', 'loadR7310C1CeilingDiffuseRuntimePackage');
+assertLargeFaceLoaderAcceptsUpgradedSamples('loadR7310C1CeilingDiffuseRuntimePackage', 'loadR7310C1StructuralDiffuseRuntimePackage');
 if (r7310StructuralPointerExists)
 {
   assert.equal(r7310Structural.packageStatus, 'architecture_probe');

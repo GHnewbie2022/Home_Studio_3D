@@ -18,17 +18,17 @@
     "reprojectionRecorded": true
   },
   "reprojectionStatus": "fail",
-  "medianRelativeLumaError": 0.42094688216513115,
-  "p90RelativeLumaError": 0.612555724861856,
+  "medianRelativeLumaError": 0.6284734674357894,
+  "p90RelativeLumaError": 0.7640596092152279,
   "reprojectionComparisons": 17,
   "rawHdrPixels": 921600,
   "atlasFloatCount": 4194304,
   "metadataFloatCount": 12582912,
   "atlasVisibleLuma": {
     "texels": 1048576,
-    "nonzeroTexels": 656993,
-    "meanLuma": 0.0774890623700509,
-    "maxLuma": 0.20751203099886575
+    "nonzeroTexels": 657044,
+    "meanLuma": 0.07745969041837475,
+    "maxLuma": 0.19528022408485413
   },
   "browserValidationStatus": "pass",
   "runnerStatus": "pass",

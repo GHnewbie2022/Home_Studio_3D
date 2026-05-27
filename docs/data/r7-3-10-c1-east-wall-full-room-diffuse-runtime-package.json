@@ -8,7 +8,7 @@
   "northeastFurnitureMode": "bed",
   "targetId": 1003,
   "surfaceName": "c1_east_wall",
-  "requestedSamples": 1000,
+  "requestedSamples": 10000,
   "targetAtlasResolution": 1024,
   "diffuseOnly": true,
   "bakedRadianceKind": "indirect_diffuse_radiance",
@@ -29,13 +29,13 @@
     "validationReport": "validation-report.json"
   },
   "artifactHashes": {
-    "atlasPatch0Sha256": "f57a35eba971e0791dbd1bbcaa521d4c7d3c818277bffaca9b0715178855c97e",
+    "atlasPatch0Sha256": "13d5321ebf35dfdfebde0c67aa1bfaef779cac00289c04af297d223a0a27aee0",
     "texelMetadataPatch0Sha256": "304fb2b7173839237f4ac83eefd55b97e9216a7ea6b2202d35bcaa74a84880d8"
   },
   "validation": {
     "status": "pass",
     "runnerStatus": "pass",
-    "actualSamples": 1000,
+    "actualSamples": 10000,
     "validTexelRatio": 0.7638559341430664
   },
   "mapping": "planar_zy",

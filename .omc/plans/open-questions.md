@@ -50,3 +50,26 @@
 - [ ] **Q9**：EXT_disjoint_timer_query_webgl2 query pool 大小？— 當前推測 8（ANGLE/Metal 限制）、替代 4 / 16 — 影響 Scenario 2 GPU_DISJOINT 觸發率；2026-04-27 探針已驗 EXT 支援、pool size 待 Step 0-2.5 量測補驗。
 - [ ] **Q10（v3 新增，Critic MJ4）**：mode 2 emission 預載是否該擴大到所有發光 hitType？— v3 採「LIGHT + TRACK_LIGHT + TRACK_WIDE_LIGHT + CLOUD_LIGHT」共 4 個發光 hitType（Cam 1 視場含吸頂燈 + 軌道燈、必須涵蓋）；shader 親證 hitType 平行分支共 17 處、其中 4 個為發光體；若實作後仍有發光體分支漏列（如 second CLOUD_LIGHT L1664 OR-and case），補列即可。
 - [ ] **Q11（v3 新增，Critic OQ1）**：Stage A 失敗為「預期常態」還是「異常」？— v3 採嚴格版「預期常態」、視為 Step 0a fast-skip 探針價值（即使 Stage A 9 hr 工程沉沒、Stage B 升級路徑仍有效）；對應 Critic 推薦 OQ1 嚴格版。
+
+## R7-3.10 B 方案（per-surface texel density 逐面貼圖像素密度）— 2026-05-27（Planner deliberate，v2 修訂）
+
+來源：`.omc/plans/R7-3.10-B-per-surface-texel-density.md` §7（v2 已依 Architect=REVISE / Critic=REJECT 修訂）
+
+> v2 變更：M（中間路線分磚）已淘汰（核實與單一 scalar resolution 衝突）；packer 改手寫 23 筆 rect 常數表；
+> 契約改動由 2 處更正為 18 處（CODEX 重疊 14 處）；新增工具缺口與 inset 各軸換算。
+
+- [ ] **Q1**：全室目標密度 D 的確切值？— 建議 ≈590 texels/m（北牆 1.7 mm/texel，相對現況 3.4 翻倍）— 更高 D 更清但 atlas 更大、烤更久（北牆約 4.2M texel、現 1.05M 約 4×，時間約隨 texel 線性）；更低 D 治糊不足 — 影響 §0 階段 0 試算表與總烤時間；交 Critic 核密度帶。附總 texel/烤時間估算（由 §8 工具 9 輸出）。
+- [ ] **Q2**：atlas 邊長對齊規則 POT（2 的次方）vs 4-texel 倍數？— 建議 4-texel（密度最齊、與 §5 padding 同粒度）；POT 浪費且密度仍不齊 — 影響密度一致性；交 Architect 定。
+- [ ] **Q3（v2 改寫）**：排版用手寫 23 筆 rect 常數表 vs packer？— v2 預設手寫常數表（重用 slot 6 既有手寫島嶼表範式 glsl:1460-1470，K 神最小實作）；packer 僅當面數 >40 或需 runtime 增刪面才採 — 影響 §1 階段 3 工程量；交 Architect 確認門檻。
+- [ ] **Q4（v2 改寫）**：北牆止血路徑？— v2 已淘汰中間路線 M（核實 r7310C1RuntimeAtlasResolution() 回單一 scalar、與北牆 2048²+其餘 1024² 混排衝突，§6），改「北牆單面直走 B-full uvRect 路徑」止血 — 交 Architect 確認此取代成立。
+- [ ] **Q5（v2.3 更正維度）**：uvRect/faceSizePx 傳遞 uniform ★vec4[7]+vec2[7]=42 floats（slots 0-6，較 v2.1 的 138 大降；glsl:186-231 有固定大小陣列先例，現最大 [11]）vs 貼圖查找表？— 影響 §1 階段 4 shader 改法；交 Architect 確認 < fragment uniform 上限（§8 工具 12 實證）。
+- [ ] **Q6（v2.3 更正維度）**：GPU MAX_TEXTURE_SIZE + fragment uniform 餘額實測值？— 非正方 atlas 總尺寸上限與 ★vec4[7]+vec2[7]=42 floats（slots 0-6，較 v2.1 的 138 大降）須實證 — 影響 D 上限與 Q5；階段 3 開工前由 §8 工具 12 量。
+- [ ] **Q7（協調點，★v2.3 重算）**：B 階段 2 真正改動 = ★A 類 9 處 expectedBytes（slots 0-6），其中落 CODEX 73% 修復同區(≥3144) = ★6 處（3156/3220/3282/3345/3414/3494）；A 類 3 處（2957/3024/3089）區外可較早動；B 類 8 處（slots 7-22）本期不改、不衝突 — 規則「A 類 6 處重疊面等 CODEX merge 落地後開工，開工前 git pull + 契約測試全綠 + check-r7310-runtime-atlas-patch-count.cjs 綠，限縮改 expectedBytes/DataTexture 不碰 requestedSamples 行」— 交 Critic 確認排序。
+- [x] **Q8（v2.3 結案，Critic 溯源 + C-B1 分類）**：18 處 expectedBytes 按 targetId 分 = ★A 類 9 改非正方（2957/3024/3089/3156/3220/3282/3345/3414/3494，slots 0-6）/ B 類 8 維持方形（3591/3674/3757/3842/3928/4011/4094/4178，slots 7-22）/ preview 1 豁免（2888）。A 類含 FLOOR/NORTH/EAST（guard 溯源 2945/3012/3077）。→ 改 9、維持方形 9。結案。
+- [ ] **Q9（v2.1 改寫）**：試點選擇 — ★v2.1 R6 更正：取樣端零 resolution 依賴的乾淨面不存在（所有 Sample* 都要 atlasUv×resolution 轉像素座標），故改以「變因最少」為準 → 首選 Ceiling(slot 5，UV 端純線性 + 取樣端最單純 SamplePatchValidLinear)，次選 EastWall(slot 2，取樣端 RectTent3 多兩層 res)。WestWall(slot 3) UV 端疑似乾淨待 Architect 逐行複核 — 影響 §1 階段 4 試點順序。
+- [ ] **Q10（v2.3 更正維度）**：docs/tools/ 目前無 texel 密度量測（工具 9）、密度回歸鎖（工具 10）、★slot↔常數表↔uvRect[7] 三同步點鎖（工具 11，僅 slots 0-6）、GPU 上限/uniform 餘額探針（工具 12）— 四支全須新建，否則驗收門檻「密度比≤1.25、北牆 3.4→≤1.7」不可測、P1 單一參數治理無 enforcement — 交 Architect/Critic 確認工具規格與落地時機（建議工具 9/12 排 T0 前置）。
+- [x] **Q11（v2.1 結案，Critic 裁定 Planner 正確）**：階段 4 與 4b 在 shader 層為「不可分原子步驟」（取樣端 resolution 不可分，錨點 7b）— 改 Ceiling 核心包圍盒公式時，5 個 Sample*(1095/1107/1167/1182/1205) 內部 resolution→faceSizePx 須同步改。Critic 終審裁定：此原子合併不違反「分層可獨立驗收」原則 P3（層間 runner/契約/compositor/shader 獨立驗收仍成立，只 shader 層內部假切分合併）。結案。
+- [x] **Q12（v2.4 定案，Critic 第 4 輪以證據裁定甲）**：採「甲＝2 張紋理」。slots 0-6 移第二張非正方紋理（新 sampler2D tR7310C1FullRoomDiffuseAtlasTextureNonSquare）、slots 7-22 留現有 combined 等格紋理 tR7310C1FullRoomDiffuseAtlasTexture（glsl:46，唯一被讀 diffuse 紋理、讀取點 1081/1105）不動。乙（單張混排）已排除：SamplePatchTexel 等格佈局（column=mod(slot,6)、固定正方格）硬假設正方、slots 0-6 非正方塞不進、會破壞 slots 7-22 等格。→ 階段 3 產 2 張 DataTexture。★Architect 階段 3 開工前最終複核。
+- [ ] **Q13（v2.4 更正，標的 A 連帶）**：共用底層 r7310C1FullRoomDiffuseSamplePatchTexel(1095) 有 ★13 個消費者（12 shadow *Texel：1585/1653/1726/1799/1872/1945/2018/2179/2608/2670/2732/2794 + PatchCoverageProbe 1132），不可盲改。slots 0-6 須分叉成「讀新紋理 + faceSizePx 感知」的取樣全鏈：SamplePatchValidLinear(1107)/SamplePatchPixel(1128)/SampleRectLinear(1167)/RectTent3(1182)/RectTent5(1205) + PatchCoverageProbe 對 slots 0-6 分支。Critic 已驗這 5 函式不被任何 slots 7-22 呼叫（解耦乾淨）— 交 Architect 定案分叉清單。
+- [ ] **OQ-C（v2.4 ADR follow-up）**：16 個 dead t*ShadowTexture uniform（glsl:47-62，從未被 texture() 讀取）本期不刪，留待 R4-2 shader 扁平化階段統一清（CLAUDE.md 列 R4-2 為 dead code 刪除階段）。本期僅記錄。
+- [ ] **OQ-D（v2.4 ADR follow-up）**：slots 7-22 未來升級觸發條件——某窄陰影面實測仍糊到不可接受時，比照 slots 0-6 走非正方 + 移第二張紋理，記升級成本（per-surface ShadowResolution uniform 各面獨立、可單面升級，不牽動本期架構）。

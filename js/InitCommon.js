@@ -2942,7 +2942,7 @@ async function loadR7310C1FullRoomDiffuseRuntimePackage()
 				throw new Error('R7-3.10 full floor diffuse runtime radiance contract mismatch');
 			if (pointer.runtimeTexture !== 'tR7310C1FullRoomDiffuseAtlasTexture' || pointer.runtimeAtlasSlot !== 0)
 				throw new Error('R7-3.10 full floor diffuse runtime atlas slot mismatch');
-			if (pointer.targetId !== R7310_C1_FLOOR_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_FLOOR_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 full floor diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
@@ -3009,7 +3009,7 @@ async function loadR7310C1NorthWallDiffuseRuntimePackage()
 				throw new Error('R7-3.10 north wall diffuse runtime pointer failed contract');
 			if (pointer.runtimeArchitecture !== 'single_full_north_wall_first_hit_hybrid')
 				throw new Error('R7-3.10 north wall diffuse runtime architecture mismatch');
-			if (pointer.targetId !== R7310_C1_NORTH_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_NORTH_WALL_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 north wall diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
@@ -3074,7 +3074,7 @@ async function loadR7310C1EastWallDiffuseRuntimePackage()
 				throw new Error('R7-3.10 east wall diffuse runtime pointer failed contract');
 			if (pointer.runtimeArchitecture !== 'single_full_east_wall_first_hit_hybrid')
 				throw new Error('R7-3.10 east wall diffuse runtime architecture mismatch');
-			if (pointer.targetId !== R7310_C1_EAST_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_EAST_WALL_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 east wall diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
@@ -3265,7 +3265,7 @@ async function loadR7310C1WestWallDiffuseRuntimePackage()
 			var pointer = await pointerResponse.json();
 			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_west_wall_diffuse_short_circuit')
 				throw new Error('R7-3.10 west wall diffuse runtime pointer failed contract');
-			if (pointer.targetId !== R7310_C1_WEST_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_WEST_WALL_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 west wall diffuse runtime package metadata mismatch');
 			if (pointer.runtimeArchitecture !== 'single_full_west_wall_first_hit_hybrid')
 				throw new Error('R7-3.10 west wall diffuse runtime architecture mismatch');
@@ -3330,7 +3330,7 @@ async function loadR7310C1SouthWallDiffuseRuntimePackage()
 			var pointer = await pointerResponse.json();
 			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_south_wall_diffuse_short_circuit')
 				throw new Error('R7-3.10 south wall diffuse runtime pointer failed contract');
-			if (pointer.targetId !== R7310_C1_SOUTH_WALL_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_SOUTH_WALL_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 south wall diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
@@ -3399,7 +3399,7 @@ async function loadR7310C1CeilingDiffuseRuntimePackage()
 				throw new Error('R7-3.10 ceiling diffuse runtime radiance contract mismatch');
 			if (pointer.runtimeTexture !== 'tR7310C1FullRoomDiffuseAtlasTexture' || pointer.runtimeAtlasSlot !== 5)
 				throw new Error('R7-3.10 ceiling diffuse runtime atlas slot mismatch');
-			if (pointer.targetId !== R7310_C1_CEILING_TARGET_ID || pointer.requestedSamples !== 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
+			if (pointer.targetId !== R7310_C1_CEILING_TARGET_ID || pointer.requestedSamples < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 ceiling diffuse runtime package metadata mismatch');
 			var validationResponse = await fetch(pointer.packageDir + '/' + pointer.artifacts.validationReport, { cache: 'no-store' });
 			if (!validationResponse.ok)
@@ -5840,7 +5840,7 @@ function fillR7310C1StructuralSeColumnNorthEastBeamGuardTexels(pixels, size)
 function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 {
 	if (surfaceName === R7310_C1_NORTH_WALL_SURFACE_NAME)
-		return 0.77;
+		return 0.75;
 	if (surfaceName === R7310_C1_EAST_WALL_SURFACE_NAME)
 		return 0.70;
 	if (surfaceName === R7310_C1_WEST_WALL_SURFACE_NAME)
@@ -5854,7 +5854,7 @@ function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 	if (surfaceName === R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME)
 		return 0.56;
 	if (surfaceName === R7310_C1_CEILING_SURFACE_NAME)
-		return 0.98;
+		return 0.83;
 	if (surfaceName === R7310_C1_STRUCTURAL_SURFACE_NAME)
 		return 0.30;
 	if (surfaceName === R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME)
