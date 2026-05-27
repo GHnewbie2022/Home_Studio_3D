@@ -103,6 +103,7 @@ let homeStudioLoadingTargetProgress = 0.0;
 let homeStudioLoadingFrameId = 0;
 let homeStudioLoadingHidden = false;
 let r7310C1RuntimeLoadingCompleted = Object.create(null);
+let r7310C1RuntimeBatchLoading = false; // C'-1: 載入期間抑制逐包重建 combined atlas，全部 settle 後才合批重建一次
 
 function updateHomeStudioLoadingUi(targetProgress)
 {
@@ -169,47 +170,62 @@ function hideHomeStudioLoadingScreen()
 
 function updateR7310C1RuntimeLoadingProgress()
 {
+	// A: 用「載入流程 settle」(markStepComplete 設的 completed) 判定，含 ironDoorReveal；
+	//    不再用 ready/!pending，避免「沒烤好的包永遠不 ready → loading 卡死」，且把所有抽搐藏在遮罩下
 	var states = [
-		{ enabled: r7310C1FloorDiffuseRuntimeEnabled, ready: r7310C1FullRoomDiffuseRuntimeReady },
-		{ enabled: r7310C1NorthWallDiffuseRuntimeEnabled, ready: r7310C1NorthWallDiffuseRuntimeReady },
-		{ enabled: r7310C1EastWallDiffuseRuntimeEnabled, ready: r7310C1EastWallDiffuseRuntimeReady },
-		{ enabled: r7310C1WestWallDiffuseRuntimeEnabled, ready: r7310C1WestWallDiffuseRuntimeReady },
-		{ enabled: r7310C1SouthWallDiffuseRuntimeEnabled, ready: r7310C1SouthWallDiffuseRuntimeReady },
-		{ enabled: r7310C1CeilingDiffuseRuntimeEnabled, ready: r7310C1CeilingDiffuseRuntimeReady },
-		{ enabled: r7310C1StructuralDiffuseRuntimeEnabled && !r7310C1StructuralDiffuseRuntimePending, ready: r7310C1StructuralDiffuseRuntimeReady },
-		{ enabled: r7310C1SeColumnNorthShadowRuntimeEnabled && !r7310C1SeColumnNorthShadowRuntimePending, ready: r7310C1SeColumnNorthShadowRuntimeReady },
-		{ enabled: r7310C1SeColumnWestShadowRuntimeEnabled && !r7310C1SeColumnWestShadowRuntimePending, ready: r7310C1SeColumnWestShadowRuntimeReady },
-		{ enabled: r7310C1SouthWallAcShadowRuntimeEnabled && !r7310C1SouthWallAcShadowRuntimePending, ready: r7310C1SouthWallAcShadowRuntimeReady },
-		{ enabled: r7310C1EastWallBeamShadowRuntimeEnabled && !r7310C1EastWallBeamShadowActiveRuntimePending(), ready: r7310C1EastWallBeamShadowActiveRuntimeReady() },
-		{ enabled: r7310C1SwColumnNorthShadowRuntimeEnabled && !r7310C1SwColumnNorthShadowRuntimePending, ready: r7310C1SwColumnNorthShadowRuntimeReady },
-		{ enabled: r7310C1WestWallBeamShadowRuntimeEnabled && !r7310C1WestWallBeamShadowRuntimePending, ready: r7310C1WestWallBeamShadowRuntimeReady },
-		{ enabled: r7310C1SwColumnInnerShadowRuntimeEnabled && !r7310C1SwColumnInnerShadowRuntimePending, ready: r7310C1SwColumnInnerShadowRuntimeReady },
-		{ enabled: r7310C1WestBeamInnerShadowRuntimeEnabled && !r7310C1WestBeamInnerShadowRuntimePending, ready: r7310C1WestBeamInnerShadowRuntimeReady },
-		{ enabled: r7310C1WestBeamUnderShadowRuntimeEnabled && !r7310C1WestBeamUnderShadowRuntimePending, ready: r7310C1WestBeamUnderShadowRuntimeReady },
-		{ enabled: r7310C1EastBeamInnerShadowRuntimeEnabled && !r7310C1EastBeamInnerShadowRuntimePending, ready: r7310C1EastBeamInnerShadowRuntimeReady },
-		{ enabled: r7310C1EastBeamUnderShadowRuntimeEnabled && !r7310C1EastBeamUnderShadowRuntimePending, ready: r7310C1EastBeamUnderShadowRuntimeReady },
-		{ enabled: r7310C1SouthWindowLeftRevealShadowRuntimeEnabled && !r7310C1SouthWindowLeftRevealShadowRuntimePending, ready: r7310C1SouthWindowLeftRevealShadowRuntimeReady },
-		{ enabled: r7310C1SouthWindowRightRevealShadowRuntimeEnabled && !r7310C1SouthWindowRightRevealShadowRuntimePending, ready: r7310C1SouthWindowRightRevealShadowRuntimeReady },
-		{ enabled: r7310C1SouthWindowBottomRevealShadowRuntimeEnabled && !r7310C1SouthWindowBottomRevealShadowRuntimePending, ready: r7310C1SouthWindowBottomRevealShadowRuntimeReady },
-		{ enabled: r7310C1SouthWindowTopRevealShadowRuntimeEnabled && !r7310C1SouthWindowTopRevealShadowRuntimePending, ready: r7310C1SouthWindowTopRevealShadowRuntimeReady }
+		{ enabled: r7310C1FloorDiffuseRuntimeEnabled, key: 'floor' },
+		{ enabled: r7310C1NorthWallDiffuseRuntimeEnabled, key: 'northWall' },
+		{ enabled: r7310C1EastWallDiffuseRuntimeEnabled, key: 'eastWall' },
+		{ enabled: r7310C1WestWallDiffuseRuntimeEnabled, key: 'westWall' },
+		{ enabled: r7310C1SouthWallDiffuseRuntimeEnabled, key: 'southWall' },
+		{ enabled: r7310C1CeilingDiffuseRuntimeEnabled, key: 'ceiling' },
+		{ enabled: r7310C1StructuralDiffuseRuntimeEnabled, key: 'structural' },
+		{ enabled: r7310C1SeColumnNorthShadowRuntimeEnabled, key: 'seColumnNorthShadow' },
+		{ enabled: r7310C1SeColumnWestShadowRuntimeEnabled, key: 'seColumnWestShadow' },
+		{ enabled: r7310C1SouthWallAcShadowRuntimeEnabled, key: 'southWallAcShadow' },
+		{ enabled: r7310C1EastWallBeamShadowRuntimeEnabled, key: 'eastWallBeamShadow' },
+		{ enabled: r7310C1SwColumnNorthShadowRuntimeEnabled, key: 'swColumnNorthShadow' },
+		{ enabled: r7310C1WestWallBeamShadowRuntimeEnabled, key: 'westWallBeamShadow' },
+		{ enabled: r7310C1SwColumnInnerShadowRuntimeEnabled, key: 'swColumnInnerShadow' },
+		{ enabled: r7310C1WestBeamInnerShadowRuntimeEnabled, key: 'westBeamInnerShadow' },
+		{ enabled: r7310C1WestBeamUnderShadowRuntimeEnabled, key: 'westBeamUnderShadow' },
+		{ enabled: r7310C1EastBeamInnerShadowRuntimeEnabled, key: 'eastBeamInnerShadow' },
+		{ enabled: r7310C1EastBeamUnderShadowRuntimeEnabled, key: 'eastBeamUnderShadow' },
+		{ enabled: r7310C1SouthWindowLeftRevealShadowRuntimeEnabled, key: 'southWindowLeftRevealShadow' },
+		{ enabled: r7310C1SouthWindowRightRevealShadowRuntimeEnabled, key: 'southWindowRightRevealShadow' },
+		{ enabled: r7310C1SouthWindowBottomRevealShadowRuntimeEnabled, key: 'southWindowBottomRevealShadow' },
+		{ enabled: r7310C1SouthWindowTopRevealShadowRuntimeEnabled, key: 'southWindowTopRevealShadow' },
+		{ enabled: r7310C1IronDoorRevealRuntimeEnabled, key: 'ironDoorReveal' }
 	];
 	var total = 0;
-	var ready = 0;
+	var done = 0;
 	for (var i = 0; i < states.length; i += 1)
 	{
 		if (!states[i].enabled) continue;
 		total += 1;
-		if (states[i].ready) ready += 1;
+		if (r7310C1RuntimeLoadingCompleted[states[i].key]) done += 1;
 	}
 	if (total === 0)
 	{
+		r7310C1RuntimeBatchLoading = false;
 		hideHomeStudioLoadingScreen();
 		return;
 	}
-	var progress = 0.08 + 0.90 * (ready / total);
+	var progress = 0.08 + 0.90 * (done / total);
 	updateHomeStudioLoadingUi(progress);
-	if (ready >= total)
-		hideHomeStudioLoadingScreen();
+	if (homeStudioLoadingHidden)
+		return;
+	if (done < total)
+	{
+		// A + C'-1: 尚未全部 settle → 維持 loading 畫面、抑制逐包重建 combined atlas
+		r7310C1RuntimeBatchLoading = true;
+		return;
+	}
+	// 全部 settle → 解除抑制、合批重建一次 + 喚醒一次 + 才放人進房（A 消抽搐、C'-1 消重複重建）
+	r7310C1RuntimeBatchLoading = false;
+	refreshR7310C1CombinedDiffuseRuntimeTexture();
+	if (typeof wakeRender === 'function') wakeRender('r7310-c1-batch-load-complete');
+	hideHomeStudioLoadingScreen();
 }
 
 function markR7310C1RuntimeLoadingStepComplete(surfaceKey)
@@ -2655,6 +2671,8 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 {
 	if (!THREE)
 		return false;
+	if (r7310C1RuntimeBatchLoading)
+		return false; // C'-1: 載入期間不逐包重建 384MB atlas，待全部 settle 後由 loading gate 合批重建一次
 	var resolution = r7310C1RuntimeAtlasResolution();
 	var expectedLength = resolution * resolution * 4;
 	var floorPixels = r7310C1FloorDiffuseRuntimePixels instanceof Float32Array
