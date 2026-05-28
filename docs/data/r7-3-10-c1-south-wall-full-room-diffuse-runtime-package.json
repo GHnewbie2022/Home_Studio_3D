@@ -22,6 +22,40 @@
     "yMax": 2.905,
     "z": 3.056
   },
+  "invalidTexelRegions": {
+    "windowHole": {
+      "xMin": -1.75,
+      "xMax": 0.69,
+      "yMin": 1.04,
+      "yMax": 2.905
+    }
+  },
+  "windowRevealAtlasRegions": {
+    "leftReveal": {
+      "xMin": -1.69,
+      "xMax": -1.52,
+      "yMin": 1.1,
+      "yMax": 2.845
+    },
+    "rightReveal": {
+      "xMin": 0.46,
+      "xMax": 0.63,
+      "yMin": 1.1,
+      "yMax": 2.845
+    },
+    "bottomReveal": {
+      "xMin": -1.52,
+      "xMax": 0.46,
+      "yMin": 1.1,
+      "yMax": 1.27
+    },
+    "topReveal": {
+      "xMin": -1.52,
+      "xMax": 0.46,
+      "yMin": 2.675,
+      "yMax": 2.845
+    }
+  },
   "artifacts": {
     "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",

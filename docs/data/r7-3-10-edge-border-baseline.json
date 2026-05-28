@@ -20,7 +20,7 @@
       "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/ceiling-full-room-1024px-1000spp",
       "bakedRadianceKind": "indirect_diffuse_radiance",
       "targetAtlasResolution": 1024,
-      "atlasSha256": "6ac5611fb6a7a08f655da2dd52a565c9d0b1c03ed2049e499f45abfd02ad41f4",
+      "atlasSha256": "944eff6892b20ca8cd3db768012b433ed9bf036d14dae11d2b9eb8eb2205a97a",
       "metadataSha256": "23c10ec3daf38f67c6e920cd3ee9cd94e3115a46c1b24fefdebd8c720e6c992e",
       "allowedEdgeBlackCount": 0,
       "allowedEdgeBlackRuns": []
@@ -130,7 +130,7 @@
       "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp",
       "bakedRadianceKind": "indirect_diffuse_radiance",
       "targetAtlasResolution": 1024,
-      "atlasSha256": "f57a35eba971e0791dbd1bbcaa521d4c7d3c818277bffaca9b0715178855c97e",
+      "atlasSha256": "13d5321ebf35dfdfebde0c67aa1bfaef779cac00289c04af297d223a0a27aee0",
       "metadataSha256": "304fb2b7173839237f4ac83eefd55b97e9216a7ea6b2202d35bcaa74a84880d8",
       "allowedEdgeBlackCount": 422,
       "allowedEdgeBlackRuns": [
@@ -180,7 +180,7 @@
       "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/floor-full-room-1024px-1000spp",
       "bakedRadianceKind": "indirect_diffuse_radiance",
       "targetAtlasResolution": 1024,
-      "atlasSha256": "c5df34f4313b4e87bb05c95f5cc5ab5da6800a728af5937f814125e757f48591",
+      "atlasSha256": "2ad0b836b7779b2d1210e696da6b238138387cc0afea9259916f8b81b7451b74",
       "metadataSha256": "8be51ac74eb98d1ac6b6aad33a4204dc51bcda6b81ab3f091db24347e0ddbe9e",
       "allowedEdgeBlackCount": 0,
       "allowedEdgeBlackRuns": []
@@ -204,7 +204,7 @@
       "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-wall-door-hole-1024px-1000spp",
       "bakedRadianceKind": "indirect_diffuse_radiance",
       "targetAtlasResolution": 1024,
-      "atlasSha256": "d676aba601c97c0c4557c86ce50868aaf538dce74e2cc8539081e8312c37579a",
+      "atlasSha256": "9f31309ae086b97a8a6fb12d43eac843c6aa44dff25cad6c79f1de56d46ff188",
       "metadataSha256": "bd62fb675102cea99e1000d162a5858a604d24f45122ce18eff07558a1c65641",
       "allowedEdgeBlackCount": 470,
       "allowedEdgeBlackRuns": [
@@ -2672,65 +2672,10 @@
       "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/west-wall-iron-door-hole-1024px-1000spp",
       "bakedRadianceKind": "indirect_diffuse_radiance",
       "targetAtlasResolution": 1024,
-      "atlasSha256": "8149316530032e860394d3f3b7f8e2acfd94899e693506b71dfee502b2adaebc",
+      "atlasSha256": "a43308d0b1109d27388733c6bce95921701d6fdc04acb03c93fd4d57618a9655",
       "metadataSha256": "596ed043e8179429546770cc15314f78a587d890de70dd18c78e23288409940d",
-      "allowedEdgeBlackCount": 10,
-      "allowedEdgeBlackRuns": [
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 911,
-          "end": 911
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 922,
-          "end": 922
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 925,
-          "end": 926
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 929,
-          "end": 929
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 931,
-          "end": 931
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 934,
-          "end": 934
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 944,
-          "end": 944
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 948,
-          "end": 948
-        },
-        {
-          "axis": "row",
-          "fixed": 0,
-          "start": 950,
-          "end": 950
-        }
-      ]
+      "allowedEdgeBlackCount": 0,
+      "allowedEdgeBlackRuns": []
     }
   ]
 }
