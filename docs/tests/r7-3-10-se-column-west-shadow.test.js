@@ -11,10 +11,10 @@ assert.match(initCommon, /R7310_C1_SE_COLUMN_WEST_SHADOW_TARGET_ID\s*=\s*1009/);
 assert.match(initCommon, /R7310_C1_SE_COLUMN_WEST_SHADOW_SURFACE_NAME\s*=\s*'c1_se_column_west_shadow'/);
 assert.match(initCommon, /R7310_C1_SE_COLUMN_WEST_SHADOW_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1SeColumnWestShadowRuntimePackage/);
-assert.match(initCommon, /tR7310C1SeColumnWestShadowTexture/);
+assert.doesNotMatch(initCommon, /pathTracingUniforms\.tR7310C1SeColumnWestShadowTexture/);
 assert.match(initCommon, /se_column_west_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 
-assert.match(shader, /uniform sampler2D tR7310C1SeColumnWestShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1SeColumnWestShadowTexture/);
 assert.match(shader, /uniform float uR7310C1SeColumnWestShadowMode/);
 assert.match(shader, /uniform float uR7310C1SeColumnWestShadowResolution/);
 assert.match(shader, /bool r7310C1SeColumnWestShadowDiffuseUv/);
@@ -38,7 +38,7 @@ assert.match(fullRoomFallbackGuard, /!\(r7310FloorHybridFirstHit[\s\S]*r7310Ceil
 assert.match(fullRoomFallbackGuard, /bounces\s*==\s*0/);
 assert.match(fullRoomFallbackGuard, /r7310C1FullRoomDiffuseShortCircuit/);
 
-assert.match(homeStudio, /tR7310C1SeColumnWestShadowTexture/);
+assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1SeColumnWestShadowTexture/);
 assert.match(homeStudio, /uR7310C1SeColumnWestShadowMode/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);

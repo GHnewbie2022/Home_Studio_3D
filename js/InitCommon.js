@@ -16,6 +16,7 @@ let screenOutputVertexShader, screenOutputFragmentShader;
 let triangleGeometry = new THREE.BufferGeometry();
 let trianglePositions = [];
 let pathTracingMaterial, pathTracingMesh;
+let r7310BakeOnlyNoBorrowMaterial = null;
 let screenCopyMaterial, screenCopyMesh;
 let screenOutputMaterial, screenOutputMesh;
 let pathTracingRenderTarget, screenCopyRenderTarget;
@@ -258,6 +259,29 @@ function createCommonVertexShaderMaterial(params)
 	var materialParams = Object.assign({}, params);
 	materialParams.vertexShader = pathTracingVertexShader;
 	return new THREE.ShaderMaterial(materialParams);
+}
+function createR7310BakeOnlyNoBorrowMaterial()
+{
+	if (r7310BakeOnlyNoBorrowMaterial)
+		return r7310BakeOnlyNoBorrowMaterial;
+	if (!THREE || !pathTracingUniforms || !pathTracingFragmentShader || !pathTracingMesh)
+		throw new Error('[InitCommon] bake-only no-borrow material requires initialized path tracing state');
+	r7310BakeOnlyNoBorrowMaterial = createCommonVertexShaderMaterial({
+		uniforms: pathTracingUniforms,
+		uniformsGroups: pathTracingUniformsGroups,
+		defines: Object.assign({}, pathTracingDefines || {}, { R7310_BAKE_ONLY_NO_BORROW: 1 }),
+		fragmentShader: pathTracingFragmentShader,
+		depthTest: false,
+		depthWrite: false
+	});
+	return r7310BakeOnlyNoBorrowMaterial;
+}
+
+function shouldUseR7310BakeOnlyNoBorrowShader(options)
+{
+	if (options && Object.prototype.hasOwnProperty.call(options, 'bakeOnlyNoBorrowShader'))
+		return !!options.bakeOnlyNoBorrowShader;
+	return typeof window !== 'undefined' && !!window.__r7310BakeOnlyNoBorrow;
 }
 let movementPreviewLastMode = 0.0;
 let movementProtectionPeakPreviewStrength = 0.0;
@@ -2292,37 +2316,6 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		pathTracingUniforms.uR7310C1IronDoorRevealReady.value = r7310C1IronDoorRevealRuntimeReady ? 1.0 : 0.0;
 	if (r7310C1FullRoomDiffuseRuntimeTexture && pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture)
 		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture.value = r7310C1FullRoomDiffuseRuntimeTexture;
-	if (r7310C1SeColumnNorthShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture)
-		pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture.value = r7310C1SeColumnNorthShadowRuntimeDataTexture;
-	if (r7310C1SeColumnWestShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SeColumnWestShadowTexture)
-		pathTracingUniforms.tR7310C1SeColumnWestShadowTexture.value = r7310C1SeColumnWestShadowRuntimeDataTexture;
-	if (r7310C1SouthWallAcShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWallAcShadowTexture)
-		pathTracingUniforms.tR7310C1SouthWallAcShadowTexture.value = r7310C1SouthWallAcShadowRuntimeDataTexture;
-	var eastWallBeamShadowDataTexture = r7310C1EastWallBeamShadowActiveRuntimeDataTexture();
-	if (eastWallBeamShadowDataTexture && pathTracingUniforms.tR7310C1EastWallBeamShadowTexture)
-		pathTracingUniforms.tR7310C1EastWallBeamShadowTexture.value = eastWallBeamShadowDataTexture;
-	if (r7310C1SwColumnNorthShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture)
-		pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture.value = r7310C1SwColumnNorthShadowRuntimeDataTexture;
-	if (r7310C1WestWallBeamShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestWallBeamShadowTexture)
-		pathTracingUniforms.tR7310C1WestWallBeamShadowTexture.value = r7310C1WestWallBeamShadowRuntimeDataTexture;
-	if (r7310C1SwColumnInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture)
-		pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture.value = r7310C1SwColumnInnerShadowRuntimeDataTexture;
-	if (r7310C1WestBeamInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture)
-		pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture.value = r7310C1WestBeamInnerShadowRuntimeDataTexture;
-	if (r7310C1WestBeamUnderShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture)
-		pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture.value = r7310C1WestBeamUnderShadowRuntimeDataTexture;
-	if (r7310C1EastBeamInnerShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture)
-		pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture.value = r7310C1EastBeamInnerShadowRuntimeDataTexture;
-	if (r7310C1EastBeamUnderShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture)
-		pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture.value = r7310C1EastBeamUnderShadowRuntimeDataTexture;
-	if (r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture)
-		pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture.value = r7310C1SouthWindowLeftRevealShadowRuntimeDataTexture;
-	if (r7310C1SouthWindowRightRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture)
-		pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture.value = r7310C1SouthWindowRightRevealShadowRuntimeDataTexture;
-	if (r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture)
-		pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture.value = r7310C1SouthWindowBottomRevealShadowRuntimeDataTexture;
-	if (r7310C1SouthWindowTopRevealShadowRuntimeDataTexture && pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture)
-		pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture.value = r7310C1SouthWindowTopRevealShadowRuntimeDataTexture;
 	if (pathTracingUniforms.uR7310C1SeColumnNorthShadowResolution)
 		pathTracingUniforms.uR7310C1SeColumnNorthShadowResolution.value = r7310C1SeColumnNorthShadowRuntimePackage && r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution
 			? r7310C1SeColumnNorthShadowRuntimePackage.targetAtlasResolution
@@ -2560,12 +2553,6 @@ function r7310C1EastWallBeamShadowActiveRuntimeTexture()
 		: r7310C1EastWallBeamShadowRuntimeTexture;
 }
 
-function r7310C1EastWallBeamShadowActiveRuntimeDataTexture()
-{
-	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
-		? r7310C1EastWallBeamShadowWardrobeRuntimeDataTexture
-		: r7310C1EastWallBeamShadowRuntimeDataTexture;
-}
 
 function r7310C1EastWallBeamShadowActiveRuntimeError()
 {
@@ -2853,8 +2840,6 @@ function updateR739C1AccurateReflectionUniforms()
 		pathTracingUniforms.uR739C1ReflectionReady.value = r739C1AccurateReflectionReady ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR739C1ReflectionFloorRoughness)
 		pathTracingUniforms.uR739C1ReflectionFloorRoughness.value = packageFloorRoughness;
-	if (r739C1AccurateReflectionTexture && pathTracingUniforms.tR739C1ReflectionSurfaceCacheTexture)
-		pathTracingUniforms.tR739C1ReflectionSurfaceCacheTexture.value = r739C1AccurateReflectionTexture;
 	return applied;
 }
 
@@ -4659,46 +4644,59 @@ async function renderR738MainRawHdrSamples(targetSamples, timeoutMs, options)
 	resetR738MainAccumulation();
 	if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(true);
 	var samples = 0;
-	for (var sample = 1; sample <= target; sample += 1)
+	var useBakeOnlyNoBorrowShader = shouldUseR7310BakeOnlyNoBorrowShader(options);
+	var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
+	var savedPathTracingMeshMaterial = pathTracingMesh ? pathTracingMesh.material : null;
+	try
 	{
-		if (performance.now() - startedAt > timeout)
-			break;
-		sampleCounter = sample;
-		frameCounter = sample + 1.0;
-		cameraIsMoving = false;
-		cameraRecentlyMoving = false;
-		pathTracingUniforms.uSampleCounter.value = sampleCounter;
-		pathTracingUniforms.uFrameCounter.value = frameCounter;
-		pathTracingUniforms.uPreviousSampleCount.value = 1.0;
-		pathTracingUniforms.uCameraIsMoving.value = false;
-		var requestedRandomVec2 = options.randomVec2 || null;
-		var probeRandomX = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.x))
-			? Number(requestedRandomVec2.x)
-			: Math.random();
-		var probeRandomY = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.y))
-			? Number(requestedRandomVec2.y)
-			: Math.random();
-		pathTracingUniforms.uRandomVec2.value.set(probeRandomX, probeRandomY);
-		pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
-		if (screenOutputUniforms)
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = bakeOnlyNoBorrowMaterial;
+		for (var sample = 1; sample <= target; sample += 1)
 		{
-			if (screenOutputUniforms.uSampleCounter) screenOutputUniforms.uSampleCounter.value = sampleCounter;
-			if (screenOutputUniforms.uOneOverSampleCounter) screenOutputUniforms.uOneOverSampleCounter.value = 1.0 / Math.max(1.0, sampleCounter);
-			if (screenOutputUniforms.uCameraIsMoving) screenOutputUniforms.uCameraIsMoving.value = false;
+			if (performance.now() - startedAt > timeout)
+				break;
+			sampleCounter = sample;
+			frameCounter = sample + 1.0;
+			cameraIsMoving = false;
+			cameraRecentlyMoving = false;
+			pathTracingUniforms.uSampleCounter.value = sampleCounter;
+			pathTracingUniforms.uFrameCounter.value = frameCounter;
+			pathTracingUniforms.uPreviousSampleCount.value = 1.0;
+			pathTracingUniforms.uCameraIsMoving.value = false;
+			var requestedRandomVec2 = options.randomVec2 || null;
+			var probeRandomX = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.x))
+				? Number(requestedRandomVec2.x)
+				: Math.random();
+			var probeRandomY = requestedRandomVec2 && Number.isFinite(Number(requestedRandomVec2.y))
+				? Number(requestedRandomVec2.y)
+				: Math.random();
+			pathTracingUniforms.uRandomVec2.value.set(probeRandomX, probeRandomY);
+			pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
+			if (screenOutputUniforms)
+			{
+				if (screenOutputUniforms.uSampleCounter) screenOutputUniforms.uSampleCounter.value = sampleCounter;
+				if (screenOutputUniforms.uOneOverSampleCounter) screenOutputUniforms.uOneOverSampleCounter.value = 1.0 / Math.max(1.0, sampleCounter);
+				if (screenOutputUniforms.uCameraIsMoving) screenOutputUniforms.uCameraIsMoving.value = false;
+			}
+			if (typeof updateR73QuickPreviewFillUniforms === 'function') updateR73QuickPreviewFillUniforms();
+			renderer.setRenderTarget(pathTracingRenderTarget);
+			renderer.render(pathTracingScene, worldCamera);
+			renderer.setRenderTarget(screenCopyRenderTarget);
+			renderer.render(screenCopyScene, orthoCamera);
+			samples = sample;
+			if (sample % 16 === 0)
+				await new Promise(function(resolve) { setTimeout(resolve, 0); });
 		}
-		if (typeof updateR73QuickPreviewFillUniforms === 'function') updateR73QuickPreviewFillUniforms();
-		renderer.setRenderTarget(pathTracingRenderTarget);
-		renderer.render(pathTracingScene, worldCamera);
-		renderer.setRenderTarget(screenCopyRenderTarget);
-		renderer.render(screenCopyScene, orthoCamera);
-		samples = sample;
-		if (sample % 16 === 0)
-			await new Promise(function(resolve) { setTimeout(resolve, 0); });
+		renderer.setRenderTarget(null);
+		if (samples < target)
+			throw new Error('R7-3.8 C1 raw HDR manual capture timeout before ' + target + ' samples');
+		return samples;
 	}
-	renderer.setRenderTarget(null);
-	if (samples < target)
-		throw new Error('R7-3.8 C1 raw HDR manual capture timeout before ' + target + ' samples');
-	return samples;
+	finally
+	{
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = savedPathTracingMeshMaterial;
+	}
 }
 
 function summarizeR738SurfaceClassPixels(readback)
@@ -4734,8 +4732,13 @@ async function captureR738C1SurfaceClassSummary()
 	var previous = createR738FloatRenderTarget(width, height);
 	var state = captureR738BakeState();
 	var savedRenderTarget = renderer.getRenderTarget ? renderer.getRenderTarget() : null;
+	var useBakeOnlyNoBorrowShader = shouldUseR7310BakeOnlyNoBorrowShader({});
+	var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
+	var savedPathTracingMeshMaterial = pathTracingMesh ? pathTracingMesh.material : null;
 	try
 	{
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = bakeOnlyNoBorrowMaterial;
 		samplingPaused = true;
 		cameraIsMoving = false;
 		cameraRecentlyMoving = false;
@@ -4764,12 +4767,15 @@ async function captureR738C1SurfaceClassSummary()
 	}
 	finally
 	{
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = savedPathTracingMeshMaterial;
 		restoreR738BakeState(state);
 		renderer.setRenderTarget(savedRenderTarget);
 		target.dispose();
 		previous.dispose();
 	}
 }
+window.captureR738C1SurfaceClassSummary = captureR738C1SurfaceClassSummary;
 window.captureR738C1SurfaceClassSummary = captureR738C1SurfaceClassSummary;
 
 function buildR738TexelMetadata(size, worldBounds)
@@ -5966,14 +5972,19 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 		var patchId = normalizeR738PositiveInt(options.patchId, 0, 0, 999999);
 		var surfaceName = options.surfaceName || 'floor_center_c1_reference';
 		var floorWorldBounds = options.floorWorldBounds || { xMin: -1.0, xMax: 1.0, zMin: -1.0, zMax: 1.0, y: 0.01 };
+		var useBakeOnlyNoBorrowShader = shouldUseR7310BakeOnlyNoBorrowShader(options);
+		var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
 		var target = createR738FloatRenderTarget(size, size);
 	var previous = createR738FloatRenderTarget(size, size);
 	var state = captureR738BakeState();
 	var savedRenderTarget = renderer.getRenderTarget ? renderer.getRenderTarget() : null;
+	var savedPathTracingMeshMaterial = pathTracingMesh ? pathTracingMesh.material : null;
 	var startMs = performance.now();
 	var samples = 0;
 	try
 	{
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = bakeOnlyNoBorrowMaterial;
 		if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
 		samplingPaused = true;
 			cameraIsMoving = false;
@@ -6100,6 +6111,8 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 	}
 	finally
 	{
+		if (bakeOnlyNoBorrowMaterial && pathTracingMesh)
+			pathTracingMesh.material = savedPathTracingMeshMaterial;
 		restoreR738BakeState(state);
 		renderer.setRenderTarget(savedRenderTarget);
 		target.dispose();

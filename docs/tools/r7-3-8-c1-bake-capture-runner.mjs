@@ -14,10 +14,16 @@ function parseArgs(argv) {
   const out = {
     samples: 1000,
     atlasResolution: 512,
+    atlasWidth: null,
+    atlasHeight: null,
     timeoutMs: 180000,
     httpPort: 9002,
     cdpPort: 9223,
     angle: 'metal',
+    browser: 'chrome',
+    browserPath: null,
+    bakeShader: 'auto',
+    throwawayPackage: false,
     smokeTest: false,
     previewTest: false,
     hibernationTest: false,
@@ -73,10 +79,16 @@ function parseArgs(argv) {
   for (const arg of argv) {
     if (arg.startsWith('--samples=')) out.samples = Number(arg.slice('--samples='.length));
     else if (arg.startsWith('--atlas-resolution=')) out.atlasResolution = Number(arg.slice('--atlas-resolution='.length));
+    else if (arg.startsWith('--atlas-width=')) out.atlasWidth = Number(arg.slice('--atlas-width='.length));
+    else if (arg.startsWith('--atlas-height=')) out.atlasHeight = Number(arg.slice('--atlas-height='.length));
     else if (arg.startsWith('--timeout-ms=')) out.timeoutMs = Number(arg.slice('--timeout-ms='.length));
     else if (arg.startsWith('--http-port=')) out.httpPort = Number(arg.slice('--http-port='.length));
     else if (arg.startsWith('--cdp-port=')) out.cdpPort = Number(arg.slice('--cdp-port='.length));
     else if (arg.startsWith('--angle=')) out.angle = arg.slice('--angle='.length);
+    else if (arg.startsWith('--browser=')) out.browser = arg.slice('--browser='.length);
+    else if (arg.startsWith('--browser-path=')) out.browserPath = arg.slice('--browser-path='.length);
+    else if (arg.startsWith('--r7310-bake-shader=')) out.bakeShader = arg.slice('--r7310-bake-shader='.length);
+    else if (arg === '--throwaway-package') out.throwawayPackage = true;
     else if (arg === '--smoke-test') out.smokeTest = true;
     else if (arg === '--preview-test') out.previewTest = true;
     else if (arg === '--hibernation-test') out.hibernationTest = true;
@@ -130,6 +142,8 @@ function parseArgs(argv) {
     else if (arg.startsWith('--r7310-west-join-d1-override-zmax=')) out.westJoinD1OverrideZMax = Number(arg.slice('--r7310-west-join-d1-override-zmax='.length));
   }
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
+  if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
+  if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
   if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   for (const key of ['samples', 'atlasResolution', 'timeoutMs', 'httpPort', 'cdpPort']) {
@@ -139,6 +153,12 @@ function parseArgs(argv) {
   if (out.targetSamples !== null) {
     if (!Number.isFinite(out.targetSamples) || out.targetSamples <= 0) throw new Error('Invalid targetSamples');
     out.targetSamples = Math.trunc(out.targetSamples);
+  }
+  for (const key of ['atlasWidth', 'atlasHeight']) {
+    if (out[key] !== null) {
+      if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
+      out[key] = Math.trunc(out[key]);
+    }
   }
   if (!Number.isFinite(out.westJoinD1OverrideZMax)) throw new Error('Invalid westJoinD1OverrideZMax');
   if (out.cameraState !== null) {
@@ -223,18 +243,31 @@ async function startStaticServer(port) {
   return server;
 }
 
-function findBrowser() {
-  const override = process.env.HOME_STUDIO_BROWSER_PATH;
-  if (override && fs.existsSync(override)) return override;
-  const candidates = [
-    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Chromium.app/Contents/MacOS/Chromium'
-  ];
+function isBraveBrowserPath(browserPath) {
+  return /Brave Browser|brave/i.test(browserPath || '');
+}
+
+function findBrowser(args = {}) {
+  const override = args.browserPath || process.env.HOME_STUDIO_BROWSER_PATH;
+  if (override) {
+    if (isBraveBrowserPath(override)) throw new Error('Brave is not allowed for bake runner automation');
+    if (!fs.existsSync(override)) throw new Error(`Browser path does not exist: ${override}`);
+    return override;
+  }
+  const chromeCandidates = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'];
+  const chromiumCandidates = ['/Applications/Chromium.app/Contents/MacOS/Chromium'];
+  const browserMode = args.browser || 'chrome';
+  const candidates = browserMode === 'chromium'
+    ? chromiumCandidates
+    : browserMode === 'auto'
+      ? chromeCandidates.concat(chromiumCandidates)
+      : chromeCandidates;
   const found = candidates.find((candidate) => fs.existsSync(candidate));
-  if (!found) throw new Error('No supported browser found');
+  if (!found) throw new Error(`No supported non-Brave browser found for mode ${browserMode}`);
+  if (isBraveBrowserPath(found)) throw new Error('Brave is not allowed for bake runner automation');
   return found;
 }
+
 
 async function waitForCdp(port, timeoutMs) {
   const started = Date.now();
@@ -1467,9 +1500,11 @@ function validateR739Payload({ report, validationReport, referenceBuffer, maskBu
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const useBakeOnlyNoBorrowShader = args.bakeShader === 'no-borrow' ||
+    (args.bakeShader === 'auto' && args.fullRoomDiffuseBake && args.angle === 'metal');
   console.error('[r738-runner] starting static server');
   const server = await startStaticServer(args.httpPort);
-  const browserPath = findBrowser();
+  const browserPath = findBrowser(args);
   const userDataDir = path.join('/private/tmp', `home-studio-r738-cdp-${Date.now()}`);
   const browserArgs = [
     '--headless=new',
@@ -1554,6 +1589,7 @@ async function main() {
       console.error('[r738-runner] running R7-3.10 camera pose info helper');
       const report = await evaluate(cdp, `(() => {
         return (async () => {
+	        window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
           await new Promise((resolve) => setTimeout(resolve, 500));
           const el = document.getElementById('cameraPoseInfo');
           const copyButton = document.getElementById('copyCameraPoseInfo');
@@ -8131,6 +8167,8 @@ async function main() {
 	      return (async () => {
 	        const report = await window.${args.fullRoomDiffuseBake ? r7310CaptureHelper : 'reportR738C1BakeCaptureAfterSamples'}(${args.targetSamples || args.samples}, ${args.timeoutMs}, {
 	          targetAtlasResolution: ${args.atlasResolution},
+	          targetAtlasWidth: ${args.atlasWidth === null ? 'undefined' : args.atlasWidth},
+	          targetAtlasHeight: ${args.atlasHeight === null ? 'undefined' : args.atlasHeight},
 	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
 	          northeastFurnitureMode: '${args.r7310NeFurniture}'
 	        });
@@ -8165,7 +8203,8 @@ async function main() {
 	    const formalR7310Bake = args.fullRoomDiffuseBake &&
 	      args.atlasResolution === 1024 &&
 	      (args.targetSamples || args.samples) >= 1000 &&
-	      !args.smokeTest;
+	      !args.smokeTest &&
+      !args.throwawayPackage;
 	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture) : null;
 	    const packageDir = formalPackageDir || path.join(repoRoot, '.omc', packageRoot, timestampForPath());
     fs.mkdirSync(packageDir, { recursive: true });

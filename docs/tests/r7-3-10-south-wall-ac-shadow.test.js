@@ -11,10 +11,10 @@ assert.match(initCommon, /R7310_C1_SOUTH_WALL_AC_SHADOW_TARGET_ID\s*=\s*1010/);
 assert.match(initCommon, /R7310_C1_SOUTH_WALL_AC_SHADOW_SURFACE_NAME\s*=\s*'c1_south_wall_ac_shadow'/);
 assert.match(initCommon, /R7310_C1_SOUTH_WALL_AC_SHADOW_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1SouthWallAcShadowRuntimePackage/);
-assert.match(initCommon, /tR7310C1SouthWallAcShadowTexture/);
+assert.doesNotMatch(initCommon, /pathTracingUniforms\.tR7310C1SouthWallAcShadowTexture/);
 assert.match(initCommon, /south_wall_ac_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 
-assert.match(shader, /uniform sampler2D tR7310C1SouthWallAcShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1SouthWallAcShadowTexture/);
 assert.match(shader, /uniform float uR7310C1SouthWallAcShadowMode/);
 assert.match(shader, /uniform float uR7310C1SouthWallAcShadowResolution/);
 assert.match(shader, /bool r7310C1SouthWallAcShadowHiddenBySeColumn/);
@@ -44,7 +44,7 @@ const fullRoomShortCircuitGuard = shader.slice(Math.max(0, shortCircuitCallIndex
 assert.match(fullRoomShortCircuitGuard, /r7310SouthWallAcHybridFirstHit/, 'south wall AC hybrid first hit must not fall through into full-room diffuse short-circuit');
 assert.match(fullRoomShortCircuitGuard, /r7310SouthWindowTopRevealShadowHybridFirstHit/, 'south-window reveal hybrids must remain in the same full-room diffuse guard');
 
-assert.match(homeStudio, /tR7310C1SouthWallAcShadowTexture/);
+assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1SouthWallAcShadowTexture/);
 assert.match(homeStudio, /uR7310C1SouthWallAcShadowMode/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);

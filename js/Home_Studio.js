@@ -5596,22 +5596,6 @@ function initSceneData() {
     r738DefaultBakeAtlasTexture.needsUpdate = true;
     pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SeColumnNorthShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SeColumnWestShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SouthWallAcShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1EastWallBeamShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SwColumnNorthShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1WestWallBeamShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SwColumnInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1WestBeamInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1WestBeamUnderShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1EastBeamInnerShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1EastBeamUnderShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SouthWindowLeftRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SouthWindowRightRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SouthWindowBottomRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1SouthWindowTopRevealShadowTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1IronDoorRevealTexture = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5690,16 +5674,6 @@ function initSceneData() {
     pathTracingUniforms.uR739C1CurrentViewReflectionMode = { value: 0.0 };
     pathTracingUniforms.uR739C1CurrentViewReflectionReady = { value: 0.0 };
     pathTracingUniforms.uR739C1CurrentViewReflectionRoughness = { value: 0.1 };
-    var r739DefaultReflectionSurfaceCacheTexture = new THREE.DataTexture(new Float32Array([0, 0, 0, 1]), 1, 1, THREE.RGBAFormat, THREE.FloatType);
-    r739DefaultReflectionSurfaceCacheTexture.minFilter = THREE.NearestFilter;
-    r739DefaultReflectionSurfaceCacheTexture.magFilter = THREE.NearestFilter;
-    r739DefaultReflectionSurfaceCacheTexture.wrapS = THREE.ClampToEdgeWrapping;
-    r739DefaultReflectionSurfaceCacheTexture.wrapT = THREE.ClampToEdgeWrapping;
-    r739DefaultReflectionSurfaceCacheTexture.flipY = false;
-    r739DefaultReflectionSurfaceCacheTexture.generateMipmaps = false;
-    r739DefaultReflectionSurfaceCacheTexture.needsUpdate = true;
-    pathTracingUniforms.tR739C1ReflectionSurfaceCacheTexture = { value: r739DefaultReflectionSurfaceCacheTexture };
-
     // R3-0 / R3-7：NEE 直接光補償（shader 10 處 `mask *= weight * uLegacyGain`）。
     // 同屬 erichlof 框架能量校準係數，R2-18 肉眼定案 1.5；與 uIndirectMultiplier 同為框架補償性質非物理值。
     pathTracingUniforms.uLegacyGain = { value: 1.0 };

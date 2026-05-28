@@ -8,8 +8,8 @@
 //       a mismatch makes the bake writer and the runtime sampler address DIFFERENT atlas cells.
 //   (3) coverage: R7310_C1_RUNTIME_ATLAS_PATCH_COUNT MUST be >= slot + 1, else the shader clamps slot away
 //       (r7310C1FullRoomDiffuseSamplePatchTexel clamps patchSlot to patchCount - 1).
-//   (4) display uniforms: every iron-door reveal shader uniform MUST be registered in Home_Studio.js pathTracingUniforms,
-//       else InitCommon's guarded setters silently skip it and runtime display remains disabled.
+//   (4) display control uniforms MUST be registered in Home_Studio.js pathTracingUniforms,
+//       else InitCommon's guarded setters silently skip them and runtime display remains disabled.
 //   (5) bake surface point: patchId 1023 MUST be handled in r7310C1BakeSurfacePoint, else bake capture falls back to
 //       the normal camera ray and writes a flattened camera view into the atlas.
 //   (6) north-jamb ownership: the iron-door reveal display predicate MUST stop at the north-wall hidden boundary
@@ -54,10 +54,9 @@ const covers = Number.isFinite(slotNum) && Number.isFinite(pcNum) && pcNum >= sl
 console.log((covers ? 'OK  ' : 'FAIL') + ' patchCount covers slot: patchCount=' + patchCountJs + ' >= slot+1=' + (Number.isFinite(slotNum) ? slotNum + 1 : '?'));
 if (!covers) ok = false;
 
-// (4): shader uniforms must also exist in pathTracingUniforms so InitCommon can update them.
+// (4): display control uniforms must exist in pathTracingUniforms so InitCommon can update them.
 const homeTxt = fs.readFileSync(path.join(REPO, 'js/Home_Studio.js'), 'utf8');
 const uniformNames = [
-  'tR7310C1IronDoorRevealTexture',
   'uR7310C1IronDoorRevealMode',
   'uR7310C1IronDoorRevealReady',
   'uR7310C1IronDoorRevealResolution',
@@ -99,7 +98,7 @@ console.log((ownershipBoundaryMatch ? 'OK  ' : 'FAIL') + ' iron-door reveal X ma
 if (!ownershipBoundaryMatch) ok = false;
 
 if (!ok) {
-  console.error('MISMATCH: iron-door reveal contract diverged (guard-band BAND/GUARD, atlas slot, patchCount coverage, display uniform registration, bake surface-point mapping, or north-jamb ownership boundary). Fix before any bake.');
+  console.error('MISMATCH: iron-door reveal contract diverged (guard-band BAND/GUARD, atlas slot, patchCount coverage, display control uniform registration, bake surface-point mapping, or north-jamb ownership boundary). Fix before any bake.');
   process.exit(1);
 }
-console.log('iron-door reveal contract in sync (guard-band + atlas slot + patchCount coverage + display uniforms + bake surface-point mapping + north-jamb ownership boundary).');
+console.log('iron-door reveal contract in sync (guard-band + atlas slot + patchCount coverage + display control uniforms + bake surface-point mapping + north-jamb ownership boundary).');

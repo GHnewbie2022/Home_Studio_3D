@@ -18,8 +18,8 @@ assert.match(initCommon, /loadR7310C1WestWallBeamShadowRuntimePackage/);
 assert.match(initCommon, /sw_column_north_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 assert.match(initCommon, /west_wall_beam_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 
-assert.match(shader, /uniform sampler2D tR7310C1SwColumnNorthShadowTexture/);
-assert.match(shader, /uniform sampler2D tR7310C1WestWallBeamShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1SwColumnNorthShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1WestWallBeamShadowTexture/);
 assert.match(shader, /uniform float uR7310C1SwColumnNorthShadowMode/);
 assert.match(shader, /uniform float uR7310C1WestWallBeamShadowMode/);
 assert.match(shader, /bool r7310C1SwColumnNorthShadowDiffuseUv/);
@@ -85,8 +85,8 @@ assert.match(
   'west-side hybrid first hits must join the guard that skips the old full-diffuse route'
 );
 
-assert.match(homeStudio, /tR7310C1SwColumnNorthShadowTexture/);
-assert.match(homeStudio, /tR7310C1WestWallBeamShadowTexture/);
+assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1SwColumnNorthShadowTexture/);
+assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1WestWallBeamShadowTexture/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);

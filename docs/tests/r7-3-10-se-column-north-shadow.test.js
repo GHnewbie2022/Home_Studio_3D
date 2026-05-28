@@ -10,10 +10,10 @@ assert.match(initCommon, /R7310_C1_SE_COLUMN_NORTH_SHADOW_TARGET_ID\s*=\s*1008/)
 assert.match(initCommon, /R7310_C1_SE_COLUMN_NORTH_SHADOW_SURFACE_NAME\s*=\s*'c1_se_column_north_shadow'/);
 assert.match(initCommon, /R7310_C1_SE_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1SeColumnNorthShadowRuntimePackage/);
-assert.match(initCommon, /tR7310C1SeColumnNorthShadowTexture/);
+assert.doesNotMatch(initCommon, /pathTracingUniforms\.tR7310C1SeColumnNorthShadowTexture/);
 assert.match(initCommon, /se_column_north_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 
-assert.match(shader, /uniform sampler2D tR7310C1SeColumnNorthShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1SeColumnNorthShadowTexture/);
 assert.match(shader, /uniform float uR7310C1SeColumnNorthShadowMode/);
 assert.match(shader, /uniform float uR7310C1SeColumnNorthShadowResolution/);
 assert.match(shader, /bool r7310C1SeColumnNorthShadowDiffuseUv/);

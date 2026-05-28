@@ -32,7 +32,9 @@ uniform float uCeilingLampHalfH;
 
 uniform float uWallAlbedo; // R2-UI：結構表面反射率（地板/天花板/牆/樑/柱，陣列索引 0..32；fix19 修正原 1..15 漏蓋多數牆段之索引錯誤）
 uniform float uMaxBounces; // R2-UI：最大反彈次數 1~14，runtime 可調，硬性編譯期上限 14
+#ifndef R7310_BAKE_ONLY_NO_BORROW
 uniform sampler2D tBorrowTexture; // R6 LGG-r16 J3：1/8 res 14 彈借光 buffer，主 pass 在 terminal 採樣
+#endif
 uniform float uBorrowStrength;    // R6 LGG-r16 J3：借光強度 0~1，0=關（不跑借光 pass）
 uniform float uIsBorrowPass;      // R6 LGG-r16 J3：1=當前 frame 是借光 pass，shader 跳過借光採樣避免遞迴
 uniform float uR73QuickPreviewTerminalMode;
@@ -44,22 +46,6 @@ uniform float uR738C1BakePatchResolution;
 uniform float uR738C1BakeDiffuseOnlyMode;
 uniform sampler2D tR738C1BakeAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTexture;
-uniform sampler2D tR7310C1SeColumnNorthShadowTexture;
-uniform sampler2D tR7310C1SeColumnWestShadowTexture;
-uniform sampler2D tR7310C1SouthWallAcShadowTexture;
-uniform sampler2D tR7310C1EastWallBeamShadowTexture;
-uniform sampler2D tR7310C1SwColumnNorthShadowTexture;
-uniform sampler2D tR7310C1WestWallBeamShadowTexture;
-uniform sampler2D tR7310C1SwColumnInnerShadowTexture;
-uniform sampler2D tR7310C1WestBeamInnerShadowTexture;
-uniform sampler2D tR7310C1WestBeamUnderShadowTexture;
-uniform sampler2D tR7310C1EastBeamInnerShadowTexture;
-uniform sampler2D tR7310C1EastBeamUnderShadowTexture;
-uniform sampler2D tR7310C1SouthWindowLeftRevealShadowTexture;
-uniform sampler2D tR7310C1SouthWindowRightRevealShadowTexture;
-uniform sampler2D tR7310C1SouthWindowBottomRevealShadowTexture;
-uniform sampler2D tR7310C1SouthWindowTopRevealShadowTexture;
-uniform sampler2D tR7310C1IronDoorRevealTexture;
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -137,7 +123,6 @@ uniform float uR739C1ReflectionFloorRoughness;
 uniform float uR739C1CurrentViewReflectionMode;
 uniform float uR739C1CurrentViewReflectionReady;
 uniform float uR739C1CurrentViewReflectionRoughness;
-uniform sampler2D tR739C1ReflectionSurfaceCacheTexture;
 
 // R2-13 X-ray 透視剝離
 uniform vec3 uCamPos;
@@ -6622,21 +6607,23 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		//   AO 帶用 positionGate 微擋（borrow_luma 0.5 → gate 0.25 → 弱 lift）
 		//   亮面 positionGate 0 → 完全不影響
 		//   深暗角 positionGate ≈ 1 → 全套
-		if (uBorrowStrength > 0.0)
-		{
-			// R6 LGG-r29：positionGate 收緊到 (0.0, 0.3)
-			// r28 範圍 (0.2, 0.6) 讓亮面（borrow_luma 0.4~0.6）也有 0.5 級 gate
-			//   → contribution 受 1/8 borrow per-texel variance 影響、向外擴散變髒
-			// 收緊到 (0.0, 0.3) 後 borrow_luma > 0.3 全擋（牆面/天花板/亮區乾淨）
-			// 只剩深暗角與接觸暗角 borrow_luma < 0.3 時放行
-			vec2 borrowUv = gl_FragCoord.xy / uResolution;
-			vec3 borrowedSum = texture(tBorrowTexture, borrowUv).rgb;
-			vec3 borrowedAvg = borrowedSum / max(uSampleCounter, 1.0);
-			borrowedAvg = min(borrowedAvg, vec3(1.0));
-			float borrowLuma = dot(borrowedAvg, vec3(0.299, 0.587, 0.114));
-			float positionGate = 1.0 - smoothstep(0.0, 0.3, borrowLuma);
-			accumCol += mask * borrowedAvg * uBorrowStrength * positionGate;
-		}
+		#ifndef R7310_BAKE_ONLY_NO_BORROW
+			if (uBorrowStrength > 0.0)
+			{
+				// R6 LGG-r29：positionGate 收緊到 (0.0, 0.3)
+				// r28 範圍 (0.2, 0.6) 讓亮面（borrow_luma 0.4~0.6）也有 0.5 級 gate
+				//   → contribution 受 1/8 borrow per-texel variance 影響、向外擴散變髒
+				// 收緊到 (0.0, 0.3) 後 borrow_luma > 0.3 全擋（牆面/天花板/亮區乾淨）
+				// 只剩深暗角與接觸暗角 borrow_luma < 0.3 時放行
+				vec2 borrowUv = gl_FragCoord.xy / uResolution;
+				vec3 borrowedSum = texture(tBorrowTexture, borrowUv).rgb;
+				vec3 borrowedAvg = borrowedSum / max(uSampleCounter, 1.0);
+				borrowedAvg = min(borrowedAvg, vec3(1.0));
+				float borrowLuma = dot(borrowedAvg, vec3(0.299, 0.587, 0.114));
+				float positionGate = 1.0 - smoothstep(0.0, 0.3, borrowLuma);
+				accumCol += mask * borrowedAvg * uBorrowStrength * positionGate;
+			}
+		#endif
 		if (uR73QuickPreviewTerminalMode > 0.5 && uR73QuickPreviewTerminalStrength > 0.0)
 		{
 			float r73QuickPreviewSampleFade = 1.0 - smoothstep(4.0, 24.0, uSampleCounter);

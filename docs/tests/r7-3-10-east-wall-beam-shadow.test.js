@@ -11,10 +11,10 @@ assert.match(initCommon, /R7310_C1_EAST_WALL_BEAM_SHADOW_TARGET_ID\s*=\s*1011/);
 assert.match(initCommon, /R7310_C1_EAST_WALL_BEAM_SHADOW_SURFACE_NAME\s*=\s*'c1_east_wall_beam_shadow'/);
 assert.match(initCommon, /R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /loadR7310C1EastWallBeamShadowRuntimePackage/);
-assert.match(initCommon, /tR7310C1EastWallBeamShadowTexture/);
+assert.doesNotMatch(initCommon, /pathTracingUniforms\.tR7310C1EastWallBeamShadowTexture/);
 assert.match(initCommon, /east_wall_beam_shadow_1024_baked_indirect_diffuse_plus_live_direct_shadow_and_live_reflection/);
 
-assert.match(shader, /uniform sampler2D tR7310C1EastWallBeamShadowTexture/);
+assert.doesNotMatch(shader, /uniform sampler2D tR7310C1EastWallBeamShadowTexture/);
 assert.match(shader, /uniform float uR7310C1EastWallBeamShadowMode/);
 assert.match(shader, /uniform float uR7310C1EastWallBeamShadowResolution/);
 assert.match(shader, /bool r7310C1EastWallBeamShadowDiffuseUv/);
@@ -47,7 +47,7 @@ assert.notEqual(fullDiffuseGuardStart, -1, 'full-diffuse first-hit guard missing
 const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, fullDiffuseGuardStart + 1300);
 assert.match(fullDiffuseGuard, /r7310EastWallBeamHybridFirstHit/, 'east wall beam hybrid first hit must not fall through into the old full-diffuse route');
 
-assert.match(homeStudio, /tR7310C1EastWallBeamShadowTexture/);
+assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1EastWallBeamShadowTexture/);
 assert.match(homeStudio, /uR7310C1EastWallBeamShadowMode/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
