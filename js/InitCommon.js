@@ -6152,15 +6152,17 @@ function averageR738AtlasPixels(pixels, samples)
 	return { pixels: averaged, nonFiniteTexels: nonFiniteTexels };
 }
 
-function calculateR738ReprojectionSanity(rawHdr, rawSamples, atlasPixels, metadata, width, height)
+function calculateR738ReprojectionSanity(rawHdr, rawSamples, atlasPixels, metadata, width, height, options)
 {
 	if (!rawHdr || !atlasPixels || !metadata || !worldCamera || !THREE)
 		return { comparisons: 0, medianRelativeLumaError: null, p90RelativeLumaError: null, status: 'fail' };
+	options = options || {};
 	width = normalizeR738PositiveInt(width, 512, 1, 8192);
 	height = normalizeR738PositiveInt(height, width, 1, 8192);
 	var errors = [];
 	var rawDivisor = Math.max(1, Number(rawSamples) || 1);
 	var classIds = window.__r738C1BakeCaptureLastSurfaceClassIds || null;
+	var expectedSurfaceClassIds = Array.isArray(options.expectedSurfaceClassIds) ? options.expectedSurfaceClassIds : [Number.isFinite(Number(options.expectedSurfaceClassIds)) ? Number(options.expectedSurfaceClassIds) : 1];
 	var sampleGrid = 8;
 	for (var gy = 0; gy < sampleGrid; gy += 1)
 	{
@@ -6176,8 +6178,21 @@ function calculateR738ReprojectionSanity(rawHdr, rawSamples, atlasPixels, metada
 			var sx = Math.max(0, Math.min(rawHdr.width - 1, Math.floor((projected.x * 0.5 + 0.5) * rawHdr.width)));
 			var sy = Math.max(0, Math.min(rawHdr.height - 1, Math.floor((projected.y * 0.5 + 0.5) * rawHdr.height)));
 			var rawIndex = sy * rawHdr.width + sx;
-			if (classIds && classIds[rawIndex] !== 1)
-				continue;
+			if (classIds)
+			{
+				var rawClassId = classIds[rawIndex];
+				var classAllowed = false;
+				for (var ci = 0; ci < expectedSurfaceClassIds.length; ci += 1)
+				{
+					if (rawClassId === expectedSurfaceClassIds[ci])
+					{
+						classAllowed = true;
+						break;
+					}
+				}
+				if (!classAllowed)
+					continue;
+			}
 			var rawOffset = rawIndex * 4;
 			var atlasOffset = (ty * width + tx) * 4;
 			var rawLuma = (0.2126 * rawHdr.pixels[rawOffset] + 0.7152 * rawHdr.pixels[rawOffset + 1] + 0.0722 * rawHdr.pixels[rawOffset + 2]) / rawDivisor;
@@ -7162,7 +7177,7 @@ window.reportR7310C1NorthWallDiffuseBakeAfterSamples = async function(targetSamp
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
-		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasWidth, prep.targetAtlasHeight);
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasWidth, prep.targetAtlasHeight, { expectedSurfaceClassIds: [4] });
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
@@ -7254,7 +7269,7 @@ window.reportR7310C1EastWallDiffuseBakeAfterSamples = async function(targetSampl
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
-		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasWidth, prep.targetAtlasHeight);
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasWidth, prep.targetAtlasHeight, { expectedSurfaceClassIds: [4] });
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
@@ -7427,7 +7442,7 @@ window.reportR7310C1WestWallDiffuseBakeAfterSamples = async function(targetSampl
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
-		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution, undefined, { expectedSurfaceClassIds: [4] });
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
@@ -7507,7 +7522,7 @@ window.reportR7310C1SouthWallDiffuseBakeAfterSamples = async function(targetSamp
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
-		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution);
+		var reprojection = calculateR738ReprojectionSanity(rawHdr, actualSamples, atlasPixels, texelMetadata, prep.targetAtlasResolution, undefined, { expectedSurfaceClassIds: [4] });
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,

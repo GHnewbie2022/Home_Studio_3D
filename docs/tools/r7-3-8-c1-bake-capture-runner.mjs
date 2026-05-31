@@ -8210,6 +8210,15 @@ async function main() {
 	    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
 	    const rectangularR7310Bake = args.atlasWidth !== null || args.atlasHeight !== null;
+	    const r7310FullRoomCaptureCameraOptions = {
+	      cameraState: args.cameraState,
+	      northWallCamera: args.cameraState ? false : args.r7310Surface === 'north-wall',
+	      eastWallCamera: args.cameraState ? false : args.r7310Surface === 'east-wall',
+	      westWallCamera: args.cameraState ? false : args.r7310Surface === 'west-wall',
+	      southWallCamera: args.cameraState ? false : args.r7310Surface === 'south-wall',
+	      ceilingCamera: args.cameraState ? false : args.r7310Surface === 'ceiling',
+	      structuralCamera: args.cameraState ? false : args.r7310Surface === 'structural-beams-columns'
+	    };
 	    const expression = `(() => {
 	      function f32ToBase64(arr) {
         if (!arr) return null;
@@ -8239,6 +8248,13 @@ async function main() {
 	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
 	          northeastFurnitureMode: '${args.r7310NeFurniture}',
 	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
+	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
+	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
+	          eastWallCamera: ${r7310FullRoomCaptureCameraOptions.eastWallCamera ? 'true' : 'false'},
+	          westWallCamera: ${r7310FullRoomCaptureCameraOptions.westWallCamera ? 'true' : 'false'},
+	          southWallCamera: ${r7310FullRoomCaptureCameraOptions.southWallCamera ? 'true' : 'false'},
+	          ceilingCamera: ${r7310FullRoomCaptureCameraOptions.ceilingCamera ? 'true' : 'false'},
+	          structuralCamera: ${r7310FullRoomCaptureCameraOptions.structuralCamera ? 'true' : 'false'},
 	          bakeDiagnosticsOptions: window.__r7310BakeDiagnosticsOptions
 	        });
 	        const bakeDiagnostics = report && (report.bakeDiagnostics || (report.atlasSummary && report.atlasSummary.bakeDiagnostics)) || null;
