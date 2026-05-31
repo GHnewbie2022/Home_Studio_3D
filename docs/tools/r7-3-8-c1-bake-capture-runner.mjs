@@ -38,6 +38,13 @@ function parseArgs(argv) {
     fullRoomDiffuseBake: false,
     r7310Surface: 'floor',
     r7310NeFurniture: 'bed',
+    r7310SeparatedIrradianceBake: false,
+    r7310BakeDiagnostics: false,
+    r7310BakeSubmissionBoundary: 'none',
+    r7310BakeSubmissionEverySamples: 16,
+    r7310BakeSubmissionLogLimit: 2048,
+    r7310BakeTileWidth: 0,
+    r7310BakeTileHeight: 0,
     runtimeShortCircuitTest: false,
     northWallRuntimeTest: false,
     eastWallRuntimeTest: false,
@@ -103,6 +110,13 @@ function parseArgs(argv) {
     else if (arg === '--r7310-full-room-diffuse-bake') out.fullRoomDiffuseBake = true;
     else if (arg.startsWith('--r7310-surface=')) out.r7310Surface = arg.slice('--r7310-surface='.length);
     else if (arg.startsWith('--r7310-ne-furniture=')) out.r7310NeFurniture = arg.slice('--r7310-ne-furniture='.length);
+    else if (arg === '--r7310-separated-irradiance-bake') out.r7310SeparatedIrradianceBake = true;
+    else if (arg === '--r7310-bake-diagnostics') out.r7310BakeDiagnostics = true;
+    else if (arg.startsWith('--r7310-bake-submission-boundary=')) out.r7310BakeSubmissionBoundary = arg.slice('--r7310-bake-submission-boundary='.length);
+    else if (arg.startsWith('--r7310-bake-submission-every-samples=')) out.r7310BakeSubmissionEverySamples = Number(arg.slice('--r7310-bake-submission-every-samples='.length));
+    else if (arg.startsWith('--r7310-bake-submission-log-limit=')) out.r7310BakeSubmissionLogLimit = Number(arg.slice('--r7310-bake-submission-log-limit='.length));
+    else if (arg.startsWith('--r7310-bake-tile-width=')) out.r7310BakeTileWidth = Number(arg.slice('--r7310-bake-tile-width='.length));
+    else if (arg.startsWith('--r7310-bake-tile-height=')) out.r7310BakeTileHeight = Number(arg.slice('--r7310-bake-tile-height='.length));
     else if (arg === '--r7310-runtime-short-circuit-test') out.runtimeShortCircuitTest = true;
     else if (arg === '--r7310-north-wall-runtime-test') out.northWallRuntimeTest = true;
     else if (arg === '--r7310-east-wall-runtime-test') out.eastWallRuntimeTest = true;
@@ -144,9 +158,14 @@ function parseArgs(argv) {
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
   if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
+  if (!['none', 'flush', 'fence', 'finish'].includes(out.r7310BakeSubmissionBoundary)) throw new Error('Invalid r7310BakeSubmissionBoundary');
   if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   for (const key of ['samples', 'atlasResolution', 'timeoutMs', 'httpPort', 'cdpPort']) {
+    if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
+    out[key] = Math.trunc(out[key]);
+  }
+  for (const key of ['r7310BakeSubmissionEverySamples', 'r7310BakeSubmissionLogLimit']) {
     if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
     out[key] = Math.trunc(out[key]);
   }
@@ -551,6 +570,30 @@ async function waitForExpression(cdp, expression, timeoutMs) {
 function base64ToBuffer(value) {
   if (!value) return Buffer.alloc(0);
   return Buffer.from(value, 'base64');
+}
+
+async function readBrowserFloatArtifactBuffer(cdp, artifactExpression, chunkBytes = 4 * 1024 * 1024) {
+  const byteLength = await evaluate(cdp, `(() => {
+    const arr = ${artifactExpression};
+    return arr ? arr.byteLength : 0;
+  })()`, { timeoutMs: 60000 });
+  const chunks = [];
+  for (let offset = 0; offset < byteLength; offset += chunkBytes) {
+    const length = Math.min(chunkBytes, byteLength - offset);
+    const base64 = await evaluate(cdp, `(() => {
+      const arr = ${artifactExpression};
+      const bytes = new Uint8Array(arr.buffer, arr.byteOffset + ${offset}, ${length});
+      let binary = '';
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+      return btoa(binary);
+    })()`, { timeoutMs: 60000 });
+    chunks.push(base64ToBuffer(base64));
+  }
+  return Buffer.concat(chunks);
 }
 
 function computeWestJoinSanityAggregate(probeResult) {
@@ -1025,6 +1068,8 @@ function buildManifest({ report, packageDir, smokeTest }) {
     commit,
     smokeTest,
     targetAtlasResolution: report.targetAtlasResolution,
+    targetAtlasWidth: report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || report.targetAtlasResolution,
+    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
     requestedSamples: report.requestedSamples,
     diffuseOnly: report.diffuseOnly === true,
     upscaled: false,
@@ -1064,9 +1109,12 @@ function summarizeAtlasVisibleLuma(buffer) {
 }
 
 function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer, smokeTest }) {
-  const resolution = report.targetAtlasResolution;
-  const expectedAtlasBytes = resolution * resolution * 4 * 4;
-  const expectedMetadataBytes = resolution * resolution * 12 * 4;
+	const resolution = report.targetAtlasResolution;
+	const width = report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || resolution;
+	const height = report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || resolution;
+	const metadataTransferred = metadataBuffer.length > 0;
+	const expectedAtlasBytes = width * height * 4 * 4;
+	const expectedMetadataBytes = width * height * 12 * 4;
   const validTexelRatioMinimumBySurface = {
     c1_east_wall: 0.70,
     c1_west_wall: 0.60,
@@ -1094,8 +1142,9 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     diffuseOnly: report.diffuseOnly === true && report.atlasSummary.diffuseOnly === true,
     upscaled: report.upscaled === false && report.atlasSummary.upscaled === false,
     atlasResolution: report.atlasSummary.patchSize === resolution,
+    atlasDimensions: report.atlasSummary.patchWidth === width && report.atlasSummary.patchHeight === height,
     atlasBytes: atlasBuffer.length === expectedAtlasBytes,
-    metadataBytes: metadataBuffer.length === expectedMetadataBytes,
+    metadataBytes: metadataTransferred ? metadataBuffer.length === expectedMetadataBytes : true,
     finiteRaw: report.rawHdrSummary.nonFinitePixels === 0,
     finiteAtlas: report.atlasSummary.nonFiniteTexels === 0,
     atlasVisibleLuma: atlasVisibleLuma.nonzeroTexels > 0 && atlasVisibleLuma.meanLuma > 0.001 && atlasVisibleLuma.maxLuma > 0.01,
@@ -1140,9 +1189,10 @@ function r7310RuntimeScopeForSurface(surfaceName) {
   return 'unknown';
 }
 
-function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed') {
+function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
   if (surfaceName === 'c1_floor_full_room') return 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
   if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
+  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return 'docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json';
   if (surfaceName === 'c1_north_wall') return 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
   if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
   if (surfaceName === 'c1_east_wall') return 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
@@ -1170,10 +1220,11 @@ function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed')
   return null;
 }
 
-function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = 'bed') {
+function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
   const root = path.join(repoRoot, 'assets', 'bakes', 'r7-3-10', 'c1-static-diffuse');
   if (surfaceName === 'c1_floor_full_room') return path.join(root, 'floor-full-room-1024px-1000spp');
   if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'north-wall-wardrobe-door-hole-1024px-1000spp');
+  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return path.join(root, 'north-wall-separated-1024px-1000spp');
   if (surfaceName === 'c1_north_wall') return path.join(root, 'north-wall-door-hole-1024px-1000spp');
   if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-wardrobe-1024px-1000spp');
   if (surfaceName === 'c1_east_wall') return path.join(root, 'east-wall-1024px-1000spp');
@@ -1257,9 +1308,10 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
   if (report.surfaceName === 'c1_north_wall') {
     pointer.mapping = 'planar_xy';
     pointer.invalidTexelRegions = report.invalidTexelRegions || null;
-    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
-    pointer.bakedRadianceKind = 'indirect_diffuse_radiance';
-    pointer.directLightAlreadyIncluded = false;
+	    pointer.referenceForAcceptance = 'live_path_tracing_same_camera';
+	    pointer.bakedRadianceKind = report.bakedRadianceKind || 'indirect_diffuse_radiance';
+	    pointer.multiplyAlbedoAfterBakeLookup = report.multiplyAlbedoAfterBakeLookup === true;
+	    pointer.directLightAlreadyIncluded = false;
     pointer.addDirectLightAfterBakeLookup = true;
     pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
     pointer.runtimeAtlasSlot = 1;
@@ -1286,6 +1338,11 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
     pointer.runtimeTexture = 'tR7310C1FullRoomDiffuseAtlasTexture';
     pointer.runtimeAtlasSlot = 3;
     pointer.runtimeArchitecture = 'single_full_west_wall_first_hit_hybrid';
+  }
+  if (report.surfaceName === 'c1_south_wall') {
+    pointer.mapping = 'planar_xy';
+    pointer.invalidTexelRegions = report.invalidTexelRegions || null;
+    pointer.windowRevealAtlasRegions = report.windowRevealAtlasRegions || null;
   }
   if (report.surfaceName === 'c1_ceiling') {
     pointer.mapping = 'planar_xz';
@@ -8152,6 +8209,7 @@ async function main() {
 	      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples'
 	    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
+	    const rectangularR7310Bake = args.atlasWidth !== null || args.atlasHeight !== null;
 	    const expression = `(() => {
 	      function f32ToBase64(arr) {
         if (!arr) return null;
@@ -8164,23 +8222,37 @@ async function main() {
         }
         return btoa(binary);
 	      }
-	      return (async () => {
+      return (async () => {
+	        window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
+	        window.__r7310BakeDiagnosticsOptions = {
+	          enabled: ${args.r7310BakeDiagnostics ? 'true' : 'false'},
+	          submissionBoundaryMode: '${args.r7310BakeSubmissionBoundary}',
+	          submissionEverySamples: ${args.r7310BakeSubmissionEverySamples},
+	          logLimit: ${args.r7310BakeSubmissionLogLimit},
+	          tileWidth: ${args.r7310BakeTileWidth || 0},
+	          tileHeight: ${args.r7310BakeTileHeight || 0}
+	        };
 	        const report = await window.${args.fullRoomDiffuseBake ? r7310CaptureHelper : 'reportR738C1BakeCaptureAfterSamples'}(${args.targetSamples || args.samples}, ${args.timeoutMs}, {
 	          targetAtlasResolution: ${args.atlasResolution},
 	          targetAtlasWidth: ${args.atlasWidth === null ? 'undefined' : args.atlasWidth},
 	          targetAtlasHeight: ${args.atlasHeight === null ? 'undefined' : args.atlasHeight},
 	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
-	          northeastFurnitureMode: '${args.r7310NeFurniture}'
+	          northeastFurnitureMode: '${args.r7310NeFurniture}',
+	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
+	          bakeDiagnosticsOptions: window.__r7310BakeDiagnosticsOptions
 	        });
-        const artifacts = window.getR738C1BakeCaptureArtifacts();
+	        const bakeDiagnostics = report && (report.bakeDiagnostics || (report.atlasSummary && report.atlasSummary.bakeDiagnostics)) || null;
+	        const transferMetadata = ${rectangularR7310Bake ? 'false' : 'true'};
+	        const artifacts = window.getR738C1BakeCaptureArtifacts();
         return {
           report,
           rawHdrSummary: artifacts.rawHdrSummary,
           surfaceClassSummary: artifacts.surfaceClassSummary,
           validationReport: artifacts.validationReport,
-          atlasBase64: f32ToBase64(artifacts.atlasPixels),
-          preSyncAtlasBase64: f32ToBase64(artifacts.preSyncAtlasPixels),
-          metadataBase64: f32ToBase64(artifacts.texelMetadata)
+          bakeDiagnostics,
+          atlasBase64: transferMetadata ? f32ToBase64(artifacts.atlasPixels) : null,
+          preSyncAtlasBase64: transferMetadata ? f32ToBase64(artifacts.preSyncAtlasPixels) : null,
+          metadataBase64: transferMetadata ? f32ToBase64(artifacts.texelMetadata) : null
         };
       })();
     })()`;
@@ -8189,7 +8261,9 @@ async function main() {
       timeoutMs: args.timeoutMs + 180000
     });
     console.error('[r738-runner] capture helper returned');
-    const atlasBuffer = base64ToBuffer(payload.atlasBase64);
+    const atlasBuffer = rectangularR7310Bake
+      ? await readBrowserFloatArtifactBuffer(cdp, 'window.getR738C1BakeCaptureArtifacts().atlasPixels')
+      : base64ToBuffer(payload.atlasBase64);
     const preSyncAtlasBuffer = base64ToBuffer(payload.preSyncAtlasBase64);
     const metadataBuffer = base64ToBuffer(payload.metadataBase64);
     const validation = validatePayload({
@@ -8203,22 +8277,71 @@ async function main() {
 	    const formalR7310Bake = args.fullRoomDiffuseBake &&
 	      args.atlasResolution === 1024 &&
 	      (args.targetSamples || args.samples) >= 1000 &&
+	      !rectangularR7310Bake &&
 	      !args.smokeTest &&
-      !args.throwawayPackage;
-	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture) : null;
+	      !args.throwawayPackage;
+	    const separatedR7310Bake = args.r7310SeparatedIrradianceBake === true;
+	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture, { separatedIrradianceBake: separatedR7310Bake }) : null;
 	    const packageDir = formalPackageDir || path.join(repoRoot, '.omc', packageRoot, timestampForPath());
     fs.mkdirSync(packageDir, { recursive: true });
     const manifest = buildManifest({ report: payload.report, packageDir, smokeTest: args.smokeTest });
+    const bakeDiagnostics = payload.bakeDiagnostics || null;
+    const bakeDiagnosticsSummary = bakeDiagnostics ? {
+      enabled: bakeDiagnostics.enabled === true,
+      submissionBoundaryMode: bakeDiagnostics.submissionBoundaryMode || 'none',
+      submissionEverySamples: bakeDiagnostics.submissionEverySamples || null,
+      submissionCount: Array.isArray(bakeDiagnostics.submissions) ? bakeDiagnostics.submissions.length : 0,
+      maxSubmissionElapsedMs: bakeDiagnostics.maxSubmissionElapsedMs || 0,
+      maxRenderMs: bakeDiagnostics.maxRenderMs || 0,
+      maxBoundaryMs: bakeDiagnostics.maxBoundaryMs || 0,
+      readbackMs: bakeDiagnostics.readbackMs,
+      tileWidth: bakeDiagnostics.tileWidth || 0,
+      tileHeight: bakeDiagnostics.tileHeight || 0,
+      tileColumns: bakeDiagnostics.tileColumns || 0,
+      tileRows: bakeDiagnostics.tileRows || 0,
+      tileCount: bakeDiagnostics.tileCount || 0,
+      completedTiles: bakeDiagnostics.completedTiles || 0,
+      minCompletedSamples: bakeDiagnostics.minCompletedSamples === undefined ? null : bakeDiagnostics.minCompletedSamples,
+      timedOut: bakeDiagnostics.timedOut === true,
+      tileReadbackCount: Array.isArray(bakeDiagnostics.tileReadbacks) ? bakeDiagnostics.tileReadbacks.length : 0,
+      maxTileReadbackMs: bakeDiagnostics.maxTileReadbackMs || 0,
+      totalTileReadbackMs: bakeDiagnostics.totalTileReadbackMs || 0,
+      contextLostCount: bakeDiagnostics.contextLostCount || 0,
+      contextRestoredCount: bakeDiagnostics.contextRestoredCount || 0
+    } : null;
     const validationReport = {
       ...payload.validationReport,
       browserValidationStatus: payload.validationReport.status,
       runnerStatus: validation.status,
       runnerChecks: validation.checks,
       runnerFailedChecks: validation.failed,
+      bakeDiagnosticsSummary,
       bakeContaminationGuardSnapshot: (payload.report && payload.report.atlasSummary && payload.report.atlasSummary.bakeContaminationGuardSnapshot) || null
     };
     if (args.smokeTest && validation.status === 'pass') validationReport.status = 'pass';
     if (validation.status !== 'pass') validationReport.status = 'fail';
+    const markRunnerFailedCheck = (checkName) => {
+      validationReport.status = 'fail';
+      validationReport.runnerStatus = 'fail';
+      const currentChecks = validationReport.runnerFailedChecks || [];
+      if (!currentChecks.includes(checkName))
+        validationReport.runnerFailedChecks = [...currentChecks, checkName];
+    };
+    if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.contextLostCount > 0)
+      markRunnerFailedCheck('webgl-context-lost');
+    if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.maxSubmissionElapsedMs > 250)
+      markRunnerFailedCheck('gpu-submission-ms-over-250');
+    if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.maxTileReadbackMs > 250)
+      markRunnerFailedCheck('gpu-tile-readback-ms-over-250');
+    const expectedCompletedSamples = Number(payload.report?.requestedSamples || 0);
+    if (
+      bakeDiagnosticsSummary &&
+      expectedCompletedSamples > 0 &&
+      bakeDiagnosticsSummary.minCompletedSamples < expectedCompletedSamples
+    )
+      markRunnerFailedCheck('gpu-tile-incomplete-samples');
+    if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.timedOut)
+      markRunnerFailedCheck('gpu-tile-incomplete-samples');
     const artifactHashes = {
       atlasPatch0Sha256: sha256(atlasBuffer),
       texelMetadataPatch0Sha256: sha256(metadataBuffer)
@@ -8227,13 +8350,31 @@ async function main() {
 	    fs.writeFileSync(path.join(packageDir, 'raw-hdr-summary.json'), `${JSON.stringify(payload.rawHdrSummary, null, 2)}\n`);
 	    fs.writeFileSync(path.join(packageDir, 'surface-class-summary.json'), `${JSON.stringify(payload.surfaceClassSummary, null, 2)}\n`);
 	    if (payload.report.coverageReport) fs.writeFileSync(path.join(packageDir, 'coverage-report.json'), `${JSON.stringify(payload.report.coverageReport, null, 2)}\n`);
+    if (bakeDiagnostics)
+      fs.writeFileSync(path.join(packageDir, 'bake-diagnostics.json'), `${JSON.stringify(bakeDiagnostics, null, 2)}\n`);
+    const diagnosticEvents = cdp.events
+      .filter((event) => {
+        if (event.method === 'Runtime.exceptionThrown') return true;
+        if (event.method === 'Log.entryAdded') {
+          const level = event.params && event.params.entry ? event.params.entry.level : '';
+          return level === 'warning' || level === 'error';
+        }
+        if (event.method === 'Runtime.consoleAPICalled') {
+          const type = event.params ? event.params.type : '';
+          return type === 'warning' || type === 'error';
+        }
+        return false;
+      });
+    if (diagnosticEvents.length > 0)
+      fs.writeFileSync(path.join(packageDir, 'page-diagnostics.json'), `${JSON.stringify(diagnosticEvents, null, 2)}\n`);
     fs.writeFileSync(path.join(packageDir, 'atlas-patch-000-rgba-f32.bin'), atlasBuffer);
     if (preSyncAtlasBuffer.length > 0)
       fs.writeFileSync(path.join(packageDir, 'atlas-patch-000-pre-sync-rgba-f32.bin'), preSyncAtlasBuffer);
-    fs.writeFileSync(path.join(packageDir, 'texel-metadata-patch-000-f32.bin'), metadataBuffer);
+    if (metadataBuffer.length > 0)
+      fs.writeFileSync(path.join(packageDir, 'texel-metadata-patch-000-f32.bin'), metadataBuffer);
     fs.writeFileSync(path.join(packageDir, 'validation-report.json'), `${JSON.stringify(validationReport, null, 2)}\n`);
 	    if (formalR7310Bake) {
-	      const pointerPath = r7310PointerPathForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture);
+	      const pointerPath = r7310PointerPathForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture, { separatedIrradianceBake: separatedR7310Bake });
 	      if (pointerPath && validationReport.status === 'pass') {
         const runtimePointer = buildR7310RuntimePointer({
           report: payload.report,
@@ -8250,6 +8391,7 @@ async function main() {
     console.log(`atlasResolution: ${payload.report.targetAtlasResolution}`);
     console.log(`upscaled: ${payload.report.upscaled}`);
     console.log(`status: ${validationReport.status}`);
+    if (bakeDiagnosticsSummary) console.log(`bakeDiagnostics: ${JSON.stringify(bakeDiagnosticsSummary)}`);
     console.log(`package: ${path.relative(repoRoot, packageDir)}`);
     if (validationReport.status !== 'pass') {
       console.error(`failedChecks: ${validation.failed.join(', ')}`);

@@ -5328,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-iron-door-reveal-v3';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-east-slot10-retired-v3';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5586,16 +5586,19 @@ function initSceneData() {
     pathTracingUniforms.uR738C1BakePatchId = { value: 0 };
     pathTracingUniforms.uR738C1BakePatchResolution = { value: 512.0 };
     pathTracingUniforms.uR738C1BakeDiffuseOnlyMode = { value: 0.0 };
+    pathTracingUniforms.uR738C1BakeTileOriginPx = { value: new THREE.Vector2(0.0, 0.0) };
+    pathTracingUniforms.uR738C1BakeFullAtlasResolution = { value: new THREE.Vector2(1.0, 1.0) };
     var r738DefaultBakeAtlasTexture = new THREE.DataTexture(new Float32Array([0, 0, 0, 1]), 1, 1, THREE.RGBAFormat, THREE.FloatType);
     r738DefaultBakeAtlasTexture.minFilter = THREE.NearestFilter;
     r738DefaultBakeAtlasTexture.magFilter = THREE.NearestFilter;
     r738DefaultBakeAtlasTexture.wrapS = THREE.ClampToEdgeWrapping;
-    r738DefaultBakeAtlasTexture.wrapT = THREE.ClampToEdgeWrapping;
-    r738DefaultBakeAtlasTexture.flipY = false;
-    r738DefaultBakeAtlasTexture.generateMipmaps = false;
-    r738DefaultBakeAtlasTexture.needsUpdate = true;
-    pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-    pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+	r738DefaultBakeAtlasTexture.wrapT = THREE.ClampToEdgeWrapping;
+	r738DefaultBakeAtlasTexture.flipY = false;
+	r738DefaultBakeAtlasTexture.generateMipmaps = false;
+	r738DefaultBakeAtlasTexture.needsUpdate = true;
+	pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5658,6 +5661,15 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution = { value: 512.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 23.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
+	pathTracingUniforms.uR7310C1SeparatedBakeMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
+	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1NonSquareAtlasSizePx = { value: new THREE.Vector2(2912.0, 3432.0) };
+	pathTracingUniforms.uR7310C1NonSquareNorthWallUvRect = { value: new THREE.Vector4(0.0, 0.0, 2492.0 / 2912.0, 1716.0 / 3432.0) };
+	pathTracingUniforms.uR7310C1NonSquareEastWallUvRect = { value: new THREE.Vector4(0.0, 1716.0 / 3432.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1NonSquareNorthWallFaceSizePx = { value: new THREE.Vector2(2492.0, 1716.0) };
+	pathTracingUniforms.uR7310C1NonSquareEastWallFaceSizePx = { value: new THREE.Vector2(2912.0, 1716.0) };
     pathTracingUniforms.uR738C1BakePastePreviewMode = { value: 0.0 };
     pathTracingUniforms.uR738C1BakePastePreviewReady = { value: 0.0 };
     pathTracingUniforms.uR738C1BakePastePreviewStrength = { value: 1.0 };
@@ -5674,7 +5686,7 @@ function initSceneData() {
     pathTracingUniforms.uR739C1CurrentViewReflectionMode = { value: 0.0 };
     pathTracingUniforms.uR739C1CurrentViewReflectionReady = { value: 0.0 };
     pathTracingUniforms.uR739C1CurrentViewReflectionRoughness = { value: 0.1 };
-    // R3-0 / R3-7：NEE 直接光補償（shader 10 處 `mask *= weight * uLegacyGain`）。
+	// R3-0 / R3-7：NEE 直接光補償（shader 10 處 `mask *= weight * uLegacyGain`）。
     // 同屬 erichlof 框架能量校準係數，R2-18 肉眼定案 1.5；與 uIndirectMultiplier 同為框架補償性質非物理值。
     pathTracingUniforms.uLegacyGain = { value: 1.0 };
 
@@ -6111,6 +6123,15 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '鐵門開口 4 面使用 R7-3.10 1024 bake'
 			: '鐵門開口回到 live path tracing';
 	}
+	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
+	var nonSquareActive = !!(report && report.nonSquareAtlasEnabled);
+	if (nonSquareBtn) {
+		nonSquareBtn.textContent = nonSquareActive ? '北東非方格：開' : '北東非方格：關';
+		nonSquareBtn.classList.toggle('glow-white', nonSquareActive);
+		nonSquareBtn.title = nonSquareActive
+			? '北牆與東牆改讀非方格尺寸實驗貼圖'
+			: '北牆與東牆使用原 1024 等格貼圖';
+	}
 }
 
 function bindR7310FullFloorDiffuseControls() {
@@ -6122,7 +6143,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
 	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
 	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
-	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn) return;
+	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
+	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn && !nonSquareBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -6143,6 +6165,7 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(ceilingBtn, 'ceilingEnabled', 'setR7310C1CeilingDiffuseRuntimeEnabled');
 	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
 	bindButton(ironDoorBtn, 'ironDoorRevealEnabled', 'setR7310C1IronDoorRevealRuntimeEnabled');
+	bindButton(nonSquareBtn, 'nonSquareAtlasEnabled', 'setR7310C1UseNonSquareAtlas');
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());
 }

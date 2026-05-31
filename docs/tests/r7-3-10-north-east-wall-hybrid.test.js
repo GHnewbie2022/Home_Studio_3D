@@ -64,7 +64,13 @@ for (const surface of surfaces) {
 }
 
 assert.match(shader, /bool r7310NorthWallHybridFirstHit\s*=\s*bounces == 0[\s\S]{0,160}r7310C1NorthWallHybridActive/);
-assert.match(shader, /bool r7310EastWallHybridFirstHit\s*=\s*bounces == 0 &&\s*!r7310EastWallBeamHybridFirstHit[\s\S]{0,160}r7310C1EastWallHybridActive/);
+assert.match(shader, /bool r7310EastWallHybridFirstHit\s*=\s*bounces == 0 &&\s*r7310C1EastWallHybridActive/);
+const eastFirstHitStart = shader.indexOf('bool r7310EastWallHybridFirstHit');
+assert.notEqual(eastFirstHitStart, -1, 'east wall hybrid first-hit declaration missing');
+const eastFirstHitEnd = shader.indexOf('bool r7310SwColumnNorthHybridFirstHit', eastFirstHitStart);
+assert.ok(eastFirstHitEnd > eastFirstHitStart, 'east wall hybrid first-hit end marker missing');
+const eastFirstHitBody = shader.slice(eastFirstHitStart, eastFirstHitEnd);
+assert.doesNotMatch(eastFirstHitBody, /!r7310EastWallBeamHybridFirstHit/);
 
 const fullDiffuseGuardStart = shader.indexOf('if (!(r7310FloorHybridFirstHit');
 assert.notEqual(fullDiffuseGuardStart, -1, 'full diffuse guard must include floor/ceiling and north/east wall hybrid routes');

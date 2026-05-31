@@ -37,7 +37,7 @@ assert.doesNotMatch(shortCircuitBody, /uR7310C1SouthWallAcShadowMode/, 'south wa
 assert.match(shader, /r7310C1SouthWallAcShadowHybridActive\(hitType, hitObjectID, nl, x\)/);
 assert.match(shader, /!r7310SouthWallAcHybridFirstHit/);
 assert.match(shader, /r7310C1SouthWallAcShadowIndirectBakeFirstHit\(bounces, diffuseCount\)/);
-const shortCircuitCall = 'r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, r7310BakedRadiance)';
+const shortCircuitCall = 'r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance)';
 const shortCircuitCallIndex = shader.indexOf(shortCircuitCall);
 assert.ok(shortCircuitCallIndex > 0, 'full-room short-circuit call missing');
 const fullRoomShortCircuitGuard = shader.slice(Math.max(0, shortCircuitCallIndex - 700), shortCircuitCallIndex);

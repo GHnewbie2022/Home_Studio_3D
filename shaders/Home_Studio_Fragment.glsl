@@ -32,7 +32,7 @@ uniform float uCeilingLampHalfH;
 
 uniform float uWallAlbedo; // R2-UI：結構表面反射率（地板/天花板/牆/樑/柱，陣列索引 0..32；fix19 修正原 1..15 漏蓋多數牆段之索引錯誤）
 uniform float uMaxBounces; // R2-UI：最大反彈次數 1~14，runtime 可調，硬性編譯期上限 14
-#ifndef R7310_BAKE_ONLY_NO_BORROW
+#if !defined(R7310_BAKE_ONLY_NO_BORROW) && !defined(R7310_RUNTIME_NO_BORROW_TEXTURE)
 uniform sampler2D tBorrowTexture; // R6 LGG-r16 J3：1/8 res 14 彈借光 buffer，主 pass 在 terminal 採樣
 #endif
 uniform float uBorrowStrength;    // R6 LGG-r16 J3：借光強度 0~1，0=關（不跑借光 pass）
@@ -44,8 +44,11 @@ uniform int uR738C1BakeCaptureMode;
 uniform int uR738C1BakePatchId;
 uniform float uR738C1BakePatchResolution;
 uniform float uR738C1BakeDiffuseOnlyMode;
+uniform vec2 uR738C1BakeTileOriginPx;
+uniform vec2 uR738C1BakeFullAtlasResolution;
 uniform sampler2D tR738C1BakeAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTexture;
+uniform sampler2D tR7310C1FullRoomDiffuseAtlasTextureNonSquare;
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -108,6 +111,15 @@ uniform float uR7310C1RuntimeProbeMode;
 uniform float uR7310C1RuntimeAtlasPatchResolution;
 uniform float uR7310C1RuntimeAtlasPatchCount;
 uniform float uR7310C1RuntimeAtlasGridColumns;
+uniform float uR7310C1SeparatedBakeMode;
+uniform float uR7310C1NorthWallSeparatedDiffuseMode;
+uniform float uR7310C1UseNonSquareAtlas;
+uniform float uR7310C1NonSquareAtlasReady;
+uniform vec2 uR7310C1NonSquareAtlasSizePx;
+uniform vec4 uR7310C1NonSquareNorthWallUvRect;
+uniform vec4 uR7310C1NonSquareEastWallUvRect;
+uniform vec2 uR7310C1NonSquareNorthWallFaceSizePx;
+uniform vec2 uR7310C1NonSquareEastWallFaceSizePx;
 uniform float uR738C1BakePastePreviewMode;
 uniform float uR738C1BakePastePreviewReady;
 uniform float uR738C1BakePastePreviewStrength;
@@ -1210,15 +1222,171 @@ vec3 r7310C1FullRoomDiffuseSampleRectTent5(vec2 atlasUv, float patchSlot, vec4 r
 	}
 	return sum / max(1.0, weightSum);
 }
+bool r7310C1NonSquareAtlasSlotSupported(float patchSlot)
+{
+	float slot = floor(patchSlot + 0.5);
+	return slot == 1.0 || slot == 2.0;
+}
+bool r7310C1ShouldUseNonSquareAtlas(float patchSlot)
+{
+	return uR7310C1UseNonSquareAtlas > 0.5 &&
+		uR7310C1NonSquareAtlasReady > 0.5 &&
+		r7310C1NonSquareAtlasSlotSupported(patchSlot);
+}
+vec4 r7310C1NonSquareAtlasUvRect(float patchSlot)
+{
+	float slot = floor(patchSlot + 0.5);
+	if (slot == 1.0)
+		return uR7310C1NonSquareNorthWallUvRect;
+	if (slot == 2.0)
+		return uR7310C1NonSquareEastWallUvRect;
+	return vec4(0.0, 0.0, 1.0, 1.0);
+}
+vec2 r7310C1NonSquareAtlasFaceSizePx(float patchSlot)
+{
+	float slot = floor(patchSlot + 0.5);
+	if (slot == 1.0)
+		return max(vec2(1.0), uR7310C1NonSquareNorthWallFaceSizePx);
+	if (slot == 2.0)
+		return max(vec2(1.0), uR7310C1NonSquareEastWallFaceSizePx);
+	return vec2(max(1.0, uR7310C1RuntimeAtlasPatchResolution));
+}
+vec4 r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2 pixelCoord, float patchSlot)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1FullRoomDiffuseSamplePatchTexel(pixelCoord, patchSlot);
+	vec2 atlasSize = max(vec2(1.0), uR7310C1NonSquareAtlasSizePx);
+	vec4 uvRect = r7310C1NonSquareAtlasUvRect(patchSlot);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 pixel = clamp(pixelCoord, vec2(0.0), faceSize - vec2(1.0));
+	vec2 uv = uvRect.xy + (pixel + vec2(0.5)) / atlasSize;
+	return texture(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, uv);
+}
+vec3 r7310C1FullRoomDiffuseSamplePatchValidLinearNonSquare(vec2 atlasUv, float patchSlot)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, patchSlot);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 pixel = clamp(atlasUv * faceSize - vec2(0.5), vec2(0.0), faceSize - vec2(1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), faceSize - vec2(1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(p0, patchSlot);
+	vec4 c10 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2(p1.x, p0.y), patchSlot);
+	vec4 c01 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2(p0.x, p1.y), patchSlot);
+	vec4 c11 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(p1, patchSlot);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(floor(pixel + vec2(0.5)), patchSlot);
+	return nearest.a > 0.5 ? max(nearest.rgb, vec3(0.0)) : vec3(0.0);
+}
+vec3 r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(vec2 pixelCoord, float patchSlot)
+{
+	return max(r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(pixelCoord, patchSlot).rgb, vec3(0.0));
+}
+vec3 r7310C1PatchCoverageProbeNonSquare(vec2 atlasUv, float patchSlot, float routeId)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1PatchCoverageProbe(atlasUv, uR7310C1RuntimeAtlasPatchResolution, patchSlot, routeId);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 pixel = clamp(atlasUv * faceSize - vec2(0.5), vec2(0.0), faceSize - vec2(1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), faceSize - vec2(1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(p0, patchSlot);
+	vec4 c10 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2(p1.x, p0.y), patchSlot);
+	vec4 c01 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2(p0.x, p1.y), patchSlot);
+	vec4 c11 = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(p1, patchSlot);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(floor(pixel + vec2(0.5)), patchSlot);
+	return vec3(clamp(weightSum, 0.0, 1.0), clamp(nearest.a, 0.0, 1.0), clamp(routeId / 255.0, 0.0, 1.0));
+}
+vec3 r7310C1FullRoomDiffuseSampleRectLinearNonSquare(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1FullRoomDiffuseSampleRectLinear(atlasUv, patchSlot, rect);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 minPixel = ceil(rect.xy * faceSize - vec2(0.5));
+	vec2 maxPixel = floor(rect.zw * faceSize - vec2(0.5));
+	vec2 pixel = clamp(atlasUv * faceSize - vec2(0.5), minPixel, maxPixel);
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), maxPixel);
+	vec2 t = pixel - p0;
+	vec3 c00 = r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(p0, patchSlot);
+	vec3 c10 = r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(vec2(p1.x, p0.y), patchSlot);
+	vec3 c01 = r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(vec2(p0.x, p1.y), patchSlot);
+	vec3 c11 = r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(p1, patchSlot);
+	return mix(mix(c00, c10, t.x), mix(c01, c11, t.x), t.y);
+}
+vec3 r7310C1FullRoomDiffuseSampleRectTent3NonSquare(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, patchSlot, rect);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 pixelStep = vec2(1.0) / faceSize;
+	vec3 sum = vec3(0.0);
+	float weightSum = 0.0;
+	for (int y = -1; y <= 1; y++)
+	{
+		for (int x = -1; x <= 1; x++)
+		{
+			float wx = x == 0 ? 2.0 : 1.0;
+			float wy = y == 0 ? 2.0 : 1.0;
+			float w = wx * wy;
+			sum += w * r7310C1FullRoomDiffuseSampleRectLinearNonSquare(
+				atlasUv + vec2(float(x), float(y)) * pixelStep,
+				patchSlot,
+				rect
+			);
+			weightSum += w;
+		}
+	}
+	return sum / max(1.0, weightSum);
+}
+vec3 r7310C1FullRoomDiffuseSampleRectTent5NonSquare(vec2 atlasUv, float patchSlot, vec4 rect)
+{
+	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
+		return r7310C1FullRoomDiffuseSampleRectTent5(atlasUv, patchSlot, rect);
+	vec2 faceSize = r7310C1NonSquareAtlasFaceSizePx(patchSlot);
+	vec2 pixelStep = vec2(1.0) / faceSize;
+	vec3 sum = vec3(0.0);
+	float weightSum = 0.0;
+	for (int y = -2; y <= 2; y++)
+	{
+		for (int x = -2; x <= 2; x++)
+		{
+			float wx = 3.0 - abs(float(x));
+			float wy = 3.0 - abs(float(y));
+			float w = wx * wy;
+			sum += w * r7310C1FullRoomDiffuseSampleRectLinearNonSquare(
+				atlasUv + vec2(float(x), float(y)) * pixelStep,
+				patchSlot,
+				rect
+			);
+			weightSum += w;
+		}
+	}
+	return sum / max(1.0, weightSum);
+}
 vec4 r7310C1EastWallAtlasRect()
 {
 	return vec4(0.0, 0.0, 1.0, 1.0);
 }
 const float R7310_C1_EAST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX = 2.49;
+const bool R7310_C1_EAST_WALL_BEAM_SHADOW_RETIRED = true;
 const float R7310_C1_WEST_WALL_BEAM_SHADOW_SEAM_GUARD_Z_MAX = 2.846;
 const float R7310_C1_WEST_WALL_BEAM_SHADOW_Z_MAX = 3.056;
 const float R7310_C1_WEST_WALL_BEAM_SHADOW_Y_MAX = 2.905;
-const float R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2.475;
+const float R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2.49;
 const float R7310_C1_EAST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
 const float R7310_C1_WEST_WALL_SW_COLUMN_HANDOFF_Z_MIN = 2.7179;
 const float R7310_C1_WEST_WALL_BEAM_HANDOFF_Y_MIN = 2.515;
@@ -1490,12 +1658,21 @@ bool r7310C1NorthWallHybridActive(int visibleHitType, float visibleObjectID, vec
 		r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv);
 }
-vec3 r7310C1NorthWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+vec3 r7310C1NorthWallHybridPreAlbedoRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	vec2 atlasUv = vec2(0.0);
 	if (!r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv))
 		return vec3(0.0);
-	return r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, 1.0);
+	return r7310C1ShouldUseNonSquareAtlas(1.0)
+		? r7310C1FullRoomDiffuseSamplePatchValidLinearNonSquare(atlasUv, 1.0)
+		: r7310C1FullRoomDiffuseSamplePatchValidLinear(atlasUv, 1.0);
+}
+vec3 r7310C1NorthWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, vec3 visibleAlbedo)
+{
+	vec3 r7310NorthWallPreAlbedoRadiance = r7310C1NorthWallHybridPreAlbedoRadiance(visibleHitType, visibleObjectID, visibleNormal, visiblePosition);
+	if (uR7310C1NorthWallSeparatedDiffuseMode > 0.5)
+		return r7310NorthWallPreAlbedoRadiance * visibleAlbedo;
+	return r7310NorthWallPreAlbedoRadiance;
 }
 bool r7310C1NorthWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
 {
@@ -1532,12 +1709,18 @@ bool r7310C1EastWallHybridActive(int visibleHitType, float visibleObjectID, vec3
 		r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		r7310C1EastWallDiffuseUv(visiblePosition, atlasUv);
 }
-vec3 r7310C1EastWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+vec3 r7310C1EastWallHybridPreAlbedoRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	vec2 atlasUv = vec2(0.0);
 	if (!r7310C1EastWallDiffuseUv(visiblePosition, atlasUv))
 		return vec3(0.0);
-	return r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
+	return r7310C1ShouldUseNonSquareAtlas(2.0)
+		? r7310C1FullRoomDiffuseSampleRectTent3NonSquare(atlasUv, 2.0, r7310C1EastWallAtlasRect())
+		: r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
+}
+vec3 r7310C1EastWallHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return r7310C1EastWallHybridPreAlbedoRadiance(visibleHitType, visibleObjectID, visibleNormal, visiblePosition);
 }
 bool r7310C1EastWallIndirectBakeFirstHit(int bounceIndex, int diffuseIndex)
 {
@@ -1592,6 +1775,8 @@ vec3 r7310C1EastWallBeamShadowSampleValidLinear(vec2 atlasUv)
 }
 bool r7310C1EastWallBeamShadowHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
+	if (R7310_C1_EAST_WALL_BEAM_SHADOW_RETIRED)
+		return false;
 	vec2 atlasUv = vec2(0.0);
 	return uR738C1BakeCaptureMode == 0 &&
 		uR7310C1EastWallBeamShadowMode > 0.5 &&
@@ -2822,7 +3007,7 @@ bool r7310C1SouthWallAcShadowIndirectBakeFirstHit(int bounceIndex, int diffuseIn
 		bounceIndex == 0 &&
 		diffuseIndex == 0;
 }
-bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, int visibleIsRayExiting, out vec3 bakedRadiance)
+bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, int visibleIsRayExiting, vec3 visibleAlbedo, out vec3 bakedRadiance)
 {
 	bakedRadiance = vec3(0.0);
 	if (uR738C1BakeCaptureMode != 0)
@@ -2843,15 +3028,22 @@ bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectI
 		r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		r7310C1NorthWallDiffuseUv(visiblePosition, atlasUv))
 	{
-		vec3 r7310NorthWallBakedRadiance = r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 1.0));
-		bakedRadiance = r7310NorthWallBakedRadiance;
+		vec3 r7310NorthWallBakedRadiance = r7310C1ShouldUseNonSquareAtlas(1.0)
+			? r7310C1FullRoomDiffuseSamplePatchValidLinearNonSquare(atlasUv, 1.0)
+			: r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 1.0));
+		if (uR7310C1NorthWallSeparatedDiffuseMode > 0.5)
+			bakedRadiance = r7310NorthWallBakedRadiance * visibleAlbedo;
+		else
+			bakedRadiance = r7310NorthWallBakedRadiance;
 		return true;
 	}
 	if (uR7310C1EastWallDiffuseMode > 0.5 &&
 		r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
 		r7310C1EastWallDiffuseUv(visiblePosition, atlasUv))
 	{
-		vec3 r7310EastWallBakedRadiance = r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
+		vec3 r7310EastWallBakedRadiance = r7310C1ShouldUseNonSquareAtlas(2.0)
+			? r7310C1FullRoomDiffuseSampleRectTent3NonSquare(atlasUv, 2.0, r7310C1EastWallAtlasRect())
+			: r7310C1FullRoomDiffuseSampleRectTent3(atlasUv, 2.0, r7310C1EastWallAtlasRect());
 		bakedRadiance = r7310EastWallBakedRadiance;
 		return true;
 	}
@@ -5421,7 +5613,6 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310EastWallBeamHybridFirstHit = bounces == 0 &&
 				r7310C1EastWallBeamShadowHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310EastWallHybridFirstHit = bounces == 0 &&
-				!r7310EastWallBeamHybridFirstHit &&
 				r7310C1EastWallHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310SwColumnNorthHybridFirstHit = bounces == 0 &&
 				r7310C1SwColumnNorthShadowHybridActive(hitType, hitObjectID, nl, x);
@@ -5662,6 +5853,47 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310ProbeLargeSouthCull ? 1.0 : 0.0,
 						r7310ProbeSingleAxisCullable ? 1.0 : 0.0
 					);
+				}
+				break;
+			}
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 48.5 &&
+				r7310C1RuntimeProbeMode < 53.5)
+			{
+				if (r7310C1RuntimeProbeMode < 49.5)
+				{
+					accumCol = r7310NorthWallHybridFirstHit
+						? clamp(r7310C1NorthWallHybridPreAlbedoRadiance(hitType, hitObjectID, nl, x), vec3(0.0), vec3(1.0))
+						: vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode < 50.5)
+				{
+					accumCol = r7310EastWallHybridFirstHit
+						? clamp(r7310C1EastWallHybridPreAlbedoRadiance(hitType, hitObjectID, nl, x), vec3(0.0), vec3(1.0))
+						: vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode < 51.5)
+				{
+					accumCol = r7310EastWallHybridFirstHit
+						? vec3(
+							r7310C1ShouldUseNonSquareAtlas(2.0) ? 1.0 : 0.0,
+							uR7310C1UseNonSquareAtlas > 0.5 ? 1.0 : 0.0,
+							uR7310C1NonSquareAtlasReady > 0.5 ? 1.0 : 0.0
+						)
+						: vec3(0.0);
+				}
+				else if (r7310C1RuntimeProbeMode < 52.5)
+				{
+					accumCol = r7310EastWallHybridFirstHit
+						? clamp(r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2(10.0, 10.0), 2.0).rgb, vec3(0.0), vec3(1.0))
+						: vec3(0.0);
+				}
+				else
+				{
+					vec2 r7310ProbeEastUv = vec2(0.0);
+					accumCol = r7310EastWallHybridFirstHit && r7310C1EastWallDiffuseUv(x, r7310ProbeEastUv)
+						? clamp(r7310C1FullRoomDiffuseSampleRectTent3NonSquare(r7310ProbeEastUv, 2.0, r7310C1EastWallAtlasRect()), vec3(0.0), vec3(1.0))
+						: vec3(0.0);
 				}
 				break;
 			}
@@ -5933,7 +6165,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					{
 						vec3 r7310NorthBeamRadiance = vec3(0.0);
 						if (r7310NorthWallHybridFirstHit)
-							r7310NorthBeamRadiance = r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x);
+							r7310NorthBeamRadiance = r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x, hitColor);
 						else if (r7310WestBeamInnerShadowHybridFirstHit)
 							r7310NorthBeamRadiance = r7310C1WestBeamInnerShadowHybridRadiance(hitType, hitObjectID, nl, x);
 						else if (r7310WestBeamUnderShadowHybridFirstHit)
@@ -6105,7 +6337,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			if (r7310CeilingHybridFirstHit)
 				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310NorthWallHybridFirstHit)
-				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x);
+				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x, hitColor);
 			if (r7310EastWallHybridFirstHit)
 				accumCol += mask * r7310C1EastWallHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310SeColumnNorthHybridFirstHit)
@@ -6193,7 +6425,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			}
 			if (!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
 				bounces == 0 &&
-				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, r7310BakedRadiance))
+				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance))
 			{
 				vec2 r7310RuntimeProbeAtlasUv = vec2(0.0);
 				if (r7310C1RuntimeProbeMode > 0.5 && r7310C1RuntimeProbeMode < 1.5)
@@ -6284,7 +6516,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			}
 			diffuseCount++;
 
-			mask *= hitColor;
+			bool r7310SeparatedNorthWallBakeFirstHit = uR7310C1SeparatedBakeMode > 0.5 && r7310NorthWallIndirectBakeFirstHit;
+			if (!r7310SeparatedNorthWallBakeFirstHit)
+				mask *= hitColor;
 			
 			bounceIsSpecular = FALSE;
 			misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0; // R3-6 R4: SPEC→DIFF state-clear
@@ -6607,7 +6841,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		//   AO 帶用 positionGate 微擋（borrow_luma 0.5 → gate 0.25 → 弱 lift）
 		//   亮面 positionGate 0 → 完全不影響
 		//   深暗角 positionGate ≈ 1 → 全套
-		#ifndef R7310_BAKE_ONLY_NO_BORROW
+		#if !defined(R7310_BAKE_ONLY_NO_BORROW) && !defined(R7310_RUNTIME_NO_BORROW_TEXTURE)
 			if (uBorrowStrength > 0.0)
 			{
 				// R6 LGG-r29：positionGate 收緊到 (0.0, 0.3)

@@ -27,8 +27,8 @@ assert.match(
 );
 assert.match(
   shader,
-  /const float R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2\.475;/,
-  'east wall full bake must keep avoiding masked southeast handoff texels'
+  /const float R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2\.49;/,
+  'east wall full bake must meet the southeast column handoff with no orphan strip'
 );
 assert.match(
   initCommon,
@@ -37,8 +37,8 @@ assert.match(
 );
 assert.match(
   initCommon,
-  /const R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2\.475;/,
-  'JS east wall metadata handoff must match shader'
+  /const R7310_C1_EAST_WALL_SE_COLUMN_HANDOFF_Z_MIN = 2\.49;/,
+  'JS east wall metadata handoff must match shader and the southeast column dead zone'
 );
 assert.match(
   homeStudio,

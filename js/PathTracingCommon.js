@@ -3297,7 +3297,8 @@ void main( void )
 
 	if (uR738C1BakeCaptureMode == 2)
 	{
-		vec2 r738BakeUv = gl_FragCoord.xy / uResolution;
+		vec2 r738BakeFullResolution = max(uR738C1BakeFullAtlasResolution, vec2(1.0));
+		vec2 r738BakeUv = (gl_FragCoord.xy + uR738C1BakeTileOriginPx) / r738BakeFullResolution;
 		vec3 r738BakePoint = vec3(0.0);
 		vec3 r738BakeNormal = vec3(0.0, 1.0, 0.0);
 		int r738BakeHitType = 0;

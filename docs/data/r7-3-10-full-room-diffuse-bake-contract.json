@@ -198,6 +198,7 @@
       "x": 1.91
     },
     "runtimeAtlasSlot": 10,
+    "runtimeRetired": true,
     "requestedSamples": 1000,
     "targetAtlasResolution": 1024,
     "diffuseOnly": true,
@@ -208,16 +209,16 @@
     "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
     "uniformContractAlias": "tR7310C1EastWallBeamShadowTexture",
     "referenceForAcceptance": "live_path_tracing_same_camera",
-    "intendedVisibleProblem": "east_beam_shadow_on_east_wall",
+    "intendedVisibleProblem": "retired_redundant_duplicate_of_east_wall_full",
     "runtimeOwnership": {
-      "owner": "c1_east_wall_beam_shadow",
-      "reason": "guard_east_wall_before_southeast_column_contact"
+      "owner": "c1_east_wall",
+      "reason": "slot_10_retired_after_matching_slot_2_without_unique_visible_content"
     },
     "seamGuard": {
       "protectedContact": "east_wall_to_southeast_column_north_face",
       "columnNorthZ": 2.49,
       "hybridZMax": 2.49,
-      "fallbackRoute": "east_wall_beam_shadow_hybrid"
+      "fallbackRoute": "east_wall_hybrid"
     }
   },
   "c1WestWallBatch": {

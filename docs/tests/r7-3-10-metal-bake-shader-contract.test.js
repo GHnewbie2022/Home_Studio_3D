@@ -63,13 +63,17 @@ assert.match(surfaceClassCapture, /shouldUseR7310BakeOnlyNoBorrowShader\(\{\}\)/
 assert.match(surfaceClassCapture, /pathTracingMesh\.material\s*=\s*bakeOnlyNoBorrowMaterial/);
 assert.match(surfaceClassCapture, /pathTracingMesh\.material\s*=\s*savedPathTracingMeshMaterial/);
 
-assert.match(shader, /#ifndef R7310_BAKE_ONLY_NO_BORROW\s+uniform sampler2D tBorrowTexture;/);
+assert.match(shader, /!\s*defined\(R7310_BAKE_ONLY_NO_BORROW\)\s*&&\s*!\s*defined\(R7310_RUNTIME_NO_BORROW_TEXTURE\)[\s\S]*uniform sampler2D tBorrowTexture;/);
 const borrowBlock = bodyOf(
 	shader,
-	'#ifndef R7310_BAKE_ONLY_NO_BORROW\n\t\t\tif (uBorrowStrength > 0.0)',
+	'#if !defined(R7310_BAKE_ONLY_NO_BORROW) && !defined(R7310_RUNTIME_NO_BORROW_TEXTURE)\n\t\t\tif (uBorrowStrength > 0.0)',
 	'#endif\n\t\tif (uR73QuickPreviewTerminalMode'
 );
 assert.match(borrowBlock, /texture\(tBorrowTexture,\s*borrowUv\)/);
+assert.match(initCommon, /let r7310RuntimeBorrowTextureDisabled\s*=\s*false;/);
+assert.match(initCommon, /getParameter\(context\.MAX_TEXTURE_IMAGE_UNITS\)\s*<=\s*16/);
+assert.match(initCommon, /pathTracingDefines\.R7310_RUNTIME_NO_BORROW_TEXTURE\s*=\s*1/);
+assert.match(initCommon, /&&\s*!r7310RuntimeBorrowTextureDisabled[\s\S]*&&\s*!firstFrameRecoveryLowCostMovementActive\(cameraIsMoving\)/);
 
 assert.match(runner, /browser:\s*'chrome'/);
 assert.match(runner, /bakeShader:\s*'auto'/);
@@ -88,6 +92,12 @@ assert.match(runner, /targetAtlasWidth:\s*\$\{args\.atlasWidth === null \? 'unde
 assert.match(runner, /targetAtlasHeight:\s*\$\{args\.atlasHeight === null \? 'undefined' : args\.atlasHeight\}/);
 assert.doesNotMatch(runner, /targetAtlasWidth:\s*\$\{args\.atlasWidth === null \? 'null'/);
 assert.doesNotMatch(runner, /targetAtlasHeight:\s*\$\{args\.atlasHeight === null \? 'null'/);
+assert.match(runner, /completedTiles:\s*bakeDiagnostics\.completedTiles\s*\|\|\s*0/);
+assert.match(runner, /minCompletedSamples:\s*bakeDiagnostics\.minCompletedSamples\s*===\s*undefined\s*\?\s*null\s*:\s*bakeDiagnostics\.minCompletedSamples/);
+assert.match(runner, /timedOut:\s*bakeDiagnostics\.timedOut\s*===\s*true/);
+assert.match(runner, /Number\(payload\.report\?\.requestedSamples\s*\|\|\s*0\)/);
+assert.match(runner, /bakeDiagnosticsSummary\.minCompletedSamples\s*<\s*expectedCompletedSamples/);
+assert.match(runner, /gpu-tile-incomplete-samples/);
 
 const retiredDedicatedSamplers = [
 	'tR7310C1SeColumnNorthShadowTexture',
