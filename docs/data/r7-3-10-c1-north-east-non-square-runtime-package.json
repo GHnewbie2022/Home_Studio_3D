@@ -1,0 +1,65 @@
+{
+  "packageStatus": "architecture_probe",
+  "generatedAt": "2026-05-31T17:13:28.758Z",
+  "note": "P5d throwaway runtime preview: north slot uses true 2492x1716 separated non-square Metal bake from .omc/20260531-233623; east slot is resampled from existing square bake only to keep east visually stable until true east non-square bake.",
+  "runtimeScope": "c1_north_east_non_square_first_hit_hybrid",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTextureNonSquare",
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-p5d-runtime-preview",
+  "targetAtlasWidth": 2912,
+  "targetAtlasHeight": 3432,
+  "requestedSamples": 1000,
+  "actualSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "multiplyAlbedoAfterBakeLookup": true,
+  "sourceBuild": {
+    "north": ".omc/r7-3-10-full-room-diffuse-bake/20260531-233623/atlas-patch-000-rgba-f32.bin",
+    "east": "assets/bakes/r7-3-10/c1-static-diffuse/east-wall-1024px-1000spp/atlas-patch-000-rgba-f32.bin"
+  },
+  "uvRects": {
+    "northWall": {
+      "x": 0,
+      "y": 0,
+      "z": 0.8557692307692307,
+      "w": 0.5
+    },
+    "eastWall": {
+      "x": 0,
+      "y": 0.5,
+      "z": 1,
+      "w": 1
+    }
+  },
+  "faceSizePx": {
+    "northWall": {
+      "width": 2492,
+      "height": 1716
+    },
+    "eastWall": {
+      "width": 2912,
+      "height": 1716
+    }
+  },
+  "artifacts": {
+    "atlas": "north-east-non-square-p5d-preview-2912x3432-rgba-f32.bin",
+    "atlasPatch0": "north-east-non-square-p5d-preview-2912x3432-rgba-f32.bin",
+    "atlasChunks": [
+      "north-east-non-square-p5d-preview-2912x3432-rgba-f32.part0.bin",
+      "north-east-non-square-p5d-preview-2912x3432-rgba-f32.part1.bin"
+    ]
+  },
+  "validation": {
+    "northSource": {
+      "status": "pass",
+      "sourceDir": ".omc/r7-3-10-full-room-diffuse-bake/20260531-233623",
+      "contextLost": 0,
+      "minCompletedSamples": 1000,
+      "maxSubmissionElapsedMs": 171.3,
+      "maxTileReadbackMs": 15.4
+    },
+    "eastSource": {
+      "status": "preview-resampled-square-placeholder"
+    }
+  }
+}

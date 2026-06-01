@@ -50,6 +50,9 @@ assert.match(capture, /patchWidth:\s*width/);
 assert.match(capture, /patchHeight:\s*height/);
 
 assert.match(initCommon, /function createR7310C1NonSquareRuntimeTexture\(pixels,\s*width,\s*height\)/);
+assert.match(initCommon, /R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES/);
+assert.match(initCommon, /north_nonsquare__west_beam_north_edge/);
+assert.match(initCommon, /function applyR7310C1NonSquareAtlasEdgePolicies\(pixels,\s*width,\s*height\)/);
 assert.match(initCommon, /async function loadR7310C1NonSquareAtlasRuntimePackage\(\)/);
 
 const loader = bodyOf(
@@ -67,8 +70,21 @@ assert.match(loader, /targetAtlasWidth/);
 assert.match(loader, /targetAtlasHeight/);
 assert.match(loader, /targetAtlasWidth\s*\*\s*targetAtlasHeight\s*\*\s*4\s*\*\s*4/);
 assert.doesNotMatch(loader, /targetAtlasWidth\s*\*\s*pointer\.targetAtlasHeight\s*\*\s*4\s*\*\s*4/);
+assert.match(loader, /applyR7310C1NonSquareAtlasEdgePolicies\(atlasPixels,\s*targetAtlasWidth,\s*targetAtlasHeight\)/);
+assert.doesNotMatch(loader, /createR7310C1NonSquareRuntimeTexture\(\s*new Float32Array\(atlasBuffer\)/);
 assert.match(loader, /tR7310C1FullRoomDiffuseAtlasTextureNonSquare\.value\s*=\s*r7310C1NonSquareAtlasRuntimeDataTexture/);
 assert.match(initCommon, /uR7310C1NonSquareAtlasReady\.value\s*=\s*r7310C1NonSquareAtlasRuntimeReady\s*\?\s*1\.0\s*:\s*0\.0/);
+
+const edgePolicy = bodyOf(
+	initCommon,
+	'function applyR7310C1NonSquareAtlasEdgePolicies',
+	'async function loadR7310C1NonSquareAtlasRuntimePackage'
+);
+assert.match(edgePolicy, /R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES/);
+assert.match(edgePolicy, /R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX/);
+assert.match(edgePolicy, /R7310_C1_NORTH_WALL_WORLD_BOUNDS/);
+assert.match(edgePolicy, /R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS\.west/);
+assert.match(edgePolicy, /luma/);
 
 const packagePath = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json';
 const pointer = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -81,8 +97,24 @@ assert.ok(Number(pointer.requestedSamples) >= 1000);
 assert.equal(pointer.diffuseOnly, true);
 assert.equal(pointer.upscaled, false);
 const artifactName = pointer.artifacts && (pointer.artifacts.atlas || pointer.artifacts.atlasPatch0);
-assert.ok(artifactName, 'non-square feature-color package must declare an atlas artifact');
-const artifactPath = `${pointer.packageDir}/${artifactName}`;
-assert.equal(fs.statSync(artifactPath).size, 2912 * 3432 * 4 * 4);
+const artifactChunks = pointer.artifacts && pointer.artifacts.atlasChunks;
+assert.ok(artifactName || (Array.isArray(artifactChunks) && artifactChunks.length > 0), 'non-square package must declare atlas data');
+if (Array.isArray(artifactChunks) && artifactChunks.length > 0)
+{
+	let chunkBytes = 0;
+	for (const chunk of artifactChunks)
+	{
+		assert.equal(typeof chunk, 'string');
+		chunkBytes += fs.statSync(`${pointer.packageDir}/${chunk}`).size;
+	}
+	assert.equal(chunkBytes, 2912 * 3432 * 4 * 4);
+	assert.match(loader, /atlasChunks/);
+	assert.match(loader, /mergedAtlasOffset\s*!==\s*expectedBytes/);
+}
+else
+{
+	const artifactPath = `${pointer.packageDir}/${artifactName}`;
+	assert.equal(fs.statSync(artifactPath).size, 2912 * 3432 * 4 * 4);
+}
 
 console.log('R7-3.10 non-square data path contract passed');

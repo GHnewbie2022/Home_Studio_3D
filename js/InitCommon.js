@@ -1582,6 +1582,17 @@ const R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS = Object.freeze({
 		yMax: 2.905
 	})
 });
+const R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES = Object.freeze([
+	Object.freeze({
+		name: 'north_nonsquare__west_beam_north_edge',
+		surface: 'northWall',
+		invalidRegion: R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west,
+		fillDirection: 1,
+		maxFillPixels: 4,
+		maxSearchPixels: 10,
+		lumaThreshold: 0.00001
+	})
+]);
 const R7310_C1_EAST_WALL_TARGET_ID = 1003;
 const R7310_C1_EAST_WALL_SURFACE_NAME = 'c1_east_wall';
 const R7310_C1_EAST_WALL_WORLD_BOUNDS = Object.freeze({
@@ -2847,6 +2858,77 @@ function createR7310C1NonSquareRuntimeTexture(pixels, width, height)
 	return texture;
 }
 
+function applyR7310C1NonSquareAtlasEdgePolicies(pixels, width, height)
+{
+	if (!(pixels instanceof Float32Array))
+		return false;
+	var safeWidth = Math.max(1, Math.trunc(Number(width) || 1));
+	var safeHeight = Math.max(1, Math.trunc(Number(height) || 1));
+	var applied = false;
+	for (var i = 0; i < R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES.length; i += 1)
+	{
+		var policy = R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES[i];
+		if (!policy || policy.surface !== 'northWall')
+			continue;
+		var region = policy.invalidRegion || R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west;
+		var faceSize = R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX;
+		var uvRect = R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT;
+		var bounds = R7310_C1_NORTH_WALL_WORLD_BOUNDS;
+		var faceOriginX = Math.round(uvRect.uMin * safeWidth);
+		var faceOriginY = Math.round(uvRect.vMin * safeHeight);
+		var faceWidth = Math.max(1, Math.trunc(Number(faceSize.width) || 1));
+		var faceHeight = Math.max(1, Math.trunc(Number(faceSize.height) || 1));
+		var xSpan = Math.max(0.000001, bounds.xMax - bounds.xMin);
+		var ySpan = Math.max(0.000001, bounds.yMax - bounds.yMin);
+		var startX = Math.floor(((region.xMax - bounds.xMin) / xSpan) * faceWidth);
+		var startY = Math.floor(((region.yMin - bounds.yMin) / ySpan) * faceHeight);
+		var endY = Math.ceil(((region.yMax - bounds.yMin) / ySpan) * faceHeight);
+		startX = Math.max(0, Math.min(faceWidth - 1, startX));
+		startY = Math.max(0, Math.min(faceHeight - 1, startY));
+		endY = Math.max(startY, Math.min(faceHeight, endY));
+		var maxFillPixels = Math.max(1, Math.trunc(Number(policy.maxFillPixels) || 1));
+		var maxSearchPixels = Math.max(maxFillPixels + 1, Math.trunc(Number(policy.maxSearchPixels) || (maxFillPixels + 1)));
+		var lumaThreshold = Math.max(0.0, Number(policy.lumaThreshold) || 0.0);
+		for (var y = startY; y < endY; y += 1)
+		{
+			for (var x = startX; x < Math.min(faceWidth, startX + maxFillPixels); x += 1)
+			{
+				var atlasX = faceOriginX + x;
+				var atlasY = faceOriginY + y;
+				if (atlasX < 0 || atlasX >= safeWidth || atlasY < 0 || atlasY >= safeHeight)
+					continue;
+				var dst = (atlasY * safeWidth + atlasX) * 4;
+				if (pixels[dst + 3] <= 0.5)
+					continue;
+				var luma = pixels[dst] * 0.2126 + pixels[dst + 1] * 0.7152 + pixels[dst + 2] * 0.0722;
+				if (luma > lumaThreshold)
+					continue;
+				var src = -1;
+				for (var sx = x + 1; sx < Math.min(faceWidth, startX + maxSearchPixels); sx += 1)
+				{
+					var sampleX = faceOriginX + sx;
+					var sample = (atlasY * safeWidth + sampleX) * 4;
+					if (pixels[sample + 3] <= 0.5)
+						continue;
+					var sampleLuma = pixels[sample] * 0.2126 + pixels[sample + 1] * 0.7152 + pixels[sample + 2] * 0.0722;
+					if (sampleLuma <= lumaThreshold)
+						continue;
+					src = sample;
+					break;
+				}
+				if (src < 0)
+					continue;
+				pixels[dst] = pixels[src];
+				pixels[dst + 1] = pixels[src + 1];
+				pixels[dst + 2] = pixels[src + 2];
+				pixels[dst + 3] = pixels[src + 3];
+				applied = true;
+			}
+		}
+	}
+	return applied;
+}
+
 function buildR7310C1CombinedDiffuseRuntimeTexture(floorPixels, northWallPixels, eastWallPixels, westWallPixels, southWallPixels, ceilingPixels, structuralPixels, seColumnNorthShadowPixels, seColumnWestShadowPixels, southWallAcShadowPixels, eastWallBeamShadowPixels, swColumnNorthShadowPixels, westWallBeamShadowPixels, swColumnInnerShadowPixels, westBeamInnerShadowPixels, westBeamUnderShadowPixels, eastBeamInnerShadowPixels, eastBeamUnderShadowPixels, southWindowLeftRevealShadowPixels, southWindowRightRevealShadowPixels, southWindowBottomRevealShadowPixels, southWindowTopRevealShadowPixels, ironDoorRevealPixels, resolution)
 {
 	var slots = [
@@ -3207,18 +3289,47 @@ async function loadR7310C1NonSquareAtlasRuntimePackage()
 			if (Number(pointer.requestedSamples || 0) < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 non-square north/east atlas metadata mismatch');
 			var atlasArtifact = pointer.artifacts && (pointer.artifacts.atlas || pointer.artifacts.atlasPatch0);
-			if (!atlasArtifact)
+			var atlasChunks = pointer.artifacts && pointer.artifacts.atlasChunks;
+			if (!atlasArtifact && (!Array.isArray(atlasChunks) || atlasChunks.length === 0))
 				throw new Error('R7-3.10 non-square north/east atlas artifact missing');
-			var atlasResponse = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
-			if (!atlasResponse.ok)
-				throw new Error('R7-3.10 non-square north/east atlas binary not found');
-			var atlasBuffer = await atlasResponse.arrayBuffer();
 			var expectedBytes = targetAtlasWidth * targetAtlasHeight * 4 * 4;
+			var atlasBuffer;
+			if (Array.isArray(atlasChunks) && atlasChunks.length > 0)
+			{
+				var mergedAtlasBytes = new Uint8Array(expectedBytes);
+				var mergedAtlasOffset = 0;
+				for (var atlasChunkIndex = 0; atlasChunkIndex < atlasChunks.length; atlasChunkIndex++)
+				{
+					var atlasChunkName = atlasChunks[atlasChunkIndex];
+					if (typeof atlasChunkName !== 'string' || atlasChunkName.length === 0)
+						throw new Error('R7-3.10 non-square north/east atlas chunk contract mismatch');
+					var atlasChunkResponse = await fetch(pointer.packageDir + '/' + atlasChunkName, { cache: 'no-store' });
+					if (!atlasChunkResponse.ok)
+						throw new Error('R7-3.10 non-square north/east atlas chunk not found');
+					var atlasChunkBuffer = await atlasChunkResponse.arrayBuffer();
+					if (mergedAtlasOffset + atlasChunkBuffer.byteLength > expectedBytes)
+						throw new Error('R7-3.10 non-square north/east atlas chunk length mismatch');
+					mergedAtlasBytes.set(new Uint8Array(atlasChunkBuffer), mergedAtlasOffset);
+					mergedAtlasOffset += atlasChunkBuffer.byteLength;
+				}
+				if (mergedAtlasOffset !== expectedBytes)
+					throw new Error('R7-3.10 non-square north/east atlas chunk total length mismatch');
+				atlasBuffer = mergedAtlasBytes.buffer;
+			}
+			else
+			{
+				var atlasResponse = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
+				if (!atlasResponse.ok)
+					throw new Error('R7-3.10 non-square north/east atlas binary not found');
+				atlasBuffer = await atlasResponse.arrayBuffer();
+			}
 			if (atlasBuffer.byteLength !== expectedBytes)
 				throw new Error('R7-3.10 non-square north/east atlas binary length mismatch');
+			var atlasPixels = new Float32Array(atlasBuffer);
+			applyR7310C1NonSquareAtlasEdgePolicies(atlasPixels, targetAtlasWidth, targetAtlasHeight);
 			r7310C1NonSquareAtlasRuntimePackage = pointer;
 			r7310C1NonSquareAtlasRuntimeDataTexture = createR7310C1NonSquareRuntimeTexture(
-				new Float32Array(atlasBuffer),
+				atlasPixels,
 				targetAtlasWidth,
 				targetAtlasHeight
 			);
