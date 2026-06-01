@@ -12,9 +12,28 @@ const cdpPort = Number(process.env.R7310_CDP_PORT || 9297);
 const width = Number(process.env.R7310_VIEWPORT_WIDTH || 1458);
 const height = Number(process.env.R7310_VIEWPORT_HEIGHT || 741);
 const userDataDir = process.env.R7310_USER_DATA_DIR || path.join(os.tmpdir(), `r7310-render-space-seam-gate-chrome-${Date.now()}`);
-const pageUrl = process.env.R7310_PAGE_URL || `http://127.0.0.1:9004/Home_Studio.html?v=r7310-render-space-seam-gate-${Date.now()}`;
+
+// --non-square-package=<key>: 選要測的 non-square package（例如 'd590' 或 'd800-north-preview'）
+// 空字串 = 不帶 URL 參數，由 runtime 使用寫死的 D590 package
+const nonSquarePackageArg = process.argv.slice(2).reduce((found, arg) => {
+	const match = arg.match(/^--non-square-package=(.*)$/);
+	return match ? match[1] : found;
+}, '');
+const nonSquarePackage = nonSquarePackageArg || process.env.R7310_NON_SQUARE_PACKAGE || '';
+
+const basePageUrl = process.env.R7310_PAGE_URL || `http://127.0.0.1:9004/Home_Studio.html?v=r7310-render-space-seam-gate-${Date.now()}`;
+const pageUrl = (() => {
+	if (!nonSquarePackage) return basePageUrl;
+	const resolvedUrl = new URL(basePageUrl);
+	resolvedUrl.searchParams.set('nonSquarePackage', nonSquarePackage);
+	return resolvedUrl.toString();
+})();
+
 const outputDir = process.env.R7310_OUTPUT_DIR || path.join(os.tmpdir(), 'r7310-render-space-seam-gate');
 const outputPath = process.env.R7310_OUTPUT_PATH || path.join(outputDir, `report-${Date.now()}.json`);
+
+// 截圖檔名前綴：key 非空時使用 key，否則用 'd590' 表示預設 package
+const screenshotPrefix = nonSquarePackage || 'd590';
 
 const cameraState = {
 	position: { x: -1.549935, y: 2.400085, z: -1.657816 },
@@ -566,8 +585,8 @@ async function main() {
 				awaitPromise: true,
 				timeoutMs: 240000,
 			});
-			const canvasPath = writeCanvasImage(measurement, state.id);
-			const screenshotPath = await captureScreenshot(cdp, state.id);
+			const canvasPath = writeCanvasImage(measurement, `${screenshotPrefix}-${state.id}`);
+			const screenshotPath = await captureScreenshot(cdp, `${screenshotPrefix}-${state.id}`);
 			const passedExpectation = measurement.metrics.status === state.expectedStatus;
 			results.push({
 				...measurement,

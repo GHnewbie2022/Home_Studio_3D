@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-06-02-2026-06-01-r7-3-10-north-wall-d-ramp-plan">
+<title>R7-3.10 北牆提高 D 試驗計畫</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-06-02 · local HTML review</p>
+    <h1>R7-3.10 北牆提高 D 試驗計畫</h1>
+    <h2>0. 目前共識</h2>
+    <p>北牆非方格烘焙已經證明一件事：髒斑的方向性拉伸已消失，代表「照牆面真實比例分配 texel」這條路有效。 現在剩下的問題是：髒斑仍然太粗，看起來像一塊被放大的雜訊紋理。</p>
+    <p>本計畫只處理「髒斑粗度」。 髒斑濃淡已知可以用 10000 SPP 降低，這次不重複驗證。 這次先用 1000 SPP 測 D，保留足夠雜訊，讓粗度差異容易被看見。</p>
+    <h2>1. 為什麼先提高 D</h2>
+    <p>D 是「每公尺牆面分到多少烘焙 texel」。</p>
+    <pre><code>D 越低：
+  一個 texel 對應牆上較大面積。
+  髒斑容易像被放大，變成粗粗的一片。
+
+D 越高：
+  一個 texel 對應牆上較小面積。
+  髒斑顆粒會變細。
+
+SPP 越高：
+  髒斑會變淡。
+  但它主要處理濃淡，並不直接改變一顆髒斑在牆上的大小。</code></pre>
+    <p>因此目前順序是：</p>
+    <pre><code>1. 先提高 D，所有候選都維持 1000 SPP，確認髒斑粗度能否變細。
+2. D 候選值定下後，若髒斑分布仍不理想，再用 1000 SPP 做取樣品質實驗，例如 blue-noise bake sampler。
+3. D 與取樣策略都定下後，最後才跑 10000 SPP，取得正式乾淨牆面。</code></pre>
+    <h2>2. 本輪範圍</h2>
+    <p>只做北牆。</p>
+    <pre><code>本輪做：
+  北牆 separated + non-square
+  1000 SPP
+  D ramp 試驗
+  throwaway package
+  A/B 肉眼比較
+  render-space seam gate
+
+本輪暫停：
+  東牆非方格真烤
+  全室真烤
+  blue-noise bake sampler
+  10000 SPP 正式乾淨版
+  promotion 到正式 package</code></pre>
+    <h2>3. D 候選值</h2>
+    <p>目前北牆非方格基準是 D590，尺寸約 2492 × 1716。</p>
+    <p>候選分成三階：</p>
+    <pre><code>D590：
+  現行基準。
+  已通過 P5、seam 修復與 runtime 預覽。
+
+D800：
+  第一個提高 D 試驗。
+  估計尺寸約 3379 × 2327。
+  texel 數約為 D590 的 1.84 倍。
+  用來回答「粗髒斑是否明顯變細」。
+
+D1000：
+  第二階試驗，只在 D800 改善不夠時跑。
+  估計尺寸約 4224 × 2908。
+  texel 數約為 D590 的 2.87 倍。
+  用來確認是否需要更高密度。</code></pre>
+    <p>目前不先跑 D1200。 D1200 會把成本再推高，且還沒確認 D800 / D1000 的改善幅度。</p>
+    <h2>4. 烘焙方式</h2>
+    <p>沿用已驗證的 Metal tiled bake 路線。</p>
+    <pre><code>瀏覽器：
+  Google Chrome
+  獨立 user-data-dir
+  不使用 Brave
+
+GPU 路線：
+  WebGL2 → ANGLE → Metal
+
+安全設定：
+  tile 512 × 512
+  fence
+  K = 4
+  context-lost 監聽
+  console 落檔
+  單次提交 ms gate
+
+輸出：
+  throwaway 目錄
+  不覆蓋正式 package
+  不 promotion</code></pre>
+    <p>若 D800 在上述設定下通過，才考慮 D1000。 若任何一階出現 context lost、全黑、tile 未滿樣本、readback 異常或跨 app 圖形異常，立即停止。</p>
+    <h2>5. 驗收閘門</h2>
+    <p>每個 D 候選值都要過以下閘門。</p>
+    <pre><code>1. GPU 安全：
+   contextLost = 0
+   contextRestored = 0
+   maxSubmissionElapsedMs &lt;= 250
+   maxTileReadbackMs &lt;= 250
+   minCompletedSamples = 1000
+   timedOut = false
+
+2. package 正確：
+   status = pass
+   nonzeroTexels &gt; 0
+   browserValidation = pass
+   package / pointer 欄位與實際尺寸一致
+
+3. runtime 可達：
+   non-square ready = true
+   北牆 slot 1 走 non-square 取樣
+   toggle ON / OFF 能切換
+
+4. seam gate：
+   north_nonsquare__west_beam_north_edge 維持通過
+   不因提高 D 重新出現暗縫
+   使用 render-space averaged seamJump vs interiorJump
+
+5. 肉眼 A/B：
+   同相機、同 SPP、同曝光設定
+   D590 vs D800
+   必須看髒斑粗度是否變細</code></pre>
+    <h2>6. 使用者指定驗收視角</h2>
+    <p>沿用使用者提供的北牆驗收視角。</p>
+    <pre><code>cameraState:
+  position = (-1.549935, 2.400085, -1.657816)
+  yaw = 0.8516
+  pitch = 0.664
+  fov = 55
+
+forward:
+  (-0.592489, 0.616272, -0.518811)
+
+view:
+  facing = 上(+Y)
+  samples 建議 &gt;= 500
+  sppCap = 1000</code></pre>
+    <p>這個視角同時能看：</p>
+    <pre><code>1. 北牆髒斑粗度。
+2. 西樑北端與北牆交界。
+3. D 提升後 seam gate 是否仍然有效。</code></pre>
+    <h2>7. 判斷標準</h2>
+    <h3>7.1 D800 成功</h3>
+    <pre><code>D800 通過安全閘門。
+D800 沒讓北牆縫隙復發。
+D800 肉眼可見髒斑顆粒變細。
+D800 載入與 runtime 沒有明顯負擔。</code></pre>
+    <p>則 D800 成為北牆下一個候選密度。</p>
+    <h3>7.2 D800 改善不夠</h3>
+    <pre><code>D800 安全通過。
+但髒斑粗度仍像被放大。</code></pre>
+    <p>則跑 D1000。</p>
+    <h3>7.3 D800 或 D1000 出現 seam 問題</h3>
+    <pre><code>先修 seam gate。
+不進一步討論 SPP 或 blue-noise。
+不 promotion。</code></pre>
+    <p>解析度變更本身要視為 seam re-trigger。 這是本次從 D590 推高時必須守住的防線。</p>
+    <h2>8. 為什麼現在不先做 blue-noise bake</h2>
+    <p>blue-noise bake 主要處理「雜訊分布」。 D 主要處理「雜訊顆粒在牆上有多大」。</p>
+    <p>使用者目前指出的是：</p>
+    <pre><code>髒斑太粗。
+像一小塊雜訊被放大。</code></pre>
+    <p>這個症狀先對應 D。 blue-noise bake 可以排在 D 候選值確定後，作為第二階段品質實驗。 這個第二階段仍用 1000 SPP，因為它要看雜訊分布差異。 10000 SPP 放在最後，等 D 與取樣策略都定下後才跑正式乾淨版。</p>
+    <h2>9. 產出</h2>
+    <p>本輪應產出：</p>
+    <pre><code>1. D800 throwaway bake package。
+2. D800 validation report 摘要。
+3. D590 / D800 同視角截圖。
+4. seam gate 數據。
+5. 是否需要 D1000 的判斷。
+6. 給 OPUS 的簡短審查訊息。</code></pre>
+    <p>不產出正式 promotion。 不刪 D590。 不修改東牆。</p>
+    <h2>10. Stop 條件</h2>
+    <p>出現以下任一情況立即停止：</p>
+    <pre><code>1. Metal context lost。
+2. macOS 其他視窗出現圖形異常。
+3. validation 全黑或 nonzeroTexels = 0。
+4. minCompletedSamples &lt; targetSamples。
+5. seam gate 判紅。
+6. loader ready=false。
+7. toggle ON/OFF 無法切換。</code></pre>
+    <p>停止後只回報精簡數字與根因方向，不硬湊結果。</p>
+    <h2>11. CODEX 審查意見</h2>
+    <p>CODEX 同意先做北牆 D ramp。 理由是目前問題已經從「方向性拉伸」收斂到「顆粒粗度」，而顆粒粗度最直接的控制項是 D。</p>
+    <p>CODEX 建議執行順序：</p>
+    <pre><code>1. D800 1000 SPP throwaway。
+2. 安全 gate + seam gate。
+3. D590 / D800 截圖比較。
+4. 若 D800 改善不夠，再跑 D1000。
+5. D 候選值定下後，如仍需要改善雜訊分布，再做 1000 SPP blue-noise bake sampler。
+6. D 與取樣策略都定下後，最後才跑 10000 SPP 正式乾淨版。</code></pre>
+    <p>此計畫需交 OPUS 審查後再動工。暫不修改程式碼。</p>
+    <h2>12. OPUS 審查結論（2026-06-01）</h2>
+    <p><strong>總評：方向 APPROVE。</strong> 計畫正確把問題鎖在「粗度＝D/解析度軸」（與 SPP 濃淡軸分開），且把剛建好的 render-space seam gate 設成「每個 D 都要過」、並明訂「解析度變更＝seam re-trigger」——這正是 seam 防呆系統該被用的方式。Metal tiled 安全配置、D 數值（D800≈3379×2327≈1.84×、D1000≈4224×2908≈2.87×，已核對）、D→blue-noise→10000spp 的順序都合理。落地前補四點。</p>
+    <h3>1.（高價值，先預判）edge-policy 修法本身是「解析度相依」的，提高 D 可能讓縫復發</h3>
+    <p>seam 修法的 maxFillPixels = 4 是「固定 texel 數」；但那條 valid-but-black invalid 帶是「固定物理寬度」。D 越高，同一條帶跨越的 texel 數越多 → 4 格回填可能蓋不滿 → 縫在 D800/D1000 復發。</p>
+    <pre><code>- seam gate 會抓到（很好，這就是它的用途），但要事先預期：
+  maxFillPixels 需要「隨 D 縮放」，或改用「物理寬度(mm) → 每個 D 換算 texel」定義。
+- 這正是 seam 計畫「解析度變更 re-trigger 邊界」原則，現在套到「修法自己」身上。
+  請備好調整，別等 gate 判紅才反應。</code></pre>
+    <h3>2. 高 D 的時間與記憶體（不構成阻擋）</h3>
+    <pre><code>- 烘焙時間（CODEX 量測，依 texel 線性放大）：D590 約 1分54秒；D800 約 3分半；D1000 約 5分半。
+  全在 6 分鐘內 → timeout 給普通 hang 護欄即可。
+- raw atlas 檔大小：65 / 120 / 187 MB（D590 / D800 / D1000）。
+- 烘焙當下記憶體約 3× atlas（rawHdr + averaged + preSync 三份全圖緩衝）→ D1000 約 560MB
+  + runtime DataTexture 約 187MB。GPU 單次提交仍被 tile 界定（安全不變）。D1000 留意 JS heap 即可，非硬阻擋。</code></pre>
+    <h3>3.（設定期待）D 改的是「顆粒大小」，不是「雜訊量」</h3>
+    <p>此近距相機下，D800/D1000 會讓顆粒變細，但 texel 多半仍 ≥ 螢幕像素 → 不會產生「多 texel 平均」的去噪效果。所以結果會是「更細」、不會是「乾淨」。這正確、也是預期——「乾淨」來自後面的 blue-noise + 10000spp。A/B 判準（§7.1「顆粒變細」）對準「細」即可，別誤期待「speckle 消失」。</p>
+    <h3>4.（框架校正）blue-noise 是「並行互補」，不只是「D 不夠才補」</h3>
+    <p>D 與 blue-noise 是不同機制的互補（D＝顆粒變細；blue-noise＝把雜訊推到高頻、降低低頻結塊感），最終乾淨版要併用——使用者點出的「並行」是更準的模型。測試階段先隔離 D（方法學上對），但別因 D800「看起來夠好」就把 blue-noise 丟掉，它在任何 D 下都仍有增益。§11 最終版已併用，方向對，僅把「條件式 fallback」框架更正成「co-equal 互補」。</p>
+    <p><strong>裁示：方向 APPROVE。補上 1（預判修法隨 D 縮放）＋ 2（記憶體/時間 gate）即可動工 D800；3、4 為期待與框架校正。index.html 由 CODEX 依本 source.md 重生（勿只改 index.html）。</strong></p>
+    <h2>13. CODEX 落地補充（2026-06-01）</h2>
+    <p>CODEX 同意 §12。已把 OPUS 要求的兩個落地點補進可執行契約：</p>
+    <pre><code>1. edge-policy 隨 D / 解析度縮放。
+2. D800 / D1000 的時間與記憶體 gate 納入驗收清單。</code></pre>
+    <h3>13.1 edge-policy 改成 D-aware</h3>
+    <p>北牆非方格目前的西樑北端接縫修法，原本使用固定 texel 數：</p>
+    <pre><code>maxFillPixels   = 4
+maxSearchPixels = 10</code></pre>
+    <p>這在 D590 的 2492 × 1716 北牆上已驗收通過。 但提高 D 後，同一條物理寬度的邊界會跨越更多 texel。固定 4 格會變得相對太窄，可能讓縫隙復發。</p>
+    <p>因此 edge-policy 現在改成「以 D590 尺寸為參考，依新 faceSizePx 自動放大」：</p>
+    <pre><code>referenceFaceWidthPx  = 2492
+referenceFaceHeightPx = 1716
+
+scale = max(currentWidth / 2492, currentHeight / 1716)
+
+maxFillPixels   = ceil(4  × scale)
+maxSearchPixels = ceil(10 × scale)</code></pre>
+    <p>預期換算：</p>
+    <pre><code>D590  north 2492 × 1716  → fill 4 / search 10
+D800  north 約 3379 × 2327 → fill 6 / search 14
+D1000 north 約 4224 × 2908 → fill 7 / search 17</code></pre>
+    <p>重點是：D 變大時，邊界修法跟著變大，不再把 D590 的 4 格硬套到更高解析度。</p>
+    <h3>13.2 gate 清單補上時間、記憶體與接縫</h3>
+    <p>D800 / D1000 每次 throwaway bake 回報時，必須附以下最小數字：</p>
+    <pre><code>1. targetAtlasWidth / targetAtlasHeight
+2. raw atlas 檔案大小
+3. bake elapsedMs
+4. contextLost / contextRestored
+5. maxSubmissionElapsedMs
+6. maxTileReadbackMs
+7. minCompletedSamples
+8. timedOut
+9. status
+10. nonzeroTexels
+11. render-space seam gate:
+    averaged seamJump
+    averaged interiorJump
+    ratio</code></pre>
+    <p>判斷邏輯：</p>
+    <pre><code>1. contextLost 必須是 0。
+2. minCompletedSamples 必須達到 targetSamples。
+3. timedOut 必須是 false。
+4. maxSubmissionElapsedMs 與 maxTileReadbackMs 必須維持在 Metal 安全線內。
+5. seam gate 必須維持綠燈；解析度變更本身視為 seam re-trigger。</code></pre>
+    <h3>13.3 已跑驗證</h3>
+    <p>已新增契約測試，鎖住「edge-policy 必須依 faceSizePx 縮放」：</p>
+    <pre><code>node docs/tests/r7-3-10-non-square-data-path.test.js
+→ R7-3.10 non-square data path contract passed</code></pre>
+    <p>也已確認 InitCommon.js 語法：</p>
+    <pre><code>node --check js/InitCommon.js
+→ pass</code></pre>
+    <h3>13.4 結論</h3>
+    <p>§12 可採納。 本頁計畫已更新成可動工版本：先跑 D800 1000 SPP throwaway，若顆粒粗度改善不足，再跑 D1000。 10000 SPP 仍放在 D 決策之後，用來做最後乾淨版。</p>
+    <h2>14. CODEX 前置工作盤點，交 OPUS 審查（2026-06-01）</h2>
+    <p>本段是 CODEX 對前置工作現況的自清單。目的不是宣稱 D800 已完成，而是讓 OPUS 判斷：目前已補的防呆與契約，是否足夠支撐下一步進入 D800 真烘焙與 D590 / D800 runtime 切換。</p>
+    <h3>14.1 已完成的事</h3>
+    <pre><code>1. 已把 OPUS §12 的要求寫進本計畫。
+   內容包含：
+     - D 提高時，edge-policy 也要跟著解析度放大。
+     - D800 / D1000 每次烘焙都要回報時間、記憶體與 Metal tile gate 數字。
+     - D 先驗粗度，10000 SPP 留到最後做乾淨版。
+
+2. 已把北牆非方格接縫的 edge-policy 改成 D-aware。
+   位置：
+     js/InitCommon.js
+
+   舊行為：
+     maxFillPixels = 4
+     maxSearchPixels = 10
+     這兩個值固定不變。
+
+   新行為：
+     以 D590 的北牆 2492 × 1716 作為 reference。
+     新 D 的 faceSizePx 越大，maxFillPixels / maxSearchPixels 也跟著 ceil 放大。
+
+   預期換算：
+     D590  → fill 4 / search 10
+     D800  → fill 6 / search 14
+     D1000 → fill 7 / search 17
+
+3. 已新增測試鎖住這件事。
+   位置：
+     docs/tests/r7-3-10-non-square-data-path.test.js
+
+   測試重點：
+     - policy 必須有 referenceFaceWidthPx / referenceFaceHeightPx。
+     - helper 必須用 max(widthScale, heightScale)。
+     - fill / search 必須用 ceil 跟著比例放大。
+     - apply edge policy 時必須用 faceWidth / faceHeight 呼叫 helper。
+
+4. 已重生本頁 HTML。
+   位置：
+     docs/html-review/2026-06-01-r7-3-10-north-wall-d-ramp-plan/index.html</code></pre>
+    <h3>14.2 已跑過的驗證</h3>
+    <pre><code>1. 非方格資料路徑契約測試
+   指令：
+     node docs/tests/r7-3-10-non-square-data-path.test.js
+
+   結果：
+     R7-3.10 non-square data path contract passed
+
+2. InitCommon.js 語法檢查
+   指令：
+     node --check js/InitCommon.js
+
+   結果：
+     pass
+
+3. HTML Review 前端腳本語法檢查
+   指令：
+     node --check docs/html-review/2026-06-01-r7-3-10-north-wall-d-ramp-plan/assets/html-review.js
+
+   結果：
+     pass</code></pre>
+    <h3>14.3 尚未完成的主成果</h3>
+    <p>以下項目尚未完成。這些才是使用者真正要驗收的 D800 成果：</p>
+    <pre><code>1. 尚未跑 D800 北牆 1000 SPP 真烘焙。
+2. 尚未產出 D800 runtime package。
+3. 尚未做 D590 / D800 runtime 切換開關。
+4. 尚未提供可肉眼 A/B 驗收的 D800 畫面網址。
+5. 尚未跑 D800 的 render-space seam gate。
+6. 尚未把 D800 與 D590 在同一相機下做截圖對照。</code></pre>
+    <h3>14.4 CODEX 對現況的判斷</h3>
+    <pre><code>1. 前置工作目前只補到「避免 D 提高後邊界補洞比例失效」。
+2. 這批前置工作可降低 D800 後縫隙復發的風險，但不能證明 D800 畫面已可驗收。
+3. 下一步應進入真正的 D800 pipeline：
+     a. 先補 D590 / D800 runtime 切換契約。
+     b. 再補 UI / loader / package variant 接線。
+     c. 跑 D800 throwaway bake。
+     d. 接進 runtime。
+     e. 用同一相機提供 D590 / D800 A/B 驗收。</code></pre>
+    <h3>14.5 請 OPUS 審的問題</h3>
+    <pre><code>1. 目前 D-aware edge-policy 的 reference / scale / ceil 策略是否足夠？
+2. D800 前是否還需要補其他 seam policy 的 scaling？
+3. 目前時間 / 記憶體 / seam gate 清單是否足以放行 D800 throwaway？
+4. 若上述都可接受，CODEX 下一步是否可直接進 D590 / D800 切換與 D800 bake？</code></pre>
+    <h2>15. OPUS 審查 §14（2026-06-01）</h2>
+    <p><strong>總評：盤點誠實，但核心修法有一個結構性缺口必須先補——目前的「D-aware」在 D800 會變成 no-op。</strong> §14 把已完成／未完成分得清楚，helper 數學本身正確、且在 D590 正確退化成 fill 4（無回歸）。問題出在它縮放的「來源」。已逐行讀碼核實，非採信宣稱。</p>
+    <h3>15.1（CRITICAL，答 Q1／Q4）D-aware 讀到的是「寫死常數」，D800 會算出 scale = 1.0</h3>
+    <p>證據鏈（js/InitCommon.js）：</p>
+    <pre><code>- :1538-1542 北/東牆非方格幾何 5 個常數全寫死 D590：
+    ATLAS_SIZE_PX        = 2912 × 3432
+    NORTH_WALL_UV_RECT   = uMax 2492/2912, vMax 1716/3432
+    NORTH_WALL_FACE_SIZE = 2492 × 1716
+- :1591-1592 policy.referenceFaceWidthPx / HeightPx = 2492 / 1716（同一組數）。
+- :2895 / :2900-2901 apply 取 faceWidth/faceHeight ← FACE_SIZE_PX 常數。
+- :2910 helper 收到的就是這個常數。
+- :2869-2871 widthScale = faceWidth / referenceFaceWidth = 2492 / 2492 = 1.0。
+  → 任何 D 都算 scale = 1.0 → maxFillPixels 永遠 = ceil(4 × 1.0) = 4。</code></pre>
+    <p>helper 是拿「寫死的 face size」除以「寫死的 reference」，兩者都是 2492，比值恆為 1。只有當 FACE_SIZE_PX 常數本身被改成 D800 的值，scale 才會 ≠ 1。</p>
+    <p>位置也會跟著錯：</p>
+    <pre><code>- :2904 startX = floor((region.xMax - bounds.xMin)/xSpan × faceWidth)，用 faceWidth = 2492。
+- :3351 loader 傳給 apply 的 atlas 尺寸 targetAtlasWidth/Height 是「package 動態值」（D800 變大）。
+- D800 北牆 face 實際約 3379 寬，seam 物理位置落在 ~3379 座標系；
+  startX 仍以 2492 座標系算 → 回填欄位整個偏左、偏窄。位置與寬度雙錯。</code></pre>
+    <p>根因＝<strong>single source of truth 分裂</strong>：atlas 尺寸走 package（動態），face/UV 幾何走寫死常數（靜態），D-aware 程式讀到的是靜態那半。</p>
+    <h3>15.2（答 Q1，修法）兩條可接受路徑，擇一</h3>
+    <pre><code>A. 首選：face 幾何改成「從 package 推導」，消滅分裂。
+   faceWidth  = round((uvRect.uMax - uvRect.uMin) × targetAtlasWidth)
+   faceHeight = round((uvRect.vMax - uvRect.vMin) × targetAtlasHeight)
+   常數只留「比例（UV rect）」，不留絕對像素 → helper 自動隨 D 正確。
+
+B. 若堅持留常數：D800 variant 接線時必須「同時重生」5 個常數，
+   並加 runtime guard：載入後比對
+     |uvRect.uMax × targetAtlasWidth − FACE_SIZE_PX.width| &gt; 1 → throw。
+   沒有這個 guard，漏改任何一個常數都會「靜默」讓 seam 修法失效。</code></pre>
+    <h3>15.3（答 Q2）目前沒有其他「活的」固定像素接縫機制</h3>
+    <pre><code>- 已掃 dilation：:7030-7033 dilationAppliedBySurface 只是寫死 false 的回報旗標，
+  沒有像素半徑、沒有實際 dilation，非風險。
+- 唯一同類風險是東牆自己的寫死幾何（:1540 EAST_WALL_UV_RECT、:1542 EAST_WALL_FACE_SIZE_PX），
+  與北牆同一個分裂問題；東牆本輪暫停，留待東牆非方格啟動時一起處理。
+- 本輪北牆：補完 15.1 即可，無需額外 seam policy scaling。</code></pre>
+    <h3>15.4（答 Q3）gate 清單足夠當安全網，補一道「烤前」檢查</h3>
+    <pre><code>- §13.2 清單與 validation-report.json 的 bakeDiagnosticsSummary 對得上，OK。
+- render-space seam gate 會驅動真正的 runtime loader → 會實際跑到 apply edge policy
+  的 D800 幾何 → 就算 15.1 沒修，gate 會「判紅」，壞 atlas 不會靜默上線。
+  風險等級＝「白烤一次」，非「污染正式 package」。
+- 請加一道「烤前」檢查：載入 package 後比對 targetAtlasWidth/Height 與幾何常數一致
+  （即 15.2 的 guard）。把「靜默 no-op」提前成「明確報錯」，省下整趟 D800 白烤。
+- tile 安全與 D 無關：tile 仍 512×512、K=4 fence；per-tile 工作量固定，
+  maxSubmissionElapsedMs（暖機首塊 171ms、穩態約 57–63ms，量自 20260531-233623）
+  不隨 D 成長 → 250ms submission/readback gate 在 D800/D1000 仍有效。</code></pre>
+    <h3>15.5（測試缺口）契約測試鎖住了 helper 內部數學，沒鎖住「隨 atlas 放大」</h3>
+    <pre><code>- docs/tests/r7-3-10-non-square-data-path.test.js:89-94 驗了 referenceFaceWidthPx=2492、
+  max(widthScale, heightScale)、ceil。
+  但沒有一個 case 證明「atlas 變大時 fill 跟著變大」→ 目前 D800 no-op 也能讓它 PASS（假安全）。
+- 建議補 case：resolveR7310C1NonSquareEdgePolicyPixels(policy, 3379, 2327)
+  斷言 fill === 6、search === 14；再加 face↔package 一致性 guard 的測試。</code></pre>
+    <h3>15.6 裁示</h3>
+    <pre><code>Q1：helper 數學正確、D590 無回歸；但「以現況接線」不足以保護 D800
+    （讀寫死常數 → scale 恆 1）。先補 15.1（消滅 single source of truth 分裂）。
+Q2：無其他活的固定像素接縫機制；東牆常數同病，本輪暫停不處理。
+Q3：gate 清單足夠當安全網；加一道「烤前」face↔package 一致性檢查；
+    tile 安全與 D 無關，已確認。
+Q4：可進 D590/D800 切換與 D800 bake，但「先收掉 15.1」再烤。
+    seam gate 會擋住漏修（判紅、不污染正式 package），最壞是白烤一趟；
+    為省這趟，請先把 face 幾何改成「從 package 推導」或加上一致性 guard。
+index.html 由 CODEX 依本 source.md 重生（勿只改 index.html）。</code></pre>
+    <h2>16. CODEX 回覆 §15：已收掉 D-aware edge-policy 的 single source of truth 分裂</h2>
+    <p>CODEX 採納 OPUS §15 的裁示。§15 指出的問題成立：</p>
+    <pre><code>舊狀態：
+  applyR7310C1NonSquareAtlasEdgePolicies()
+  使用 R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX = 2492×1716。
+
+結果：
+  D590 時正確。
+  D800 / D1000 時，edge-policy 仍以 2492×1716 計算 seam 位置與回填寬度。
+  這會讓 D-aware helper 的 scale 恆為 1，變成看似有保護、實際沒有跟著 D 放大的假安全。</code></pre>
+    <p>已做修正：</p>
+    <pre><code>1. 新增 resolveR7310C1NonSquareFaceGeometry(uvRect, atlasWidth, atlasHeight)。
+   它用目前載入的 atlas 實際寬高推導 face origin / face size。
+
+2. applyR7310C1NonSquareAtlasEdgePolicies() 不再讀
+   R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX。
+   它改用：
+     faceGeometry = resolveR7310C1NonSquareFaceGeometry(uvRect, safeWidth, safeHeight)
+     faceOriginX  = faceGeometry.originX
+     faceOriginY  = faceGeometry.originY
+     faceWidth    = faceGeometry.width
+     faceHeight   = faceGeometry.height
+
+3. R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX 仍保留。
+   目前 runtime shader uniform / status 顯示還會讀它。
+   但 seam edge-policy 已不再依賴它，所以 D800 seam policy 不會被 D590 常數鎖死。</code></pre>
+    <p>新增契約測試也已補上：</p>
+    <pre><code>docs/tests/r7-3-10-non-square-data-path.test.js
+
+新增鎖點：
+  1. edge-policy 函式內不得出現 R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX。
+  2. 必須存在 resolveR7310C1NonSquareFaceGeometry(uvRect, atlasWidth, atlasHeight)。
+  3. apply edge-policy 必須用 uvRect + safeWidth/safeHeight 推導 face geometry。
+  4. D800 估算值：
+       face ≈ 3379×2327
+       maxFillPixels = ceil(4 × max(3379/2492, 2327/1716)) = 6
+       maxSearchPixels = ceil(10 × 同一 scale) = 14
+     用測試鎖住「D 變大，保護寬度也要變大」。</code></pre>
+    <p>已跑驗證：</p>
+    <pre><code>node docs/tests/r7-3-10-non-square-data-path.test.js
+  PASS: R7-3.10 non-square data path contract passed
+
+node --check js/InitCommon.js
+  PASS</code></pre>
+    <p>目前狀態：</p>
+    <pre><code>這一刀只修「烤前防呆與 edge-policy 尺寸來源」。
+尚未開始 D800 bake。
+尚未 promote 任何 package。
+下一步才是依 §14 / §15 的 gate 跑 D590 / D800 切換與 D800 throwaway bake。</code></pre>
+    <h2>17. OPUS 審查 §16（2026-06-01）</h2>
+    <p><strong>總評：APPROVE，這一刀是真改進——已逐行讀碼＋親跑測試（PASS）核實。FACE_SIZE_PX 的絕對像素依賴確實切除，位置（startX）與寬度（fill/search）雙錯都修好，D590 精準零回歸。但路徑 A 只走了一半：resolver 吃的 uvRect 仍是寫死常數，而 package 其實已經帶了正確的 uvRects / faceSizePx——D800 改 packing 時這個寫死值會再次過期。</strong></p>
+    <h3>17.1 已核實（逐行 + 實跑）</h3>
+    <pre><code>- resolver（:2863-2891）：faceWidth = round((uMax-uMin) × 實際 atlasWidth)，吃 live 尺寸。
+  D590 驗算：(2492/2912)×2912 = 2492、(1716/3432)×3432 = 1716，精準重現 → scale 1.0、fill 4，零回歸。
+- apply（:2912-）：startX（:2934 位置）與 helper（:2940 尺寸）都改吃 faceGeometry → §15.1「雙錯」兩個都修。
+- edge-policy 函式內已無 FACE_SIZE_PX（:2628/:2633 那組屬別的 uniform 設定函式，不在此路徑）。
+- 我親跑：node 契約測試 PASS、node --check PASS。CODEX 的 PASS 宣稱屬實。</code></pre>
+    <h3>17.2（殘留，且 D800 很可能踩到）resolver 吃的 uvRect 還是寫死的</h3>
+    <pre><code>- :2925 var uvRect = R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT;  ← 寫死常數，非 package 值。
+- 同一個寫死 uvRect 也餵 shader 取樣 uniform（:2614-2617）。
+- 所以 resolver 的 (uMax-uMin) 比例是「寫死的」，只有 atlasWidth 是動態的。
+  single source of truth 分裂沒有完全消滅，只是從「絕對像素」降一級成「比例」。</code></pre>
+    <p>為什麼 D800 幾乎一定踩到（north 會變成最寬牆）：</p>
+    <pre><code>- 現況 atlas 2912 寬：north 2492 寬（z = 2492/2912 = 0.8557）、east 2912 寬（full）。
+  兩牆上下堆疊（northWall y:0、eastWall y:0.5）→ atlas 寬 = max(兩牆寬)。
+- D800：north 重烤到約 3379 寬，east 仍是 resampled 舊圖（約 2912 寬，見 package note）。
+  → atlas 寬 = max(3379, 2912) = 3379 → north 變成最寬牆 → north z 從 0.8557 變成約 1.0。
+- 但寫死 uvRect 還是 0.8557 → resolver 算 faceWidth = 0.8557 × 3379 ≈ 2892（錯，應為 3379）。
+  位置與尺寸再次失準——同一個病、升一層。north-only packing（north 填滿 atlas）也一樣，z 直接 = 1.0。</code></pre>
+    <h3>17.3 決定性修法：package 已經帶好資料，只差改讀來源</h3>
+    <pre><code>- package pointer 已宣告（docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json）：
+    :20-32 uvRects.northWall = { x:0, y:0, z:0.8557…, w:0.5 }   ← 即 {uMin, vMin, uMax, vMax}
+    :34-43 faceSizePx.northWall = { 2492, 1716 }
+  這是「bake 自己產出的 layout 宣告」，D800 package 會自動帶 D800 的值。
+- 完成路徑 A（零新增資料，只改讀取點）：
+    1. edge-policy :2925 改讀 pointer.uvRects.northWall（不讀寫死常數）。
+    2. shader 取樣 uniform :2614-2624 一併改讀 package uvRects（北＋東）。
+- 改完後 runtime 對「任何 D、任何 packing」都與 bake 宣告自洽，這個病根除。</code></pre>
+    <h3>17.4 安全網仍在（最壞＝白烤，非污染正式 package）</h3>
+    <pre><code>- 寫死 uvRect 同時餵 shader 取樣，所以 uvRect 一過期，「北牆畫面本身就會取樣錯位」，
+  A/B 一眼看得出 + render-space seam gate 會判紅。壞 atlas 不會靜默上線。
+- 風險等級＝白烤一趟 ＋ 追一個「牆取樣錯位」的假 bug。先做 17.3 可省這趟。</code></pre>
+    <h3>17.5 裁示</h3>
+    <pre><code>- 本刀 APPROVE：FACE_SIZE_PX 絕對依賴已除、雙錯已修、D590 零回歸、測試實跑 PASS。
+- 動 D800 真烤前，完成路徑 A：edge-policy + shader uniform 改讀 package 的 uvRects / faceSizePx
+  （資料已在 package :20-43），把寫死 uvRect 這個殘留也收乾淨。
+- 改讀 package 後，loader 同步加自洽 guard：斷言
+  round((uvRects.northWall.z - uvRects.northWall.x) × targetAtlasWidth) === faceSizePx.northWall.width
+  （高同理），不符即 throw，鎖住 bake 產出的 uvRect 與 faceSize 互相吻合。
+- 東牆 uvRect / faceSize 同理（:1540 / :1542、package eastWall），東牆非方格啟動時一起改。
+- 測試建議：仿 r7-3-10-bake-tiling-safety.test.js 的 extract+execute 前例，抽出 resolver 真的執行
+  resolveR7310C1NonSquareFaceGeometry({...north uvRect...}, 3379-class atlas) 斷言 face 寬，端到端鎖死。
+- index.html 由 CODEX 依本 source.md 重生（勿只改 index.html）。</code></pre>
+    <h2>18. CODEX 回覆 §17：uvRect / faceSize 來源收斂完成（2026-06-01）</h2>
+    <p>§17 指出的殘留已補完。本次修改只處理「非方格 runtime 幾何來源」與防呆，尚未開始 D800 bake，尚未 promote package。</p>
+    <h3>18.1 已改內容</h3>
+    <pre><code>1. runtime 新增 package-derived 幾何狀態：
+   r7310C1NonSquareNorthWallUvRect
+   r7310C1NonSquareEastWallUvRect
+   r7310C1NonSquareNorthWallFaceSizePx
+   r7310C1NonSquareEastWallFaceSizePx
+
+2. 非方格 package 載入成功後，InitCommon 會從 pointer 讀：
+   pointer.uvRects.northWall / eastWall
+   pointer.faceSizePx.northWall / eastWall
+
+3. edge-policy 不再讀 R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT。
+   applyR7310C1NonSquareAtlasEdgePolicies() 現在讀 runtime 的
+   r7310C1NonSquareNorthWallUvRect，再用當前 atlas 實際寬高推導 face geometry。
+
+4. shader uniform 設定不再餵寫死 uvRect / faceSize。
+   uR7310C1NonSquareNorthWallUvRect
+   uR7310C1NonSquareEastWallUvRect
+   uR7310C1NonSquareNorthWallFaceSizePx
+   uR7310C1NonSquareEastWallFaceSizePx
+   都改餵 runtime 從 package 讀出的值。
+
+5. loader 新增自洽 guard。
+   載入後會檢查：
+     round((uvRect.uMax - uvRect.uMin) × targetAtlasWidth)  == faceSize.width
+     round((uvRect.vMax - uvRect.vMin) × targetAtlasHeight) == faceSize.height
+   north / east 都檢查。不符即 throw。
+
+6. loader 也要求 pointer 必須同時具備：
+   uvRects.northWall
+   uvRects.eastWall
+   faceSizePx.northWall
+   faceSizePx.eastWall
+   缺任一項即 throw。</code></pre>
+    <h3>18.2 已補測試</h3>
+    <pre><code>docs/tests/r7-3-10-non-square-data-path.test.js
+
+新增鎖點：
+  1. normalizeR7310C1NonSquareUvRect 存在。
+  2. normalizeR7310C1NonSquareFaceSizePx 存在。
+  3. assertR7310C1NonSquareFaceGeometryConsistency 存在。
+  4. applyR7310C1NonSquareRuntimeGeometry 存在。
+  5. loader 必須呼叫 applyR7310C1NonSquareRuntimeGeometry(pointer, targetAtlasWidth, targetAtlasHeight)。
+  6. edge-policy 必須讀 r7310C1NonSquareNorthWallUvRect。
+  7. edge-policy 不得在函式內直接讀 R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT。
+  8. 真的執行 resolver，餵 D800-class atlas：
+       uvRect = {uMin:0, vMin:0, uMax:1, vMax:0.5}
+       atlas = 3379 × 4654
+       face = 3379 × 2327
+       maxFillPixels = 6
+       maxSearchPixels = 14
+  9. 讀現有 package pointer，確認 north / east 的 uvRect 與 faceSizePx 彼此吻合。</code></pre>
+    <h3>18.3 已跑驗證</h3>
+    <pre><code>node --check js/InitCommon.js
+  PASS
+
+node --check docs/tests/r7-3-10-non-square-data-path.test.js
+  PASS
+
+node docs/tests/r7-3-10-non-square-data-path.test.js
+  PASS: R7-3.10 non-square data path contract passed
+
+git diff --check
+  PASS</code></pre>
+    <h3>18.4 狀態</h3>
+    <pre><code>§17 的改 a / 改 b / loader 自洽 guard / 東牆同批修正 / D800-class resolver test 已完成。
+
+現在 runtime 對 north / east 非方格幾何的權威來源是 package pointer。
+寫死 D590 uvRect 仍可作為初始 fallback，但正式載入後會被 package 值覆蓋。
+
+尚未開始 D800 bake。
+尚未 promote package。
+下一步可由 OPUS 複審 §18，再決定是否進 D800 throwaway bake。</code></pre>
+    <h2>19. OPUS 複審 §18（2026-06-01）</h2>
+    <p><strong>總評：APPROVE。§17 路徑 A 已完整走完。已逐行讀碼＋親跑測試（contract test 與 node --check 均 PASS）。寫死 uvRect 殘留已根除，runtime 幾何權威來源改為 package，且時序、guard、測試三項都正確。可進 D800 throwaway bake。</strong></p>
+    <h3>19.1 已核實（逐行 + 實跑）</h3>
+    <pre><code>- 來源收斂：edge-policy（:3005）與 shader uniform（:2627-2649）都改讀 module 變數
+  r7310C1NonSquareNorthWallUvRect；該變數由 loader 在 :3423 applyR7310C1NonSquareRuntimeGeometry
+  覆寫成 package 值。寫死常數只當初始 fallback（:2018-2031）。
+- 時序正確（命門）：:3423 設變數(package) → :3462 edge-policy 讀 → :3472 uniform 讀。
+  D800 時兩者都拿到 package 值，不會停在 D590 fallback。
+- guard 正確：assertR7310C1NonSquareFaceGeometryConsistency（:2963-2965）
+  斷言 round((uMax-uMin)×atlas)===faceSize，north＋east 都檢（:2983-2984）；
+  缺 uvRects/faceSizePx 欄位先 throw（:2977）。缺欄位或不自洽都會明確報錯，不靜默用 fallback 錯位。
+- 測試升級成真執行：vm.runInNewContext 實際呼叫 resolver——
+  resolveFace({0,0,1,0.5}, 3379, 4654) → 斷言 3379×2327；resolvePolicy → 斷言 6/14；
+  assertPointerFace 對真實 package 驗 north/east 自洽。正是 §17.5 要的 extract+execute。
+- 零回歸：D590 現有 package 通過 guard（round(0.8557692×2912)=2492、round(0.5×3432)=1716，north/east 皆吻合）。
+  我親跑 node test PASS、node --check PASS。</code></pre>
+    <h3>19.2 D800 bake 前的兩個前瞻提醒（非阻擋）</h3>
+    <pre><code>1. guard 用 round 比對 → bake 端產 package 時，faceSizePx 必須用同一條公式
+   round((uMax-uMin)×atlasWidth) 產出，且 uvRect 在 JSON 保留足夠精度（現況 D590 存 16 位、精準）。
+   否則 D800 的 uvRect 若被截斷精度，round 可能差 1 → guard 判 throw。
+   這是「寧可明確 throw、不要靜默錯位」的正確代價，但請在 bake 端對齊公式避免假性失敗。
+2. edge-policy 目前只有 north 條目（:3002 非 northWall 即 skip），符合本輪範圍。
+   east 幾何來源（module 變數/uniform/guard）已全部預留，東牆非方格啟動時只差加 east policy 條目。</code></pre>
+    <h3>19.3 裁示</h3>
+    <pre><code>- §18 APPROVE：來源收斂、時序、guard、測試四項皆逐行核實通過，D590 零回歸。
+- 放行 D800 throwaway bake。動工時確認：
+    a. D800 package 必帶 uvRects.northWall/eastWall 與 faceSizePx.northWall/eastWall（缺則 loader throw）。
+    b. bake 端 faceSizePx 用 round((uMax-uMin)×atlas) 同公式產出，與 runtime guard 對齊。
+    c. 其餘照 §5 / §13.2 gate 與 render-space seam gate 回報。
+- index.html 由 CODEX 依本 source.md 重生（勿只改 index.html）。</code></pre>
+    <h2>20. OPUS：改由 OPUS 實烤的提案＋待確認執行未知數（交 CODEX 討論，2026-06-01）</h2>
+    <p>本段非裁示，是討論請求。使用者今日調度：為平衡用量，這輪改由 OPUS 跑 D800 真烤、CODEX 轉審查方。驗收採雙軌——使用者肉眼 A/B ＋ CODEX 讀數字下裁示，OPUS 只回報機器數字、不自評通過（守 writer/reviewer 分離）。OPUS 已做唯讀偵查，確認入口與一個執行未知數，需 CODEX 拍板後才動工。</p>
+    <h3>20.1 已查證（OPUS 唯讀偵查）</h3>
+    <pre><code>1. 跑 raw atlas 有現成入口：
+   - runner 支援 CLI 尺寸參數 args.atlasWidth/atlasHeight（runner:8212 / :8246-8247）。
+   - capture 端 normalizeR738PositiveInt 接受任意 targetAtlasWidth，上限 8192（InitCommon:5057）。
+   - D800 的 3379×2327 在範圍內 → 不需先寫大段接線。
+2. Brave 由 runner 程式碼硬擋（OPUS 實烤一律用 Google Chrome）：
+   - runner:6-7 isBraveBrowserPath 偵測；:13 指定 Brave 即 throw；
+     :17 候選只列 Google Chrome；:26-27 找到 Brave 再 throw。
+3. Metal tile+fence 安全機制已在 P0-P5 與 20260531-233623 正式烤驗證。</code></pre>
+    <h3>20.2 執行未知數（要 CODEX 拍板）</h3>
+    <pre><code>raw atlas → runtime package 這段「沒有現成工具」：
+- grep docs/tools/ 找「uvRects」回傳空 → 現有 P5d package 是手工組的。
+- runner 只吐 D800 north 的 raw atlas + validation report，
+  不會自動組成 §18 loader 要的「帶 uvRects/faceSizePx、north+east 合併」package。
+- loader scope 是 c1_north_east_non_square_first_hit_hybrid（合併），
+  north-only atlas 會因缺 east 在 InitCommon:2977 throw → D800 throwaway 必須是合併 layout。</code></pre>
+    <p>若沿用 D590 的「垂直堆疊、north 上 east 下」layout，OPUS 預算 D800 合併幾何如下（供 CODEX 核對）：</p>
+    <pre><code>north D800 真烤            : 3379 × 2327
+east（沿用 D590 resampled）: 2912 × 1716
+合併 atlas                : 寬 max(3379,2912)=3379、高 2327+1716=4043
+
+uvRects（{x,y,z,w} = {uMin,vMin,uMax,vMax}）：
+  northWall : x0 y0          z 1.0               w 2327/4043 ≈ 0.57556
+  eastWall  : x0 y0.57556    z 2912/3379 ≈ 0.86179   w 1.0
+faceSizePx：
+  northWall : 3379 × 2327
+  eastWall  : 2912 × 1716
+
+§18 guard 自洽驗算 round((span)×atlas)：
+  north 寬 round(1.0×3379)=3379 ✓、高 round(0.57556×4043)=2327 ✓
+  east  寬 round(0.86179×3379)=2912 ✓、高 round((1-0.57556)×4043)=1716 ✓
+注意：east z=2912/3379 是無限小數 → pointer JSON 要存足夠精度，
+      否則 round 差 1、guard 假性 throw（§19.2 第 1 點）。</code></pre>
+    <h3>20.3 給 CODEX 的問題</h3>
+    <pre><code>Q1. D800 throwaway 是否沿用「north D800 + east D590-resampled、垂直堆疊」合併 layout？
+    若改別的 packing（east 也放大／水平排），uvRects/faceSizePx 要另算。
+Q2. 「raw atlas → 合併 package」要手工組（算 20.2 那組數 + 寫 pointer JSON），
+    還是新寫一支 assembler 腳本？工作量與正確性風險由此決定。
+Q3. east resampled 的來源與步驟？（從現有 east 1024 square bake resample 到 2912×1716？）
+Q4. D800 north 精確尺寸 3379×2327 是否為定值？density 公式來源（2492 × 800/590 取整？）請確認。
+Q5. bake 端產 faceSizePx 是否用 round((uMax-uMin)×atlas) 同公式，與 runtime guard 對齊？</code></pre>
+    <h3>20.4 OPUS 建議的分工切法（待 CODEX 同意）</h3>
+    <pre><code>- OPUS：跑 runner 產 D800 north raw atlas，回報 bake-diagnostics 安全數字
+  （contextLost、maxSubmissionElapsedMs、maxTileReadbackMs、minCompletedSamples、timedOut、nonzeroTexels）。
+- CODEX：拍板 Q1-Q5；決定 package 組裝方式（手工 or assembler）並組成 D800 合併 package。
+- OPUS：載入 runtime、跑 render-space seam gate、產 A/B 開通網址，回報數字（不自評）。
+- 使用者肉眼 A/B ＋ CODEX 讀數字下「通過/不通過」裁示。</code></pre>
+    <p>請 CODEX 回覆 Q1-Q5（建議直接在本檔接 §21）。定案後 OPUS 再動工。index.html 待討論收斂後由 CODEX 依本 source.md 重生（勿只改 index.html）。</p>
+    <h2>21. CODEX 回覆 §20：D800 raw bake / package 組裝定案（2026-06-02）</h2>
+    <p>本段回覆 §20.3 的 Q1-Q5，並把 OPUS raw bake 回傳格式與 CODEX package 組裝 gate 寫成可執行契約。結論：同意 OPUS 先跑 D800 north raw atlas；CODEX 負責把 raw north 與現有 east 區塊組成 north+east 合併 runtime package。全程仍是 throwaway，不 promotion。</p>
+    <h3>21.1 裁示摘要</h3>
+    <p>採用 §20.2 的「垂直堆疊」layout：</p>
+    <pre><code>上半部：northWall D800 真烤 atlas。
+下半部：eastWall 沿用目前 D590 resampled east 區塊。
+合併後仍維持 c1_north_east_non_square_first_hit_hybrid scope。</code></pre>
+    <p>理由：</p>
+    <pre><code>1. loader 與 shader 目前就是 north+east 合併 scope。
+2. 本輪目標只驗 north D800，east 作為合併 scope 必要成員，先保持穩定。
+3. 垂直堆疊最接近目前 D590 preview layout，uvRect 與 faceSizePx 可直接用整數 layout 推導。
+4. 這能測到真正風險：D800 north 的尺寸、edge policy、render-space seam gate、runtime NonSquare 取樣。</code></pre>
+    <h3>21.2 Q1-Q5 回覆</h3>
+    <pre><code>Q1. D800 throwaway 是否沿用「north D800 + east D590-resampled、垂直堆疊」合併 layout？
+
+    是。採用 §20.2 的垂直堆疊。
+
+    northWall D800:
+      faceSizePx = 3379 × 2327
+      uvRect     = { x:0, y:0, z:1, w:2327/4043 }
+
+    eastWall D590-resampled:
+      faceSizePx = 2912 × 1716
+      uvRect     = { x:0, y:2327/4043, z:2912/3379, w:1 }
+
+    combined atlas:
+      3379 × 4043
+
+Q2. raw atlas → 合併 package 要手工組，還是寫 assembler？
+
+    寫 deterministic assembler，不手工組。
+
+    理由：
+      1. combined atlas 約 3379 × 4043 × 16 bytes，資料量大。
+      2. pointer JSON 要同步 byteLength、chunk、sha256、uvRects、faceSizePx。
+      3. 手工組容易產生小數精度、chunk 清單、hash 與 guard 不一致。
+
+    assembler 職責：
+      1. 讀 OPUS raw north atlas。
+      2. 讀現有 east D590 resampled 區塊。
+      3. 配置 combined Float32Array。
+      4. copy north/east 到指定 rect。
+      5. 寫 combined bin / part chunks / pointer JSON。
+      6. 跑 uvRect ↔ faceSizePx guard。
+
+Q3. east resampled 的來源與步驟？
+
+    優先沿用目前 north-east non-square preview package 裡的 eastWall 區塊。
+
+    現有 package：
+      docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json
+
+    現有 atlas：
+      assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-p5d-runtime-preview/
+      north-east-non-square-p5d-preview-2912x3432-rgba-f32.bin
+
+    這份 preview 已經含 eastWall 2912 × 1716 區塊。
+    本輪不要重建 east，避免把 east resample 誤差混進 north D800 判讀。
+    若現有 preview east 讀取失敗，才改用 accepted east-wall package 重建 2912 × 1716 區塊，並在回報中明列。
+
+Q4. D800 north 精確尺寸是否為 3379 × 2327？
+
+    是。以 D590 現行北牆 faceSizePx 2492 × 1716 為基準：
+
+      width  = round(2492 × 800 / 590) = 3379
+      height = round(1716 × 800 / 590) = 2327
+
+    OPUS raw bake 請用 targetAtlasWidth=3379、targetAtlasHeight=2327。
+
+Q5. bake 端 faceSizePx 是否用同公式，與 runtime guard 對齊？
+
+    是。faceSizePx 必須等於實際 copy 進 combined atlas 的整數 rect 尺寸。
+    uvRects 必須由整數 layout 反推，不由浮點估算先行。
+
+    guard 公式：
+      round((uvRect.z - uvRect.x) × combinedAtlasWidth)  === faceSizePx.width
+      round((uvRect.w - uvRect.y) × combinedAtlasHeight) === faceSizePx.height
+
+    north:
+      round((1 - 0) × 3379) = 3379
+      round((2327/4043 - 0) × 4043) = 2327
+
+    east:
+      round((2912/3379 - 0) × 3379) = 2912
+      round((1 - 2327/4043) × 4043) = 1716</code></pre>
+    <h3>21.3 OPUS raw bake 回傳格式</h3>
+    <p>OPUS 跑 raw north D800 後，請回傳下列資料。這是 CODEX 組 package 前的必要輸入。</p>
+    <pre><code>1. raw north atlas .bin 路徑。
+2. validation-report.json 路徑。
+3. targetAtlasWidth=3379。
+4. targetAtlasHeight=2327。
+5. requestedSamples=1000。
+6. gate 數字：
+   contextLost
+   contextRestored
+   minCompletedSamples
+   timedOut
+   maxSubmissionElapsedMs
+   maxTileReadbackMs
+   status
+   nonzeroTexels
+   reprojectionStatus
+   reprojectionComparisons
+   seam candidate-only failureCount
+7. 確認輸出是 throwaway，尚未 promotion。</code></pre>
+    <h3>21.4 CODEX package 組裝 gate</h3>
+    <p>CODEX 組出 D800 north+east runtime package 後，必須先過這些 gate，再交 OPUS 跑 runtime/seam gate。</p>
+    <pre><code>1. combined atlas byteLength：
+   3379 × 4043 × 4 × 4
+
+2. pointer 必帶：
+   packageStatus = &#x27;architecture_probe&#x27;
+   runtimeScope = &#x27;c1_north_east_non_square_first_hit_hybrid&#x27;
+   runtimeTexture = &#x27;tR7310C1FullRoomDiffuseAtlasTextureNonSquare&#x27;
+   requestedSamples = 1000
+   diffuseOnly = true
+   upscaled = false
+   targetAtlasWidth = 3379
+   targetAtlasHeight = 4043
+   uvRects.northWall
+   uvRects.eastWall
+   faceSizePx.northWall
+   faceSizePx.eastWall
+
+3. uvRect ↔ faceSizePx 自洽：
+   northWall width/height round-trip 必須等於 3379 × 2327。
+   eastWall  width/height round-trip 必須等於 2912 × 1716。
+
+4. east 區塊來源：
+   預設使用現有 preview package east 區塊。
+   若 fallback 重建 east，需附來源 package 與 resample 指令。
+
+5. 本地測試：
+   node docs/tests/r7-3-10-non-square-data-path.test.js
+   node --check js/InitCommon.js
+   git diff --check
+
+6. runtime smoke：
+   package fetch 成功。
+   r7310C1NonSquareAtlasRuntimeReady = true。
+   slot 1 northWall 走 NonSquare 取樣。
+   北牆 render-space seam gate 仍綠。</code></pre>
+    <h3>21.5 分工定案</h3>
+    <pre><code>OPUS：
+  跑 D800 north raw atlas。
+  回傳 §21.3 的路徑與 gate 數字。
+
+CODEX：
+  寫 assembler。
+  組成 D800 north+east combined runtime package。
+  跑 §21.4 gate。
+
+OPUS：
+  載入 runtime。
+  跑 render-space seam gate。
+  產 A/B 網址與截圖。
+
+使用者 + CODEX：
+  依肉眼 A/B 與 gate 數字裁示 D800 是否可 promotion。</code></pre>
+    <h3>21.6 安全邊界</h3>
+    <pre><code>1. 本輪仍只處理北牆 D800。
+2. 不重烤 east。
+3. 不 promotion。
+4. 不覆蓋 accepted package。
+5. 不碰 Brave。
+6. D/SPP/blue-noise/東牆非方格維持暫停，等北牆 D800 A/B 有結果再裁示。</code></pre>
+    <h2>22. OPUS 回應 §21：審查裁示＋驗收方式＋實作方案（2026-06-02）</h2>
+    <p>本節是 OPUS 對 §21 的完整回應，三部分一次看完：A 審查裁示（22.1–22.4）、B 驗收方式定案（22.5–22.6）、C 實作方案請 CODEX 審（22.7–22.8）。</p>
+    <hr>
+    <p><strong>A. 審查 §21</strong></p>
+    <p><strong>總評：方向 APPROVE。</strong> 數字全部核實一致、layout 與分工合理，且兩個關鍵決策正確：(1) 用整數 rect 反推 uvRect、pointer 存分數，根除 §19.2 的精度隱患；(2) 寫 deterministic assembler、east 沿用現有 preview 區塊不重 resample。動工前修 1 個契約瑕疵、納 4 個提醒。</p>
+    <h3>22.1 已核實一致</h3>
+    <pre><code>- D800 尺寸：round(2492×800/590)=3379、round(1716×800/590)=2327 ✓
+- combined 3379×4043；north uvRect {0,0,1,2327/4043}、east {0,2327/4043,2912/3379,1} ✓
+- §18 guard 相符（北寬 3379/高 2327、東寬 2912/高 1716 round-trip 全中）✓ 與 §20.2 預算一致
+- byteLength 3379×4043×4×4 = 218,580,752 ✓</code></pre>
+    <h3>22.2（契約瑕疵，必修）§21.3 把 seam 數字放錯階段</h3>
+    <pre><code>- §21.3 第 6 項清單列了「seam candidate-only failureCount」當 OPUS raw bake 回傳。
+- 但 raw bake 階段只有 raw north atlas + validation-report，還沒有 combined runtime package。
+- render-space seam gate 必須 Chrome 載入 runtime 才跑得出（§17/§19 確立 seam gate 是 render-space）。
+  此項在 raw 階段「無法產生」。
+- 修正：把 seam candidate-only failureCount 從 §21.3（raw bake 回傳）移到 §21.5 第三段
+  「OPUS 載入 runtime、跑 render-space seam gate」階段。raw 階段 OPUS 只回 atlas/validation/bake-diagnostics。</code></pre>
+    <h3>22.3 四個提醒（執行時注意）</h3>
+    <pre><code>1.（assembler 易錯）east copy 的 stride：
+   - north raw 3379 寬 = combined 3379 寬 → 整塊 copy 可（stride 對齊）。
+   - east 來源在現有 2912×3432 atlas 的 row 1716-3431（2912 寬），要 copy 到
+     combined(0,2327) 的 2912×1716 rect；src stride 2912 ≠ dst stride 3379
+     → 必須 per-row copy（比照 copyR738TilePixelsToAtlasPixels），別整塊 memcpy。
+2.（gate 判讀）reprojectionStatus：
+   - north-only separated non-square bake 的 reprojectionStatus 預期是 &#x27;fail&#x27;、comparisons 0
+     （與現有 north-wall-separated package 一致），不影響整體 status=pass。
+     判 gate 時別把 reprojection fail 當紅燈。
+3.（建議）assembler 交 OPUS 前先自測：combined byteLength=3379×4043×16、
+   north/east rect 各自 nonzeroTexels&gt;0、§18 guard 通過。把錯誤擋在組裝端，省一趟白載入。
+4.（記憶體）combined DataTexture = 3379×4043×16 ≈ 218MB（含 east，比 D590 的 160MB 大）。
+   assembler 組裝時 JS heap 另有來源兩塊 + 目標一塊。可控，runtime 載入留意即可。</code></pre>
+    <h3>22.4 審查裁示 + raw bake 參數</h3>
+    <pre><code>- §21 方向 APPROVE。修 22.2（seam 項移後階段）後，§21.5 分工定案成立。
+- OPUS raw bake 參數已定案、可執行：
+    targetAtlasWidth=3379、targetAtlasHeight=2327、samples=1000、angle=metal、Google Chrome。
+- 流程：OPUS 跑 raw → 回 atlas/validation/bake-diagnostics → CODEX 寫 assembler 組 combined package
+  → 過 §21.4 gate → OPUS 載入跑 render-space seam gate + A/B → 使用者肉眼 + CODEX 裁示。
+- 仍 throwaway，不 promotion、不覆蓋 accepted、不碰 Brave。</code></pre>
+    <hr>
+    <p><strong>B. 驗收方式定案：截圖並排</strong></p>
+    <p>使用者指出 §21 漏收「D590 vs D800 對比機制」——烤完只有 D800 單張，沒有 D590 可比，無法驗收粗度差異（§5 第5點、§9 第3點本來就要這個對比）。使用者已定：<strong>截圖並排</strong>（不做即時切換開關，throwaway 不值得改 runtime UI）。</p>
+    <h3>22.5 驗收方式（截圖並排）</h3>
+    <pre><code>- D590：用現有 preview package（north 2492×1716）在 §6 指定視角截一張。
+- D800：用 CODEX 組的 throwaway package（north 3379×2327）在「同視角、同 SPP、同曝光」截一張。
+- 兩張並排，使用者肉眼判「髒斑顆粒有沒有變細」。
+- §6 視角：position(-1.549935,2.400085,-1.657816)、yaw 0.8516、pitch 0.664、fov 55、samples≥500、sppCap 1000。</code></pre>
+    <h3>22.6 接線與流程（截圖並排所需）</h3>
+    <pre><code>只需要一個能力：runtime 能「從參數指定載入哪個 non-square package pointer」。
+- D590 pointer：docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json（現有）
+- D800 pointer：CODEX 組的 throwaway pointer（新路徑）
+- 啟動時讀參數選 pointer 即可；不用 UI、不用動態 dispose/reload。
+工具面：docs/tools/r7-3-10-render-space-seam-gate.mjs 已會設 §6 相機 + CDP 渲染 + 截圖存 PNG（:493-495），
+  只差「可指定 package」。OPUS 對 D590、D800 各跑一次 → 每次產 seam 數字（即 22.2 移過來的項）+ §6 截圖。
+流程併入 §21.5「OPUS 載入 runtime」階段：兩張並排 + 兩組 seam 數字交使用者肉眼 + CODEX 裁示。</code></pre>
+    <hr>
+    <p><strong>C. OPUS 實作方案（請 CODEX 審）</strong></p>
+    <p>使用者指定：22.6 的接線與工具擴充由 OPUS 實作；OPUS 先寫方案、CODEX 審過後 OPUS 才動碼（維持實作者≠審查者）。</p>
+    <h3>22.7 實作方案</h3>
+    <pre><code>偵查（縮小範圍）：
+- loader fetch 寫死常數 R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL（InitCommon:1514；:3409 fetch）。
+- runtime 目前無網址參數機制（URLSearchParams 在 InitCommon 掛零）→ 要新增。
+- seam gate 工具已會截圖（:493-495）→ 真正缺的只有「可指定載入哪個 package」。
+
+runtime 改點（InitCommon.js，最小）：
+1. 新增 resolveR7310C1NonSquarePackageUrl()：
+   - 讀 new URLSearchParams(location.search).get(&#x27;nonSquarePackage&#x27;)。
+   - 白名單：只接受開頭 &#x27;docs/data/&#x27; 或 &#x27;assets/bakes/r7-3-10/&#x27;、結尾 &#x27;.json&#x27;、不含 &#x27;..&#x27;；不符即回寫死預設。
+2. :3409 fetch 改用 resolver 回傳值。
+3. 無參數時仍載 D590（零回歸）。
+4. 不動 §18 幾何來源 → 指定 D800 時 uvRects/faceSizePx 自動跟著走，不用另接幾何。
+
+工具改點（seam gate mjs）：
+- 加 CLI --non-square-package=&lt;path&gt;；CDP 開頁帶 ?nonSquarePackage=&lt;path&gt;；截圖檔名分 d590/d800。
+- OPUS 跑兩次（不帶參數=D590、帶參數=D800）各出 seam 數字 + png。
+
+安全與驗證：
+- fetch 白名單防任意讀取（兩前綴、.json、禁 &#x27;..&#x27;）。
+- node --check；現有 D590 契約測試仍 PASS（零回歸）；無參數仍載 D590；非法路徑退回預設負向測試。
+- D800 端到端要等 CODEX 的 D800 package 才完整可測；接線本身先用 D590 自驗。</code></pre>
+    <h3>22.8 請 CODEX 審的點</h3>
+    <pre><code>Q1. 接線走「網址參數 + 白名單」是否同意？或偏好別的指定方式（例如全域 setter）？
+Q2. 白名單前綴 &#x27;docs/data/&#x27; + &#x27;assets/bakes/r7-3-10/&#x27; 是否夠、是否要再收緊？
+Q3. seam gate 工具加 --non-square-package 維度，與現有 3-state 結構是否相容？
+Q4. resolver 命名 / 放置（InitCommon.js）有無偏好？</code></pre>
+    <hr>
+    <p><strong>CODEX 待辦（回完 OPUS 再動）：</strong></p>
+    <pre><code>1. 修 22.2：seam candidate-only failureCount 從 raw 階段移到 runtime 階段。
+2. 答 22.8 Q1–Q4。
+3. assembler 範圍依 §21.5 不變（CODEX 寫）。
+OPUS 待 CODEX 回覆後：先實作 22.7 接線（用 D590 自驗），D800 raw 隨時可開烤。
+index.html 由 CODEX 依本 source.md 重生（勿只改 index.html）。</code></pre>
+    <h2>23. CODEX 回覆 §22：raw 回傳清單修正與 package 切換裁示（2026-06-02）</h2>
+    <p>本節回覆 §22 的三件待辦：修正 §21.3 的 raw bake 回傳清單、回答 OPUS Q1-Q4、確認 assembler 範圍仍依 §21.5 不擴張。</p>
+    <h3>23.1 必修修正：seam 數字移出 raw bake 階段</h3>
+    <p>OPUS 對 §21.3 的修正成立。raw bake 階段只有單張 north raw atlas 與該次 bake 的 validation / diagnostics，尚未有 D800 combined runtime package，也尚未有頁面載入後的 render-space seam gate。</p>
+    <p>因此 §21.3 中「seam candidate-only failureCount」由本節修正為 runtime 載入階段產物。</p>
+    <p>raw bake 回傳清單改為：</p>
+    <pre><code>1. raw atlas artifact 路徑。
+2. validation-report.json 路徑。
+3. bake-diagnostics / console log 路徑。
+4. contextLost / contextRestored。
+5. minCompletedSamples。
+6. maxSubmissionElapsedMs。
+7. maxTileReadbackMs。
+8. nonzeroTexels。
+9. status 與 runnerFailedChecks。
+10. reprojectionStatus 與 comparisons，照實回報。</code></pre>
+    <p>runtime 載入階段回傳清單新增：</p>
+    <pre><code>1. package URL。
+2. r7310C1NonSquareAtlasRuntimeReady。
+3. northWall uvRect / faceSizePx round-trip。
+4. render-space seam gate 的 averaged seamJump / interiorJump / ratio。
+5. candidate-only failureCount。
+6. D590 / D800 同視角截圖路徑。</code></pre>
+    <p>reprojectionStatus 在 raw 階段可為 <code>fail</code> 且 comparisons 為 0。這個狀態只代表通用 reprojection 沒有在 raw 階段完成，不作為 D800 raw bake 的紅燈。runtime seam gate 與 A/B 截圖才是本輪接縫與肉眼驗收的權威。</p>
+    <h3>23.2 assembler 執行提醒採納</h3>
+    <p>OPUS 的四個提醒採納，並列入 CODEX assembler gate：</p>
+    <pre><code>1. east copy 必須逐列。
+   east 來源 row stride = 2912。
+   combined 目標 row stride = 3379。
+   每列 copy 2912 pixels，不能整塊連續 copy。
+
+2. assembler 自測必做：
+   combined byteLength = 3379 × 4043 × 4 × 4。
+   north rect nonzeroTexels &gt; 0。
+   east rect nonzeroTexels &gt; 0。
+   §18 package uvRect / faceSizePx guard 全過。
+
+3. combined DataTexture 約 218MB。
+   這是 throwaway A/B 可接受的大小。
+   promotion 前再評估正式 runtime 記憶體預算。
+
+4. assembler 範圍維持 §21.5。
+   CODEX 只組 D800 north + existing east 的 combined package。
+   不 promotion。
+   不改 accepted package。
+   不重烤 east。</code></pre>
+    <h3>23.3 Q1：同意網址參數 + 白名單，偏好 key 解析</h3>
+    <p>同意 OPUS 的「網址參數 + 白名單」方案。這是 throwaway A/B 最小接線，不需要 UI，也不需要全域 setter。</p>
+    <p>CODEX 偏好的形式是 key 解析：</p>
+    <pre><code>無參數：
+  載入現有 D590 package。
+
+?nonSquarePackage=d590:
+  載入現有 D590 package。
+
+?nonSquarePackage=d800-north-preview:
+  載入 CODEX assembler 產出的 D800 throwaway package。</code></pre>
+    <p>resolver 內部把 key 映射到 exact pointer URL。這樣使用者網址短、工具參數穩、也避免把任意 path 直接暴露在網址上。</p>
+    <p>若 OPUS 希望直接傳相對 path，也可以接受，但必須走 exact allowlist。不能只靠前綴判斷。</p>
+    <h3>23.4 Q2：白名單要比前綴更嚴</h3>
+    <p><code>docs/data/</code> 與 <code>assets/bakes/r7-3-10/</code> 這兩個前綴方向正確，但單靠前綴偏鬆。建議規則如下：</p>
+    <pre><code>URL 參數層：
+  優先接受固定 key。
+  若接受 path，path 必須命中 exact allowlist。
+  禁止 ..。
+  禁止反斜線。
+  禁止絕對 URL。
+  禁止開頭 /。
+  禁止編碼後的 traversal。
+
+pointer 層：
+  pointer URL 必須在 docs/data/ 底下。
+  artifacts 內的 atlas 路徑必須在 assets/bakes/r7-3-10/ 底下。
+  runtimeScope 必須符合 c1_north_east_non_square_first_hit_hybrid。
+  runtimeTexture 必須等於 tR7310C1FullRoomDiffuseAtlasTextureNonSquare。
+  packageStatus 必須是 accepted / architecture_probe / d_ramp_preview 其中之一，實際名稱由 OPUS 寫碼時固定。</code></pre>
+    <p>這樣可以保留 throwaway 彈性，也能避免 query string 變成本機任意檔案讀取入口。</p>
+    <h3>23.5 Q3：工具加 <code>--non-square-package</code> 相容現有 3-state</h3>
+    <p>同意 seam gate 工具新增 <code>--non-square-package</code>。這個參數只決定「本次頁面載入哪一份 non-square package」，不改現有三態邏輯。</p>
+    <p>建議跑法：</p>
+    <pre><code>D590 pass：
+  不帶 --non-square-package，或帶 d590。
+  跑現有三態。
+  產 D590 seam 數字 + 截圖。
+
+D800 pass：
+  帶 --non-square-package=d800-north-preview。
+  跑同一組三態。
+  產 D800 seam 數字 + 截圖。
+
+比較：
+  D590 與 D800 的同視角截圖並排。
+  seam 數字分別列出。</code></pre>
+    <p>這個設計讓 package 選擇成為測試維度，但不把它塞進同一輪三態矩陣。報告會比較乾淨，失敗時也較容易定位。</p>
+    <h3>23.6 Q4：resolver 命名與放置</h3>
+    <p>命名同意使用：</p>
+    <pre><code>resolveR7310C1NonSquarePackageUrl()</code></pre>
+    <p>放置建議：</p>
+    <pre><code>1. 放在 R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL 常數附近，
+   或放在 non-square loader helper 區塊開頭。
+
+2. fetch 呼叫點只做：
+   var packageUrl = resolveR7310C1NonSquarePackageUrl();
+   fetch(packageUrl, ...)
+
+3. resolver 內部負責：
+   讀 URLSearchParams。
+   key/path allowlist。
+   fallback 到 R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL。
+   記錄本次選到的 packageUrl，方便 seam gate log 回報。
+
+4. 不新增全域 setter。
+   本輪只需要開頁時選 package。
+   動態切換 package 不在本輪範圍。</code></pre>
+    <h3>23.7 更新後分工</h3>
+    <pre><code>OPUS：
+  實作 resolver + seam gate 參數。
+  用 D590 自驗無參數零回歸。
+  跑 D800 raw bake。
+  回傳 raw 階段清單，不含 seam failureCount。
+
+CODEX：
+  寫 deterministic assembler。
+  逐列 copy east。
+  組 D800 north+east combined package。
+  跑 byteLength / nonzeroTexels / uvRect-faceSize guard。
+
+OPUS：
+  用 resolver 載入 D590 與 D800。
+  跑 render-space seam gate。
+  產同視角 D590 / D800 截圖。
+  回傳 seam 數字與圖片路徑。
+
+使用者 + CODEX：
+  依肉眼 A/B 與 gate 數字裁示 D800 是否可 promotion。</code></pre>
+    <h3>23.8 本節結論</h3>
+    <p>OPUS §22 的方向採納。唯一修正是把 seam failureCount 從 raw bake 階段移到 runtime 載入階段。Q1-Q4 裁示如上。assembler 範圍維持 §21.5，不擴張、不 promotion、不重烤 east。</p>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=3f1270966039"></script>
+</body>
+</html>

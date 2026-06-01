@@ -1512,6 +1512,66 @@ const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-no
 const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json?v=r7310-b-north-east-ab-v1';
+
+function resolveR7310C1NonSquarePackageUrl()
+{
+	var defaultUrl = R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL;
+
+	var param = null;
+	try
+	{
+		if (typeof location !== 'undefined')
+			param = new URLSearchParams(location.search).get('nonSquarePackage');
+	}
+	catch (e)
+	{
+		return defaultUrl;
+	}
+
+	// Safety: reject traversal, absolute URLs, absolute paths
+	if (param && (
+		param.indexOf('..') !== -1 ||
+		param.indexOf('\\') !== -1 ||
+		param.indexOf('http://') !== -1 ||
+		param.indexOf('https://') !== -1 ||
+		param.charAt(0) === '/'
+	))
+	{
+		return defaultUrl;
+	}
+
+	var url;
+	if (!param || param === '' || param === 'd590')
+	{
+		url = defaultUrl;
+	}
+	else if (param === 'd800-north-preview')
+	{
+		// CODEX §24 Q2 已確認此為 D800 combined package 正式 pointer 路徑
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-preview-runtime-package.json';
+	}
+	else if (param === 'd1000-north-preview')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d1000-preview-runtime-package.json';
+	}
+	else if (param === 'd1000bn-north-preview')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d1000bn-preview-runtime-package.json';
+	}
+	else if (param === 'd590bn-north-preview')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d590bn-preview-runtime-package.json';
+	}
+	else
+	{
+		url = defaultUrl;
+	}
+
+	if (typeof window !== 'undefined')
+		window.__r7310C1NonSquareSelectedPackageUrl = url;
+
+	return url;
+}
 const R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
 const R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
 const R7310_C1_SOUTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
@@ -1588,6 +1648,8 @@ const R7310_C1_NON_SQUARE_ATLAS_EDGE_POLICIES = Object.freeze([
 		surface: 'northWall',
 		invalidRegion: R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west,
 		fillDirection: 1,
+		referenceFaceWidthPx: 2492,
+		referenceFaceHeightPx: 1716,
 		maxFillPixels: 4,
 		maxSearchPixels: 10,
 		lumaThreshold: 0.00001
@@ -2012,6 +2074,21 @@ let r7310C1NonSquareAtlasRuntimeLoadPromise = null;
 let r7310C1NonSquareAtlasRuntimePackage = null;
 let r7310C1NonSquareAtlasRuntimeDataTexture = null;
 let r7310C1NonSquareAtlasRuntimeError = null;
+let r7310C1NonSquareAtlasSizePx = { width: R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.width, height: R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.height };
+let r7310C1NonSquareNorthWallUvRect = {
+	uMin: R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.uMin,
+	vMin: R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.vMin,
+	uMax: R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.uMax,
+	vMax: R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.vMax
+};
+let r7310C1NonSquareEastWallUvRect = {
+	uMin: R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.uMin,
+	vMin: R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.vMin,
+	uMax: R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.uMax,
+	vMax: R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.vMax
+};
+let r7310C1NonSquareNorthWallFaceSizePx = { width: R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.width, height: R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.height };
+let r7310C1NonSquareEastWallFaceSizePx = { width: R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.width, height: R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.height };
 let r7310C1FloorDiffuseRuntimeEnabled = true;
 let r7310C1NortheastFurnitureRuntimeMode = 'bed';
 let r7310C1NorthWallDiffuseRuntimeEnabled = true;
@@ -2606,30 +2683,30 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 	if (pathTracingUniforms.uR7310C1NonSquareAtlasReady)
 		pathTracingUniforms.uR7310C1NonSquareAtlasReady.value = r7310C1NonSquareAtlasRuntimeReady ? 1.0 : 0.0;
 	if (pathTracingUniforms.uR7310C1NonSquareAtlasSizePx)
-		pathTracingUniforms.uR7310C1NonSquareAtlasSizePx.value.set(R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.width, R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.height);
+		pathTracingUniforms.uR7310C1NonSquareAtlasSizePx.value.set(r7310C1NonSquareAtlasSizePx.width, r7310C1NonSquareAtlasSizePx.height);
 	if (pathTracingUniforms.uR7310C1NonSquareNorthWallUvRect)
 		pathTracingUniforms.uR7310C1NonSquareNorthWallUvRect.value.set(
-			R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.uMin,
-			R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.vMin,
-			R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.uMax,
-			R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT.vMax
+			r7310C1NonSquareNorthWallUvRect.uMin,
+			r7310C1NonSquareNorthWallUvRect.vMin,
+			r7310C1NonSquareNorthWallUvRect.uMax,
+			r7310C1NonSquareNorthWallUvRect.vMax
 		);
 	if (pathTracingUniforms.uR7310C1NonSquareEastWallUvRect)
 		pathTracingUniforms.uR7310C1NonSquareEastWallUvRect.value.set(
-			R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.uMin,
-			R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.vMin,
-			R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.uMax,
-			R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT.vMax
+			r7310C1NonSquareEastWallUvRect.uMin,
+			r7310C1NonSquareEastWallUvRect.vMin,
+			r7310C1NonSquareEastWallUvRect.uMax,
+			r7310C1NonSquareEastWallUvRect.vMax
 		);
 	if (pathTracingUniforms.uR7310C1NonSquareNorthWallFaceSizePx)
 		pathTracingUniforms.uR7310C1NonSquareNorthWallFaceSizePx.value.set(
-			R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.width,
-			R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.height
+			r7310C1NonSquareNorthWallFaceSizePx.width,
+			r7310C1NonSquareNorthWallFaceSizePx.height
 		);
 	if (pathTracingUniforms.uR7310C1NonSquareEastWallFaceSizePx)
 		pathTracingUniforms.uR7310C1NonSquareEastWallFaceSizePx.value.set(
-			R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.width,
-			R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.height
+			r7310C1NonSquareEastWallFaceSizePx.width,
+			r7310C1NonSquareEastWallFaceSizePx.height
 		);
 	if (pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution)
 		pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution.value = r7310C1RuntimeAtlasResolution();
@@ -2858,6 +2935,120 @@ function createR7310C1NonSquareRuntimeTexture(pixels, width, height)
 	return texture;
 }
 
+function resolveR7310C1NonSquareFaceGeometry(uvRect, atlasWidth, atlasHeight)
+{
+	var safeWidth = Math.max(1, Math.trunc(Number(atlasWidth) || 1));
+	var safeHeight = Math.max(1, Math.trunc(Number(atlasHeight) || 1));
+	var rawUMin = Number(uvRect && uvRect.uMin);
+	var rawVMin = Number(uvRect && uvRect.vMin);
+	var rawUMax = Number(uvRect && uvRect.uMax);
+	var rawVMax = Number(uvRect && uvRect.vMax);
+	var uMin = Number.isFinite(rawUMin) ? rawUMin : 0.0;
+	var vMin = Number.isFinite(rawVMin) ? rawVMin : 0.0;
+	var uMax = Number.isFinite(rawUMax) ? rawUMax : uMin;
+	var vMax = Number.isFinite(rawVMax) ? rawVMax : vMin;
+	uMin = Math.max(0.0, Math.min(1.0, uMin));
+	vMin = Math.max(0.0, Math.min(1.0, vMin));
+	uMax = Math.max(uMin, Math.min(1.0, uMax));
+	vMax = Math.max(vMin, Math.min(1.0, vMax));
+	var originX = Math.max(0, Math.min(safeWidth - 1, Math.round(uMin * safeWidth)));
+	var originY = Math.max(0, Math.min(safeHeight - 1, Math.round(vMin * safeHeight)));
+	var faceWidth = Math.max(1, Math.round((uMax - uMin) * safeWidth));
+	var faceHeight = Math.max(1, Math.round((vMax - vMin) * safeHeight));
+	faceWidth = Math.max(1, Math.min(faceWidth, safeWidth - originX));
+	faceHeight = Math.max(1, Math.min(faceHeight, safeHeight - originY));
+	return {
+		originX: originX,
+		originY: originY,
+		width: faceWidth,
+		height: faceHeight
+	};
+}
+
+function resolveR7310C1NonSquareEdgePolicyPixels(policy, faceWidth, faceHeight)
+{
+	var safeFaceWidth = Math.max(1, Math.trunc(Number(faceWidth) || 1));
+	var safeFaceHeight = Math.max(1, Math.trunc(Number(faceHeight) || 1));
+	var referenceFaceWidth = Math.max(1, Math.trunc(Number(policy && policy.referenceFaceWidthPx) || safeFaceWidth));
+	var referenceFaceHeight = Math.max(1, Math.trunc(Number(policy && policy.referenceFaceHeightPx) || safeFaceHeight));
+	var widthScale = safeFaceWidth / referenceFaceWidth;
+	var heightScale = safeFaceHeight / referenceFaceHeight;
+	var scale = Math.max(widthScale, heightScale);
+	var baseFillPixels = Math.max(1, Number(policy && policy.maxFillPixels) || 1);
+	var baseSearchPixels = Math.max(baseFillPixels + 1, Number(policy && policy.maxSearchPixels) || (baseFillPixels + 1));
+	var maxFillPixels = Math.max(1, Math.ceil(baseFillPixels * scale));
+	var maxSearchPixels = Math.max(maxFillPixels + 1, Math.ceil(baseSearchPixels * scale));
+	return {
+		maxFillPixels: maxFillPixels,
+		maxSearchPixels: maxSearchPixels
+	};
+}
+
+function normalizeR7310C1NonSquareUvRect(surfaceName, uvRect, fallback)
+{
+	var source = uvRect || {};
+	var fallbackRect = fallback || { uMin: 0.0, vMin: 0.0, uMax: 0.0, vMax: 0.0 };
+	var uMin = Number(source.uMin !== undefined ? source.uMin : (source.x !== undefined ? source.x : fallbackRect.uMin));
+	var vMin = Number(source.vMin !== undefined ? source.vMin : (source.y !== undefined ? source.y : fallbackRect.vMin));
+	var uMax = Number(source.uMax !== undefined ? source.uMax : (source.z !== undefined ? source.z : fallbackRect.uMax));
+	var vMax = Number(source.vMax !== undefined ? source.vMax : (source.w !== undefined ? source.w : fallbackRect.vMax));
+	if (!Number.isFinite(uMin) || !Number.isFinite(vMin) || !Number.isFinite(uMax) || !Number.isFinite(vMax))
+		throw new Error('R7-3.10 non-square ' + surfaceName + ' uvRect contract mismatch');
+	if (uMin < 0.0 || vMin < 0.0 || uMax > 1.0 || vMax > 1.0 || uMax <= uMin || vMax <= vMin)
+		throw new Error('R7-3.10 non-square ' + surfaceName + ' uvRect contract mismatch');
+	return {
+		uMin: uMin,
+		vMin: vMin,
+		uMax: uMax,
+		vMax: vMax
+	};
+}
+
+function normalizeR7310C1NonSquareFaceSizePx(surfaceName, faceSize, fallback)
+{
+	var source = faceSize || {};
+	var fallbackSize = fallback || { width: 0, height: 0 };
+	var width = Math.trunc(Number(source.width !== undefined ? source.width : fallbackSize.width) || 0);
+	var height = Math.trunc(Number(source.height !== undefined ? source.height : fallbackSize.height) || 0);
+	if (width <= 0 || height <= 0)
+		throw new Error('R7-3.10 non-square ' + surfaceName + ' faceSize contract mismatch');
+	return {
+		width: width,
+		height: height
+	};
+}
+
+function assertR7310C1NonSquareFaceGeometryConsistency(surfaceName, uvRect, faceSize, atlasWidth, atlasHeight)
+{
+	var measuredWidth = Math.round((uvRect.uMax - uvRect.uMin) * atlasWidth);
+	var measuredHeight = Math.round((uvRect.vMax - uvRect.vMin) * atlasHeight);
+	if (measuredWidth !== faceSize.width || measuredHeight !== faceSize.height)
+		throw new Error('R7-3.10 non-square ' + surfaceName + ' uvRect/faceSize mismatch');
+}
+
+function applyR7310C1NonSquareRuntimeGeometry(pointer, targetAtlasWidth, targetAtlasHeight)
+{
+	var safeWidth = Math.trunc(Number(targetAtlasWidth) || 0);
+	var safeHeight = Math.trunc(Number(targetAtlasHeight) || 0);
+	if (safeWidth <= 0 || safeHeight <= 0)
+		throw new Error('R7-3.10 non-square north/east atlas size mismatch');
+	var uvRects = pointer && pointer.uvRects ? pointer.uvRects : {};
+	var faceSizePx = pointer && pointer.faceSizePx ? pointer.faceSizePx : {};
+	if (!uvRects.northWall || !uvRects.eastWall || !faceSizePx.northWall || !faceSizePx.eastWall)
+		throw new Error('R7-3.10 non-square runtime geometry contract mismatch');
+	var northUvRect = normalizeR7310C1NonSquareUvRect('northWall', uvRects.northWall, R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT);
+	var eastUvRect = normalizeR7310C1NonSquareUvRect('eastWall', uvRects.eastWall, R7310_C1_NON_SQUARE_EAST_WALL_UV_RECT);
+	var northFaceSize = normalizeR7310C1NonSquareFaceSizePx('northWall', faceSizePx.northWall, R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX);
+	var eastFaceSize = normalizeR7310C1NonSquareFaceSizePx('eastWall', faceSizePx.eastWall, R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX);
+	assertR7310C1NonSquareFaceGeometryConsistency('northWall', northUvRect, northFaceSize, safeWidth, safeHeight);
+	assertR7310C1NonSquareFaceGeometryConsistency('eastWall', eastUvRect, eastFaceSize, safeWidth, safeHeight);
+	r7310C1NonSquareAtlasSizePx = { width: safeWidth, height: safeHeight };
+	r7310C1NonSquareNorthWallUvRect = northUvRect;
+	r7310C1NonSquareEastWallUvRect = eastUvRect;
+	r7310C1NonSquareNorthWallFaceSizePx = northFaceSize;
+	r7310C1NonSquareEastWallFaceSizePx = eastFaceSize;
+}
+
 function applyR7310C1NonSquareAtlasEdgePolicies(pixels, width, height)
 {
 	if (!(pixels instanceof Float32Array))
@@ -2871,13 +3062,13 @@ function applyR7310C1NonSquareAtlasEdgePolicies(pixels, width, height)
 		if (!policy || policy.surface !== 'northWall')
 			continue;
 		var region = policy.invalidRegion || R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west;
-		var faceSize = R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX;
-		var uvRect = R7310_C1_NON_SQUARE_NORTH_WALL_UV_RECT;
+		var uvRect = r7310C1NonSquareNorthWallUvRect;
 		var bounds = R7310_C1_NORTH_WALL_WORLD_BOUNDS;
-		var faceOriginX = Math.round(uvRect.uMin * safeWidth);
-		var faceOriginY = Math.round(uvRect.vMin * safeHeight);
-		var faceWidth = Math.max(1, Math.trunc(Number(faceSize.width) || 1));
-		var faceHeight = Math.max(1, Math.trunc(Number(faceSize.height) || 1));
+		var faceGeometry = resolveR7310C1NonSquareFaceGeometry(uvRect, safeWidth, safeHeight);
+		var faceOriginX = faceGeometry.originX;
+		var faceOriginY = faceGeometry.originY;
+		var faceWidth = faceGeometry.width;
+		var faceHeight = faceGeometry.height;
 		var xSpan = Math.max(0.000001, bounds.xMax - bounds.xMin);
 		var ySpan = Math.max(0.000001, bounds.yMax - bounds.yMin);
 		var startX = Math.floor(((region.xMax - bounds.xMin) / xSpan) * faceWidth);
@@ -2886,8 +3077,9 @@ function applyR7310C1NonSquareAtlasEdgePolicies(pixels, width, height)
 		startX = Math.max(0, Math.min(faceWidth - 1, startX));
 		startY = Math.max(0, Math.min(faceHeight - 1, startY));
 		endY = Math.max(startY, Math.min(faceHeight, endY));
-		var maxFillPixels = Math.max(1, Math.trunc(Number(policy.maxFillPixels) || 1));
-		var maxSearchPixels = Math.max(maxFillPixels + 1, Math.trunc(Number(policy.maxSearchPixels) || (maxFillPixels + 1)));
+		var policyPixels = resolveR7310C1NonSquareEdgePolicyPixels(policy, faceWidth, faceHeight);
+		var maxFillPixels = policyPixels.maxFillPixels;
+		var maxSearchPixels = policyPixels.maxSearchPixels;
 		var lumaThreshold = Math.max(0.0, Number(policy.lumaThreshold) || 0.0);
 		for (var y = startY; y < endY; y += 1)
 		{
@@ -3274,7 +3466,8 @@ async function loadR7310C1NonSquareAtlasRuntimePackage()
 		try
 		{
 			r7310C1NonSquareAtlasRuntimeError = null;
-			var pointerResponse = await fetch(R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			var nonSquarePackageUrl = resolveR7310C1NonSquarePackageUrl();
+			var pointerResponse = await fetch(nonSquarePackageUrl, { cache: 'no-store' });
 			if (!pointerResponse.ok)
 				throw new Error('R7-3.10 non-square north/east atlas pointer not found');
 			var pointer = await pointerResponse.json();
@@ -3284,10 +3477,11 @@ async function loadR7310C1NonSquareAtlasRuntimePackage()
 				throw new Error('R7-3.10 non-square north/east atlas pointer failed contract');
 			if (pointer.runtimeTexture !== 'tR7310C1FullRoomDiffuseAtlasTextureNonSquare')
 				throw new Error('R7-3.10 non-square north/east atlas texture contract mismatch');
-			if (targetAtlasWidth !== R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.width || targetAtlasHeight !== R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.height)
+			if (targetAtlasWidth <= 0 || targetAtlasHeight <= 0)
 				throw new Error('R7-3.10 non-square north/east atlas size mismatch');
 			if (Number(pointer.requestedSamples || 0) < 1000 || pointer.diffuseOnly !== true || pointer.upscaled !== false)
 				throw new Error('R7-3.10 non-square north/east atlas metadata mismatch');
+			applyR7310C1NonSquareRuntimeGeometry(pointer, targetAtlasWidth, targetAtlasHeight);
 			var atlasArtifact = pointer.artifacts && (pointer.artifacts.atlas || pointer.artifacts.atlasPatch0);
 			var atlasChunks = pointer.artifacts && pointer.artifacts.atlasChunks;
 			if (!atlasArtifact && (!Array.isArray(atlasChunks) || atlasChunks.length === 0))
@@ -9690,16 +9884,28 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		ironDoorRevealEnabled: r7310C1IronDoorRevealRuntimeEnabled,
 		nonSquareAtlasEnabled: r7310C1UseNonSquareAtlas,
 		nonSquareAtlasSizePx: {
-			width: R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.width,
-			height: R7310_C1_NON_SQUARE_ATLAS_SIZE_PX.height
+			width: r7310C1NonSquareAtlasSizePx.width,
+			height: r7310C1NonSquareAtlasSizePx.height
+		},
+		nonSquareNorthWallUvRect: {
+			uMin: r7310C1NonSquareNorthWallUvRect.uMin,
+			vMin: r7310C1NonSquareNorthWallUvRect.vMin,
+			uMax: r7310C1NonSquareNorthWallUvRect.uMax,
+			vMax: r7310C1NonSquareNorthWallUvRect.vMax
+		},
+		nonSquareEastWallUvRect: {
+			uMin: r7310C1NonSquareEastWallUvRect.uMin,
+			vMin: r7310C1NonSquareEastWallUvRect.vMin,
+			uMax: r7310C1NonSquareEastWallUvRect.uMax,
+			vMax: r7310C1NonSquareEastWallUvRect.vMax
 		},
 		nonSquareNorthWallFaceSizePx: {
-			width: R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.width,
-			height: R7310_C1_NON_SQUARE_NORTH_WALL_FACE_SIZE_PX.height
+			width: r7310C1NonSquareNorthWallFaceSizePx.width,
+			height: r7310C1NonSquareNorthWallFaceSizePx.height
 		},
 		nonSquareEastWallFaceSizePx: {
-			width: R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.width,
-			height: R7310_C1_NON_SQUARE_EAST_WALL_FACE_SIZE_PX.height
+			width: r7310C1NonSquareEastWallFaceSizePx.width,
+			height: r7310C1NonSquareEastWallFaceSizePx.height
 		},
 		enabled: r7310C1AnyFullRoomDiffuseSurfaceEnabled(),
 		northeastFurnitureRuntimeMode: r7310C1NortheastFurnitureRuntimeMode,

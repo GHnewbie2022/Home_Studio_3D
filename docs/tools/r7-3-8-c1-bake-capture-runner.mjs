@@ -24,6 +24,7 @@ function parseArgs(argv) {
     browserPath: null,
     bakeShader: 'auto',
     throwawayPackage: false,
+    r71BlueNoise: false,
     smokeTest: false,
     previewTest: false,
     hibernationTest: false,
@@ -96,6 +97,7 @@ function parseArgs(argv) {
     else if (arg.startsWith('--browser-path=')) out.browserPath = arg.slice('--browser-path='.length);
     else if (arg.startsWith('--r7310-bake-shader=')) out.bakeShader = arg.slice('--r7310-bake-shader='.length);
     else if (arg === '--throwaway-package') out.throwawayPackage = true;
+    else if (arg === '--r71-blue-noise') out.r71BlueNoise = true;
     else if (arg === '--smoke-test') out.smokeTest = true;
     else if (arg === '--preview-test') out.previewTest = true;
     else if (arg === '--hibernation-test') out.hibernationTest = true;
@@ -8233,7 +8235,9 @@ async function main() {
 	      }
       return (async () => {
 	        window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
-	        window.__r7310BakeDiagnosticsOptions = {
+	        window.__r71BlueNoiseRequested = ${args.r71BlueNoise ? 'true' : 'false'};
+        if (window.__r71BlueNoiseRequested && typeof window.setR71BlueNoiseSamplingEnabled === 'function') window.setR71BlueNoiseSamplingEnabled(true);
+        window.__r7310BakeDiagnosticsOptions = {
 	          enabled: ${args.r7310BakeDiagnostics ? 'true' : 'false'},
 	          submissionBoundaryMode: '${args.r7310BakeSubmissionBoundary}',
 	          submissionEverySamples: ${args.r7310BakeSubmissionEverySamples},
