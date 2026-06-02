@@ -84,7 +84,7 @@ function parseArgs(argv) {
     cameraState: null,
     westJoinD1OverrideZMax: 2.7179,
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
-    seed: '0xDEADBEEF',
+    seed: null,
     dumpAtSamples: [],
     outputMode: 'indirect_radiance'
   };
@@ -191,7 +191,7 @@ function parseArgs(argv) {
   }
   if (!Number.isFinite(out.westJoinD1OverrideZMax)) throw new Error('Invalid westJoinD1OverrideZMax');
   // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
-  if (!/^0x[0-9a-fA-F]{1,8}$/.test(out.seed)) throw new Error('Invalid seed (must be 0x-prefixed 1-8 hex digits, e.g. 0xDEADBEEF)');
+  if (out.seed !== null && !/^0x[0-9a-fA-F]{1,8}$/.test(out.seed)) throw new Error('Invalid seed (must be 0x-prefixed 1-8 hex digits, e.g. 0xDEADBEEF)');
   if (!Array.isArray(out.dumpAtSamples) || !out.dumpAtSamples.every((n) => Number.isFinite(n) && n > 0 && Number.isInteger(n))) throw new Error('Invalid dumpAtSamples (must be comma-separated positive integers)');
   if (!['indirect_radiance', 'normal'].includes(out.outputMode)) throw new Error('Invalid outputMode (must be indirect_radiance | normal)');
   if (out.cameraState !== null) {
@@ -1602,7 +1602,7 @@ async function main() {
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
     // URL query 傳 seed / outputMode / dumpAtSamples 給瀏覽器端（ADR-Normal-Aux-Shader / ADR-InitCommon-URL-Keys 接通）
     const adrExtensionsQuery = [
-      `seed=${encodeURIComponent(args.seed)}`,
+      args.seed !== null ? `seed=${encodeURIComponent(args.seed)}` : '',
       `outputMode=${encodeURIComponent(args.outputMode)}`,
       args.dumpAtSamples.length ? `dumpAtSamples=${encodeURIComponent(args.dumpAtSamples.join(','))}` : ''
     ].filter(Boolean).join('&');

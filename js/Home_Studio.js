@@ -5662,6 +5662,23 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 23.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
 	pathTracingUniforms.uR7310C1SeparatedBakeMode = { value: 0.0 };
+	// R7-3.10 Stage 0.5 RNG seed 接線：不帶 ?seed 時維持 (0,0)，對現有 runtime / bake 中性。
+	var r7310RngSeedHi16 = 0.0;
+	var r7310RngSeedLo16 = 0.0;
+	try {
+		if (typeof location !== 'undefined') {
+			var r7310SeedParam = new URLSearchParams(location.search).get('seed');
+			if (/^0x[0-9a-fA-F]{1,8}$/.test(r7310SeedParam || '')) {
+				var r7310Seed32 = Number.parseInt(r7310SeedParam.slice(2), 16) >>> 0;
+				r7310RngSeedHi16 = Math.floor(r7310Seed32 / 65536.0);
+				r7310RngSeedLo16 = r7310Seed32 & 0xFFFF;
+			}
+		}
+	} catch (e) {
+		r7310RngSeedHi16 = 0.0;
+		r7310RngSeedLo16 = 0.0;
+	}
+	pathTracingUniforms.uR7310C1RngSeed = { value: new THREE.Vector2(r7310RngSeedHi16, r7310RngSeedLo16) };
 	// ADR 2 v2 Normal-Aux Output：plan §13 ADR-Normal-Aux-Shader
 	// 0.0 = 預設輸出 indirect_diffuse_radiance；1.0 = primary hit early-out 直接輸出 raw firstVisibleNormal
 	// 值域：[-1, +1]^3、無 pack、無 clamp、單位向量直供 OIDN normal 輔助圖使用
