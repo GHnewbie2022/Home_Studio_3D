@@ -1,0 +1,100 @@
+{
+  "tool": "r7-3-10-north-ab-capture",
+  "httpBase": "127.0.0.1:9001",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1,
+    "mobile": false
+  },
+  "cameraState": {
+    "name": "north_wall_ab_validation_user",
+    "position": {
+      "x": 1.712181,
+      "y": 2.360559,
+      "z": -1.778225
+    },
+    "yaw": -0.4276,
+    "pitch": 0.461,
+    "fov": 55,
+    "forward": {
+      "x": 0.371398,
+      "y": 0.444844,
+      "z": -0.814971
+    }
+  },
+  "captures": [
+    {
+      "packageKey": "d800-north-preview",
+      "screenshot": "stage1-a-raw-north-wall-1000spp.png",
+      "cameraState": {
+        "name": "north_wall_ab_validation_user",
+        "position": {
+          "x": 1.712181,
+          "y": 2.360559,
+          "z": -1.778225
+        },
+        "yaw": -0.4276,
+        "pitch": 0.461,
+        "fov": 55,
+        "forward": {
+          "x": 0.371398,
+          "y": 0.444844,
+          "z": -0.814971
+        }
+      },
+      "forward": {
+        "x": 0.37139790980734366,
+        "y": 0.444844,
+        "z": -0.8149708020872504
+      },
+      "facing": "北(-Z)",
+      "samples": 1000,
+      "fov": 55,
+      "aspect": 1.7778,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "deviceScaleFactor": 1,
+        "mobile": false
+      },
+      "sawSouthWindow": false
+    },
+    {
+      "packageKey": "d800-north-denoise-c",
+      "screenshot": "stage1-b-oidn-rt-high-color-only-north-wall-1000spp.png",
+      "cameraState": {
+        "name": "north_wall_ab_validation_user",
+        "position": {
+          "x": 1.712181,
+          "y": 2.360559,
+          "z": -1.778225
+        },
+        "yaw": -0.4276,
+        "pitch": 0.461,
+        "fov": 55,
+        "forward": {
+          "x": 0.371398,
+          "y": 0.444844,
+          "z": -0.814971
+        }
+      },
+      "forward": {
+        "x": 0.37139790980734366,
+        "y": 0.444844,
+        "z": -0.8149708020872504
+      },
+      "facing": "北(-Z)",
+      "samples": 1000,
+      "fov": 55,
+      "aspect": 1.7778,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "deviceScaleFactor": 1,
+        "mobile": false
+      },
+      "sawSouthWindow": false
+    }
+  ]
+}
