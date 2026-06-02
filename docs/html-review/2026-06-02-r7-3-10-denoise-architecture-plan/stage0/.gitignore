@@ -1,0 +1,5 @@
+# Stage 0 throwaway bake 產物（烤圖鐵律：throwaway only、不入版控）
+# PFM / binary atlas 為大檔暫存、指標與判讀材料（.json / .md / .png）才入版控
+*.pfm
+*.bin
+*.bin.meta.json

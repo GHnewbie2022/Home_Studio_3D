@@ -1,0 +1,34 @@
+{
+  "tool": "r7-3-10-denoise-metrics",
+  "reference": ".omc/r7-3-10-full-room-diffuse-bake/20260602-015822/atlas-patch-000-rgba-f32.bin",
+  "denoised": "docs/html-review/2026-06-02-r7-3-10-denoise-architecture-plan/stage0/spike-b-constant-white.bin",
+  "range": {
+    "coreTexels": 5812635,
+    "totalTexels": 7862933,
+    "boundaryErode": 16,
+    "dynamicRangeLuma": 0.5652140269696713
+  },
+  "metricsVsA": {
+    "meanL1Rgb": 0.009055331017149653,
+    "meanL1Luma": 0.009390419384782614,
+    "p95L1Luma": 0.02614663273096085,
+    "p99L1Luma": 0.035318645548820526,
+    "maxL1Luma": 0.36844951862804587,
+    "ssimLuma11x11": 0.6701889774077998,
+    "fftHighFreqRetention": 0.407993841390858,
+    "aoRoiDeltaPct": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "seamJumpRatio": null
+  },
+  "notes": {
+    "colorSpace": "linear RGB（不 tonemap、plan §9.1）",
+    "aoRoiDeltaPct": "佔位 [0×5]、由 r7-3-10-denoise-ao-roi.mjs 算 render-space 截圖後覆寫",
+    "fftHighFreqRetention": "sanity 指標、不入 §10.1 主表、不入 §16.3 passDecision（plan §9.2）",
+    "seamJumpRatio": "null：未提供 --seam-pairs 接縫點對座標檔"
+  }
+}

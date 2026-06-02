@@ -1,0 +1,56 @@
+{
+  "variant": "spike_d",
+  "stage": "0",
+  "D": 800,
+  "SPP": 1000,
+  "auxStrategy": "color_only_beta",
+  "wallTimeMs": {
+    "bake": 0,
+    "auxBake": 0,
+    "oidn": 327.977125,
+    "preFill": 41.033292,
+    "postMask": 35.259792,
+    "metrics": 0,
+    "total": 667.229917
+  },
+  "gpu": {
+    "contextLost": 0,
+    "contextRestored": 0,
+    "maxSubmissionElapsedMs": 0,
+    "maxTileReadbackMs": 0
+  },
+  "atlasIntegrity": {
+    "nonzeroTexels": 1048576,
+    "nonzeroRatio": 1,
+    "nanCount": 0,
+    "infCount": 0
+  },
+  "oidnRuntime": {
+    "maxRssMb": 68.984375,
+    "deviceUsed": "metal",
+    "version": "2.4.1"
+  },
+  "metricsVsA": {
+    "meanL1Rgb": 0.011382880094461036,
+    "meanL1Luma": 0.011869536540121677,
+    "p95L1Luma": 0.02924018902182579,
+    "p99L1Luma": 0.0386550243735313,
+    "maxL1Luma": 0.3794049180995672,
+    "ssimLuma11x11": 0.5633146277616838,
+    "fftHighFreqRetention": 0.01334171599336023,
+    "aoRoiDeltaPct": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "seamJumpRatio": 0
+  },
+  "passDecision": "pass",
+  "oidn_resolved_path": "/opt/oidn-official/bin/oidnDenoise",
+  "oidn_device_list": "Device 0\n  Name: Apple M4 Pro\n  Type: Metal\n  LUID: 6205000001000000\n  Node: 1\n\nDevice 1\n  Name: Apple M4 Pro\n  Type: CPU",
+  "oidn_device_used": "metal",
+  "filter": "RTLightmap",
+  "referenceNote": "Stage 0 reference = raw 1000 SPP input（非 10000 SPP A）、metricsVsA = denoised vs raw、§S0.4.1"
+}

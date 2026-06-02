@@ -1,0 +1,34 @@
+{
+  "tool": "r7-3-10-denoise-metrics",
+  "reference": "docs/html-review/2026-06-02-r7-3-10-denoise-architecture-plan/stage0/raw-crop-1024.bin",
+  "denoised": "docs/html-review/2026-06-02-r7-3-10-denoise-architecture-plan/stage0/spike-d-rtlightmap-crop.bin",
+  "range": {
+    "coreTexels": 984064,
+    "totalTexels": 1048576,
+    "boundaryErode": 16,
+    "dynamicRangeLuma": 0.5592508592665195
+  },
+  "metricsVsA": {
+    "meanL1Rgb": 0.011382880094461036,
+    "meanL1Luma": 0.011869536540121677,
+    "p95L1Luma": 0.02924018902182579,
+    "p99L1Luma": 0.0386550243735313,
+    "maxL1Luma": 0.3794049180995672,
+    "ssimLuma11x11": 0.5633146277616838,
+    "fftHighFreqRetention": 0.01334171599336023,
+    "aoRoiDeltaPct": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "seamJumpRatio": null
+  },
+  "notes": {
+    "colorSpace": "linear RGB（不 tonemap、plan §9.1）",
+    "aoRoiDeltaPct": "佔位 [0×5]、由 r7-3-10-denoise-ao-roi.mjs 算 render-space 截圖後覆寫",
+    "fftHighFreqRetention": "sanity 指標、不入 §10.1 主表、不入 §16.3 passDecision（plan §9.2）",
+    "seamJumpRatio": "null：未提供 --seam-pairs 接縫點對座標檔"
+  }
+}

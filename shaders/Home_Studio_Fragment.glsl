@@ -112,6 +112,12 @@ uniform float uR7310C1RuntimeAtlasPatchResolution;
 uniform float uR7310C1RuntimeAtlasPatchCount;
 uniform float uR7310C1RuntimeAtlasGridColumns;
 uniform float uR7310C1SeparatedBakeMode;
+// ADR 2 v2 Normal-Aux Output：plan §13 ADR-Normal-Aux-Shader、為 OIDN albedo+normal 降噪模式提供 world-space normal G-buffer
+// 0.0 = 預設、輸出 indirect_diffuse_radiance；> 0.5 = primary hit early-out、直接輸出 raw firstVisibleNormal
+// 值域：[-1, +1]^3、無 pack、無 clamp、單位向量直供 OIDN normal 輔助圖使用
+// 對齊 OIDN RT filter normal aux 規格（world-space normal）來源：Open Image Denoise documentation
+// 與 r7-3-8-c1-bake-capture-runner.mjs --output-mode=normal 與 ?outputMode=normal URL query 對接
+uniform float uR7310C1NormalAuxOutputMode;
 uniform float uR7310C1NorthWallSeparatedDiffuseMode;
 uniform float uR7310C1UseNonSquareAtlas;
 uniform float uR7310C1NonSquareAtlasReady;
@@ -4529,6 +4535,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 		if (t == INFINITY)
 		{
+			// ADR 2 Normal-Aux primary miss：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
+			// primary ray 沒打到任何 geometry 時、normal aux 回 vec3(0.0) 表「無 first-visible surface」
+			// 與 OIDN normal-aux 的「無 geometry」慣例對齊；bounces > 0 不受此 branch 影響
+			if (bounces == 0 && uR7310C1NormalAuxOutputMode > 0.5)
+				return vec3(0.0);
+
 			if (uCloudVisibilityProbeMode > 0 && sampleLight == TRUE && cloudVisibilityProbeMatches(lastNeePickedIdx))
 			{
 				accumCol += (uCloudVisibilityProbeMode >= 4)
@@ -4576,6 +4588,15 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			// R7-3.10 Phase 2 H7' probe：把 BVH 命中的 isRayExiting 升級到 firstVisible* 體系。
 			// 此值僅作 probe 證據，不作 guard 條件。
 			firstVisibleIsRayExiting = hitIsRayExiting;
+			// ADR 2 Normal-Aux Early-Out：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
+			// primary hit 設好 firstVisibleNormal 後立即 return、bypass 整個 PT loop、
+			// 達到 1 SPP geometry-only 的時間與穩定性優勢
+			// 直接輸出 raw firstVisibleNormal ∈ [-1, +1]、無 pack、無 clamp
+			// PFM RGBA32F 支援負值浮點、由 oidn-bridge 直接寫入 normal.pfm、
+			// 對齊 OIDN RT filter normal aux 規格（world-space normal、[-1, +1] raw）
+			// 來源：Open Image Denoise documentation RT filter 參數表
+			if (uR7310C1NormalAuxOutputMode > 0.5)
+				return firstVisibleNormal;
 			if (
 				uR739C1ReflectionReferenceMode > 0.5 &&
 				uR739C1ReflectionReferenceMode < 1.5 &&

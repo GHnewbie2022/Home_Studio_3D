@@ -5662,6 +5662,40 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 23.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
 	pathTracingUniforms.uR7310C1SeparatedBakeMode = { value: 0.0 };
+	// R7-3.10 Stage 0.5 RNG seed 接線：不帶 ?seed 時維持 (0,0)，對現有 runtime / bake 中性。
+	var r7310RngSeedHi16 = 0.0;
+	var r7310RngSeedLo16 = 0.0;
+	try {
+		if (typeof location !== 'undefined') {
+			var r7310SeedParam = new URLSearchParams(location.search).get('seed');
+			if (/^0x[0-9a-fA-F]{1,8}$/.test(r7310SeedParam || '')) {
+				var r7310Seed32 = Number.parseInt(r7310SeedParam.slice(2), 16) >>> 0;
+				r7310RngSeedHi16 = Math.floor(r7310Seed32 / 65536.0);
+				r7310RngSeedLo16 = r7310Seed32 & 0xFFFF;
+			}
+		}
+	} catch (e) {
+		r7310RngSeedHi16 = 0.0;
+		r7310RngSeedLo16 = 0.0;
+	}
+	pathTracingUniforms.uR7310C1RngSeed = { value: new THREE.Vector2(r7310RngSeedHi16, r7310RngSeedLo16) };
+	// ADR 2 v2 Normal-Aux Output：plan §13 ADR-Normal-Aux-Shader
+	// 0.0 = 預設輸出 indirect_diffuse_radiance；1.0 = primary hit early-out 直接輸出 raw firstVisibleNormal
+	// 值域：[-1, +1]^3、無 pack、無 clamp、單位向量直供 OIDN normal 輔助圖使用
+	// 對齊 OIDN RT filter normal aux 規格（world-space normal）來源：Open Image Denoise documentation
+	//
+	// ADR 3 v2 URL→uniform 接線（CODEX 二審必修 1）：
+	//   runner（docs/tools/r7-3-8-c1-bake-capture-runner.mjs L1605-1606）送 ?outputMode=normal|indirect_radiance
+	//   頁面端在此讀 URL 設 uniform（與 nonSquarePackage 同模式、InitCommon.js:1524）。
+	//   缺此接線時、即使 runner 送 --output-mode=normal、shader 仍走 indirect、Stage 0 γ 組失真。
+	//   正常瀏覽無 outputMode query → 0.0；bake URL 帶 outputMode=normal → 1.0。
+	var r7310NormalAuxOutputMode = 0.0;
+	try {
+		if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('outputMode') === 'normal') {
+			r7310NormalAuxOutputMode = 1.0;
+		}
+	} catch (e) { r7310NormalAuxOutputMode = 0.0; }
+	pathTracingUniforms.uR7310C1NormalAuxOutputMode = { value: r7310NormalAuxOutputMode };
 	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
 	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };

@@ -1,0 +1,60 @@
+{
+  "stage": "0",
+  "reference": "raw 1000 SPP input（§S0.4.1、非 10000 SPP A）",
+  "abc_full_atlas_metrics": [
+    {
+      "variant": "spike_a",
+      "auxStrategy": "color_only_beta",
+      "filter": "RT",
+      "meanL1Luma": 0.00928358326448491,
+      "ssimLuma11x11": 0.6771628097447538,
+      "p99L1Luma": 0.03514357847869398,
+      "passDecision": "pass",
+      "deviceUsed": "metal"
+    },
+    {
+      "variant": "spike_b",
+      "auxStrategy": "constant_white_albedo_alpha",
+      "filter": "RT",
+      "meanL1Luma": 0.009390419384782614,
+      "ssimLuma11x11": 0.6701889774077998,
+      "p99L1Luma": 0.035318645548820526,
+      "passDecision": "pass",
+      "deviceUsed": "metal"
+    },
+    {
+      "variant": "spike_c",
+      "auxStrategy": "prefiltered_normal_gamma",
+      "filter": "RT",
+      "meanL1Luma": 0.009405456754286832,
+      "ssimLuma11x11": 0.6686700769313053,
+      "p99L1Luma": 0.0354214224278927,
+      "passDecision": "pass",
+      "deviceUsed": "metal"
+    }
+  ],
+  "d_rtlightmap_crop_metrics": {
+    "rtlightmap": {
+      "variant": "spike_d",
+      "auxStrategy": "color_only_beta",
+      "filter": "RTLightmap",
+      "meanL1Luma": 0.011869536540121677,
+      "ssimLuma11x11": 0.5633146277616838,
+      "p99L1Luma": 0.0386550243735313,
+      "passDecision": "pass",
+      "deviceUsed": "metal"
+    },
+    "rt_baseline": {
+      "variant": "spike_a_crop_rt",
+      "filter": "RT",
+      "meanL1Luma": 0.011607527875966023,
+      "ssimLuma11x11": 0.5816781851648277
+    }
+  },
+  "decision": {
+    "auxStrategy": "color_only_beta",
+    "filter": "RT",
+    "scenario": "S0.4 場景2(aux無增益)+場景7(RTLightmap淘汰)",
+    "northWallNormalConstant": "(0,0,1) 平面、normal aux 無 spatial 增益"
+  }
+}

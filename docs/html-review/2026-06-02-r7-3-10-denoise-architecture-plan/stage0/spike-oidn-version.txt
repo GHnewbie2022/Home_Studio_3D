@@ -1,0 +1,5 @@
+oidn_version=2.4.1
+oidn_device_used=metal
+oidn_resolved_path=/opt/oidn-official/bin/oidnDenoise
+oidn_resolution_source=default
+oidn_device_list="Device 0\n  Name: Apple M4 Pro\n  Type: Metal\n  LUID: 6205000001000000\n  Node: 1\n\nDevice 1\n  Name: Apple M4 Pro\n  Type: CPU"

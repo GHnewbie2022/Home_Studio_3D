@@ -1,0 +1,27 @@
+{
+  "tool": "r7-3-10-oidn-bridge",
+  "auxStrategy": "color_only_beta",
+  "wallTimeMs": {
+    "preFill": 44.163042,
+    "oidn": 231.3255,
+    "postMask": 36.625,
+    "total": 588.248
+  },
+  "atlasIntegrity": {
+    "nonzeroTexels": 1048576,
+    "nonzeroRatio": 1,
+    "nanCount": 0,
+    "infCount": 0
+  },
+  "oidnRuntime": {
+    "maxRssMb": 69.546875,
+    "deviceUsed": "metal",
+    "version": "2.4.1"
+  },
+  "oidn_resolved_path": "/opt/oidn-official/bin/oidnDenoise",
+  "oidn_resolution_source": "default",
+  "oidn_device_list": "Device 0\n  Name: Apple M4 Pro\n  Type: Metal\n  LUID: 6205000001000000\n  Node: 1\n\nDevice 1\n  Name: Apple M4 Pro\n  Type: CPU",
+  "oidn_device_used": "metal",
+  "rowOrderFlipped": false,
+  "passDecision": "pass"
+}

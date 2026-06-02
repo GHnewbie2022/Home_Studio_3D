@@ -1562,6 +1562,59 @@ function resolveR7310C1NonSquarePackageUrl()
 	{
 		url = 'docs/data/r7-3-10-c1-north-east-non-square-d590bn-preview-runtime-package.json';
 	}
+	// ADR 3 InitCommon-URL-Keys：plan §13 + §22.5 落版（v4 CODEX 四審後動工）
+	// 擴 12 個 else-if 分支、對應 §22.5 sweep-spot 對照截圖 URL key 白名單
+	// 不改 query 參數名（仍是 nonSquarePackage）、不改 resolver function signature、不改成 lookup table
+	// resolver 從 5 個 key（舊）變 17 個 key（5 舊 + 12 新）
+	// 每個 key 對應一個 runtime package pointer、由 §22.5 stage 1 sweep-spot 截圖工具呼叫
+	else if (param === 'd800-north-raw-10000spp')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-raw-10000spp-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-denoise-b')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-denoise-b-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-denoise-c')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-denoise-c-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-spike-color-only')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-spike-color-only-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-spike-constant-white-albedo')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-spike-constant-white-albedo-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-spike-prefiltered-normal')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-spike-prefiltered-normal-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-raw-1000spp')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-raw-1000spp-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-noise-seed-0')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-noise-seed-0-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-noise-seed-1')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-noise-seed-1-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-noise-seed-2')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-noise-seed-2-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-noise-seed-3')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-noise-seed-3-preview-runtime-package.json';
+	}
+	else if (param === 'd800-north-noise-seed-4')
+	{
+		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-noise-seed-4-preview-runtime-package.json';
+	}
 	else
 	{
 		url = defaultUrl;
