@@ -82,7 +82,11 @@ function parseArgs(argv) {
     neFurnitureRuntimeTest: false,
     targetSamples: null,
     cameraState: null,
-    westJoinD1OverrideZMax: 2.7179
+    westJoinD1OverrideZMax: 2.7179,
+    // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
+    seed: '0xDEADBEEF',
+    dumpAtSamples: [],
+    outputMode: 'indirect_radiance'
   };
   for (const arg of argv) {
     if (arg.startsWith('--samples=')) out.samples = Number(arg.slice('--samples='.length));
@@ -156,6 +160,10 @@ function parseArgs(argv) {
     else if (arg.startsWith('--target-samples=')) out.targetSamples = Number(arg.slice('--target-samples='.length));
     else if (arg.startsWith('--camera-state-json=')) out.cameraState = JSON.parse(arg.slice('--camera-state-json='.length));
     else if (arg.startsWith('--r7310-west-join-d1-override-zmax=')) out.westJoinD1OverrideZMax = Number(arg.slice('--r7310-west-join-d1-override-zmax='.length));
+    // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
+    else if (arg.startsWith('--seed=')) out.seed = arg.slice('--seed='.length);
+    else if (arg.startsWith('--dump-at-samples=')) out.dumpAtSamples = arg.slice('--dump-at-samples='.length).split(',').filter(Boolean).map(Number);
+    else if (arg.startsWith('--output-mode=')) out.outputMode = arg.slice('--output-mode='.length);
   }
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
@@ -182,6 +190,10 @@ function parseArgs(argv) {
     }
   }
   if (!Number.isFinite(out.westJoinD1OverrideZMax)) throw new Error('Invalid westJoinD1OverrideZMax');
+  // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
+  if (!/^0x[0-9a-fA-F]{1,8}$/.test(out.seed)) throw new Error('Invalid seed (must be 0x-prefixed 1-8 hex digits, e.g. 0xDEADBEEF)');
+  if (!Array.isArray(out.dumpAtSamples) || !out.dumpAtSamples.every((n) => Number.isFinite(n) && n > 0 && Number.isInteger(n))) throw new Error('Invalid dumpAtSamples (must be comma-separated positive integers)');
+  if (!['indirect_radiance', 'normal'].includes(out.outputMode)) throw new Error('Invalid outputMode (must be indirect_radiance | normal)');
   if (out.cameraState !== null) {
     const position = out.cameraState.position || {};
     const forward = out.cameraState.forward || null;
@@ -1587,7 +1599,14 @@ async function main() {
   try {
     console.error('[r738-runner] waiting for CDP');
     await waitForCdp(args.cdpPort, 20000);
-    const url = `http://127.0.0.1:${args.httpPort}/Home_Studio.html?verify=r7-3-8-c1-1000spp-bake-capture&runner=${Date.now()}`;
+    // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
+    // URL query 傳 seed / outputMode / dumpAtSamples 給瀏覽器端（ADR-Normal-Aux-Shader / ADR-InitCommon-URL-Keys 接通）
+    const adrExtensionsQuery = [
+      `seed=${encodeURIComponent(args.seed)}`,
+      `outputMode=${encodeURIComponent(args.outputMode)}`,
+      args.dumpAtSamples.length ? `dumpAtSamples=${encodeURIComponent(args.dumpAtSamples.join(','))}` : ''
+    ].filter(Boolean).join('&');
+    const url = `http://127.0.0.1:${args.httpPort}/Home_Studio.html?verify=r7-3-8-c1-1000spp-bake-capture&runner=${Date.now()}&${adrExtensionsQuery}`;
     console.error('[r738-runner] opening target');
     const target = await openCdpTarget(args.cdpPort, 'about:blank');
     cdp = new CdpWebSocket(target.webSocketDebuggerUrl);
