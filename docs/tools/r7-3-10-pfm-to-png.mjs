@@ -69,32 +69,78 @@ function writePNG(path, rgb8, width, height) {
   writeFileSync(path, Buffer.concat([sig, pngChunk('IHDR', ihdr), pngChunk('IDAT', idat), pngChunk('IEND', Buffer.alloc(0))]));
 }
 
+// 讀 RGBA32F atlas binary → rgb-float32（取 RGB、忽略 alpha；valid mask 另回供 auto-exposure）
+function readRGBA32F(path, width, height) {
+  const buf = readFileSync(path);
+  if (!width || !height) throw new Error('--rgba32f 需 --width 與 --height');
+  if (buf.length !== width * height * 4 * 4) {
+    throw new Error(`RGBA32F 大小不符：${buf.length} vs ${width * height * 16}`);
+  }
+  const data = new Float32Array(width * height * 3);
+  const mask = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    data[i * 3] = buf.readFloatLE((i * 4) * 4);
+    data[i * 3 + 1] = buf.readFloatLE((i * 4 + 1) * 4);
+    data[i * 3 + 2] = buf.readFloatLE((i * 4 + 2) * 4);
+    mask[i] = buf.readFloatLE((i * 4 + 3) * 4) > 0.5 ? 1 : 0;
+  }
+  return { data, width, height, mask };
+}
+
+// auto-exposure：valid 區 luma p99 當白點正規化（indirect radiance 偏暗、固定 exposure 看不清）
+function computeAutoExposure(data, mask, width, height) {
+  const LUMA = [0.2126, 0.7152, 0.0722];
+  const lumas = [];
+  for (let i = 0; i < width * height; i++) {
+    if (mask && !mask[i]) continue;
+    lumas.push(data[i * 3] * LUMA[0] + data[i * 3 + 1] * LUMA[1] + data[i * 3 + 2] * LUMA[2]);
+  }
+  if (lumas.length === 0) return 1.0;
+  lumas.sort((a, b) => a - b);
+  const p99 = lumas[Math.min(lumas.length - 1, Math.floor(lumas.length * 0.99))];
+  return p99 > 1e-6 ? 1.0 / p99 : 1.0;
+}
+
 function parseArgs(argv) {
-  const out = { in: null, out: null, exposure: 1.0, gamma: 2.2 };
+  const out = { in: null, out: null, exposure: 1.0, gamma: 2.2, rgba32f: false, width: null, height: null, autoExposure: false, normalPack: false };
   for (const arg of argv) {
     if (arg.startsWith('--in=')) out.in = arg.slice('--in='.length);
     else if (arg.startsWith('--out=')) out.out = arg.slice('--out='.length);
     else if (arg.startsWith('--exposure=')) out.exposure = Number(arg.slice('--exposure='.length));
     else if (arg.startsWith('--gamma=')) out.gamma = Number(arg.slice('--gamma='.length));
+    else if (arg === '--rgba32f') out.rgba32f = true;
+    else if (arg.startsWith('--width=')) out.width = Number(arg.slice('--width='.length));
+    else if (arg.startsWith('--height=')) out.height = Number(arg.slice('--height='.length));
+    else if (arg === '--auto-exposure') out.autoExposure = true;
+    else if (arg === '--normal-pack') out.normalPack = true;
   }
+  if (out.rgba32f && out.exposure === 1.0 && !out.normalPack) out.autoExposure = true; // RGBA32F atlas 預設 auto-exposure（normal-pack 除外）
   return out;
 }
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.in || !args.out) { console.error('[pfm-to-png] 缺 --in=x.pfm 與 --out=x.png'); process.exitCode = 1; return; }
+  if (!args.in || !args.out) { console.error('[pfm-to-png] 缺 --in 與 --out（PFM 或 --rgba32f + --width + --height）'); process.exitCode = 1; return; }
 
-  const pfm = readPFM(args.in);
-  const rgb8 = new Uint8Array(pfm.width * pfm.height * 3);
+  const src = args.rgba32f ? readRGBA32F(args.in, args.width, args.height) : readPFM(args.in);
+  let exposure = args.exposure;
+  if (args.autoExposure) exposure = computeAutoExposure(src.data, src.mask || null, src.width, src.height);
+
+  const rgb8 = new Uint8Array(src.width * src.height * 3);
   const invGamma = 1 / args.gamma;
-  for (let i = 0; i < pfm.width * pfm.height * 3; i++) {
-    let v = pfm.data[i] * args.exposure;
-    v = Math.max(0, v);                       // 負值（如 raw normal）clamp 到 0、僅供視覺
-    v = Math.pow(Math.min(1, v), invGamma);   // tonemap：clamp [0,1] + gamma OETF
+  for (let i = 0; i < src.width * src.height * 3; i++) {
+    let v;
+    if (args.normalPack) {
+      // raw normal [-1,+1] → [0,1] pack（標準 normal map 視覺、no gamma、僅供 sanity 判讀）
+      v = Math.max(0, Math.min(1, src.data[i] * 0.5 + 0.5));
+    } else {
+      v = Math.max(0, src.data[i] * exposure);  // 負值 clamp 到 0、僅供視覺
+      v = Math.pow(Math.min(1, v), invGamma);   // tonemap：clamp [0,1] + gamma OETF
+    }
     rgb8[i] = Math.round(v * 255);
   }
-  writePNG(args.out, rgb8, pfm.width, pfm.height);
-  console.log(`[pfm-to-png] OK：${args.out}（${pfm.width}×${pfm.height}、exposure=${args.exposure}、gamma=${args.gamma}）`);
+  writePNG(args.out, rgb8, src.width, src.height);
+  console.log(`[pfm-to-png] OK：${args.out}（${src.width}×${src.height}、${args.rgba32f ? 'RGBA32F' : 'PFM'}、exposure=${exposure.toExponential(3)}、gamma=${args.gamma}${args.autoExposure ? '、auto' : ''}）`);
 }
 
 main();
