@@ -122,3 +122,12 @@
 - [ ] **Q-T（v5 新增，GATE 比帶容差，★R3）**：GATE-PIXEL 的 ±2% 區塊均值比帶是否足夠？— 2000 SPP 收斂雜訊 floor 須實測：Phase 0 先用「現行混烤版同版本、兩個不同 seed」量同面區塊均值雜訊分佈，據此定容差（雜訊 >2% 則放寬比帶或提高 SPP）— Phase 0 規格 + Phase 1 套用。
 - [ ] **Q-S（v5 新增，★F2 改正 + F4 回填）**：GIK 取樣分支（glsl:5181-5207）的可分離性 — ★F2 已親證 GIK「無 stochastic 反射分支但有 NEE 耦合（5196 dispatch + 5200 mask*=weight）」，spike 驗證對象＝「第三條路徑的漫反射項能否從 NEE 耦合分離」（非「GIK 是否無 NEE 耦合」）。★F4 回填：實作層該面是否乘 albedo 由 diffuse mode uniform 統一真相源閘控（與 JS 旗標同源、不在 GLSL 硬寫面清單）— 下輪交 Architect 確認 GIK 第三條路徑分離的 GLSL 改法 — Phase 3 spike 前置。
 - [ ] **Q-U（v5 新增，★F5）**：北牆 boxColor 實值待 CODEX 確認 — 決定「雙層 albedo 缺口（boxColor + uWallAlbedo）」在 Phase 1（北牆 boxColor 非純白即暴露）還是 Phase 2 暴露；★F1 forcing 令 hitColor=vec3(1.0) 對「boxColor 純白 / 非純白」兩種情況皆安全（一次中和全層），故此 OQ 不阻擋 Phase 1，僅供驗收歸因 — Phase 1。
+
+## R7-3.10 北牆 xatlas albedo 架構對齊 D800 — 2026-06-07（Planner RALPLAN-DR deliberate）
+
+來源：`.omc/plans/r7-3-10-xatlas-albedo-architecture-align.md`
+
+- [ ] **Q1**：pre-mortem P1 的紅旗門檻數值 — 含-albedo 重烤後 `visibleExactBlackTexels` 相較 albedo-free 版的容許上升量（建議 ≤ +5 texel 或 ≤ +0.1%） — 影響 C2C luma 閾值是否需動；交 Architect 定數值、Critic 複核。
+- [ ] **Q2**：runner 端讓 `report.multiplyAlbedoAfterBakeLookup = false` 的 single source of truth 接線點 — 是 report builder 寫死、還是由 xatlas bake mode 旗標衍生？— 影響 §6[B] 是否需動 runner 程式或僅改 report；交 CODEX 讀 runner 上下文確認。
+- [ ] **Q3**：是否採選項乙作為「零成本反證實驗」先跑一輪（暫關 runtime SeparatedAlbedo 看色階變化方向）再正式走選項甲 — 影響迭代順序與一次驗收 vs 兩次；交 Architect/Critic 裁決是否值得這道旁證。
+- [ ] **Q4**：新增配對契約測試 N3（shader 移除 xatlas albedo-free ⇔ pointer multiplyAlbedoAfterBakeLookup:false）的落地時機 — 與重烤同批 commit vs 獨立 commit — 影響 cache-buster 數量與驗收粒度；交 CODEX/使用者。

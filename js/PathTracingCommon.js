@@ -3301,20 +3301,45 @@ void main( void )
 
 	if (uR738C1BakeCaptureMode == 2)
 	{
-		vec2 r738BakeFullResolution = max(uR738C1BakeFullAtlasResolution, vec2(1.0));
-		vec2 r738BakeUv = (gl_FragCoord.xy + uR738C1BakeTileOriginPx) / r738BakeFullResolution;
-		vec3 r738BakePoint = vec3(0.0);
-		vec3 r738BakeNormal = vec3(0.0, 1.0, 0.0);
-		int r738BakeHitType = 0;
-		float r738BakeObjectID = 0.0;
-		bool r7310C1BakePointActive = uR738C1BakePatchId >= 1000;
-		bool r738C1BakePointFound = r7310C1BakePointActive
-			? r7310C1BakeSurfacePoint(uR738C1BakePatchId, r738BakeUv, r738BakePoint, r738BakeNormal, r738BakeHitType, r738BakeObjectID)
-			: r738C1BakeSurfacePoint(uR738C1BakePatchId, r738BakeUv, r738BakePoint, r738BakeNormal, r738BakeHitType, r738BakeObjectID);
-		if (r738C1BakePointFound)
+		if (uR7310C1XatlasBakeMode > 0.5)
 		{
-			rayOrigin = r738BakePoint + r738BakeNormal * (uEPS_intersect * 8.0);
-			rayDirection = -r738BakeNormal;
+			r7310C1XatlasBakeTexelValid = false;
+			r7310C1XatlasBakeSurfaceNormal = vec3(0.0, 1.0, 0.0);
+			ivec2 r7310XatlasAtlasSize = ivec2(max(uR7310C1XatlasBakeAtlasSize, vec2(1.0)));
+			ivec2 r7310XatlasTexel = ivec2(floor(gl_FragCoord.xy + uR738C1BakeTileOriginPx));
+			if (r7310XatlasTexel.x >= 0 && r7310XatlasTexel.y >= 0 &&
+				r7310XatlasTexel.x < r7310XatlasAtlasSize.x && r7310XatlasTexel.y < r7310XatlasAtlasSize.y)
+			{
+				vec4 r7310XatlasWorldPos = texelFetch(tR738C1BakeAtlasTexture, r7310XatlasTexel, 0);
+				vec4 r7310XatlasNormalPacked = texelFetch(tR7310C1FullRoomDiffuseAtlasTexture, r7310XatlasTexel, 0);
+				float r7310XatlasNormalLen = length(r7310XatlasNormalPacked.xyz);
+				if (r7310XatlasWorldPos.w > 0.5 && r7310XatlasNormalPacked.w > 0.5 && r7310XatlasNormalLen > 0.000001)
+				{
+					vec3 r7310XatlasNormal = r7310XatlasNormalPacked.xyz / r7310XatlasNormalLen;
+					rayOrigin = r7310XatlasWorldPos.xyz + r7310XatlasNormal * (uEPS_intersect * 8.0);
+					rayDirection = -r7310XatlasNormal;
+					r7310C1XatlasBakeSurfaceNormal = r7310XatlasNormal;
+					r7310C1XatlasBakeTexelValid = true;
+				}
+			}
+		}
+		else
+		{
+			vec2 r738BakeFullResolution = max(uR738C1BakeFullAtlasResolution, vec2(1.0));
+			vec2 r738BakeUv = (gl_FragCoord.xy + uR738C1BakeTileOriginPx) / r738BakeFullResolution;
+			vec3 r738BakePoint = vec3(0.0);
+			vec3 r738BakeNormal = vec3(0.0, 1.0, 0.0);
+			int r738BakeHitType = 0;
+			float r738BakeObjectID = 0.0;
+			bool r7310C1BakePointActive = uR738C1BakePatchId >= 1000;
+			bool r738C1BakePointFound = r7310C1BakePointActive
+				? r7310C1BakeSurfacePoint(uR738C1BakePatchId, r738BakeUv, r738BakePoint, r738BakeNormal, r738BakeHitType, r738BakeObjectID)
+				: r738C1BakeSurfacePoint(uR738C1BakePatchId, r738BakeUv, r738BakePoint, r738BakeNormal, r738BakeHitType, r738BakeObjectID);
+			if (r738C1BakePointFound)
+			{
+				rayOrigin = r738BakePoint + r738BakeNormal * (uEPS_intersect * 8.0);
+				rayDirection = -r738BakeNormal;
+			}
 		}
 	}
 

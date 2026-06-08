@@ -49,6 +49,9 @@ uniform vec2 uR738C1BakeFullAtlasResolution;
 uniform sampler2D tR738C1BakeAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTextureNonSquare;
+// R7-3.10 C2C: xatlas runtime atlas REUSES the tR738C1BakeAtlasTexture slot to stay within
+// the Metal MAX_TEXTURE_IMAGE_UNITS(16) budget (xatlas-bake-c2-redfirst.md §37). No dedicated runtime sampler.
+// Safe because runtime-xatlas, bake (captureMode==2) and floor paste-preview are mutually exclusive.
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -118,6 +121,12 @@ uniform float uR7310C1SeparatedBakeMode;
 // 對齊 OIDN RT filter normal aux 規格（world-space normal）來源：Open Image Denoise documentation
 // 與 r7-3-8-c1-bake-capture-runner.mjs --output-mode=normal 與 ?outputMode=normal URL query 對接
 uniform float uR7310C1NormalAuxOutputMode;
+uniform float uR7310C1XatlasBakeMode;
+uniform vec2 uR7310C1XatlasBakeAtlasSize;
+uniform float uR7310C1XatlasRuntimeMode;
+uniform float uR7310C1XatlasRuntimeReady;
+uniform vec2 uR7310C1XatlasRuntimeAtlasSize;
+uniform float uR7310C1XatlasRuntimeSeparatedAlbedo;
 uniform float uR7310C1NorthWallSeparatedDiffuseMode;
 uniform float uR7310C1UseNonSquareAtlas;
 uniform float uR7310C1NonSquareAtlasReady;
@@ -138,6 +147,9 @@ uniform float uR739C1ReflectionReferenceMode;
 uniform float uR739C1ReflectionSurfaceMaskMode;
 uniform float uR739C1ReflectionReady;
 uniform float uR739C1ReflectionFloorRoughness;
+
+bool r7310C1XatlasBakeTexelValid = true;
+vec3 r7310C1XatlasBakeSurfaceNormal = vec3(0.0, 1.0, 0.0);
 uniform float uR739C1CurrentViewReflectionMode;
 uniform float uR739C1CurrentViewReflectionReady;
 uniform float uR739C1CurrentViewReflectionRoughness;
@@ -630,6 +642,22 @@ bool r7310C1NorthWallHiddenBySideWall(float x)
 {
 	return x <= -1.91 || x >= 1.91;
 }
+bool r7310C1NorthWallHiddenByBeamGap(float x, float y)
+{
+	// R7-3.10 global seam hardening (OPUS 2026-06-03): mirror JS
+	// R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS (InitCommon.js). The west/east beam
+	// north caps are coplanar with the north-wall plane (z=-1.874, normal +Z, objectID<1.5)
+	// so they pass RuntimeSurfaceIsNorthWall and the north-wall hybrid CLAIMS them. JS
+	// metadata already marks those texels invalid (alpha=0); the valid-linear sampler then
+	// returns vec3(0.0) -> the thin west-beam-north-end black line (visible with the
+	// non-square d800 atlas, hidden on the dilation-filled square atlas). Runtime ownership
+	// MUST exclude the same region so the cap LIVE-TRACES instead. The two sides are locked
+	// by docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js -- changing one constant
+	// without the other reopens the seam.
+	bool westBeamGap = x >= -1.908 && x <= -1.752 && y >= 2.525 && y <= 2.905;
+	bool eastBeamGap = x >= 1.850 && x <= 1.908 && y >= 2.516 && y <= 2.905;
+	return westBeamGap || eastBeamGap;
+}
 bool r7310C1SouthWallHiddenBySideColumn(float x, float y)
 {
 	bool swColumnBack = x >= -1.91 && x <= -1.75 && y >= 0.0 && y <= 2.905;
@@ -655,6 +683,15 @@ bool r7310C1SouthWallAcShadowHiddenBySeColumn(float x, float y)
 		y >= 0.0 &&
 		y <= 2.905;
 }
+bool r7310C1SouthWallAcShadowHiddenBySideColumn(float x, float y)
+{
+	// R7-3.10 global seam hardening: mirror JS R7310_C1_SOUTH_WALL_AC_SHADOW_SW/SE_COLUMN_BACK.
+	// The AC-shadow face shares the south-wall side-column backs; bake-point 1010 + metadata already
+	// exclude them, so the runtime gate must too. Locked by the south-wall side-column contract test.
+	bool acSwColumnBack = x >= -1.91 && x <= -1.75 && y >= 0.0 && y <= 2.905;
+	bool acSeColumnBack = x >= 1.78 && x <= 1.91 && y >= 0.0 && y <= 2.905;
+	return acSwColumnBack || acSeColumnBack;
+}
 // R7-3.10 iron-door reveal guard-band contract constants (single source of truth; Phase 3 metadata builder MUST reuse).
 const float IRON_DOOR_REVEAL_BAND_H = 0.25;                                                   // 4 faces -> 4 v-bands
 const float IRON_DOOR_REVEAL_GUARD_V = 0.04;                                                  // guard each side of every band (atlas-v)
@@ -679,6 +716,8 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 		if (x >= -1.52 && x <= -0.73 && y >= 0.0 && y <= 2.03)
 			return false;
 		if (r7310C1NorthWallHiddenBySideWall(x))
+			return false;
+		if (r7310C1NorthWallHiddenByBeamGap(x, y))
 			return false;
 		position = vec3(x, y, -1.874);
 		normal = vec3(0.0, 0.0, 1.0);
@@ -1127,6 +1166,90 @@ vec3 r7310C1FullRoomDiffuseSamplePatchValidLinear(vec2 atlasUv, float patchSlot)
 		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
 	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexel(floor(pixel + vec2(0.5)), patchSlot);
 	return nearest.a > 0.5 ? max(nearest.rgb, vec3(0.0)) : vec3(0.0);
+}
+vec4 r7310C1XatlasRuntimeSampleTexel(vec2 pixelCoord)
+{
+	ivec2 atlasSize = ivec2(max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0)));
+	ivec2 pixel = ivec2(clamp(floor(pixelCoord + vec2(0.5)), vec2(0.0), vec2(atlasSize) - vec2(1.0)));
+	return texelFetch(tR738C1BakeAtlasTexture, pixel, 0); // R7-3.10 C2C: reuse bake-atlas slot (runtime-xatlas / bake / paste-preview are mutually exclusive)
+}
+bool r7310C1XatlasRuntimeSampleValidLinear(vec2 atlasUv, out vec3 radiance)
+{
+	vec2 atlasSize = max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	vec2 pixel = clamp(atlasUv * atlasSize - vec2(0.5), vec2(0.0), atlasSize - vec2(1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), atlasSize - vec2(1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1XatlasRuntimeSampleTexel(p0);
+	vec4 c10 = r7310C1XatlasRuntimeSampleTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1XatlasRuntimeSampleTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1XatlasRuntimeSampleTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+	{
+		radiance = max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+		return true;
+	}
+	vec4 nearest = r7310C1XatlasRuntimeSampleTexel(floor(pixel + vec2(0.5)));
+	if (nearest.a > 0.5)
+	{
+		radiance = max(nearest.rgb, vec3(0.0));
+		return true;
+	}
+	radiance = vec3(0.0);
+	return false;
+}
+bool r7310C1RuntimeSurfaceIsNorthWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
+bool r7310C1XatlasA1NorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (uR7310C1NorthWallDiffuseMode < 0.5 ||
+		uR7310C1XatlasRuntimeMode < 0.5 ||
+		uR7310C1XatlasRuntimeReady < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (!r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (visiblePosition.x < -1.912 || visiblePosition.x > -1.518 ||
+		visiblePosition.y < -0.002 || visiblePosition.y > 2.907 ||
+		abs(visiblePosition.z + 1.874) > 0.006)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
+	float x01 = clamp((visiblePosition.x + 1.91) / 0.39, 0.0, 1.0);
+		atlasUv = vec2(
+			mix(0.6146934628, 0.0005285412, y01),
+			mix(0.3594961166, 0.5106589198, x01)
+		);
+	return true;
+}
+float r7310C1XatlasA1NorthWallTriangleId(vec3 visiblePosition)
+{
+	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
+	float x01 = clamp((visiblePosition.x + 1.91) / 0.39, 0.0, 1.0);
+	return y01 <= x01 ? 10.0 : 11.0;
+}
+vec3 r7310C1XatlasA1TriangleProbeColor(float triangleId)
+{
+	if (triangleId < 10.5)
+		return vec3(1.0, 0.12, 0.02); // tri10
+	if (triangleId < 11.5)
+		return vec3(0.05, 0.95, 0.25); // tri11
+	if (triangleId < 20.5)
+		return vec3(0.15, 0.35, 1.0); // tri20
+	if (triangleId < 21.5)
+		return vec3(1.0, 0.85, 0.05); // tri21
+	return vec3(0.35);
 }
 vec3 r7310C1FullRoomDiffuseSamplePatchPixel(vec2 pixelCoord, float patchSlot)
 {
@@ -1646,6 +1769,12 @@ bool r7310C1NorthWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 	}
 	if (visiblePosition.x >= -1.52 && visiblePosition.x <= -0.73 && visiblePosition.y >= 0.0 && visiblePosition.y <= 2.03)
 	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y))
+	{
+		// West/east beam north cap -> not owned by the north wall; let it live-trace.
 		atlasUv = vec2(0.0);
 		return false;
 	}
@@ -2630,6 +2759,17 @@ bool r7310C1SouthWallDiffuseUv(vec3 visiblePosition, vec3 visibleNormal, out vec
 		atlasUv = vec2(0.0);
 		return false;
 	}
+	if (r7310C1SouthWallHiddenBySideColumn(visiblePosition.x, visiblePosition.y))
+	{
+		// R7-3.10 global seam hardening (OPUS 2026-06-03): SW/SE column backs are baked-invalid
+		// (JS metadata alpha=0; bake-point 1005 skips them, added in db6895d). The runtime ownership
+		// gate was the missing third side -> south wall hybrid claimed those bands and the combined
+		// atlas read produced a dark fringe at the x=-1.75 / x=1.78 column edges (bilinear bleed).
+		// Release them to live trace, matching metadata. Locked by
+		// docs/tests/r7-3-10-south-wall-side-column-contract.test.js.
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	atlasUv = vec2(
 		(visiblePosition.x + 2.11) / 4.22,
 		visiblePosition.y / 2.905
@@ -2958,6 +3098,12 @@ bool r7310C1SouthWallAcShadowDiffuseUv(int visibleHitType, float visibleObjectID
 		atlasUv = vec2(0.0);
 		return false;
 	}
+	if (r7310C1SouthWallAcShadowHiddenBySideColumn(visiblePosition.x, visiblePosition.y))
+	{
+		// R7-3.10 global seam hardening: same SW/SE column-back release as the main south wall.
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	atlasUv = vec2(
 		(visiblePosition.x + 2.11) / 4.22,
 		visiblePosition.y / 2.905
@@ -3029,6 +3175,17 @@ bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectI
 	{
 		bakedRadiance = r7310C1FullRoomDiffuseSample(r7310C1CombinedAtlasUv(atlasUv, 0.0));
 		return true;
+	}
+	if (r7310C1XatlasA1NorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+	{
+		vec3 r7310XatlasRadiance = vec3(0.0);
+		if (r7310C1XatlasRuntimeSampleValidLinear(atlasUv, r7310XatlasRadiance))
+		{
+			bakedRadiance = uR7310C1XatlasRuntimeSeparatedAlbedo > 0.5
+				? r7310XatlasRadiance * visibleAlbedo
+				: r7310XatlasRadiance;
+			return true;
+		}
 	}
 	if (uR7310C1NorthWallDiffuseMode > 0.5 &&
 		r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) &&
@@ -4476,6 +4633,14 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		return cloudMisWeightProbeContributionUniformSentinel();
 	if (uMovementPreviewMode > 0.5 && uCloudVisibilityProbeMode == 0 && uCloudMisWeightProbeMode == 0 && uCloudContributionProbeMode == 0)
 		return CalculateMovementPreview(objectNormal, objectColor, objectID, pixelSharpness);
+	if (uR7310C1XatlasBakeMode > 0.5 && !r7310C1XatlasBakeTexelValid)
+	{
+		objectNormal = vec3(0.0);
+		objectColor = vec3(0.0);
+		objectID = -INFINITY;
+		pixelSharpness = 1.0;
+		return vec3(0.0);
+	}
     vec3 n, nl, x;
 	vec3 diffuseBounceMask = vec3(1);
 	vec3 diffuseBounceRayOrigin = vec3(0);
@@ -4524,11 +4689,10 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	vec3 misBsdfBounceOrigin = vec3(0.0);
 	float misPBsdfStashed = 0.0;
 
-
 	for (int bounces = 0; bounces < 14; bounces++)
 	{
 		if (bounces >= int(uMaxBounces)) { reachedMaxBounces = true; break; } // R2-UI：runtime 動態上限；R6 LGG-r15：標記為 max-bounce 強制中斷供 terminal ambient 用
-		primaryRay = (bounces == 0) ? 1 : 0; // R2-13 僅首次 primary ray 套用 X-ray 剔除
+		primaryRay = bounces == 0 ? 1 : 0; // R2-13 僅首次 primary ray 套用 X-ray 剔除
 		previousIntersecType = hitType;
 
 		t = SceneIntersect();
@@ -5723,7 +5887,18 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310SouthWindowBottomRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowBottomRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SouthWindowTopRevealShadowIndirectBakeFirstHit = r7310C1SouthWindowTopRevealShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310IronDoorRevealIndirectBakeFirstHit = r7310C1IronDoorRevealIndirectBakeFirstHit(bounces, diffuseCount);
-			float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
+				bool r7310XatlasIndirectBakeFirstHit =
+					uR7310C1XatlasBakeMode > 0.5 &&
+					r7310C1XatlasBakeTexelValid &&
+					bounces == 0 &&
+					diffuseCount == 0;
+				vec2 r7310XatlasRuntimeAtlasUv = vec2(0.0);
+				vec3 r7310XatlasRuntimeRadiance = vec3(0.0);
+				bool r7310XatlasRuntimeFirstHit = bounces == 0 &&
+					hitIsRayExiting != TRUE &&
+					r7310C1XatlasA1NorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeAtlasUv) &&
+					r7310C1XatlasRuntimeSampleValidLinear(r7310XatlasRuntimeAtlasUv, r7310XatlasRuntimeRadiance);
+				float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
 			float r7310HybridOwnerCount = 0.0;
 			float r7310HybridOwnerMaskLow = 0.0;
 			float r7310HybridOwnerMaskHigh = 0.0;
@@ -6353,11 +6528,86 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				accumCol = r7310CeilingHybridFirstHit ? vec3(1.0, 1.0, 1.0) : vec3(0.0, 1.0, 0.0);
 				break;
 			}
-			if (r7310FloorHybridFirstHit)
-				accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
+			if (bounces == 0 &&
+				r7310C1RuntimeProbeMode > 53.5 &&
+				r7310C1RuntimeProbeMode < 54.5)
+				{
+					float r7310FinalRuntimeSourceId = 4.0;
+					if (r7310XatlasRuntimeFirstHit)
+						r7310FinalRuntimeSourceId = 1.0;
+					else if (r7310NorthWallHybridFirstHit)
+						r7310FinalRuntimeSourceId = 2.0;
+				else if (r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit)
+					r7310FinalRuntimeSourceId = 3.0;
+				else if (r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit)
+					r7310FinalRuntimeSourceId = 5.0;
+					else
+					{
+						vec2 r7310FinalRuntimeAtlasUv = vec2(0.0);
+						if (uR7310C1NorthWallDiffuseMode > 0.5 &&
+							r7310C1RuntimeSurfaceIsNorthWall(hitType, hitObjectID, nl, x) &&
+							r7310C1NorthWallDiffuseUv(x, r7310FinalRuntimeAtlasUv))
+							r7310FinalRuntimeSourceId = 2.0;
+					}
+
+				vec3 r7310FinalRuntimeSourceColor = vec3(0.45);
+				if (r7310FinalRuntimeSourceId < 1.5)
+					r7310FinalRuntimeSourceColor = vec3(1.0, 0.0, 0.0);
+				else if (r7310FinalRuntimeSourceId < 2.5)
+					r7310FinalRuntimeSourceColor = vec3(0.0, 1.0, 1.0);
+				else if (r7310FinalRuntimeSourceId < 3.5)
+					r7310FinalRuntimeSourceColor = vec3(1.0, 0.5, 0.0);
+				else if (r7310FinalRuntimeSourceId < 4.5)
+					r7310FinalRuntimeSourceColor = vec3(0.45);
+				else
+					r7310FinalRuntimeSourceColor = vec3(0.7, 0.0, 1.0);
+					accumCol = r7310FinalRuntimeSourceColor;
+					break;
+				}
+				if (bounces == 0 &&
+					r7310C1RuntimeProbeMode > 54.5 &&
+					r7310C1RuntimeProbeMode < 56.5)
+				{
+					vec2 r7310XatlasProbeUv = vec2(0.0);
+					bool r7310XatlasProbeMapped = r7310C1XatlasA1NorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasProbeUv);
+					if (!r7310XatlasProbeMapped)
+					{
+						accumCol = vec3(0.08);
+					}
+					else if (r7310C1RuntimeProbeMode < 55.5)
+					{
+						accumCol = r7310C1XatlasA1TriangleProbeColor(r7310C1XatlasA1NorthWallTriangleId(x));
+					}
+					else
+					{
+						vec2 r7310XatlasProbeAtlasSize = max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+						vec2 r7310XatlasProbePixel = clamp(r7310XatlasProbeUv * r7310XatlasProbeAtlasSize - vec2(0.5), vec2(0.0), r7310XatlasProbeAtlasSize - vec2(1.0));
+						vec4 r7310XatlasProbeTexel = r7310C1XatlasRuntimeSampleTexel(floor(r7310XatlasProbePixel + vec2(0.5)));
+						float r7310XatlasProbeLuma = dot(max(r7310XatlasProbeTexel.rgb, vec3(0.0)), vec3(0.2126, 0.7152, 0.0722));
+						if (r7310XatlasProbeTexel.a <= 0.5)
+							accumCol = vec3(0.0, 0.2, 1.0); // alpha=0：xatlas 不應取這格
+						else if (r7310XatlasProbeLuma < 0.00001)
+							accumCol = vec3(1.0, 0.0, 0.0); // alpha=1 且黑：問題候選
+						else
+							accumCol = vec3(0.0, clamp(0.25 + r7310XatlasProbeLuma * 8.0, 0.0, 1.0), 0.0);
+					}
+					break;
+				}
+				if (r7310XatlasRuntimeFirstHit)
+				{
+					accumCol += mask * (uR7310C1XatlasRuntimeSeparatedAlbedo > 0.5
+						? r7310XatlasRuntimeRadiance * hitColor
+						: r7310XatlasRuntimeRadiance);
+					// R7-3.10 A1 修正：xatlas first-hit 只加「間接光」，此處不可 break。
+					// 早期 break 會跳過下方 7070 NEE 直接光，導致 A1（木門西側）比周圍北牆 hybrid 暗。
+					// A1 的 r7310NorthWallHybridFirstHit 同時為真，會把 A1 擋在 shortCircuit(6694)
+					// 與 diffuse-bounce(6798) 之外 → 移除 break 後必走到 7070 NEE 採直接光。
+				}
+				if (r7310FloorHybridFirstHit)
+					accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310CeilingHybridFirstHit)
 				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
-			if (r7310NorthWallHybridFirstHit)
+			if (r7310NorthWallHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x, hitColor);
 			if (r7310EastWallHybridFirstHit)
 				accumCol += mask * r7310C1EastWallHybridRadiance(hitType, hitObjectID, nl, x);
@@ -6537,8 +6787,10 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			}
 			diffuseCount++;
 
-			bool r7310SeparatedNorthWallBakeFirstHit = uR7310C1SeparatedBakeMode > 0.5 && r7310NorthWallIndirectBakeFirstHit;
-			if (!r7310SeparatedNorthWallBakeFirstHit)
+			bool r7310AlbedoFreeBakeFirstHit =
+				(uR7310C1SeparatedBakeMode > 0.5 && r7310NorthWallIndirectBakeFirstHit) ||
+				r7310XatlasIndirectBakeFirstHit;
+			if (!r7310AlbedoFreeBakeFirstHit)
 				mask *= hitColor;
 			
 			bounceIsSpecular = FALSE;
@@ -6546,7 +6798,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 			rayOrigin = x + nl * uEPS_intersect;
 
-        if (float(diffuseCount) < uMaxBounces &&
+			if (float(diffuseCount) < uMaxBounces &&
 				!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
 				r7310FloorHybridGuard &&
 				r7310CeilingHybridGuard &&
@@ -6790,6 +7042,19 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				r7310SouthWindowTopRevealShadowIndirectBakeFirstHit ||
 				r7310IronDoorRevealIndirectBakeFirstHit) &&
 				willNeedDiffuseBounceRay == TRUE)
+			{
+				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
+				indirectMultApplied = true;
+				rayOrigin = diffuseBounceRayOrigin;
+				rayDirection = diffuseBounceRayDirection;
+				willNeedDiffuseBounceRay = FALSE;
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+				sampleLight = FALSE;
+				diffuseCount++;
+				continue;
+			}
+			if (r7310XatlasIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
 			{
 				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
 				indirectMultApplied = true;

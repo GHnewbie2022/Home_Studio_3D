@@ -10,6 +10,90 @@
 
 > 2026-05-21 補充：北牆與東牆已從原本 full-room diffuse short-circuit 升級為 first-hit HYBRID。runtime scope 改成 `c1_north_wall_first_hit_hybrid` / `c1_east_wall_first_hit_hybrid`，slot 仍是 1 / 2；兩面正式 package 已重烘 1024px / 1000spp，pointer 宣告 `bakedRadianceKind: indirect_diffuse_radiance`、`directLightAlreadyIncluded: false`、`addDirectLightAfterBakeLookup: true`。東牆東樑陰影 1011 維持 seam guard `z < 2.475`，東南接觸區交給一般東牆 HYBRID。快取版本號：`r7310-north-east-hybrid-v1`。驗證網址：`http://localhost:9002/Home_Studio.html?v=r7310-north-east-hybrid-v1`。
 
+> 2026-06-03 補充（OPUS）：全域 seam hardening。修正北牆西樑/東樑 beam gap 與南牆/AC 側柱背面的「runtime ownership gate 漏排除」同型 desync（JS metadata 已標 invalid，shader gate 還在 claim → valid-linear sampler 回 `vec3(0.0)` 黑）。新增 3 個 contract test 鎖 shader↔JS 常數與 gate wiring。詳見下方 `### R7-3.10-global-seam-hardening` 與 `.omc/plans/R7-3.10-global-seam-hardening.md`。
+
+---
+
+### R7-3.10-xatlas-a1-uploadRowFlip（北牆兩條垂直長條破圖）
+
+```yaml
+date: 2026-06-07
+author: Claude Code（接手 CODEX 062247 重烤後破圖）
+branch: codex/r7-3-10-global-seam-hardening
+status: flip 根因已修(中間整片綠)；北牆上下端 bake exact-zero 為第二層問題、待解
+rootcause_doc: docs/SOP/CC-rootcause-2026-06-07-r7-3-10-xatlas-a1-uploadrowflip.md
+probe_tool: docs/tools/r7-3-10-xatlas-a1-uv-alignment-probe.py
+```
+
+症狀
+- xatlas A1 C2C 北牆木門西側破圖。CODEX 062247 重烤 + exact-zero 修法已消黑洞（probe56 無紅），但 A1 區變「兩條垂直長條有光(綠)、其餘大片退 D800(藍)」。
+
+根因（runtime row flip 誤用，非 alpha/RGB policy）
+- atlas-patch(runner readback) row order 已與硬寫 runtime UV 對齊：bake prepare(InitCommon 5595-5597)對 worldpos/normal flip 一次烤進 atlas、metadata 同源；uv-alignment-probe H1 殘差 0.707px 實證。
+- pointer.uploadRowFlip:true 原意是「prepare 做過 flip」的記錄；runtime load(InitCommon 3846)誤當「atlas-patch 上傳要再 flip」→ 翻兩次 → shader texelFetch(glsl 1174 無補償)row 錯位 → world-x 西側落到 atlas alpha=0 區退 D800。
+- CPU 重現(docs/tools/r7-3-10-xatlas-a1-uv-alignment-probe.py)：flip→18.27% 命中、剛好兩條 band [[13,17],[67,79]]；no-flip→78.95% 整面。歷史一致：023242 黑洞經 flip 顯示紅、062247 改 alpha=0 後同區顯示藍+殘兩條綠。
+- 為何 contract 通過畫面壞：contract 只驗 bin 內容(alpha/luma/UV 數值)，驗不到 runtime upload flip 次數；runtime-uv-contract.test 作者漏算 prepare 的 flip。
+
+修法（零重烤，乙+丙）
+- 乙：loadR7310C1XatlasRuntimePackage(InitCommon 3846) runtime atlas-patch 不再 flip(uploadPixels = atlasPixels)；prepare 的 uploadRowFlip:true 保留(bake 用)。
+- 丙：docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json uploadRowFlip:false(語意一致)。
+- cache-buster：Home_Studio.html InitCommon ?v=r7310-xatlas-a1-uploadrowflip-fix-v1。
+- contract 補強：runtime-uv-contract.test 加斷言鎖「runtime load 不再 flip」+ 修正誤導註解。
+
+驗證
+- contract 全綠：runtime-uv / bake-mode / c2c / final-source-probe / seam-contracts-all(4/4)。
+- 實機 probe56(北牆 cameraState pos(-1.199,1.725,1.168) forward -Z fov55)：中段 y[0.58,2.32] flip 修復後整片綠、無兩條 band、無紅。
+- 實機 CPU 採樣：木門西側 76.8%、東側 82.8%、整體 79.8%(修法前 flip 西側~0%、整體18%)，對齊 no-flip 預測 78.95%。
+
+第二層問題（flip 修復後浮現，使用者驗收未過）
+- 使用者裁定：北牆 A1 整片必須同色(全綠)，上下端退藍即錯。flip 只修好中段，故未達標。
+- 現象：probe56 中段全綠、上下各約 0.4m 帶退藍(底 y<0.5、頂 y>2.3)，頂部西角另有斜接藍。
+- 成因(實證)：bake exact-zero。tri10/11 alpha=0 共 9776，a0v0(bake gate 失敗)=0；
+  底 y<0.5 n=5524 之 5523 為 exact-zero(88-box 判正面但烤出 luma=0)；
+  頂 y>2.3 n=4252 之 3001 exact-zero + 1251 mask 背面(西梁遮)。alpha=1 區 mask 100% 正面(對照正常)。
+- 即 OPUS H-a：bake gate 通過、88-box 判朝開放空間，但 path tracer 在牆角上下帶烤出 exact 0；
+  C2C policy 把 exact-zero 標 alpha=0 退 D800。與 flip、與 alpha policy 顯示無關，屬 bake 牆角採樣層。
+- 待決方向(未動工)：甲 修 bake 牆角(查 ray 自遮/worldPos 偏移)後重烤；乙 大範圍 dilation 填上下
+  (後處理 atlas-patch、零重烤、借鄰居光近似)；丙 runtime hole-fill(shader 對 alpha=0 取最近 alpha=1)。
+
+### R7-3.10-global-seam-hardening
+
+```yaml
+date: 2026-06-03
+author: OPUS
+branch: codex/r7-3-10-global-seam-hardening
+status: 北牆 beam gap + 南牆/AC 側柱 已修並驗證；3 contract test 綠；其餘 24 面靜態稽核一致
+```
+
+症狀
+- 西樑最北端與北牆交界，在 `nonSquarePackage=d800-north-denoise-c` + 北牆烘焙 on + 北東非方格 on 時，出現一條極細黑邊；關北牆烘焙或關非方格即消失。
+
+根因（架構級，非單點）
+- 「排除集合」散落在三個獨立函式且無單一真相：shader ownership gate（`*DiffuseUv`）／ shader bake-surface-point（`r7310C1BakeSurfacePoint`）／ JS metadata builder（`buildR7310C1*TexelMetadata*`）。新增遮蔽排除時只改 bake 兩邊、漏 runtime gate，desync 反覆。
+- 北牆：JS `r7310C1NorthWallHiddenByBeamGap` 標 beam gap texel invalid（alpha=0），但 shader `r7310C1NorthWallDiffuseUv` 未排除 → 北牆 hybrid claim → valid-linear sampler 全無效 tap 回 `vec3(0.0)` → 黑線。square 路徑被 edge-fill dilation 補過故看不到；non-square valid-linear 路徑現形（印證「dilation 當主防呆」會翻臉）。
+- 同型（稽核發現）：南牆（1005）與南牆 AC shadow（1010）的 `*DiffuseUv` 同樣漏排除側柱背面 `x[-1.91,-1.75]∪x[1.78,1.91] y[0,2.905]`；bake-point + metadata 已排除（commit `db6895d` 只改那兩邊）。此 band 多被 SW/SE 柱本體遮住，屬潛在；修法為一致化預防。
+
+修法（runtime gate 補上第三邊 → 回退 live trace；不需重烤）
+- shader 新增 `r7310C1NorthWallHiddenByBeamGap(x,y)`（鏡像 JS west/east），接到 `r7310C1NorthWallDiffuseUv` 與 bake-surface-point(1002)。
+- shader `r7310C1SouthWallDiffuseUv` 呼叫既有 `r7310C1SouthWallHiddenBySideColumn`。
+- shader 新增 `r7310C1SouthWallAcShadowHiddenBySideColumn`（鏡像 JS AC SW/SE），接到 `r7310C1SouthWallAcShadowDiffuseUv`。
+- cache-buster 三檔同步 bump（`js/Home_Studio.js` 的 `demoFragmentShaderFileName` + `Home_Studio.html` 兩 script tag）。
+
+驗證
+- seam-gate（`docs/tools/r7-3-10-render-space-seam-gate.mjs`，d800-north-denoise-c）：north-on-nonsquare-on 由黑線 → pass，seamJump=0.00978（黑線會接近滿幅落差）。
+- ROI luma 掃描：西樑北端交界近黑像素（luma<0.08）= 0。
+- 南牆 overview / SW 邊 / SE 邊（`docs/tools/r7-3-10-seam-view-capture.mjs`）渲染乾淨、shader 編譯正常。
+- contract test 三皆 PASS：`docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js`、`r7-3-10-south-wall-side-column-contract.test.js`、`r7-3-10-seam-shared-constant-contract.test.js`。
+
+制度化（避免復發）
+- 三 contract test 鎖 shader↔JS 重複常數與 gate wiring，desync 立即測試失敗（解決「metadata 知道 invalid、runtime 還在讀」）。
+- 計畫與 contact registry：`.omc/plans/R7-3.10-global-seam-hardening.md`。
+- 新工具：`docs/tools/r7-3-10-seam-view-capture.mjs`（任意視角 headless 截圖）、`docs/tools/r7-3-10-seam-line-scan.py`（黑/白線掃描）。
+
+備註
+- west wall `2.7179`(gate)/`2.846`(bake dead-zone) 雙值並存屬刻意、方向安全（gate 讀 bake 的子集 → 無黑線），已記錄並鎖 handoff 常數。
+- 既有 3 個 FAIL 測試與本次無關：`r7-3-10-north-beam-gap-probe`（對 InitCommon 的 `Math.min(48,...)` stale 斷言）、`r7-3-10-edge-border-audit` 與 `r7-3-10-valid-black-boundary-regression`（缺 `north-east-non-square-d1000-preview-4224x4624-1000spp` bake 資產），pre-existing。
+
 ---
 
 ### R7-3.10-north-east-wall-first-hit-hybrid
@@ -3025,7 +3109,7 @@ cache-buster `r3-1-fix01-guard-ordering` 載入後使用者回報「有畫面了
 ## R3-4 fix07｜軌道燈 lumens slider 與輸出解耦（photometric↔radiometric 量綱失配）
 
 ### 症狀
-R3-4 fix05 狀態，Option A'（emissive + 5 選 1 stochastic NEE）落地、per-face gate 修好燈具外觀。肉眼回報：
+R3-4 fix05 狀態，Option A'（emissive + 5 選 1 stochastic NEE）實作、per-face gate 修好燈具外觀。肉眼回報：
 - 新加入的「東西軌道燈 lm」slider 拉到 5 lm 畫面仍過曝（正常應幾近不可見）
 - slider 0 → 2000 全區段光斑亮度無視覺差，亮度與 lumens 完全解耦
 - 調整「間接光倍率」與「最大彈跳數」皆無改善 → 排除間接光路成因
@@ -3089,7 +3173,7 @@ cache-buster 由 `r3-4-fix06b-defaults` bump 為 `r3-4-fix07-radiometric-unit`�
 
 1. **光度↔輻射量綱失配是 path tracer 最難抓的一類 bug**：結果「看起來合理」（色比對、幾何對、變化方向對），只是尺度錯 1000×。須在 photometry 函式的 docstring 明確標註回傳量綱，並在施工時對齊既有正確管線（本案應從 R3-1 階段就對齊 Cloud 的 `Φ/(K·π·A)`）。
 2. **clamp 是診斷訊號，不是 fix**：fix05/fix03 兩道 clamp 都在「上游量綱錯」的條件下被迫加入。事後看兩道 clamp 吞掉了 overshoot 訊號 + lumens 調整訊號，反而延後找到根因。規則：當 clamp 必須打到「基準商品亮度」時，應立即質疑上游而非調 clamp 係數。
-3. **對比既有正確實作 > 從零推導**：Cloud 漫射燈條 R3-3 已落地正確 `Φ/(K·π·A)`，軌道燈 R3-4 只需對齊即可；當初若直接 diff 兩者公式，量綱錯誤會在 5 分鐘內自曝。
+3. **對比既有正確實作 > 從零推導**：Cloud 漫射燈條 R3-3 已實作正確 `Φ/(K·π·A)`，軌道燈 R3-4 只需對齊即可；當初若直接 diff 兩者公式，量綱錯誤會在 5 分鐘內自曝。
 4. **Lambertian `/π` 因子是 radiometric vs photometric 的標記**：`cd/m²` 除 `K(T)` 得 `W/(sr·m²)`；若忽略 `/π` 則雖量綱對但比例仍偏 3.14×。本案 `computeTrackRadiance` 同時漏兩者。
 
 ---
@@ -3150,7 +3234,7 @@ sampleStochasticLight11 原 Cloud idx 7-10 分支（L263）有 `if (uCloudLightE
 ## R3-6｜Many-Light + MIS 整合收尾補丁（fix04 ~ fix06）
 
 ### 背景
-R3-6 Many-Light Sampling + Multiple Importance Sampling（多重要性採樣，power heuristic β=2）由背景 executor 依 ralplan deliberate APPROVE iter 2 甲案落地（cache-buster `r3-6-fix03-mis-math`）。使用者 2026-04-20 肉眼驗收四條（金屬反射、無螢火蟲/漏光、MIS rollback 等價、checkbox 牆面無殘光）全過。但驗收過程發現三項非 MIS 本身的缺漏，以 fix04~fix06 連續補丁收尾。
+R3-6 Many-Light Sampling + Multiple Importance Sampling（多重要性採樣，power heuristic β=2）由背景 executor 依 ralplan deliberate APPROVE iter 2 甲案實作（cache-buster `r3-6-fix03-mis-math`）。使用者 2026-04-20 肉眼驗收四條（金屬反射、無螢火蟲/漏光、MIS rollback 等價、checkbox 牆面無殘光）全過。但驗收過程發現三項非 MIS 本身的缺漏，以 fix04~fix06 連續補丁收尾。
 
 ### fix04｜Cloud 漫射燈條 GUI checkbox 補齊
 
@@ -11190,4 +11274,41 @@ verification:
 lesson:
   新增 dedicated reveal 時，要同時鎖「烤圖座標」與「runtime surface 所有權」。
   atlas 正確仍可能因兩個 surface 同時認領同一條空間而變亮。
+```
+
+## R7-3.10 C2C xatlas runtime 全黑：fragment shader sampler 超過 MAX_TEXTURE_IMAGE_UNITS(16)（2026-06-05）
+```text
+symptom:
+  ?xatlasPackage=a1-c2c-smoke 開啟後 3D canvas 全黑（UI 正常）。
+  console 滿是 "useProgram: program not valid" 與
+  "Feedback loop formed between Framebuffer and active Texture"。
+  CODEX 先把 feedback loop 當根因、又把 Samples:1 當全黑原因，兩者都誤判。
+root_cause:
+  真根因＝fragment shader 靜態使用的 sampler 數量 > MAX_TEXTURE_IMAGE_UNITS(16)。
+  CDP 抓到 GPU 真實 link log：
+    "THREE.WebGLProgram: Shader Error - VALIDATE_STATUS false /
+     Program Info Log: FRAGMENT shader texture image units count exceeds MAX_TEXTURE_IMAGE_UNITS(16)"。
+  program link 失敗 → useProgram 無效 → drawArrays 全丟 → 全黑；feedback loop 是 program 無效後的次要雜訊。
+  壓爆上限那一個＝C2C runtime 新增的 tR7310C1XatlasRuntimeAtlasTexture（第 17 個 sampler）。
+  與載入哪個 package 無關（只開 xatlas、不開 nonSquare 仍全黑，靜態 sampler 數）；16 是 WebGL2/Metal 下限，使用者真機同黑。
+  違反 C2 設計 xatlas-bake-c2-redfirst.md §37「xatlas mode 重用既有 sampler slot」與
+  契約 metal-bake-shader-contract.test.js:74（MAX_TEXTURE_IMAGE_UNITS<=16）。
+fix:
+  讓 runtime xatlas 重用既有 tR738C1BakeAtlasTexture slot（bake 路徑 PathTracingCommon.js:3313 本就這樣重用）：
+    shaders/Home_Studio_Fragment.glsl：刪 tR7310C1XatlasRuntimeAtlasTexture 宣告；
+      r7310C1XatlasRuntimeSampleTexel 改 texelFetch(tR738C1BakeAtlasTexture, ...)。
+    js/InitCommon.js：xatlasApplied 時把 xatlas DataTexture 綁到 tR738C1BakeAtlasTexture；
+      貼上預覽的無條件綁定改 gate 在 applied，避免覆蓋同一 slot。
+  互斥安全：runtime-xatlas / bake(captureMode==2) / floor 貼上預覽三者本就互斥
+    （xatlasApplied 與貼上預覽 applied 同掛 r7310C1FullRoomDiffuseRuntimeConfigAllowed() 且方向相反）。
+verification:
+  CDP 探針 docs/tools/r7-3-10-c2c-blackscreen-probe.mjs（Metal、強制 Chrome、絕不碰 Brave）：
+    修前 shader/GL 錯誤 287 則含 MAX_TEXTURE 超限 → 修後 0 則、program valid、canvas 算出完整場景、sampleCounter 累積。
+  node --check InitCommon/Home_Studio；contract 全過：
+    metal-bake-shader-contract / xatlas-bake-mode / xatlas-c2c-alpha / non-square-data-path / seam 4/4。
+lesson:
+  新增任何 fragment sampler 前先確認 active sampler 數 ≤16（Metal 真機上限）。
+  症狀指紋＝「全黑 + exceeds MAX_TEXTURE_IMAGE_UNITS」；feedback-loop 是煙霧、不是根因。
+  新 atlas 一律重用既有 slot（captureMode / config 旗標保證互斥），不另立 sampler。
+  抓真根因要看 GPU 真實 shader link log（CDP console），不能只看 three.module.min.js 的 useProgram 警告。
 ```

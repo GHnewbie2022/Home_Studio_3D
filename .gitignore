@@ -22,6 +22,11 @@ textures/*.bak-pre-padding-fix
 *.swp
 *.swo
 
+# Python local cache
+__pycache__/
+**/__pycache__/
+*.pyc
+
 # OS
 Thumbs.db
 

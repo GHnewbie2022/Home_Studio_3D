@@ -5328,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-east-slot10-retired-v3';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-xatlas-a1-nobreak-direct-light-v1';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5599,6 +5599,13 @@ function initSceneData() {
 	pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
 	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
 	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
+	pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+	pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRuntimeMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5696,6 +5703,17 @@ function initSceneData() {
 		}
 	} catch (e) { r7310NormalAuxOutputMode = 0.0; }
 	pathTracingUniforms.uR7310C1NormalAuxOutputMode = { value: r7310NormalAuxOutputMode };
+	// R7-3.10 A1 final-source probe：只讀診斷入口。
+	// 例如 ?runtimeProbe=54 可直接把正式畫面標成來源色塊；55/56 可看 xatlas 三角形與 alpha 狀態。
+	try {
+		if (typeof location !== 'undefined') {
+			var r7310RuntimeProbeParam = Number(new URLSearchParams(location.search).get('runtimeProbe'));
+				if (Number.isFinite(r7310RuntimeProbeParam) && r7310RuntimeProbeParam >= 0.0 && r7310RuntimeProbeParam <= 56.0)
+				pathTracingUniforms.uR7310C1RuntimeProbeMode.value = r7310RuntimeProbeParam;
+		}
+	} catch (e) {
+		pathTracingUniforms.uR7310C1RuntimeProbeMode.value = 0.0;
+	}
 	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
 	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };
