@@ -5651,6 +5651,18 @@ function restoreR7310C1XatlasBakeTextureBindings(prepared)
 		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture.value = prepared.previousTextureBindings.fullRoomAtlas;
 }
 
+function refreshR7310C1XatlasBakeTextureUniforms(prepared)
+{
+	if (!prepared || !prepared.textures || !pathTracingUniforms)
+		return;
+	if (pathTracingUniforms.tR738C1BakeAtlasTexture)
+		pathTracingUniforms.tR738C1BakeAtlasTexture.value = prepared.textures.worldPos;
+	if (pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture)
+		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture.value = prepared.textures.normal;
+	if (pathTracingMesh && pathTracingMesh.material)
+		pathTracingMesh.material.uniformsNeedUpdate = true;
+}
+
 window.waitForR738C1Samples = async function(targetSamples, timeoutMs)
 {
 	var target = normalizeR738PositiveInt(targetSamples, 1000, 1, 1000000);
@@ -7093,6 +7105,8 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 			}
 			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
 				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			if (useXatlasBakeMode)
+				refreshR7310C1XatlasBakeTextureUniforms(xatlasPrepared);
 			if (pathTracingUniforms.uR7310C1BakeFloorWorldBounds)
 				pathTracingUniforms.uR7310C1BakeFloorWorldBounds.value.set(floorWorldBounds.xMin, floorWorldBounds.xMax, floorWorldBounds.zMin, floorWorldBounds.zMax);
 			if (pathTracingUniforms.uXrayEnabled) pathTracingUniforms.uXrayEnabled.value = 0.0;
@@ -7141,6 +7155,8 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 					pathTracingUniforms.uPreviousSampleCount.value = 1.0;
 					pathTracingUniforms.uCameraIsMoving.value = false;
 					pathTracingUniforms.uRandomVec2.value.set(Math.random(), Math.random());
+					if (useXatlasBakeMode)
+						refreshR7310C1XatlasBakeTextureUniforms(xatlasPrepared);
 					renderer.setRenderTarget(target);
 					renderer.render(pathTracingScene, worldCamera);
 					renderer.setRenderTarget(previous);

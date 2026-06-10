@@ -4633,6 +4633,28 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		return cloudMisWeightProbeContributionUniformSentinel();
 	if (uMovementPreviewMode > 0.5 && uCloudVisibilityProbeMode == 0 && uCloudMisWeightProbeMode == 0 && uCloudContributionProbeMode == 0)
 		return CalculateMovementPreview(objectNormal, objectColor, objectID, pixelSharpness);
+	if (uR7310C1XatlasBakeMode > 0.5 && uR7310C1RuntimeProbeMode > 76.5 && uR7310C1RuntimeProbeMode < 80.5)
+	{
+		// OPUS/CODEX 2026-06-10 probe 77-80：4636 invalid 短路之前，自己重做 bake gate texelFetch。
+		// 77/78 看 gate；79 看 sampler size；80 看 normal x=511/512 的硬切線。
+		ivec2 r7310P77Texel = ivec2(floor(gl_FragCoord.xy + uR738C1BakeTileOriginPx));
+		vec4 r7310P77WP = texelFetch(tR738C1BakeAtlasTexture, r7310P77Texel, 0);
+		vec4 r7310P77NP = texelFetch(tR7310C1FullRoomDiffuseAtlasTexture, r7310P77Texel, 0);
+		float r7310P77NL = length(r7310P77NP.xyz);
+		objectNormal = vec3(0.0); objectColor = vec3(0.0); objectID = -INFINITY; pixelSharpness = 1.0;
+		if (uR7310C1RuntimeProbeMode < 77.5)
+			return vec3(clamp(r7310P77WP.w, 0.0, 1.0), clamp(r7310P77NP.w, 0.0, 1.0), clamp(r7310P77NL, 0.0, 1.0));
+		if (uR7310C1RuntimeProbeMode < 78.5)
+			return vec3(r7310C1XatlasBakeTexelValid ? 1.0 : 0.0, clamp((r7310P77WP.z + 2.074) / 0.2, 0.0, 1.0), r7310P77NP.z * 0.5 + 0.5);
+		ivec2 r7310P79WorldSize = textureSize(tR738C1BakeAtlasTexture, 0);
+		ivec2 r7310P79NormalSize = textureSize(tR7310C1FullRoomDiffuseAtlasTexture, 0);
+		if (uR7310C1RuntimeProbeMode < 79.5)
+			return vec3(clamp(float(r7310P79WorldSize.x) / 1024.0, 0.0, 1.0), clamp(float(r7310P79NormalSize.x) / 1024.0, 0.0, 1.0), clamp(float(r7310P79NormalSize.y) / 1024.0, 0.0, 1.0));
+		int r7310P80Y = clamp(r7310P77Texel.y, 0, max(0, r7310P79NormalSize.y - 1));
+		vec4 r7310P80N511 = texelFetch(tR7310C1FullRoomDiffuseAtlasTexture, ivec2(511, r7310P80Y), 0);
+		vec4 r7310P80N512 = texelFetch(tR7310C1FullRoomDiffuseAtlasTexture, ivec2(512, r7310P80Y), 0);
+		return vec3(clamp(length(r7310P80N511.xyz), 0.0, 1.0), clamp(length(r7310P80N512.xyz), 0.0, 1.0), clamp(r7310P77NL, 0.0, 1.0));
+	}
 	if (uR7310C1XatlasBakeMode > 0.5 && !r7310C1XatlasBakeTexelValid)
 	{
 		objectNormal = vec3(0.0);
@@ -4699,6 +4721,25 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 		if (t == INFINITY)
 		{
+			if (bounces == 0 &&
+				uR7310C1XatlasBakeMode > 0.5 &&
+				uR7310C1RuntimeProbeMode > 71.5 &&
+				uR7310C1RuntimeProbeMode < 75.5)
+			{
+				// OPUS 2026-06-10 probe 72-75（CODEX 指定）：t==INFINITY miss 分支內 primary ray 診斷。
+				// 查 low_tri10 為何 miss。bounces==0；rayOrigin≈atlasWorldPos+normal*8eps、rayDirection=-atlasNormal。
+				// 72=常數校準（確認 low 走 miss）、73=rayOrigin worldPos、74=rayDirection、75=rayOrigin.z 高精度+rayDir.z。
+				if (uR7310C1RuntimeProbeMode < 72.5) {
+					accumCol = vec3(0.25, 0.5, 0.75);
+				} else if (uR7310C1RuntimeProbeMode < 73.5) {
+					accumCol = vec3(clamp((rayOrigin.x + 1.95) / 3.9, 0.0, 1.0), clamp(rayOrigin.y / 3.0, 0.0, 1.0), clamp((rayOrigin.z + 2.1) / 5.2, 0.0, 1.0));
+				} else if (uR7310C1RuntimeProbeMode < 74.5) {
+					accumCol = rayDirection * 0.5 + 0.5;
+				} else {
+					accumCol = vec3(clamp((rayOrigin.z + 1.95) / 0.4, 0.0, 1.0), clamp(rayDirection.z * 0.5 + 0.5, 0.0, 1.0), clamp(rayOrigin.y / 3.0, 0.0, 1.0));
+				}
+				break;
+			}
 			// ADR 2 Normal-Aux primary miss：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
 			// primary ray 沒打到任何 geometry 時、normal aux 回 vec3(0.0) 表「無 first-visible surface」
 			// 與 OIDN normal-aux 的「無 geometry」慣例對齊；bounces > 0 不受此 branch 影響
@@ -4752,6 +4793,26 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			// R7-3.10 Phase 2 H7' probe：把 BVH 命中的 isRayExiting 升級到 firstVisible* 體系。
 			// 此值僅作 probe 證據，不作 guard 條件。
 			firstVisibleIsRayExiting = hitIsRayExiting;
+			if (uR7310C1XatlasBakeMode > 0.5 &&
+				uR7310C1RuntimeProbeMode > 66.5 &&
+				uR7310C1RuntimeProbeMode < 71.5)
+			{
+				// OPUS 2026-06-10 probe 67-71（CODEX 指定）：SceneIntersect 後、hitType 分流前的通用命中點。
+				// 查 low_tri10 primary first-hit 命中誰。此處 bounces==0、firstVisible* 已設、未分流。
+				// 67=常數校準、68=hitType/objId、69=nl、70=worldPos x、71=primary rayDirection。
+				if (uR7310C1RuntimeProbeMode < 67.5) {
+					accumCol = vec3(0.25, 0.5, 0.75);
+				} else if (uR7310C1RuntimeProbeMode < 68.5) {
+					accumCol = vec3(clamp(float(firstVisibleHitType) / 256.0, 0.0, 1.0), clamp(firstVisibleObjectID / 256.0, 0.0, 1.0), 0.0);
+				} else if (uR7310C1RuntimeProbeMode < 69.5) {
+					accumCol = firstVisibleNormal * 0.5 + 0.5;
+				} else if (uR7310C1RuntimeProbeMode < 70.5) {
+					accumCol = vec3(clamp((firstVisiblePosition.x + 1.95) / 3.9, 0.0, 1.0), clamp(firstVisiblePosition.y / 3.0, 0.0, 1.0), clamp((firstVisiblePosition.z + 2.1) / 5.2, 0.0, 1.0));
+				} else {
+					accumCol = vec3(clamp(rayDirection.x * 0.5 + 0.5, 0.0, 1.0), clamp(rayDirection.y * 0.5 + 0.5, 0.0, 1.0), clamp(rayDirection.z * 0.5 + 0.5, 0.0, 1.0));
+				}
+				break;
+			}
 			// ADR 2 Normal-Aux Early-Out：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
 			// primary hit 設好 firstVisibleNormal 後立即 return、bypass 整個 PT loop、
 			// 達到 1 SPP geometry-only 的時間與穩定性優勢
@@ -5899,6 +5960,59 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					r7310C1XatlasA1NorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeAtlasUv) &&
 					r7310C1XatlasRuntimeSampleValidLinear(r7310XatlasRuntimeAtlasUv, r7310XatlasRuntimeRadiance);
 				float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
+			if (bounces == 1 &&
+				uR7310C1XatlasBakeMode > 0.5 &&
+				r7310C1RuntimeProbeMode > 56.5 &&
+				r7310C1RuntimeProbeMode < 57.5)
+			{
+				// OPUS 2026-06-09 probe 57（修正版）：second-hit（bounces==1）點的 NEE weight。
+				// NEE dispatch 分散在多個 hitType 分支，故在此通用命中點自算一次 NEE，量「未遮擋的 NEE 貢獻權重」。
+				// 多 sample 累積平均後 = NEE weight 平均，直接對照 §14.10 CPU 0.0058（非零）。
+				// GPU 算 ~0 → raw zero 在 NEE；GPU 算 ~0.0058 → raw zero 在更後面（遮擋／accumulation）。
+				// R=G=B=NEE weight luma；輸出後 break；probeMode≠57 不觸發、正常 bake 不受影響。
+				vec3 r7310P57NeeDir; vec3 r7310P57NeeT; float r7310P57NeePdf;
+				int r7310P57NeeIdx; int r7310P57NeeZero; int r7310P57NeeTheta; vec3 r7310P57NeeFacing;
+				r7310P57NeeDir = sampleStochasticLightDynamic(x, nl, light, r7310P57NeeT, r7310P57NeePdf, r7310P57NeeIdx, r7310P57NeeZero, r7310P57NeeTheta, r7310P57NeeFacing);
+				float r7310P57NeeW = dot(max(r7310P57NeeT, vec3(0.0)), vec3(0.2126, 0.7152, 0.0722));
+				// OPUS 過夜拆解：R=幾何項 max(0,dot(nl,ldir))（選中光源方向）、G=second-hit 法線 nl.y（0.5 水平/1 朝上/0 朝下）、B=NEE weight luma。
+				float r7310P57Geom = max(0.0, dot(nl, r7310P57NeeDir));
+				// OPUS 過夜第二層：R=second-hit 高度 x.y/3、G=bake ray 入射方向 (rayDirection.y+1)/2、B=幾何項。
+				// 解 CPU／GPU 張力：GPU second-hit 實際命中高度（天花板 y≈2.9 還是地板 y≈0）＋ bake ray 朝上還是朝下。
+				accumCol = vec3(clamp(x.y / 3.0, 0.0, 1.0), clamp(rayDirection.y * 0.5 + 0.5, 0.0, 1.0), r7310P57Geom);
+				break;
+			}
+			if (bounces == 1 &&
+				uR7310C1XatlasBakeMode > 0.5 &&
+				r7310C1RuntimeProbeMode > 60.5 &&
+				r7310C1RuntimeProbeMode < 61.5)
+			{
+				// OPUS 2026-06-10 probe 61（CODEX 指定）：accumCol 常數校準。
+				// 在 probe 57 同一 bounces==1 可控輸出點輸出固定值，驗證 readback 能讀到原樣數字。
+				// 預期 readback (R,G,B)=(0.25,0.5,0.75)；若非，代表 accumCol 在 break 後被後處理（exposure/scale/mask）。
+				accumCol = vec3(0.25, 0.5, 0.75);
+				break;
+			}
+			if (bounces == 0 &&
+				uR7310C1XatlasBakeMode > 0.5 &&
+				r7310C1RuntimeProbeMode > 61.5 &&
+				r7310C1RuntimeProbeMode < 66.5)
+			{
+				// OPUS 2026-06-10 probe 62-66（CODEX 指定）：bounces==0 primary first-hit 診斷。
+				// 62=常數校準（驗 bounces==0 是否可控）、63=first-hit nl、64=primary rayDirection、
+				// 65=hitType/hitObjectID、66=first-hit worldPos x。break 後不污染；probeMode∉{62..66} 不觸發。
+				if (r7310C1RuntimeProbeMode < 62.5) {
+					accumCol = vec3(0.25, 0.5, 0.75);
+				} else if (r7310C1RuntimeProbeMode < 63.5) {
+					accumCol = nl * 0.5 + 0.5;
+				} else if (r7310C1RuntimeProbeMode < 64.5) {
+					accumCol = rayDirection * 0.5 + 0.5;
+				} else if (r7310C1RuntimeProbeMode < 65.5) {
+					accumCol = vec3(clamp(float(hitType) / 256.0, 0.0, 1.0), clamp(hitObjectID / 256.0, 0.0, 1.0), 0.0);
+				} else {
+					accumCol = vec3(clamp((x.x + 1.95) / 3.9, 0.0, 1.0), clamp(x.y / 3.0, 0.0, 1.0), clamp((x.z + 2.1) / 5.2, 0.0, 1.0));
+				}
+				break;
+			}
 			float r7310HybridOwnerCount = 0.0;
 			float r7310HybridOwnerMaskLow = 0.0;
 			float r7310HybridOwnerMaskHigh = 0.0;

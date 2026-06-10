@@ -40,6 +40,7 @@ function parseArgs(argv) {
     xatlasBake: false,
     xatlasTexelmapDir: 'docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike',
     xatlasValidityMaskPath: null,
+    xatlasBakeProbeLevel: null,
     r7310Surface: 'floor',
     r7310NeFurniture: 'bed',
     r7310SeparatedIrradianceBake: false,
@@ -120,6 +121,7 @@ function parseArgs(argv) {
     else if (arg === '--r7310-xatlas-bake') out.xatlasBake = true;
     else if (arg.startsWith('--xatlas-texelmap-dir=')) out.xatlasTexelmapDir = arg.slice('--xatlas-texelmap-dir='.length);
     else if (arg.startsWith('--xatlas-validity-mask=')) out.xatlasValidityMaskPath = arg.slice('--xatlas-validity-mask='.length);
+    else if (arg.startsWith('--xatlas-bake-probe-level=')) out.xatlasBakeProbeLevel = Number(arg.slice('--xatlas-bake-probe-level='.length));
     else if (arg.startsWith('--r7310-surface=')) out.r7310Surface = arg.slice('--r7310-surface='.length);
     else if (arg.startsWith('--r7310-ne-furniture=')) out.r7310NeFurniture = arg.slice('--r7310-ne-furniture='.length);
     else if (arg === '--r7310-separated-irradiance-bake') out.r7310SeparatedIrradianceBake = true;
@@ -179,6 +181,10 @@ function parseArgs(argv) {
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   if (typeof out.xatlasTexelmapDir !== 'string' || out.xatlasTexelmapDir.length === 0 || out.xatlasTexelmapDir.startsWith('/') || out.xatlasTexelmapDir.includes('..')) throw new Error('Invalid xatlasTexelmapDir');
   if (out.xatlasValidityMaskPath !== null && (typeof out.xatlasValidityMaskPath !== 'string' || out.xatlasValidityMaskPath.length === 0 || out.xatlasValidityMaskPath.startsWith('/') || out.xatlasValidityMaskPath.includes('..'))) throw new Error('Invalid xatlasValidityMaskPath');
+  if (out.xatlasBakeProbeLevel !== null) {
+    if (!Number.isFinite(out.xatlasBakeProbeLevel) || out.xatlasBakeProbeLevel < 0) throw new Error('Invalid xatlasBakeProbeLevel');
+    out.xatlasBakeProbeLevel = Math.trunc(out.xatlasBakeProbeLevel);
+  }
   for (const key of ['samples', 'atlasResolution', 'timeoutMs', 'httpPort', 'cdpPort']) {
     if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
     out[key] = Math.trunc(out[key]);
@@ -8519,6 +8525,12 @@ async function main() {
 	          tileWidth: ${args.r7310BakeTileWidth || 0},
 	          tileHeight: ${args.r7310BakeTileHeight || 0}
 	        };
+	        const xatlasBakeProbeLevel = ${args.xatlasBakeProbeLevel === null ? 'null' : args.xatlasBakeProbeLevel};
+	        if (xatlasBakeProbeLevel !== null) {
+	          if (typeof pathTracingUniforms === 'undefined' || !pathTracingUniforms.uR7310C1RuntimeProbeMode)
+	            throw new Error('R7-3.10 xatlas bake probe uniform missing');
+	          pathTracingUniforms.uR7310C1RuntimeProbeMode.value = xatlasBakeProbeLevel;
+	        }
 	        const report = await window.${captureHelper}(${args.targetSamples || args.samples}, ${args.timeoutMs}, {
 	          targetAtlasResolution: ${args.atlasResolution},
 	          targetAtlasWidth: ${args.atlasWidth === null ? 'undefined' : args.atlasWidth},
