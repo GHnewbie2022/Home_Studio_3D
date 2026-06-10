@@ -3,10 +3,20 @@
   "runtimeScope": "c1_xatlas_a1_c2c_runtime_smoke",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "single_xatlas_a1_c2c_smoke",
-  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260610-080228",
+  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260610-183110-oidn-rt-high-beta",
+  "sourcePackageDir": ".omc/r7-3-10-xatlas-bake-spike/20260610-183110",
   "targetAtlasWidth": 946,
   "targetAtlasHeight": 516,
-  "requestedSamples": 10000,
+  "requestedSamples": 1000,
+  "denoise": {
+    "tool": "r7-3-10-oidn-bridge",
+    "filter": "RT",
+    "quality": "high",
+    "auxStrategy": "color_only_beta",
+    "deviceUsed": "metal",
+    "version": "2.4.1",
+    "alphaPreserved": true
+  },
   "diffuseOnly": true,
   "upscaled": false,
   "bakedRadianceKind": "indirect_diffuse_radiance",
@@ -25,6 +35,7 @@
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json",
+    "oidnMetrics": "atlas-patch-000-rgba-f32.bin.metrics.json",
     "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
   }
 }

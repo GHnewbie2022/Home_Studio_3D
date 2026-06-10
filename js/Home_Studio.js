@@ -5328,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-probe-diag-20260610f';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-xatlas-a1-owner-gate-v1';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
