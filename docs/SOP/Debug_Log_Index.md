@@ -1,7 +1,7 @@
 # Debug Log Index
 
 > 目的：讓接手代理先用本檔路由，再回 `Debug_Log.md` 讀必要章節。`Debug_Log.md` 保留為完整總帳，不建議每次接手全讀。
-> 更新日：2026-05-21
+> 更新日：2026-06-10
 
 ---
 
@@ -63,6 +63,14 @@ rtk rg -n '^## |^### |R7-3|v3k|effectiveStrength|sampleCounter|S2' docs/SOP/Debu
     核心：
       - probe 診斷 normal 不可污染正常渲染。
       - probe 數字通過不代表正常畫面通過。
+
+6.  `docs/SOP/R7-3.10-xatlas-a1-bake-lessons-2026-06-10.md`
+    何時讀：
+      - xatlas A1、tile bake、normal sampler、probe 77-80、正式 package 與即時 capture 結果衝突。
+    核心：
+      - 北牆 A1 破圖來自 tile(1,0) normal sampler per-tile 狀態錯誤。
+      - 修復宣告以正式 runner package + CPU 讀檔為準。
+      - 新 probe 先做常數校準，shader cache-buster 要同步。
 ```
 
 ---
