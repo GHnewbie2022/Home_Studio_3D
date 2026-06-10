@@ -1,0 +1,360 @@
+# R7-3.10 xatlas A1 北牆根因調查 ROADMAP
+
+## 0. 本次調查前提
+
+本 ROADMAP 以使用者實測為最高依據。
+
+```
+1.  A1 是北牆木門西側那塊牆。
+
+2.  A1 的 A／B／C／D／E 問題原本就存在。
+
+3.  補回直接光只處理了「大片均勻偏暗」這個獨立子問題。
+
+4.  A／B／C／D／E 是使用者拉近觀察後確認的既有 BUG。
+
+5.  目前驗收目標是整塊 A1 和其餘北牆無縫同色。
+
+6.  B 區目前看似接近正確結果，只能視為待查現象。
+    整塊 A1 仍需一起通過。
+```
+
+## 1. 現況白話版
+
+目前大片均勻偏暗已經處理。A1 還存在分裂與接縫問題。
+
+```
+A  斜斜的條紋。
+B  看起來比較接近旁邊牆面，仍屬待查區。
+C  牆面內部髒斑。
+D  西牆交界髒帶。
+E  西牆交界亮帶。
+```
+
+這五個現象要放在同一個 A1 問題中調查。最後結果要讓整片 A1 像同一塊牆；局部接近只列為觀察現象。
+
+## 2. 目前最可疑的機制
+
+第一個主線機制是同一片牆混用了不同光照資料。這已經有 062247 package 數字支持。
+
+```
+1.  北牆面 tri10：
+    alpha=1 約 77.0%，alpha=0 約 23.0%。
+
+2.  北牆面 tri11：
+    alpha=1 約 80.4%，alpha=0 約 19.6%。
+
+3.  alpha=1 的格子走 xatlas 烘焙資料。
+
+4.  alpha=0 的格子退回北牆 hybrid 路徑。
+    這條 hybrid 路徑讀 D800 denoise-c atlas。
+
+5.  A1 目前約是「大部分 xatlas + 一部分北牆 hybrid / D800」的交錯拼貼。
+
+6.  多種來源拼在同一片 A1 上，就可能形成條紋、髒斑與接縫。
+```
+
+第二個主線機制是 dilation 借值痕跡。062247 已修掉 exact-black，接下來要看補值結果是否仍留下紋理或髒感。
+
+```
+1.  062247 alpha report 顯示：
+    alphaOneExactBlackTexels = 0。
+
+2.  這代表「alpha=1 且 RGB=0」黑洞目前已歸零。
+
+3.  repairedVisibleExactBlackTexels = 8929。
+    這 8929 格已由 dilation 用鄰近可信資料補值。
+
+4.  unrepairedVisibleExactBlackTexels = 135181。
+    這些補值失敗格已轉成 alpha=0，畫面上退回北牆 hybrid / D800。
+
+5.  目前殘留主嫌疑轉成：
+    xatlas 與 hybrid 的拼貼色差、dilation 借值痕跡、邊界插值痕跡。
+```
+
+第三個待查機制是 xatlas 間接光和北牆 hybrid 間接光是否仍存在局部差異。
+
+```
+1.  既有紀錄指出 D800 denoise-c 與 xatlas 亮度曾接近。
+
+2.  這條仍需保留為局部驗證項，因為 A／C／D／E 是使用者拉近後確認的局部問題。
+
+3.  probe 49 只能顯示北牆 hybrid pre-albedo。
+    它不能直接顯示 xatlas runtime radiance。
+
+4.  要比較兩份間接光，需要另找 xatlas radiance 探針，或直接讀 bin 做同座標量測。
+```
+
+第四個待查機制是西牆交界與 A1 邊界取樣。
+
+```
+1.  D／E 靠近北牆與西牆交界。
+
+2.  這區需要查 UV、bilinear 取樣、clamp、牆角權屬、dilation 來源。
+
+3.  若交界兩側分別走不同資料來源，會形成髒帶或亮帶。
+```
+
+## 3. 已收斂的事項
+
+這些事項已列為既有結論，後續調查會直接沿用。
+
+```
+1.  直接光漏採已處理，大片均勻偏暗已消失。
+
+2.  uploadRowFlip 已修，舊的兩條垂直長條問題已收斂。
+
+3.  舊 D800 和 xatlas 的 bake 射線公式相同。
+    目前殘留主線集中在 alpha=0 fallback 拼貼、dilation 補值痕跡、邊界插值與架構選型。
+
+4.  使用者觀察到的 A／B／C／D／E 是目前最重要的事實依據。
+
+5.  A1 以整塊一致作為驗收。
+
+6.  062247 package 已套過 exact-black 修法：
+    alphaOneExactBlackTexels = 0。
+    repairedVisibleExactBlackTexels = 8929。
+    unrepairedVisibleExactBlackTexels = 135181。
+    dilatedTexels = 8929。
+
+7.  062247 的 validation status = fail 來自 GPU submission 效能門檻：
+    runnerFailedChecks = ["gpu-submission-ms-over-250"]。
+    browserValidationStatus = pass。
+    光照內容相關 runnerChecks 皆為 true。
+
+8.  alpha 與烘焙光照品質解耦已由 6-07 調查確認。
+    062247 已封住 exact-black 這個最嚴重後果。
+    目前殘留重心是 alpha=0 fallback 拼貼與 dilation 補值痕跡。
+
+9.  runtime weighted-luma guard 尚未實作。
+    目前定位是第二道保險機制，主調查仍放在 062247 已存在的拼貼與補值痕跡。
+```
+
+## 4. 調查階段
+
+### Phase 1：確認我看的程式與資料正確
+
+目的：先確定現場一致，避免拿錯 package 或舊快取。
+
+```
+1.  查目前 git 分支與未提交變更。
+2.  確認重現網址：
+    http://localhost:9001/Home_Studio.html?nonSquarePackage=d800-north-denoise-c&xatlasPackage=a1-c2c-smoke
+3.  確認 xatlas package 指向：
+    docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json
+4.  確認 packageDir、atlas 尺寸、uploadRowFlip、alpha policy。
+5.  確認 HTML、Home_Studio.js、Fragment shader 的快取版本鏈。
+```
+
+產出：
+
+```
+現場核對摘要。
+若發現網址、package、快取版本或分支不一致，先回報再繼續。
+```
+
+### Phase 2：驗證 6-07 行級結論仍適用 062247
+
+目的：沿用已完成的讀碼結果，確認它們在 062247 package 上仍成立。
+
+要讀的重點：
+
+```
+1.  shaders/Home_Studio_Fragment.glsl
+    確認 xatlas first-hit、north wall hybrid first-hit、probe 54、probe 56、probe 49、
+    NEE 直接光段與 6-07 紀錄一致。
+
+2.  js/InitCommon.js
+    確認 xatlas package 載入、A1 world position 到 UV 的換算、
+    alpha 與 atlas texture 上傳、runtime albedo 乘法與 062247 pointer 一致。
+
+3.  確認 r7310C1XatlasRuntimeSampleValidLinear 目前仍未加 weighted-luma guard。
+```
+
+產出：
+
+```
+A／B／C／D／E 的資料流草圖。
+每一區先標出可能來源：xatlas、hybrid、D800、西牆或邊界插值。
+重點放在 062247 目前仍存在的拼貼與補值痕跡。
+```
+
+### Phase 3：用 probe 分清資料來源
+
+目的：用畫面探針確認 A／B／C／D／E 的來源。
+
+```
+1.  probe 54
+    看每一格走哪條 first-hit。
+    重點是確認 A／B／C／D／E 各自是否同一路徑。
+
+2.  probe 56
+    看 alpha valid / invalid 分布。
+    重點是 A 的斜紋、D／E 的交界帶是否對應 valid / invalid 交錯。
+
+3.  probe 49
+    看 pre-albedo 間接光。
+    這個 probe 只能看北牆 hybrid pre-albedo。
+    xatlas runtime radiance 需要另找探針或讀 bin。
+```
+
+產出：
+
+```
+同視角截圖與文字判讀。
+A／B／C／D／E 對應的 source-id、alpha 狀態、間接光狀態。
+probe 49 的結果只作 hybrid 參考值。
+```
+
+### Phase 4：直接讀 package 與 atlas 數值
+
+目的：把畫面問題對回烘焙貼圖上的小格子。
+
+要查的資料：
+
+```
+1.  atlas-patch-000-rgba-f32.bin
+    看 A／C／D／E 對應格子的 RGB 與亮度。
+
+2.  texel metadata
+    看世界座標、法線、tri id、有效標記。
+
+3.  validation-report.json
+    看 actualSamples、denoise、valid ratio、警告項目。
+    062247 status=fail 已知來自 GPU submission 效能門檻，先避免把它解讀成光照內容失敗。
+
+4.  alpha report
+    看 alpha=1 / alpha=0 比例、dilation 來源、殘餘 alpha=0 分布。
+    exact-black 已歸零，後續查補值與 fallback 拼貼。
+```
+
+產出：
+
+```
+每個現象對應的 atlas 區域。
+每個區域的亮度、alpha、tri id、世界位置摘要。
+```
+
+### Phase 5：判斷主要根因類型
+
+這一階段只做分類與證據整理。
+
+候選根因：
+
+```
+1.  valid / invalid 拼貼
+    A1 同一片牆被切成不同資料來源。
+    062247 已有 tri10 / tri11 約 8 成 xatlas、約 2 成北牆 hybrid / D800 的證據。
+
+2.  dilation 借值痕跡
+    exact-black 已歸零，但 8929 格補值可能留下局部紋理或髒感。
+
+3.  xatlas 間接光和北牆 hybrid 間接光局部不一致
+    既有紀錄顯示整體亮度可能接近。
+    本項只保留局部量測，不作預設結論。
+
+4.  邊界插值或 clamp
+    西牆交界、梁邊、三角形邊界取樣造成 D／E 或 A。
+
+5.  A1 架構選型問題
+    xatlas C2C 這條路在 A1 上無法產生連續同色牆面。
+```
+
+產出：
+
+```
+根因候選排序。
+每個候選附上已支持、待補證據、可排除條件。
+```
+
+### Phase 6：決定修正方向
+
+這一階段在根因證據足夠後進行。
+
+可能方向：
+
+```
+1.  修 package-level validity
+    062247 已封住 exact-black。
+    後續只在拼貼或補值證據指向 package 時再動。
+
+2.  修 alpha-aware dilation
+    針對 8929 格補值與殘餘 alpha=0 分布。
+    重點是讓來源、距離與邊界更連續。
+
+3.  修 runtime 第二道防線
+    runtime 取樣前檢查加權亮度與有效性。
+    目前定位是保險機制。
+    若 package 端已無 alpha=1 黑洞，這項不能當主修法。
+
+4.  修邊界取樣
+    針對 A 的斜紋與 D／E 的交界帶檢查 UV、bilinear、clamp、牆角權屬。
+
+5.  評估 A1 回到 D800 / separated 架構
+    若證據顯示 xatlas C2C 造成 A1 天生多來源拼貼，
+    A1 應回到和其他北牆一致的烘焙架構。
+```
+
+產出：
+
+```
+一份修正提案。
+每個修正只對應一個已確認根因。
+每個修正附驗證方式。
+```
+
+## 5. 驗證標準
+
+```
+1.  A1 全區和其餘北牆無縫同色。
+
+2.  A 斜紋消失。
+
+3.  C 髒斑消失。
+
+4.  D 西牆交界髒帶消失。
+
+5.  E 西牆交界亮帶消失。
+
+6.  B 區不再作為單獨標準。
+    B 只跟整塊 A1 一起驗收。
+
+7.  LIVE 對照約 10 spp 乾淨，烘焙面不需等待高 SPP 才判讀。
+
+8.  宣告修復成功時仍需補正式截圖紀律：
+    每個驗收相機跑到 500 SPP，保存對照截圖。
+```
+
+## 6. 風險與護欄
+
+```
+1.  禁止退回 LIVE fallback。
+    目標仍是全室 hybrid 烘焙。
+
+2.  禁止補保底光或借光。
+    破圖需從 bake、runtime 合成、UV、alpha、dilation、world position 查起。
+
+3.  每次只驗證一個主要假設。
+
+4.  讀碼結論若與使用者實測衝突，先重新檢查讀碼。
+
+5.  修改材質或 hitType 分支前，先讀完整分支。
+
+6.  Debug_Log 待整個 A1 episode 收尾後再寫。
+```
+
+## 7. 交付順序
+
+```
+1.  現場核對摘要。
+
+2.  probe 54 / 56 / 49 的 A／B／C／D／E 對照表。
+
+3.  atlas 與 metadata 數值摘要。
+
+4.  根因候選排序。
+
+5.  修正方向建議。
+
+6.  使用者確認後再動修正。
+```

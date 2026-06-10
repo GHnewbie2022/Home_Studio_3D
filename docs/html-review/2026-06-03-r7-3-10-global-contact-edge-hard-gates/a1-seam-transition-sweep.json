@@ -1,0 +1,205 @@
+{
+  "generatedNote": "R7-3.10 Step A 輔助：跨 A1 接縫 x-sweep（y=400, cam=acceptance, package d800-north-denoise-c, nonSquareReady=true）。實測 owner/route/atlas transition。屬量測事實，不含人工定案。",
+  "yScreen": 400,
+  "package": "d800-north-denoise-c",
+  "beamSide": {
+    "desc": "西樑 owner 1015 baked",
+    "xScreenRange": [
+      560,
+      584
+    ],
+    "owners": [
+      1015
+    ],
+    "routeName": "west_beam_inner_shadow_hybrid",
+    "luma36Range": [
+      0.09695509545952082,
+      0.10491457203775645
+    ]
+  },
+  "noneSide": {
+    "desc": "北牆面 route=none / ownerCount=0（無 baked 擁有者＝黑線）",
+    "xScreenRange": [
+      592,
+      680
+    ],
+    "worldZ": -1.874000059068203,
+    "worldXRange": [
+      -1.7496038258075717,
+      -1.7391943484544756
+    ],
+    "routeName": "none",
+    "luma36": 0
+  },
+  "boundaryXScreen": "~588（beam owner1015 → 北牆 none 之交界）",
+  "rows": [
+    {
+      "xScreen": 560,
+      "worldX": -1.7499999701976778,
+      "worldZ": -1.8692825831472875,
+      "ownerCount": 1,
+      "owners": [
+        1015
+      ],
+      "routeName": "west_beam_inner_shadow_hybrid",
+      "targetId": 1015,
+      "luma36": 0.10491457203775645
+    },
+    {
+      "xScreen": 568,
+      "worldX": -1.7499999701976778,
+      "worldZ": -1.8704433292150497,
+      "ownerCount": 1,
+      "owners": [
+        1015
+      ],
+      "routeName": "west_beam_inner_shadow_hybrid",
+      "targetId": 1015,
+      "luma36": 0.10233324976861476
+    },
+    {
+      "xScreen": 576,
+      "worldX": -1.7499999701976778,
+      "worldZ": -1.8717404454946518,
+      "ownerCount": 1,
+      "owners": [
+        1015
+      ],
+      "routeName": "west_beam_inner_shadow_hybrid",
+      "targetId": 1015,
+      "luma36": 0.0978904362514615
+    },
+    {
+      "xScreen": 584,
+      "worldX": -1.7499999701976778,
+      "worldZ": -1.8730087146162988,
+      "ownerCount": 1,
+      "owners": [
+        1015
+      ],
+      "routeName": "west_beam_inner_shadow_hybrid",
+      "targetId": 1015,
+      "luma36": 0.09695509545952082
+    },
+    {
+      "xScreen": 592,
+      "worldX": -1.7496038258075717,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 600,
+      "worldX": -1.7485563576221468,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 608,
+      "worldX": -1.7476023197174073,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 616,
+      "worldX": -1.7466172695159914,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 624,
+      "worldX": -1.7455659657716753,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 632,
+      "worldX": -1.7446865737438204,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 640,
+      "worldX": -1.743659594655037,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 648,
+      "worldX": -1.7427154570817949,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 656,
+      "worldX": -1.741832819581032,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 664,
+      "worldX": -1.7408637672662737,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 672,
+      "worldX": -1.7399350047111513,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    },
+    {
+      "xScreen": 680,
+      "worldX": -1.7391943484544756,
+      "worldZ": -1.874000059068203,
+      "ownerCount": 0,
+      "owners": [],
+      "routeName": "none",
+      "targetId": null,
+      "luma36": 0
+    }
+  ]
+}

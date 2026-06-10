@@ -1,0 +1,8 @@
+{
+  "runId": "stagea-final4",
+  "dir": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/stagea-final4",
+  "probe": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/stagea-final4/west-beam-north-contact-probe.json",
+  "overlay": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/stagea-final4/west-beam-north-contact-overlay.png",
+  "composite": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/stagea-final4/overlay-vs-user-reference.png",
+  "failing": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/stagea-final4/west-beam-north-contact-failing.png"
+}

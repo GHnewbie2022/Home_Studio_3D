@@ -1,0 +1,121 @@
+{
+  "schema": "r7-3-10-c2b-backface-ratio-v1",
+  "raysPerTexel": 160,
+  "epsOffsetM": 0.001,
+  "roomBoxes": 88,
+  "perTriangle": {
+    "10": {
+      "a1Role": "north_wall_segment",
+      "rawNormal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "texelsSampled": 220,
+      "frontFraction": {
+        "mean": 0.9966477272727272,
+        "min": 0.575,
+        "max": 1.0,
+        "p10": 1.0,
+        "p90": 1.0
+      },
+      "pctTexelsFrontFracBelow0p5": 0.0
+    },
+    "11": {
+      "a1Role": "north_wall_segment",
+      "rawNormal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "texelsSampled": 220,
+      "frontFraction": {
+        "mean": 0.9479829545454546,
+        "min": 0.16875,
+        "max": 1.0,
+        "p10": 0.7206250000000001,
+        "p90": 1.0
+      },
+      "pctTexelsFrontFracBelow0p5": 3.6363636363636362
+    },
+    "20": {
+      "a1Role": "west_beam_cap",
+      "rawNormal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "texelsSampled": 220,
+      "frontFraction": {
+        "mean": 0.32659090909090904,
+        "min": 0.15625,
+        "max": 0.49375,
+        "p10": 0.25,
+        "p90": 0.425
+      },
+      "pctTexelsFrontFracBelow0p5": 100.0
+    },
+    "21": {
+      "a1Role": "west_beam_cap",
+      "rawNormal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "texelsSampled": 220,
+      "frontFraction": {
+        "mean": 0.3479605300688214,
+        "min": 0.04375,
+        "max": 0.6440677966101694,
+        "p10": 0.1875,
+        "p90": 0.475
+      },
+      "pctTexelsFrontFracBelow0p5": 98.63636363636363
+    }
+  },
+  "thresholdSweep": {
+    "0.3": {
+      "tri10": 100.0,
+      "tri11": 99.0909090909091,
+      "tri20": 61.36363636363637,
+      "tri21": 68.63636363636364
+    },
+    "0.4": {
+      "tri10": 100.0,
+      "tri11": 98.18181818181819,
+      "tri20": 13.636363636363635,
+      "tri21": 43.63636363636363
+    },
+    "0.5": {
+      "tri10": 100.0,
+      "tri11": 96.36363636363636,
+      "tri20": 0.0,
+      "tri21": 1.3636363636363635
+    },
+    "0.6": {
+      "tri10": 99.54545454545455,
+      "tri11": 90.9090909090909,
+      "tri20": 0.0,
+      "tri21": 0.9090909090909091
+    },
+    "0.7": {
+      "tri10": 99.0909090909091,
+      "tri11": 90.0,
+      "tri20": 0.0,
+      "tri21": 0.0
+    },
+    "0.8": {
+      "tri10": 99.0909090909091,
+      "tri11": 89.54545454545455,
+      "tri20": 0.0,
+      "tri21": 0.0
+    },
+    "0.9": {
+      "tri10": 99.0909090909091,
+      "tri11": 89.54545454545455,
+      "tri20": 0.0,
+      "tri21": 0.0
+    }
+  },
+  "note": "front=ray enters a box from outside; back=ray exits the box the offset sample sits inside (hidden/structural)."
+}

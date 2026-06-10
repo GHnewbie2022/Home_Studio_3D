@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-06-08-r7-3-10-xatlas-a1-rootcause-roadmap">
+<title>R7-3.10 xatlas A1 北牆破圖：根因調查 ROADMAP</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-06-08 · R7-3.10 xatlas A1 根因調查計畫</p>
+    <h1>R7-3.10 xatlas A1 北牆破圖：根因調查 ROADMAP</h1>
+    <blockquote>本頁是調查計畫（ROADMAP），供審查使用。階段 0–3 先釘根因、後談修法。</blockquote>
+    <blockquote>行號與 probe 編號於動工時以 shader 實讀為準。重現完整網址見第 6 節。</blockquote>
+    <blockquote>本版已併入 CODEX 兩輪審查：第一輪 5 點（probe 49 單邊、自動化上限、R2a/R2b、0c 用詞、D/E 西側證據、validation 標註）、</blockquote>
+    <blockquote>第二輪 4 點（xatlas 側用 valid-linear、probe 56 補 backface-ratio 工具、R2a provisional、source-id 5 再拆）。</blockquote>
+    <blockquote>放行後補強：1b 標明 atlasUv 取得（r7310C1XatlasA1NorthWallUvFromWorldPosition + worldPosition 來自 probe 32／45 或 diagnostic）。</blockquote>
+    <h2>0. 一頁摘要</h2>
+    <p>北牆木門西側那一塊（A1，世界座標 x≈[-1.91, -1.52]）走 xatlas C2C 烘焙路徑，其餘北牆走舊 D800／separated 路徑。A1 目前與其餘北牆顏色對不齊，內部被切成 A／B／C／D／E 五塊外觀。五塊皆為使用者確認的 BUG，與 SPP 無關，待查的是根因機制。</p>
+    <p>本 ROADMAP 的核心任務：用探針把「A1 內部拼塊」與「xatlas 間接光值對比 hybrid 間接光值」量清楚，分辨根因走 R1 或 R2，再決定修法。</p>
+    <p>獨立背景（與本案各自分線）：先前處理過 A1「整片偏暗」，修法是補回漏採的直接光，已收、使用者肉眼確認偏暗消失。A–E 五塊原本就存在、一直都在，與這條補直接光分屬兩條線；調查時分開看，避免方向被誤導。</p>
+    <h2>1. 硬約束（不可違反）</h2>
+    <pre><code> 1  未經使用者當次明確允許，永遠禁止退回 LIVE fallback；目標全室 hybrid 烘焙。
+ 2  永遠禁止補保底光／borrow light 這類手段。
+ 3  使用者實測為權威；讀碼結論與實測矛盾時，預設是自己讀錯。
+ 4  未確認根因前禁止出修法（先 systematic-debugging）；改材質分支前先讀完整 if (hitType==X) 分支。
+ 5  量測只量「破圖那一格」；A1 含多種外觀，量平均或量到 B 會誤判。
+ 6  整塊 A1（含 A–E）須與其餘北牆無縫同色才算過；B 看似正常屬巧合，禁止當基準或當已修好。</code></pre>
+    <h2>2. 現況：A1 被切成 A–E 五塊</h2>
+    <table>
+<thead>
+<tr>
+<th>區塊</th>
+<th>位置</th>
+<th>外觀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>北牆上緣靠梁／天花板交界（A1 頂端、近 beam gap sliver）</td>
+<td>斑馬線斜紋</td>
+</tr>
+<tr>
+<td>B</td>
+<td>A1 中段</td>
+<td>看似正常（巧合，非基準）</td>
+</tr>
+<tr>
+<td>C</td>
+<td>北牆中段（A1 範圍內）</td>
+<td>烘焙髒斑</td>
+</tr>
+<tr>
+<td>D</td>
+<td>北牆／西牆交界（西北角）</td>
+<td>髒帶</td>
+</tr>
+<tr>
+<td>E</td>
+<td>北牆／西牆交界</td>
+<td>亮帶</td>
+</tr>
+</tbody>
+</table>
+    <p>五塊同屬一套 xatlas C2C 架構；瑕疵是否存在已由使用者確認，待查的是根因機制。</p>
+    <h2>3. 根因假設：R1 對 R2（R2 再拆 R2a／R2b）</h2>
+    <p>把 source.md 第 3 節深層假設精煉成一個可證偽判據：A1 valid texel 的 xatlas 間接光值，與其餘北牆 hybrid／D800 間接光值是否一致。</p>
+    <pre><code> R1   xatlas 間接光值「本應」等於 hybrid，分裂來自 valid／invalid 拼塊 + alpha 閾值 0.5 邊界跳動
+      → 修 alpha policy／dilation 即可，架構保留；決策成本低。
+ R2a  目前 smoke package 品質／解析度造成（atlas 僅 946×516、architecture_probe 品質）
+      → 重烤更高品質／解析度 package 即可，xatlas 架構保留；決策成本中。
+      provisional（暫定）：須重烤高品質／高解析 xatlas 對照才可拍板；無對照時 R2a 與 R2b 無法終局分辨。
+ R2b  xatlas C2C 架構與 D800 本質無法對齊（bake 路徑、worldPos 映射差）
+      → A1 只要走 xatlas 就會分裂，須改回與其餘北牆相同架構（D800／separated）；決策成本高。
+ 註   R2a 與 R2b 後續決策成本不同，須分開判定，避免混為一談。</code></pre>
+    <p>A／C／D／E 初判為同一機制在不同幾何位置的表現：A＝沿 chart 三角邊的 valid／invalid 交替；C＝atlas 低解析＋烘焙雜訊；D／E＝A1 xatlas 西緣與西牆 bake 的 seam。皆待證據確認。</p>
+    <h2>4. ROADMAP（分階段）</h2>
+    <h3>階段 0：校正現況（唯讀）</h3>
+    <pre><code> 目標  讓現況理解對齊實際工作區，避開過期行號或文件描述帶來的誤導。
+ 動作  0a 確認 server port（已測：9001 回 200）並貼正確重現網址。
+       0b git diff 確認工作區已套用哪些修法；以實讀 shader 校正行號(6532/6596/6610/6699/6801/7070)。
+       0c 開重現圖自驗 6 點(可開／非黑／cameraState／有累積／瑕疵在框／確認載入 a1-c2c-smoke 且非 fallback 空包)，
+          確認 A–E 在畫面上。
+ 判據  A–E 五塊在指定相機視角可見；行號與旗標名與實碼一致。
+ 產出  現況校正筆記（含已套用修法清單）。</code></pre>
+    <h3>階段 1：探針釘根因（核心）</h3>
+    <pre><code> 目標  用 probe 分辨 R1 與 R2。
+ 動作  1a probe 54（final source-id）：標出 A1 每格走 1=xatlas／2=legacy_d800_north(北牆)／
+          3=west_beam_shadow(西梁陰影)／4=live_trace(即時光追)／5=other_hybrid_or_baked(範圍大)，
+          定位 A／C／D／E 來源。
+       1b 取「同一世界座標」兩側的間接光值再相比（這是 R1／R2 決勝判據，須兩側湊齊、同基準）：
+          hybrid 側＝probe 49（北牆 hybrid pre-albedo radiance，單邊，glsl 6061）；
+          xatlas 側＝r7310C1XatlasRuntimeCpuSampleValidLinear(atlasUv)（CPU mirror，與正式 runtime 顯示同走
+          valid-linear；InitCommon 2263 對應 shader 1176）。
+          CpuTexel 與 probe 56 綠階只適合看單點 texel／alpha 狀態，不可當決勝數值；只跑 probe 49 僅量到 hybrid 一半。
+          atlasUv 由 r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition) 取得（InitCommon 2215，限 A1 smoke
+          bounds：x∈[-1.912,-1.518]、|z+1.874|≤0.006）；worldPosition 由現有 diagnostic 或 probe 32／45 取樣
+          （皆輸出 hit 世界座標編碼，使用前先以實機確認 A1 牆面該 probe 有值）。
+       1c probe 56（xatlas alpha＋luma 診斷，glsl 6581）：看最終 alpha 與 nearest luma 分佈（runtime 取樣端）。
+          backface-ratio 是否壓在閾值 0.5 門檻 probe 56 看不到，須補讀離線工具：
+          docs/tools/r7-3-10-c2c-validity-mask.py、packageDir 內 xatlas-c2c-alpha-report.json、
+          docs/tools/r7-3-10-c2b-backface-ratio.py。
+ 判據  同格相等 → 偏 R1；同格系統性不等 → 偏 R2。R2a 對 R2b 無法只靠解析度／alpha 分佈分辨，
+       須重烤高品質／高解析 xatlas 對照才可拍板（無對照時 R2a 僅 provisional）。
+       alpha 沿三角邊交替 → 解釋 A 斑馬線。
+ 產出  A1 source-id 圖、xatlas 對比 hybrid 同格間接光差幅（兩側皆 valid-linear）、alpha＋luma 遮罩分佈圖。
+ 紀律  只量破圖那一格，避開 B。</code></pre>
+    <h3>階段 2：bin 量測佐證（離線交叉驗證）</h3>
+    <pre><code> 目標  用 atlas bin 數值佐證階段 1 的螢幕判讀。
+ 動作  2a 讀 atlas-patch bin 與 D800 北牆包，對同一世界座標比對 xatlas 對比 D800 間接光值差幅。
+       2b 確認 D800／separated 北牆包是否本就覆蓋 A1 區（影響「架構回退」是否等於切回 hybrid 路徑、零重烤）。
+       2c D／E 在北牆／西牆交界，須補西側證據：先用 probe 54 定位交界兩側 source-id
+          （3=west_beam_shadow、5=other_hybrid_or_baked 範圍大）。D／E 落 5 時，再用 westJoin probe 22/26
+          或 owner probe 37/38 拆出實際面（西牆／西牆梁／西南柱…），再讀對應西牆／西梁 package 或 runtime source 量測，
+          否則 D／E 接縫根因會缺一側。
+ 判據  bin 量測與探針結論一致；釐清架構回退成本；D／E 兩側來源皆有證據。
+ 產出  同座標數值對照表、D800 覆蓋範圍確認、D／E 交界兩側 source-id（含 5 的再拆結果）與西側 package 比對。</code></pre>
+    <h3>階段 3：判定根因 + 修法走向（僅評估，待拍板才實作）</h3>
+    <pre><code> R2b 成立  提案 A1 退出 xatlas、改回北牆既有架構（D800／separated）為主修法（決策成本高）。
+ R2a 成立  提案重烤更高品質／解析度 xatlas package，xatlas 架構保留（決策成本中；須重烤對照才可從 provisional 拍板）。
+ R1  成立  提案 alpha policy／dilation 修正為主修法（決策成本低）。
+ 共通      全程不退 LIVE、不補保底光；A–E 須一起收斂到無縫同色才算過。
+ 交付      根因報告（含證據行號索引）→ 使用者拍板 → 才進修法循環。</code></pre>
+    <h2>5. 探針速查（probe mode）</h2>
+    <pre><code> 22   westJoinRoute（西側交界走哪條：1=swColumnNorth 2=westWall 3=westWallBeam 4=swColumnInner 5=westBeamInner 6=westBeamUnder 7=structural）
+ 26   westJoinIndirectRadiance（西側交界間接光）
+ 37   hybridOwnerCountBitmask ／ 38 hybridOwnerRouteSummary（拆 source-id 5 的實際擁有者）
+ 49   北牆 hybrid pre-albedo 間接（只輸出 hybrid 側單邊；glsl 6061，須配 xatlas 側 valid-linear 才成同格比對）
+ 54   final runtime source-id（1=xatlas 2=legacy_d800_north 3=west_beam_shadow 4=live_trace 5=other_hybrid_or_baked；glsl 6532）
+ 55   xatlas A1 triId 色塊（glsl 6577）
+ 56   xatlas alpha＋luma 診斷（藍=alpha≤0.5 紅=alpha1且黑 綠=alpha1有亮；glsl 6581；看不到 backface-ratio 門檻）
+ 設法 手動：瀏覽器 console 設 pathTracingUniforms.uR7310C1RuntimeProbeMode.value = &lt;編號&gt;，或用 URL 參數截圖。
+ 上限 自動報告 reportR7310C1FullRoomDiffuseRuntimeProbe() 的 probeLevel 夾在 [1,53]（InitCommon 11343）；
+      22/26/37/38 在 [1,53] 內可由自動報告跑；54/55/56 會被夾成 53，須走手動 uniform／URL 截圖，或先把 helper 上限改到 56。</code></pre>
+    <h2>6. 重現環境（完整網址）</h2>
+    <pre><code> 完整網址  http://localhost:9001/Home_Studio.html?nonSquarePackage=d800-north-denoise-c&amp;xatlasPackage=a1-c2c-smoke
+ 套件      xatlasPackage=a1-c2c-smoke → docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json
+           packageDir .omc/r7-3-10-xatlas-bake-spike/20260607-062247、atlas 946×516、
+           requestedSamples=1000、uploadRowFlip=false、alpha policy 逐 texel backface-ratio 閾值 0.5。
+ 包品質    validation-report status=fail 屬效能型（gpu-submission-ms-over-250、maxSubmissionElapsedMs 341.7&gt;250），
+           屬非畫質型 fail：browserValidation=pass、finiteAtlas／atlasVisibleLuma／validTexelRatio 皆 pass、
+           minCompletedSamples 1000、timedOut=false。本包仍屬 architecture_probe package，可用於根因判讀。
+ 旗標      config 1、床、SPOT、地板／四牆／天花板／樑柱／鐵門開口烘焙＝開、北東非方格＝開。
+ 圖一相機  position(-1.588045, 2.556184, -1.641069) yaw 0.2252 pitch 0.75 fov 55 朝北（看 A／B／C）
+ 圖二相機  position(-1.705665, 1.924279, -1.460364) yaw 0.2708 pitch 0.427 fov 55 朝北（看 D／E）</code></pre>
+    <h2>7. 已排除（勿重走）</h2>
+    <pre><code> uploadRowFlip 雙重 flip（兩條垂直長條）—— 已修，uploadRowFlip=false。
+ albedo 架構差 35%（wrong area）—— 對照錯基準，已證偽。
+ bake exact-zero／補保底光 —— 使用者否決，永久禁止。
+ 「變暗是真實光照」—— 使用者多次否定，禁止再猜。
+ 改 rayDirection=-normal／半球取樣 —— 與乾淨 D800 同公式，動全 23 面共用路徑，屬非根因。</code></pre>
+    <h2>8. 關鍵檔案地圖</h2>
+    <table>
+<thead>
+<tr>
+<th>用途</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime 合成 first-hit／NEE（A–E 主場）</td>
+<td>shaders/Home_Studio_Fragment.glsl 6532/6596/6610/6699/6801/7070</td>
+</tr>
+<tr>
+<td>xatlas valid-linear 取樣（顯示路徑）</td>
+<td>glsl 1176 r7310C1XatlasRuntimeSampleValidLinear ／ CPU mirror InitCommon 2263</td>
+</tr>
+<tr>
+<td>xatlas first-hit 旗標</td>
+<td>glsl 5897 r7310XatlasRuntimeFirstHit</td>
+</tr>
+<tr>
+<td>北牆 hybrid 旗標／active／UV</td>
+<td>glsl 5790／1787／1758</td>
+</tr>
+<tr>
+<td>probe 49／54／55／56 定義</td>
+<td>glsl 6061／6532／6577／6581</td>
+</tr>
+<tr>
+<td>source-id decode（1..5 名稱）</td>
+<td>js/InitCommon.js 10805 r7310C1FinalRuntimeSourceNameForId</td>
+</tr>
+<tr>
+<td>自動報告 probeLevel 夾值</td>
+<td>js/InitCommon.js 11343</td>
+</tr>
+<tr>
+<td>Runtime 載入／uploadRowFlip／albedo 乘</td>
+<td>js/InitCommon.js 2196／3846-3854／13064</td>
+</tr>
+<tr>
+<td>離線 alpha／backface 工具</td>
+<td>docs/tools/r7-3-10-c2c-validity-mask.py、docs/tools/r7-3-10-c2b-backface-ratio.py、packageDir 內 xatlas-c2c-alpha-report.json</td>
+</tr>
+<tr>
+<td>a1-c2c-smoke 套件</td>
+<td>docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json</td>
+</tr>
+<tr>
+<td>對照基準（曾無縫同色）</td>
+<td>D800／separated：docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json</td>
+</tr>
+<tr>
+<td>Debug 紀律／修史</td>
+<td>docs/SOP/Debug_Log.md（開頭通用紀律 + grep 索引）</td>
+</tr>
+</tbody>
+</table>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=3f1270966039"></script>
+</body>
+</html>

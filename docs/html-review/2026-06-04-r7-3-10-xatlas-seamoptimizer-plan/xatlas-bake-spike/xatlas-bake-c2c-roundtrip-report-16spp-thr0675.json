@@ -1,0 +1,129 @@
+{
+  "schema": "r7-3-10-c2b-roundtrip-v1",
+  "status": "PASS",
+  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260605-072352",
+  "atlas": {
+    "width": 946,
+    "height": 516
+  },
+  "expectedCounts": {
+    "worldFloats": 1952544,
+    "normalFloats": 1952544,
+    "triFloats": 1952544,
+    "metadataFloats": 5857632
+  },
+  "actualCounts": {
+    "worldFloats": 1952544,
+    "normalFloats": 1952544,
+    "triFloats": 1952544,
+    "metadataFloats": 5857632
+  },
+  "checks": {
+    "counts": true,
+    "metadataFileExists": true,
+    "worldMaxErrorM": 0.0,
+    "normalMaxError": 0.0,
+    "triMismatch": 0,
+    "validMismatch": 0,
+    "sourceMismatch": 0,
+    "materialMismatch": 0,
+    "uvMaxError": 2.9739315343668693e-08,
+    "a1ZWithin1mm": true,
+    "noFlipSampledTexels": 823,
+    "noFlipWorldMaxErrorM": 4.921999931335449
+  },
+  "a1PerTriangle": {
+    "10": {
+      "texels": 22990,
+      "zMin": -1.8739999532699585,
+      "zMax": -1.8739999532699585,
+      "zMaxErrorM": 4.6730041614040374e-08
+    },
+    "11": {
+      "texels": 22988,
+      "zMin": -1.8739999532699585,
+      "zMax": -1.8739999532699585,
+      "zMaxErrorM": 4.6730041614040374e-08
+    },
+    "20": {
+      "texels": 1196,
+      "zMin": -1.8739999532699585,
+      "zMax": -1.8739999532699585,
+      "zMaxErrorM": 4.6730041614040374e-08
+    },
+    "21": {
+      "texels": 1268,
+      "zMin": -1.8739999532699585,
+      "zMax": -1.8739999532699585,
+      "zMaxErrorM": 4.6730041614040374e-08
+    }
+  },
+  "tileBoundarySamples": [
+    {
+      "x": 511,
+      "y": 0,
+      "world": [
+        -1.909999966621399,
+        0.3500000536441803,
+        -2.0739998817443848
+      ],
+      "triId": 0,
+      "valid": 1
+    },
+    {
+      "x": 512,
+      "y": 0,
+      "world": [
+        -1.909999966621399,
+        0.3450000584125519,
+        -2.0739998817443848
+      ],
+      "triId": 0,
+      "valid": 1
+    },
+    {
+      "x": 511,
+      "y": 511,
+      "world": [
+        -1.75,
+        2.884999990463257,
+        0.2946223318576813
+      ],
+      "triId": 14,
+      "valid": 1
+    },
+    {
+      "x": 512,
+      "y": 511,
+      "world": [
+        -1.75,
+        2.884999990463257,
+        0.28962552547454834
+      ],
+      "triId": 14,
+      "valid": 1
+    },
+    {
+      "x": 511,
+      "y": 515,
+      "world": [
+        -1.75,
+        2.9049999713897705,
+        0.2946223318576813
+      ],
+      "triId": 14,
+      "valid": 1
+    },
+    {
+      "x": 512,
+      "y": 515,
+      "world": [
+        -1.75,
+        2.9049999713897705,
+        0.28962552547454834
+      ],
+      "triId": 14,
+      "valid": 1
+    }
+  ]
+}

@@ -1,0 +1,582 @@
+{
+  "generatedNote": "R7-3.10 Step A 先紅基線（SOP §14.3）。≥500 spp 失敗截圖 + 五個 y 高度行 line/control probe（讀原始 float render target、無 tonemap 汙染）+ overlay 與固定 user-a1-redbox-reference.png 並排。只讀頁面 probe driver，未修改 source/shader/bake。資料為量測事實，不含人工 root cause/owner/西樑定案。",
+  "runId": "diag-30spp",
+  "package": "d800-north-denoise-c",
+  "pageUrl": "http://127.0.0.1:9004/Home_Studio.html?nonSquarePackage=d800-north-denoise-c&v=stage-a-39837",
+  "cameraState": {
+    "name": "user_acceptance",
+    "position": {
+      "x": -1.708748,
+      "y": 2.826862,
+      "z": -1.820144
+    },
+    "forward": {
+      "x": -0.495699,
+      "y": 0.416871,
+      "z": -0.761906
+    },
+    "fov": 55
+  },
+  "accumulatedSamples": 32,
+  "minSpp": 30,
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "devicePixelRatio": 1,
+    "canvasWidth": 1280,
+    "canvasHeight": 720,
+    "clientHeight": 720
+  },
+  "detect": {
+    "W": 1280,
+    "H": 720,
+    "x_line": 595,
+    "drop": 0.0046,
+    "yRange": [
+      229,
+      252
+    ]
+  },
+  "xLine": 595,
+  "controlX": 603,
+  "yHeights": [
+    229,
+    235,
+    241,
+    246,
+    252
+  ],
+  "rows": [
+    {
+      "y": 229,
+      "alignmentOk": false,
+      "route": {
+        "l31": null,
+        "l35": null
+      },
+      "owner": null,
+      "bakedLine_vs_control": {
+        "l36": {
+          "line": null,
+          "control": null
+        },
+        "l49": {
+          "line": null,
+          "control": null
+        }
+      },
+      "worldPosition": null,
+      "hitObject": null,
+      "normal": null,
+      "byLevel": {
+        "22": {
+          "decodeMode": "westJoinRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "23": {
+          "decodeMode": "westJoinNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "24": {
+          "decodeMode": "westJoinWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "25": {
+          "decodeMode": "westJoinHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "26": {
+          "decodeMode": "westJoinIndirectRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "31": {
+          "decodeMode": "northBeamRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "32": {
+          "decodeMode": "northBeamWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "33": {
+          "decodeMode": "northBeamNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "34": {
+          "decodeMode": "northBeamHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "35": {
+          "decodeMode": "northBeamCoverage",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "36": {
+          "decodeMode": "northBeamRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "37": {
+          "decodeMode": "hybridOwnerCountBitmask",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "38": {
+          "decodeMode": "hybridOwnerRouteSummary",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "49": {
+          "decodeMode": "nonSquareNorthPreAlbedoRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        }
+      }
+    },
+    {
+      "y": 235,
+      "alignmentOk": false,
+      "route": {
+        "l31": null,
+        "l35": null
+      },
+      "owner": null,
+      "bakedLine_vs_control": {
+        "l36": {
+          "line": null,
+          "control": null
+        },
+        "l49": {
+          "line": null,
+          "control": null
+        }
+      },
+      "worldPosition": null,
+      "hitObject": null,
+      "normal": null,
+      "byLevel": {
+        "22": {
+          "decodeMode": "westJoinRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "23": {
+          "decodeMode": "westJoinNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "24": {
+          "decodeMode": "westJoinWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "25": {
+          "decodeMode": "westJoinHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "26": {
+          "decodeMode": "westJoinIndirectRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "31": {
+          "decodeMode": "northBeamRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "32": {
+          "decodeMode": "northBeamWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "33": {
+          "decodeMode": "northBeamNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "34": {
+          "decodeMode": "northBeamHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "35": {
+          "decodeMode": "northBeamCoverage",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "36": {
+          "decodeMode": "northBeamRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "37": {
+          "decodeMode": "hybridOwnerCountBitmask",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "38": {
+          "decodeMode": "hybridOwnerRouteSummary",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "49": {
+          "decodeMode": "nonSquareNorthPreAlbedoRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        }
+      }
+    },
+    {
+      "y": 241,
+      "alignmentOk": false,
+      "route": {
+        "l31": null,
+        "l35": null
+      },
+      "owner": null,
+      "bakedLine_vs_control": {
+        "l36": {
+          "line": null,
+          "control": null
+        },
+        "l49": {
+          "line": null,
+          "control": null
+        }
+      },
+      "worldPosition": null,
+      "hitObject": null,
+      "normal": null,
+      "byLevel": {
+        "22": {
+          "decodeMode": "westJoinRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "23": {
+          "decodeMode": "westJoinNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "24": {
+          "decodeMode": "westJoinWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "25": {
+          "decodeMode": "westJoinHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "26": {
+          "decodeMode": "westJoinIndirectRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "31": {
+          "decodeMode": "northBeamRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "32": {
+          "decodeMode": "northBeamWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "33": {
+          "decodeMode": "northBeamNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "34": {
+          "decodeMode": "northBeamHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "35": {
+          "decodeMode": "northBeamCoverage",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "36": {
+          "decodeMode": "northBeamRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "37": {
+          "decodeMode": "hybridOwnerCountBitmask",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "38": {
+          "decodeMode": "hybridOwnerRouteSummary",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "49": {
+          "decodeMode": "nonSquareNorthPreAlbedoRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        }
+      }
+    },
+    {
+      "y": 246,
+      "alignmentOk": false,
+      "route": {
+        "l31": null,
+        "l35": null
+      },
+      "owner": null,
+      "bakedLine_vs_control": {
+        "l36": {
+          "line": null,
+          "control": null
+        },
+        "l49": {
+          "line": null,
+          "control": null
+        }
+      },
+      "worldPosition": null,
+      "hitObject": null,
+      "normal": null,
+      "byLevel": {
+        "22": {
+          "decodeMode": "westJoinRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "23": {
+          "decodeMode": "westJoinNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "24": {
+          "decodeMode": "westJoinWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "25": {
+          "decodeMode": "westJoinHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "26": {
+          "decodeMode": "westJoinIndirectRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "31": {
+          "decodeMode": "northBeamRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "32": {
+          "decodeMode": "northBeamWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "33": {
+          "decodeMode": "northBeamNormal",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "34": {
+          "decodeMode": "northBeamHitObject",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "35": {
+          "decodeMode": "northBeamCoverage",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "36": {
+          "decodeMode": "northBeamRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "37": {
+          "decodeMode": "hybridOwnerCountBitmask",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "38": {
+          "decodeMode": "hybridOwnerRouteSummary",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "49": {
+          "decodeMode": "nonSquareNorthPreAlbedoRadiance",
+          "status": "pass",
+          "line": null,
+          "control": null
+        }
+      }
+    },
+    {
+      "y": 252,
+      "alignmentOk": false,
+      "route": {
+        "l31": null,
+        "l35": null
+      },
+      "owner": null,
+      "bakedLine_vs_control": {
+        "l36": {
+          "line": null,
+          "control": null
+        },
+        "l49": {
+          "line": null,
+          "control": null
+        }
+      },
+      "worldPosition": null,
+      "hitObject": null,
+      "normal": null,
+      "byLevel": {
+        "22": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "23": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "24": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "25": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "26": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "31": {
+          "decodeMode": "northBeamRoute",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "32": {
+          "decodeMode": "northBeamWorldPosition",
+          "status": "pass",
+          "line": null,
+          "control": null
+        },
+        "33": {
+          "error": "CDP socket closed"
+        },
+        "34": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "35": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "36": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "37": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "38": {
+          "error": "CDP timeout: Runtime.evaluate"
+        },
+        "49": {
+          "error": "CDP timeout: Runtime.evaluate"
+        }
+      }
+    }
+  ],
+  "overlay": {
+    "overlayPng": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/diag-30spp/west-beam-north-contact-overlay.png",
+    "compositePng": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/diag-30spp/overlay-vs-user-reference.png",
+    "failingPng": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/stage-a/diag-30spp/west-beam-north-contact-failing.png",
+    "userReference": "docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/user-a1-redbox-reference.png",
+    "redboxInReference": {
+      "xMin": 154,
+      "xMax": 2239,
+      "yMin": 105,
+      "yMax": 2319,
+      "xMinFrac": 0.0553,
+      "xMaxFrac": 0.8042,
+      "yMinFrac": 0.0344,
+      "yMaxFrac": 0.7593,
+      "count": 33047
+    },
+    "lineFracX": 0.4648,
+    "lineFracYRange": [
+      0.3181,
+      0.35
+    ]
+  },
+  "acceptance": {
+    "fiveRows": true,
+    "allRowsAligned": false,
+    "note": "overlay 涵蓋判定以 overlay-vs-user-reference.png 對固定 reference 人眼複核為準（§14.3 驗收(2)）；alignmentOk 為 level 32 worldPosition 落西樑↔北牆交界帶之客觀錨。"
+  }
+}

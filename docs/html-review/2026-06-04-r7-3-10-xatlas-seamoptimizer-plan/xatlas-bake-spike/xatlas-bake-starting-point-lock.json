@@ -1,0 +1,57 @@
+{
+  "startingPoint": {
+    "files": {
+      "inputMesh": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-input-mesh.json",
+        "sha256": "6ec89e9ce8a729c662fdf96d71160116caa8834178bb60881cd73d278484e2ec",
+        "sha16": "6ec89e9ce8a729c6",
+        "bytes": 19403
+      },
+      "outputUv": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-output-uv.json",
+        "sha256": "0692b510b95a63fae671279e6838425bb673a2b0ec4081fcf8e518aade0d6f1b",
+        "sha16": "0692b510b95a63fa",
+        "bytes": 34810
+      },
+      "coverageReport": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-a1-coverage-report.json",
+        "sha256": "bd9dc533c2e3ad937624cc39bf56c3e708d331bb6a1a5b26a47a781dc6425dd3",
+        "sha16": "bd9dc533c2e3ad93",
+        "bytes": 440
+      },
+      "chartDebug": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-chart-debug.png",
+        "sha256": "a0fdf3b3004a8147a68a7a820a47b4bc02f2442391f29a453e3fa73708a88ffc",
+        "sha16": "a0fdf3b3004a8147",
+        "bytes": 4987
+      }
+    },
+    "atlas": {
+      "width": 946,
+      "height": 516,
+      "chartCount": 12,
+      "atlasCount": 1
+    },
+    "input": {
+      "positions": 48,
+      "triangles": 24,
+      "includedBoxes": 2
+    },
+    "a1": {
+      "capTriangleIds": [
+        20,
+        21
+      ],
+      "wallTriangleIds": [
+        10,
+        11
+      ],
+      "allTriangleIds": [
+        10,
+        11,
+        20,
+        21
+      ]
+    }
+  }
+}

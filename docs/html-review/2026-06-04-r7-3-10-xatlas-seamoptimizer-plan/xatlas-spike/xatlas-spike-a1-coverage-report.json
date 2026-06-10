@@ -1,0 +1,30 @@
+{
+  "a1CapTriangleIds": [
+    20,
+    21
+  ],
+  "a1WallTriangleIds": [
+    10,
+    11
+  ],
+  "a1TriangleIds": [
+    10,
+    11,
+    20,
+    21
+  ],
+  "allHaveChart": true,
+  "uvValid": true,
+  "noCoverageHole": true,
+  "bboxOverlapCandidates": [
+    [
+      10,
+      11
+    ],
+    [
+      20,
+      21
+    ]
+  ],
+  "note": "bboxOverlapCandidates are reported as caution because bbox overlap can over-approximate actual triangle overlap."
+}

@@ -1,0 +1,33 @@
+{
+  "edge": "a1",
+  "method": "blender-boolean-intersect(EXACT)",
+  "wallPlaneZ": -1.874,
+  "contactBand": {
+    "z": -1.874,
+    "xMin": -1.91,
+    "xMax": -1.75,
+    "yMin": 2.525,
+    "yMax": 2.905
+  },
+  "sides": [
+    {
+      "role": "north_wall",
+      "boxIndex": 15,
+      "faceNormal": "+Z"
+    },
+    {
+      "role": "west_beam",
+      "boxIndex": 28,
+      "faceNormal": "-Z"
+    }
+  ],
+  "vsPythonScan": {
+    "diffs": {
+      "xMin": 0.0,
+      "xMax": 0.0,
+      "yMin": 0.0,
+      "yMax": 0.0
+    },
+    "agree": true
+  }
+}

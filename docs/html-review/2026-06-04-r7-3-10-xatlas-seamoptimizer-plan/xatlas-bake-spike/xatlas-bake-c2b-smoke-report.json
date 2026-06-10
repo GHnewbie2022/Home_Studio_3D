@@ -1,0 +1,423 @@
+{
+  "schema": "r7-3-10-c2b-smoke-report-v1",
+  "status": "REVIEW_READY",
+  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260605-063152",
+  "manifest": {
+    "version": "r7-3-10-xatlas-bake-c2",
+    "requestedSamples": 16,
+    "targetAtlasWidth": 946,
+    "targetAtlasHeight": 516
+  },
+  "gpuSmoke": {
+    "browserValidationStatus": "pass",
+    "runnerStatus": "fail",
+    "runnerFailedChecks": [
+      "atlasSamples",
+      "patchSamples"
+    ],
+    "unexpectedRunnerFailedChecks": [],
+    "completedTiles": 4,
+    "minCompletedSamples": 16,
+    "contextLostCount": 0,
+    "contextRestoredCount": 0,
+    "submissionEverySamples": 4,
+    "maxSubmissionElapsedMs": 188.9,
+    "maxTileReadbackMs": 5.9,
+    "metadataFileBytes": 23430528,
+    "atlasFileBytes": 7810176
+  },
+  "roundtrip": {
+    "status": "PASS",
+    "worldMaxErrorM": 0.0,
+    "normalMaxError": 0.0,
+    "triMismatch": 0,
+    "validMismatch": 0,
+    "a1ZWithin1mm": true,
+    "a1PerTriangle": {
+      "10": {
+        "texels": 22990,
+        "zMin": -1.8739999532699585,
+        "zMax": -1.8739999532699585,
+        "zMaxErrorM": 4.6730041614040374e-08
+      },
+      "11": {
+        "texels": 22988,
+        "zMin": -1.8739999532699585,
+        "zMax": -1.8739999532699585,
+        "zMaxErrorM": 4.6730041614040374e-08
+      },
+      "20": {
+        "texels": 1196,
+        "zMin": -1.8739999532699585,
+        "zMax": -1.8739999532699585,
+        "zMaxErrorM": 4.6730041614040374e-08
+      },
+      "21": {
+        "texels": 1268,
+        "zMin": -1.8739999532699585,
+        "zMax": -1.8739999532699585,
+        "zMaxErrorM": 4.6730041614040374e-08
+      }
+    }
+  },
+  "backfaceRatio": {
+    "raysPerTexel": 160,
+    "epsOffsetM": 0.001,
+    "roomBoxes": 88,
+    "perTriangle": {
+      "10": {
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "texelsSampled": 220,
+        "frontFraction": {
+          "mean": 0.9966477272727272,
+          "min": 0.575,
+          "max": 1.0,
+          "p10": 1.0,
+          "p90": 1.0
+        },
+        "pctTexelsFrontFracBelow0p5": 0.0
+      },
+      "11": {
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "texelsSampled": 220,
+        "frontFraction": {
+          "mean": 0.9479829545454546,
+          "min": 0.16875,
+          "max": 1.0,
+          "p10": 0.7206250000000001,
+          "p90": 1.0
+        },
+        "pctTexelsFrontFracBelow0p5": 3.6363636363636362
+      },
+      "20": {
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "texelsSampled": 220,
+        "frontFraction": {
+          "mean": 0.32659090909090904,
+          "min": 0.15625,
+          "max": 0.49375,
+          "p10": 0.25,
+          "p90": 0.425
+        },
+        "pctTexelsFrontFracBelow0p5": 100.0
+      },
+      "21": {
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "texelsSampled": 220,
+        "frontFraction": {
+          "mean": 0.3479605300688214,
+          "min": 0.04375,
+          "max": 0.6440677966101694,
+          "p10": 0.1875,
+          "p90": 0.475
+        },
+        "pctTexelsFrontFracBelow0p5": 98.63636363636363
+      }
+    },
+    "thresholdSweep": {
+      "0.3": {
+        "tri10": 100.0,
+        "tri11": 99.0909090909091,
+        "tri20": 61.36363636363637,
+        "tri21": 68.63636363636364
+      },
+      "0.4": {
+        "tri10": 100.0,
+        "tri11": 98.18181818181819,
+        "tri20": 13.636363636363635,
+        "tri21": 43.63636363636363
+      },
+      "0.5": {
+        "tri10": 100.0,
+        "tri11": 96.36363636363636,
+        "tri20": 0.0,
+        "tri21": 1.3636363636363635
+      },
+      "0.6": {
+        "tri10": 99.54545454545455,
+        "tri11": 90.9090909090909,
+        "tri20": 0.0,
+        "tri21": 0.9090909090909091
+      },
+      "0.7": {
+        "tri10": 99.0909090909091,
+        "tri11": 90.0,
+        "tri20": 0.0,
+        "tri21": 0.0
+      },
+      "0.8": {
+        "tri10": 99.0909090909091,
+        "tri11": 89.54545454545455,
+        "tri20": 0.0,
+        "tri21": 0.0
+      },
+      "0.9": {
+        "tri10": 99.0909090909091,
+        "tri11": 89.54545454545455,
+        "tri20": 0.0,
+        "tri21": 0.0
+      }
+    },
+    "candidateDecisionAt0p5": {
+      "tri10": "valid",
+      "tri11": "mostly_valid",
+      "tri20": "invalid",
+      "tri21": "mostly_invalid",
+      "threshold": 0.5,
+      "validPctAtThreshold": {
+        "tri10": 100.0,
+        "tri11": 96.36363636363636,
+        "tri20": 0.0,
+        "tri21": 1.3636363636363635
+      }
+    }
+  },
+  "actualAtlasByTriangle": {
+    "10": {
+      "texels": 22990,
+      "nonzeroRgbTexels": 10411,
+      "nonzeroRgbPct": 45.28490648107873,
+      "nonFiniteTexels": 0,
+      "lumaMean": 0.34289339806707375,
+      "lumaMin": 0.0,
+      "lumaMax": 1.368308445715904,
+      "alphaMin": 1.0,
+      "alphaMax": 1.0
+    },
+    "11": {
+      "texels": 22988,
+      "nonzeroRgbTexels": 18603,
+      "nonzeroRgbPct": 80.92483034626761,
+      "nonFiniteTexels": 0,
+      "lumaMean": 0.6162235854490254,
+      "lumaMin": 0.0,
+      "lumaMax": 1.4070297036647796,
+      "alphaMin": 1.0,
+      "alphaMax": 1.0
+    },
+    "20": {
+      "texels": 1196,
+      "nonzeroRgbTexels": 0,
+      "nonzeroRgbPct": 0.0,
+      "nonFiniteTexels": 0,
+      "lumaMean": 0.0,
+      "lumaMin": 0.0,
+      "lumaMax": 0.0,
+      "alphaMin": 1.0,
+      "alphaMax": 1.0
+    },
+    "21": {
+      "texels": 1268,
+      "nonzeroRgbTexels": 0,
+      "nonzeroRgbPct": 0.0,
+      "nonFiniteTexels": 0,
+      "lumaMean": 0.0,
+      "lumaMin": 0.0,
+      "lumaMax": 0.0,
+      "alphaMin": 1.0,
+      "alphaMax": 1.0
+    }
+  },
+  "alphaEvidence": {
+    "currentSmokeHiddenContact": {
+      "tri20": {
+        "texels": 1196,
+        "nonzeroRgbTexels": 0,
+        "nonzeroRgbPct": 0.0,
+        "nonFiniteTexels": 0,
+        "lumaMean": 0.0,
+        "lumaMin": 0.0,
+        "lumaMax": 0.0,
+        "alphaMin": 1.0,
+        "alphaMax": 1.0
+      },
+      "tri21": {
+        "texels": 1268,
+        "nonzeroRgbTexels": 0,
+        "nonzeroRgbPct": 0.0,
+        "nonFiniteTexels": 0,
+        "lumaMean": 0.0,
+        "lumaMin": 0.0,
+        "lumaMax": 0.0,
+        "alphaMin": 1.0,
+        "alphaMax": 1.0
+      },
+      "interpretation": "Current C2B smoke still has alpha=1 black texels on hidden contact tris. This is expected before C2C. C2C must convert invalid texels to alpha=0 and run alpha-aware dilation."
+    },
+    "candidatePolicy": "At threshold 0.5, tri20/21 should be invalid and written as alpha=0 in C2C.",
+    "actualAlphaIsolationImplementedInC2B": false
+  },
+  "overlapTexels": {
+    "count": 8,
+    "samples": [
+      {
+        "x": 581,
+        "y": 515,
+        "existingTriangleId": 0,
+        "incomingTriangleId": 1,
+        "existingSourceBoxIndex": 15,
+        "incomingSourceBoxIndex": 15,
+        "existingWorld": [
+          -1.909999966621399,
+          7.927417446237497e-08,
+          -2.0739998829364774
+        ],
+        "incomingWorld": [
+          -1.9099999666213987,
+          7.927417468676654e-08,
+          -2.073999882936478
+        ]
+      },
+      {
+        "x": 639,
+        "y": 252,
+        "existingTriangleId": 6,
+        "incomingTriangleId": 7,
+        "existingSourceBoxIndex": 15,
+        "incomingSourceBoxIndex": 15,
+        "existingWorld": [
+          -1.5199999684095367,
+          2.9049999713897705,
+          -1.8739999663829796
+        ],
+        "incomingWorld": [
+          -1.5199999684095367,
+          2.9049999713897705,
+          -1.8739999663829794
+        ]
+      },
+      {
+        "x": 0,
+        "y": 252,
+        "existingTriangleId": 10,
+        "incomingTriangleId": 11,
+        "existingSourceBoxIndex": 15,
+        "incomingSourceBoxIndex": 15,
+        "existingWorld": [
+          -1.519999994039534,
+          2.9049999713554278,
+          -1.8739999532699585
+        ],
+        "incomingWorld": [
+          -1.519999994039534,
+          2.9049999713554278,
+          -1.8739999532699587
+        ]
+      },
+      {
+        "x": 581,
+        "y": 330,
+        "existingTriangleId": 10,
+        "incomingTriangleId": 11,
+        "existingSourceBoxIndex": 15,
+        "incomingSourceBoxIndex": 15,
+        "existingWorld": [
+          -1.909999947547915,
+          7.927417437160507e-08,
+          -1.8739999532699585
+        ],
+        "incomingWorld": [
+          -1.9099999475479148,
+          7.927417446237497e-08,
+          -1.8739999532699585
+        ]
+      },
+      {
+        "x": 0,
+        "y": 85,
+        "existingTriangleId": 12,
+        "incomingTriangleId": 13,
+        "existingSourceBoxIndex": 28,
+        "incomingSourceBoxIndex": 28,
+        "existingWorld": [
+          -1.909999966621399,
+          2.904999983012673,
+          2.848000049556745
+        ],
+        "incomingWorld": [
+          -1.909999966621399,
+          2.904999983012673,
+          2.848000049556744
+        ]
+      },
+      {
+        "x": 945,
+        "y": 161,
+        "existingTriangleId": 12,
+        "incomingTriangleId": 13,
+        "existingSourceBoxIndex": 28,
+        "incomingSourceBoxIndex": 28,
+        "existingWorld": [
+          -1.909999966621399,
+          2.525000095963478,
+          -1.873999826392677
+        ],
+        "incomingWorld": [
+          -1.909999966621399,
+          2.525000095963478,
+          -1.8739998263926771
+        ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "existingTriangleId": 14,
+        "incomingTriangleId": 15,
+        "existingSourceBoxIndex": 28,
+        "incomingSourceBoxIndex": 28,
+        "existingWorld": [
+          -1.7499999999999998,
+          2.9049999713804575,
+          2.8480000495567435
+        ],
+        "incomingWorld": [
+          -1.7499999999999998,
+          2.904999971380457,
+          2.8480000495567435
+        ]
+      },
+      {
+        "x": 945,
+        "y": 76,
+        "existingTriangleId": 14,
+        "incomingTriangleId": 15,
+        "existingSourceBoxIndex": 28,
+        "incomingSourceBoxIndex": 28,
+        "existingWorld": [
+          -1.75,
+          2.525000085532668,
+          -1.8739998263926767
+        ],
+        "incomingWorld": [
+          -1.75,
+          2.5250000855326684,
+          -1.8739998263926765
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "C2B stops before C2C; actual alpha=0 isolation is intentionally not applied yet.",
+    "runner status remains fail only because this is a low-sample smoke and atlasSamples/patchSamples are formal-sample gates."
+  ]
+}

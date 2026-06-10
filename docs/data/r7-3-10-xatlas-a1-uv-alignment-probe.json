@@ -1,0 +1,213 @@
+{
+  "pkg": "/Users/eajrockmacmini/Documents/VS Code/My Project/Home_Studio_3D/.omc/r7-3-10-xatlas-bake-spike/20260607-062247",
+  "atlas": {
+    "width": 946,
+    "height": 516
+  },
+  "layout_selfcheck": {
+    "10": {
+      "texels": 22990,
+      "world_x": [
+        -1.909999966621399,
+        -1.5199999809265137
+      ],
+      "world_y": [
+        7.927417300379602e-08,
+        2.9049999713897705
+      ],
+      "world_z": [
+        -1.8739999532699585,
+        -1.8739999532699585
+      ],
+      "valid_one": 22990,
+      "alpha_one": 17710
+    },
+    "11": {
+      "texels": 22988,
+      "world_x": [
+        -1.909999966621399,
+        -1.524999976158142
+      ],
+      "world_y": [
+        0.005000079050660133,
+        2.9049999713897705
+      ],
+      "world_z": [
+        -1.8739999532699585,
+        -1.8739999532699585
+      ],
+      "valid_one": 22988,
+      "alpha_one": 18492
+    }
+  },
+  "per_tri": {
+    "10": {
+      "alpha_one_texels": 17710,
+      "atlas_col_range": [
+        0,
+        569
+      ],
+      "atlas_row_range": [
+        195,
+        263
+      ],
+      "world_x_range": [
+        -1.8599998950958252,
+        -1.5199999809265137
+      ],
+      "world_y_range": [
+        0.06000007688999176,
+        2.9049999713897705
+      ],
+      "uv_residual_px": {
+        "H1_noflip": {
+          "median_px": 0.7071067811865476,
+          "p90_px": 0.7071283607022473
+        },
+        "H2_vflip": {
+          "median_px": 28.50438562747845,
+          "p90_px": 80.50155296960742
+        },
+        "H3_uflip": {
+          "median_px": 220.5005668580955,
+          "p90_px": 614.5002034173789
+        },
+        "H4_bothflip": {
+          "median_px": 224.60966087232964,
+          "p90_px": 614.5355156443953
+        }
+      }
+    },
+    "11": {
+      "alpha_one_texels": 18492,
+      "atlas_col_range": [
+        0,
+        508
+      ],
+      "atlas_row_range": [
+        185,
+        262
+      ],
+      "world_x_range": [
+        -1.909999966621399,
+        -1.524999976158142
+      ],
+      "world_y_range": [
+        0.36500006914138794,
+        2.9049999713897705
+      ],
+      "uv_residual_px": {
+        "H1_noflip": {
+          "median_px": 0.7071067811865476,
+          "p90_px": 0.7071283603729851
+        },
+        "H2_vflip": {
+          "median_px": 100.50124377339814,
+          "p90_px": 136.50091574784398
+        },
+        "H3_uflip": {
+          "median_px": 532.5002347417322,
+          "p90_px": 782.5001597443926
+        },
+        "H4_bothflip": {
+          "median_px": 541.9404947118067,
+          "p90_px": 787.2654571303801
+        }
+      }
+    }
+  },
+  "best_flip_hypothesis": "H1_noflip",
+  "flip_weighted_median_px": {
+    "H1_noflip": 0.7071067811865477,
+    "H2_vflip": 65.28041736148063,
+    "H3_uflip": 379.8701557897626,
+    "H4_bothflip": 386.70241208385414
+  },
+  "runtime_reproduction": {
+    "grid_nx_ny": [
+      80,
+      200
+    ],
+    "note": "world-x idx0=西(-1.91 木門側), idx79=東(-1.52)",
+    "no_flip_uploadRowFlipFalse": {
+      "alpha_one_hit_pct": 78.95,
+      "landed_on_target_tri_pct": 100.0,
+      "lit_world_x_columns": 80,
+      "total_world_x_columns": 80,
+      "vertical_lit_bands": [
+        [
+          0,
+          79
+        ]
+      ],
+      "vertical_lit_band_count": 1,
+      "col_hit_west_to_east": [
+        0.74,
+        0.74,
+        0.74,
+        0.74,
+        0.74,
+        0.74,
+        0.74,
+        0.76,
+        0.81,
+        0.82,
+        0.84,
+        0.82,
+        0.81,
+        0.81,
+        0.81,
+        0.81,
+        0.81,
+        0.82,
+        0.82,
+        0.81
+      ]
+    },
+    "flip_uploadRowFlipTrue_ACTUAL_RUNTIME": {
+      "alpha_one_hit_pct": 18.27,
+      "landed_on_target_tri_pct": 16.25,
+      "lit_world_x_columns": 18,
+      "total_world_x_columns": 80,
+      "vertical_lit_bands": [
+        [
+          13,
+          17
+        ],
+        [
+          67,
+          79
+        ]
+      ],
+      "vertical_lit_band_count": 2,
+      "col_hit_west_to_east": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.79,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.81,
+        0.82,
+        0.82
+      ]
+    }
+  },
+  "verdict": {
+    "best_flip": "H1_noflip",
+    "best_flip_median_residual_px": 0.707,
+    "uv_alignment": "ALIGNED (硬寫 UV 與 atlas 對齊，殘差<=2px)",
+    "root_cause_lean": "A_or_Hb (bake 階段 alpha 分佈造成條紋，非 UV 錯位)"
+  }
+}

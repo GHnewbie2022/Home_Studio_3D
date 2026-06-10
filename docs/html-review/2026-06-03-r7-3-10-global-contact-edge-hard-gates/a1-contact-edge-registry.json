@@ -1,0 +1,545 @@
+{
+  "generatedNote": "R7-3.10 Step D registry 骨架（SOP §14.6）。ownerPolicy 一律 PENDING，由 Step E 三來源對帳後產出；contactCandidates 為 Step C 幾何兩側（不代表歸屬），observedOwnerEvidence 為 Step A probe 原始讀值。未改 shader/bake/runtime。",
+  "edges": [
+    {
+      "edgeName": "A1 北牆 ↔ 西樑北端",
+      "edgeId": "a1",
+      "worldBounds": {
+        "z": -1.874,
+        "xMin": -1.91,
+        "xMax": -1.75,
+        "yMin": 2.525,
+        "yMax": 2.905
+      },
+      "worldBoundsCrossCheck": {
+        "python": {
+          "z": -1.874,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "yMin": 2.525,
+          "yMax": 2.905
+        },
+        "blender": {
+          "z": -1.874,
+          "xMin": -1.91,
+          "xMax": -1.75,
+          "yMin": 2.525,
+          "yMax": 2.905
+        },
+        "agree": true
+      },
+      "sideSurfaceIds": [
+        {
+          "targetId": 1002,
+          "surfaceName": "c1_north_wall",
+          "role": "north_wall",
+          "faceNormal": "+Z"
+        },
+        {
+          "targetId": 1015,
+          "surfaceName": "c1_west_beam_inner_shadow",
+          "role": "west_beam_inner",
+          "faceNormal": "-Z(north cap)/+X(inner)"
+        }
+      ],
+      "ownerPolicy": "PENDING",
+      "ownerPolicyNote": "禁止在 Step D 填定案；幾何相鄰≠runtime 歸屬。由 Step E gate/bake/metadata 三來源對帳後產出，取代此 PENDING。",
+      "contactCandidates": {
+        "source": "Step C 幾何（aabb rect-intersect + blender boolean）",
+        "sides": [
+          {
+            "role": "north_wall",
+            "boxIndex": 15,
+            "faceNormal": "+Z",
+            "faceZ": -1.874
+          },
+          {
+            "role": "west_beam",
+            "boxIndex": 28,
+            "faceNormal": "-Z",
+            "faceZ": -1.874
+          }
+        ],
+        "note": "幾何只說「哪兩面接觸」，不代表 runtime 歸屬。"
+      },
+      "observedOwnerEvidence": {
+        "source": "Step A probe（stagea-final4）原始讀值，每筆標 level；屬量測事實。",
+        "rows": [
+          {
+            "y": 250,
+            "alignmentOk": true,
+            "level31_route": {
+              "routeId": 0,
+              "routeName": "none",
+              "structuralIslandId": 0,
+              "targetId": null
+            },
+            "level35_coverage": {
+              "weightSum": 0,
+              "validAlpha": 0,
+              "routeId": 0,
+              "routeName": "none"
+            },
+            "level37_ownerCountBitmask": {
+              "ownerCount": 0,
+              "maskLow": 0,
+              "maskHigh": 0,
+              "owners": [],
+              "encodingValid": true
+            },
+            "level36_northBeamRadiance_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level49_nonSquarePreAlbedo_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level32_worldPosition": {
+              "x": -1.7498838543891908,
+              "y": 2.8721269607543944,
+              "z": -1.874000059068203
+            },
+            "level34_hitObject": {
+              "hitType": 1,
+              "objectID": 1
+            },
+            "level33_normal": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          },
+          {
+            "y": 340,
+            "alignmentOk": true,
+            "level31_route": {
+              "routeId": 0,
+              "routeName": "none",
+              "structuralIslandId": 0,
+              "targetId": null
+            },
+            "level35_coverage": {
+              "weightSum": 0,
+              "validAlpha": 0,
+              "routeId": 0,
+              "routeName": "none"
+            },
+            "level37_ownerCountBitmask": {
+              "ownerCount": 0,
+              "maskLow": 0,
+              "maskHigh": 0,
+              "owners": [],
+              "encodingValid": true
+            },
+            "level36_northBeamRadiance_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level49_nonSquarePreAlbedo_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level32_worldPosition": {
+              "x": -1.7495971709489824,
+              "y": 2.8602081298828126,
+              "z": -1.874000059068203
+            },
+            "level34_hitObject": {
+              "hitType": 1,
+              "objectID": 1
+            },
+            "level33_normal": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          },
+          {
+            "y": 430,
+            "alignmentOk": true,
+            "level31_route": {
+              "routeId": 0,
+              "routeName": "none",
+              "structuralIslandId": 0,
+              "targetId": null
+            },
+            "level35_coverage": {
+              "weightSum": 0,
+              "validAlpha": 0,
+              "routeId": 0,
+              "routeName": "none"
+            },
+            "level37_ownerCountBitmask": {
+              "ownerCount": 0,
+              "maskLow": 0,
+              "maskHigh": 0,
+              "owners": [],
+              "encodingValid": true
+            },
+            "level36_northBeamRadiance_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level49_nonSquarePreAlbedo_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level32_worldPosition": {
+              "x": -1.7491683751344682,
+              "y": 2.849949645996094,
+              "z": -1.874000059068203
+            },
+            "level34_hitObject": {
+              "hitType": 1,
+              "objectID": 1
+            },
+            "level33_normal": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          },
+          {
+            "y": 520,
+            "alignmentOk": true,
+            "level31_route": {
+              "routeId": 0,
+              "routeName": "none",
+              "structuralIslandId": 0,
+              "targetId": null
+            },
+            "level35_coverage": {
+              "weightSum": 0,
+              "validAlpha": 0,
+              "routeId": 0,
+              "routeName": "none"
+            },
+            "level37_ownerCountBitmask": {
+              "ownerCount": 0,
+              "maskLow": 0,
+              "maskHigh": 0,
+              "owners": [],
+              "encodingValid": true
+            },
+            "level36_northBeamRadiance_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level49_nonSquarePreAlbedo_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level32_worldPosition": {
+              "x": -1.7488845109939577,
+              "y": 2.8407295227050784,
+              "z": -1.874000059068203
+            },
+            "level34_hitObject": {
+              "hitType": 1,
+              "objectID": 1
+            },
+            "level33_normal": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          },
+          {
+            "y": 610,
+            "alignmentOk": true,
+            "level31_route": {
+              "routeId": 0,
+              "routeName": "none",
+              "structuralIslandId": 0,
+              "targetId": null
+            },
+            "level35_coverage": {
+              "weightSum": 0,
+              "validAlpha": 0,
+              "routeId": 0,
+              "routeName": "none"
+            },
+            "level37_ownerCountBitmask": {
+              "ownerCount": 0,
+              "maskLow": 0,
+              "maskHigh": 0,
+              "owners": [],
+              "encodingValid": true
+            },
+            "level36_northBeamRadiance_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level49_nonSquarePreAlbedo_line_vs_control": {
+              "line": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              },
+              "control": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "luma": 0
+              }
+            },
+            "level32_worldPosition": {
+              "x": -1.7484956771135332,
+              "y": 2.832570457458496,
+              "z": -1.874000059068203
+            },
+            "level34_hitObject": {
+              "hitType": 1,
+              "objectID": 1
+            },
+            "level33_normal": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          }
+        ]
+      },
+      "seamTransitionSweep": {
+        "file": "a1-seam-transition-sweep.json",
+        "beamSide": {
+          "desc": "西樑 owner 1015 baked",
+          "xScreenRange": [
+            560,
+            584
+          ],
+          "owners": [
+            1015
+          ],
+          "routeName": "west_beam_inner_shadow_hybrid",
+          "luma36Range": [
+            0.09695509545952082,
+            0.10491457203775645
+          ]
+        },
+        "noneSide": {
+          "desc": "北牆面 route=none / ownerCount=0（無 baked 擁有者＝黑線）",
+          "xScreenRange": [
+            592,
+            680
+          ],
+          "worldZ": -1.874000059068203,
+          "worldXRange": [
+            -1.7496038258075717,
+            -1.7391943484544756
+          ],
+          "routeName": "none",
+          "luma36": 0
+        },
+        "boundaryXScreen": "~588（beam owner1015 → 北牆 none 之交界）",
+        "measuredFinding": "西樑 owner 1015 baked（luma ~0.10）緊鄰一條北牆 route=none / ownerCount=0（luma 0）帶＝黑線本體。實測與舊「owner 1002 atlas dip」假設不同，故 ownerPolicy 維持 PENDING、分類待對帳。"
+      },
+      "bakedPackage": "d800-north-denoise-c",
+      "acceptanceCamera": {
+        "position": {
+          "x": -1.708748,
+          "y": 2.826862,
+          "z": -1.820144
+        },
+        "forward": {
+          "x": -0.495699,
+          "y": 0.416871,
+          "z": -0.761906
+        },
+        "fov": 55
+      },
+      "probeFields": [
+        "level31/35 route",
+        "level37 ownerCount/owners/encodingValid",
+        "level36/49 baked line vs control",
+        "level32 worldPosition",
+        "level34 hitObject",
+        "level33 normal"
+      ],
+      "passThreshold": {
+        "status": "candidate",
+        "note": "候選門檻；正式值待第 15 節綠燈以實測定。",
+        "seamPostAlbedoStepCandidate": 0.005,
+        "localDeltaPeakCandidate": 0.04,
+        "space": "linear",
+        "ownerCountMustBeIn": [
+          0,
+          1
+        ]
+      },
+      "hardVeto": [
+        "黑線消失但旁邊出現無人認領 live 區域",
+        "baked 交界被切出一塊 live 補洞",
+        "某段接觸邊靠 live path tracing 臨時接上",
+        "交界亮度看似接近但 owner route 不連續",
+        "probe 顯示同一條接觸邊一段 baked、一段 live、一段沒有 owner",
+        "修法靠換回舊 package 才無縫",
+        "修法靠關閉北牆某一帶改走 live",
+        "只用 tonemapped 截圖宣告通過",
+        "沒有使用者相機驗收圖"
+      ]
+    }
+  ],
+  "lockedConstants": {
+    "gateWest": {
+      "xMin": -1.908,
+      "xMax": -1.752,
+      "yMin": 2.525,
+      "yMax": 2.905
+    },
+    "shaderGateWest": {
+      "xMin": -1.908,
+      "xMax": -1.752,
+      "yMin": 2.525,
+      "yMax": 2.905
+    },
+    "shaderWiringPresent": true,
+    "northWallWorldBounds_1002": {
+      "xMin": -2.11,
+      "xMax": 2.11,
+      "yMin": 0,
+      "yMax": 2.905,
+      "z": -1.874
+    },
+    "westBeamInnerWorldBounds_1015": {
+      "zMin": -1.874,
+      "zMax": 2.848,
+      "yMin": 2.525,
+      "yMax": 2.905,
+      "x": -1.75
+    },
+    "westBeamInnerIsland": {
+      "name": "west_beam_inner_x",
+      "atlasRect": {
+        "uMin": 0,
+        "vMin": 0,
+        "uMax": 0.5,
+        "vMax": 0.17
+      },
+      "worldFace": {
+        "axis": "x",
+        "value": -1.75,
+        "yMin": 2.525,
+        "yMax": 2.905,
+        "zMin": -1.874,
+        "zMax": 2.848
+      },
+      "normal": "+X"
+    },
+    "northAtlasEdgePolicy": {
+      "name": "north_nonsquare__west_beam_north_edge",
+      "surface": "northWall",
+      "invalidRegion": {
+        "xMin": -1.908,
+        "xMax": -1.752,
+        "yMin": 2.525,
+        "yMax": 2.905
+      },
+      "fillDirection": 1,
+      "referenceFaceWidthPx": 2492,
+      "referenceFaceHeightPx": 1716,
+      "maxFillPixels": 4,
+      "maxSearchPixels": 10,
+      "lumaThreshold": 0.00001
+    },
+    "nonSquareNorthWallUvRect": {
+      "uMin": 0,
+      "vMin": 0,
+      "uMax": 0.8557692307692307,
+      "vMax": 0.5
+    },
+    "bakedPackage": "d800-north-denoise-c"
+  }
+}

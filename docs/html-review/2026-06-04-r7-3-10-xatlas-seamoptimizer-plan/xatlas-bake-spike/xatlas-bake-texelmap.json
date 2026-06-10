@@ -1,0 +1,419 @@
+{
+  "schema": "r7-3-10-xatlas-bake-texelmap-v1",
+  "result": "PASS",
+  "failures": [],
+  "startingPoint": {
+    "files": {
+      "inputMesh": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-input-mesh.json",
+        "sha256": "6ec89e9ce8a729c662fdf96d71160116caa8834178bb60881cd73d278484e2ec",
+        "sha16": "6ec89e9ce8a729c6",
+        "bytes": 19403
+      },
+      "outputUv": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-output-uv.json",
+        "sha256": "0692b510b95a63fae671279e6838425bb673a2b0ec4081fcf8e518aade0d6f1b",
+        "sha16": "0692b510b95a63fa",
+        "bytes": 34810
+      },
+      "coverageReport": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-a1-coverage-report.json",
+        "sha256": "bd9dc533c2e3ad937624cc39bf56c3e708d331bb6a1a5b26a47a781dc6425dd3",
+        "sha16": "bd9dc533c2e3ad93",
+        "bytes": 440
+      },
+      "chartDebug": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-chart-debug.png",
+        "sha256": "a0fdf3b3004a8147a68a7a820a47b4bc02f2442391f29a453e3fa73708a88ffc",
+        "sha16": "a0fdf3b3004a8147",
+        "bytes": 4987
+      }
+    },
+    "atlas": {
+      "width": 946,
+      "height": 516,
+      "chartCount": 12,
+      "atlasCount": 1
+    },
+    "input": {
+      "positions": 48,
+      "triangles": 24,
+      "includedBoxes": 2
+    },
+    "a1": {
+      "capTriangleIds": [
+        20,
+        21
+      ],
+      "wallTriangleIds": [
+        10,
+        11
+      ],
+      "allTriangleIds": [
+        10,
+        11,
+        20,
+        21
+      ]
+    }
+  },
+  "startingPointLock": {
+    "status": "matched"
+  },
+  "atlas": {
+    "width": 946,
+    "height": 516
+  },
+  "counts": {
+    "totalTexels": 488136,
+    "validTexels": 356029,
+    "emptyTexels": 132107,
+    "dilationTexels": 47752,
+    "overlapTexelsSkipped": 8
+  },
+  "overlapTexelSamples": [
+    {
+      "x": 581,
+      "y": 515,
+      "existingTriangleId": 0,
+      "incomingTriangleId": 1,
+      "existingSourceBoxIndex": 15,
+      "incomingSourceBoxIndex": 15,
+      "existingWorld": [
+        -1.909999966621399,
+        7.927417446237497e-08,
+        -2.0739998829364774
+      ],
+      "incomingWorld": [
+        -1.9099999666213987,
+        7.927417468676654e-08,
+        -2.073999882936478
+      ]
+    },
+    {
+      "x": 639,
+      "y": 252,
+      "existingTriangleId": 6,
+      "incomingTriangleId": 7,
+      "existingSourceBoxIndex": 15,
+      "incomingSourceBoxIndex": 15,
+      "existingWorld": [
+        -1.5199999684095367,
+        2.9049999713897705,
+        -1.8739999663829796
+      ],
+      "incomingWorld": [
+        -1.5199999684095367,
+        2.9049999713897705,
+        -1.8739999663829794
+      ]
+    },
+    {
+      "x": 0,
+      "y": 252,
+      "existingTriangleId": 10,
+      "incomingTriangleId": 11,
+      "existingSourceBoxIndex": 15,
+      "incomingSourceBoxIndex": 15,
+      "existingWorld": [
+        -1.519999994039534,
+        2.9049999713554278,
+        -1.8739999532699585
+      ],
+      "incomingWorld": [
+        -1.519999994039534,
+        2.9049999713554278,
+        -1.8739999532699587
+      ]
+    },
+    {
+      "x": 581,
+      "y": 330,
+      "existingTriangleId": 10,
+      "incomingTriangleId": 11,
+      "existingSourceBoxIndex": 15,
+      "incomingSourceBoxIndex": 15,
+      "existingWorld": [
+        -1.909999947547915,
+        7.927417437160507e-08,
+        -1.8739999532699585
+      ],
+      "incomingWorld": [
+        -1.9099999475479148,
+        7.927417446237497e-08,
+        -1.8739999532699585
+      ]
+    },
+    {
+      "x": 0,
+      "y": 85,
+      "existingTriangleId": 12,
+      "incomingTriangleId": 13,
+      "existingSourceBoxIndex": 28,
+      "incomingSourceBoxIndex": 28,
+      "existingWorld": [
+        -1.909999966621399,
+        2.904999983012673,
+        2.848000049556745
+      ],
+      "incomingWorld": [
+        -1.909999966621399,
+        2.904999983012673,
+        2.848000049556744
+      ]
+    },
+    {
+      "x": 945,
+      "y": 161,
+      "existingTriangleId": 12,
+      "incomingTriangleId": 13,
+      "existingSourceBoxIndex": 28,
+      "incomingSourceBoxIndex": 28,
+      "existingWorld": [
+        -1.909999966621399,
+        2.525000095963478,
+        -1.873999826392677
+      ],
+      "incomingWorld": [
+        -1.909999966621399,
+        2.525000095963478,
+        -1.8739998263926771
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "existingTriangleId": 14,
+      "incomingTriangleId": 15,
+      "existingSourceBoxIndex": 28,
+      "incomingSourceBoxIndex": 28,
+      "existingWorld": [
+        -1.7499999999999998,
+        2.9049999713804575,
+        2.8480000495567435
+      ],
+      "incomingWorld": [
+        -1.7499999999999998,
+        2.904999971380457,
+        2.8480000495567435
+      ]
+    },
+    {
+      "x": 945,
+      "y": 76,
+      "existingTriangleId": 14,
+      "incomingTriangleId": 15,
+      "existingSourceBoxIndex": 28,
+      "incomingSourceBoxIndex": 28,
+      "existingWorld": [
+        -1.75,
+        2.525000085532668,
+        -1.8739998263926767
+      ],
+      "incomingWorld": [
+        -1.75,
+        2.5250000855326684,
+        -1.8739998263926765
+      ]
+    }
+  ],
+  "a1": {
+    "wallTriangleIds": [
+      10,
+      11
+    ],
+    "capTriangleIds": [
+      20,
+      21
+    ],
+    "allTriangleIds": [
+      10,
+      11,
+      20,
+      21
+    ],
+    "wallValidTexels": 45978,
+    "capValidTexels": 2464,
+    "expectedZ": -1.874,
+    "zMin": -1.873999953269959,
+    "zMax": -1.873999953269958,
+    "zMaxErrorM": 4.6730042058129584e-08,
+    "zToleranceM": 0.001,
+    "zWithinToleranceMm": true,
+    "perTriangle": {
+      "10": {
+        "validTexels": 22990,
+        "worldBounds": {
+          "min": [
+            -1.909999947547915,
+            7.927417413985517e-08,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.5199999940395337,
+            2.9049999713554278,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 15,
+        "faceAxis": "z",
+        "faceSign": 1,
+        "faceName": "z+",
+        "surfaceHint": "north_wall",
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "11": {
+        "validTexels": 22988,
+        "worldBounds": {
+          "min": [
+            -1.9099999475479152,
+            0.005000079088428032,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.5249999934434872,
+            2.904999971355428,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 15,
+        "faceAxis": "z",
+        "faceSign": 1,
+        "faceName": "z+",
+        "surfaceHint": "north_wall",
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "20": {
+        "validTexels": 1196,
+        "worldBounds": {
+          "min": [
+            -1.909999877810525,
+            2.5250001096725403,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.7549999592267185,
+            2.8899999642529037,
+            -1.8739999532699583
+          ]
+        },
+        "sourceBoxIndex": 28,
+        "faceAxis": "z",
+        "faceSign": -1,
+        "faceName": "z-",
+        "surfaceHint": "west_beam",
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "21": {
+        "validTexels": 1268,
+        "worldBounds": {
+          "min": [
+            -1.9099998778105254,
+            2.530000107680491,
+            -1.8739999532699587
+          ],
+          "max": [
+            -1.7549999592267185,
+            2.9049999582767545,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 28,
+        "faceAxis": "z",
+        "faceSign": -1,
+        "faceName": "z-",
+        "surfaceHint": "west_beam",
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "dilation": {
+    "paddingTexels": 4,
+    "rule": "post-bake only; dilation texels do not provide GI sampling positions"
+  },
+  "binaryLayout": {
+    "rowOrder": "row-major, y=0 first, x increases fastest",
+    "texelmapFile": "xatlas-bake-texelmap.bin",
+    "texelmapFloatsPerTexel": 8,
+    "texelmapChannels": [
+      "worldX",
+      "worldY",
+      "worldZ",
+      "normalX",
+      "normalY",
+      "normalZ",
+      "triId",
+      "valid"
+    ],
+    "worldPosFile": "xatlas-bake-worldpos-rgba32f.bin",
+    "worldPosChannels": [
+      "worldX",
+      "worldY",
+      "worldZ",
+      "valid"
+    ],
+    "normalFile": "xatlas-bake-normal-rgba32f.bin",
+    "normalChannels": [
+      "normalX",
+      "normalY",
+      "normalZ",
+      "valid"
+    ],
+    "normalPolicy": "room-boundary faces use inward bake normals; other faces use metadata face normals",
+    "triValidFile": "xatlas-bake-tri-valid-rgba32f.bin",
+    "triValidChannels": [
+      "triId",
+      "sourceBoxIndex",
+      "materialType",
+      "valid"
+    ],
+    "dilationSourceFile": "xatlas-bake-dilation-source.bin",
+    "dilationSourceChannels": [
+      "sourceX",
+      "sourceY",
+      "distanceTexels",
+      "isDilationTexel"
+    ],
+    "floatByteOrder": "little"
+  }
+}

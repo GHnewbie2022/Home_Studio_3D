@@ -1,0 +1,2054 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-06-04-r7-3-10-xatlas-seamoptimizer-plan">
+<title>R7-3.10 xatlas seamoptimizer plan</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-06-04 · R7-3.10 xatlas 全域烘焙與接縫驗收</p>
+    <h1>R7-3.10 xatlas seamoptimizer plan</h1>
+    <h1>R7-3.10 邊界問題 0604 清版：A1 證據與 xatlas → seamoptimizer 路線</h1>
+    <h2>1. A1 先行 SOP 的重點</h2>
+    <h3>1.1 本章來源</h3>
+    <p>本章由 2026-06-03 文件原第 14 章抽取。原第 14 章的價值是把 A1 這條黑線用固定相機、固定 package、固定工具抓成可驗證資料。它的定位是診斷 SOP，後續主線改由 xatlas 與 seamoptimizer 接手。</p>
+    <h3>1.2 A1 固定驗收條件</h3>
+    <pre><code>1.2.1 相機固定：
+      position{x:-1.708748, y:2.826862, z:-1.820144}
+      forward{x:-0.495699, y:0.416871, z:-0.761906}
+      fov 55
+
+1.2.2 package 固定：
+      d800-north-denoise-c
+
+1.2.3 瀏覽器固定：
+      Google Chrome，不使用 Brave。
+
+1.2.4 使用者紅框圖固定：
+      user-a1-redbox-reference.png
+      這張圖是 A1 黑線位置的驗收依據。</code></pre>
+    <h3>1.3 A1 SOP 實際做了什麼</h3>
+    <pre><code>1.3.1 先在使用者相機下重現黑線。
+
+1.3.2 沿黑線取五個高度行。
+
+1.3.3 每一行讀 route、ownerCount、worldPosition、luma、hitObject、normal。
+
+1.3.4 把取樣位置畫到 overlay 圖，確認量測位置對得上使用者紅框。
+
+1.3.5 匯出 sceneBoxes、surface 常數、shader gate、atlas edge policy。
+
+1.3.6 建立 A1 registry 與 contract test，讓資料不會再憑印象改寫。</code></pre>
+    <h3>1.4 A1 SOP 的硬規則</h3>
+    <pre><code>1.4.1 資料出來前不准猜 owner。
+
+1.4.2 資料出來前不准猜黑線分類。
+
+1.4.3 不准用平滑截圖代替 route / owner / coverage 證據。
+
+1.4.4 不准改 shader、bake、runtime 產品邏輯。
+
+1.4.5 不准靠局部 live 補洞宣稱成功。
+
+1.4.6 不准把單一 A1 修補包裝成全域完成。</code></pre>
+    <h3>1.5 A1 SOP 的新定位</h3>
+    <p>A1 SOP 現在只保留為診斷證據與驗收相機來源。它不再指揮下一步工程。下一步工程改走成熟 lightmap 工具導入，也就是第 3 章與第 4 章。</p>
+    <h2>2. A1 實測結果</h2>
+    <h3>2.1 本章來源</h3>
+    <p>本章由 2026-06-03 文件原第 16 章抽取。原第 16 章記錄 A1 先行 SOP 的實測結果，是後續工具導入的基準。</p>
+    <h3>2.2 六步結果摘要</h3>
+    <pre><code>2.2.1 前置檢查 PASS。
+      server、probe driver、相機 setter、contract、紅框圖都齊。
+
+2.2.2 Step A PASS。
+      stagea-final4 五行 alignment 全過，overlay 對到紅框主體。
+
+2.2.3 Step B PASS。
+      contact-edge-source.json 匯出成功。
+      boxes=88、surfaces=23、islands=8。
+
+2.2.4 Step C PASS。
+      A1 接觸帶約為：
+      x[-1.91,-1.75] y[2.525,2.905] z=-1.874。
+
+2.2.5 Step D PASS。
+      ownerPolicy 維持 PENDING。
+      contactCandidates 與 observedOwnerEvidence 都有記錄。
+
+2.2.6 Step E PASS。
+      seam-contracts-all.mjs 4/4 通過。
+
+2.2.7 Step F1 PASS。
+      資料工廠先紅成功。
+      黑線修好這件事仍待後續工具導入與驗收。</code></pre>
+    <h3>2.3 A1 真正量到的現象</h3>
+    <pre><code>2.3.1 西樑 baked 面：
+      owner 1015
+      route west_beam_inner_shadow_hybrid
+      luma 約 0.097–0.105
+
+2.3.2 西樑旁邊的北牆帶：
+      route = none
+      ownerCount = 0
+      luma = 0
+
+2.3.3 白話結論：
+      A1 黑線的核心證據是「北牆有一條位置沒有烘焙歸屬，直接變黑」。</code></pre>
+    <h3>2.4 已淘汰的舊假設</h3>
+    <p>舊說法「owner 1002 atlas 邊緣自己變暗」目前只保留為歷史假設。A1 新證據指向 coverage 缺洞：該區沒有 route、沒有 owner、亮度為 0。</p>
+    <h3>2.5 這個結果對新主線的意義</h3>
+    <pre><code>2.5.1 第一要務是解決 coverage。
+      每個需要烘焙的面都要有 lightmap UV、atlas chart、有效 texel。
+
+2.5.2 seamoptimizer 不能排第一。
+      它處理的是已有數值的接縫校平。
+      A1 的問題是有一段位置沒有數值來源。
+
+2.5.3 xatlas 應排第一。
+      它先建立完整 lightmap UV / atlas coverage。</code></pre>
+    <h2>3. xatlas 主線：先解 coverage 與 atlas</h2>
+    <h3>3.1 本章目標</h3>
+    <p>第 3 章的目標是導入 xatlas，先回答一個問題：我們能不能把現有房間幾何轉成完整、唯一、可烘焙的 lightmap UV atlas。</p>
+    <h3>3.2 xatlas 的角色</h3>
+    <pre><code>3.2.1 xatlas 負責把 mesh 切成 chart。
+
+3.2.2 xatlas 負責把 chart 打包成 atlas。
+
+3.2.3 xatlas 負責提供適合 lightmap baking 的唯一 UV。
+
+3.2.4 xatlas 要先解決 A1 這種 coverage 缺洞。</code></pre>
+    <h3>3.3 xatlas 第一個 spike</h3>
+    <pre><code>3.3.1 輸入：
+      由 sceneBoxes 產生的房間 mesh。
+
+3.3.2 工具：
+      xatlas。
+
+3.3.3 輸出：
+      xatlas-lightmap-uv.json
+      xatlas-debug-atlas.png
+      xatlas-debug-mesh.glb
+
+3.3.4 驗收：
+      A1 北牆帶必須有 chart。
+      A1 北牆帶必須有有效 UV。
+      A1 北牆帶不得出現 route=none / ownerCount=0 的 coverage 缺洞。</code></pre>
+    <h3>3.4 xatlas 第二個 spike</h3>
+    <pre><code>3.4.1 目標：
+      把現有 path-traced GI 烤進 xatlas 產生的 atlas。
+
+3.4.2 保留：
+      現有 path tracing 畫質。
+      現有 OIDN RT high color-only 成果路線。
+
+3.4.3 更換：
+      atlas / UV 承載方式。
+
+3.4.4 驗收：
+      A1 使用者相機下沒有黑線。
+      atlas 裡 A1 位置有有效 texel。
+      沒有新增 live 補洞。</code></pre>
+    <h3>3.5 xatlas 硬停</h3>
+    <pre><code>3.5.1 xatlas 無法吃 sceneBoxes 生成的 mesh → 停。
+
+3.5.2 A1 北牆帶沒有 chart → 停。
+
+3.5.3 A1 北牆帶有 UV 但烤不到有效 texel → 停。
+
+3.5.4 產物仍需要人工指定 A1 owner → 停。
+
+3.5.5 OPUS 回到逐條 A1 / A2 / B1 手工修補 → 停。</code></pre>
+    <h3>3.6 Blender 的新角色</h3>
+    <p>Blender 保留為 debug mesh 與幾何檢查工具。Blender lightmap_pack 從候選路線移除。正式 lightmap UV / atlas 來源固定先看 xatlas。</p>
+    <h2>4. seamoptimizer 收尾：烤後接縫校平與驗收</h2>
+    <h3>4.1 seamoptimizer 的角色</h3>
+    <p>seamoptimizer 排在 xatlas 與烘焙之後。它的工作是把已經有 lightmap 值的 chart 接縫校平，降低兩側亮度跳變。</p>
+    <h3>4.2 seamoptimizer 啟動條件</h3>
+    <pre><code>4.2.1 xatlas atlas 已完成。
+
+4.2.2 A1 位置已有有效 coverage。
+
+4.2.3 path-traced GI 已烤進 xatlas atlas。
+
+4.2.4 dilation / gutter 策略已有初版。</code></pre>
+    <h3>4.3 seamoptimizer 第一個 spike</h3>
+    <pre><code>4.3.1 輸入：
+      xatlas mesh positions
+      xatlas lightmap UV
+      已烤好的 float lightmap
+      atlas width / height / channelCount
+
+4.3.2 輸出：
+      seamoptimized-lightmap.bin
+      seamoptimizer-report.json
+      before-after-seam-diff.png
+
+4.3.3 驗收：
+      A1 接縫兩側 luma 跳變下降。
+      沒有產生白線。
+      沒有產生髒色。
+      沒有破壞 OIDN 降噪後的平滑牆面。</code></pre>
+    <h3>4.4 dilation / gutter 的位置</h3>
+    <pre><code>4.4.1 xatlas 負責 chart 與 atlas。
+
+4.4.2 path tracer 負責把 GI 烤進 atlas。
+
+4.4.3 seamoptimizer 負責接縫值校平。
+
+4.4.4 dilation / gutter 負責把 chart 外緣向外補色，避免雙線性取樣吃到空白或錯色。</code></pre>
+    <h3>4.5 最終驗收</h3>
+    <pre><code>4.5.1 使用者 A1 相機：
+      不可看到黑線、白線、縫隙。
+
+4.5.2 route / owner：
+      A1 不可再出現 route=none / ownerCount=0 的未認領帶。
+
+4.5.3 runtime：
+      不可新增 live 補洞。
+
+4.5.4 atlas：
+      A1 對應 texel 必須有有效值。
+
+4.5.5 A/B：
+      舊 d800-north-denoise-c 與新 xatlas-seamoptimized package 同視角比較。
+
+4.5.6 工具：
+      需輸出 metrics、debug image、package manifest、驗收截圖。</code></pre>
+    <h3>4.6 舊工具的降級規則</h3>
+    <pre><code>4.6.1 原 A1 contact-edge registry 工具：
+      保留為診斷證據，不當主線修法。
+
+4.6.2 原 full-room contact-edge registry 章節：
+      移出下一步主線。
+
+4.6.3 28 條人工候選清單：
+      保留為歷史風險清單，不當權威邊界清單。
+
+4.6.4 Blender lightmap_pack：
+      移除候選資格。
+
+4.6.5 Blender debug mesh：
+      保留。
+
+4.6.6 seam-view / probe 工具：
+      保留作驗收，不當修法本體。</code></pre>
+    <h3>4.7 給 OPUS 的下一步</h3>
+    <pre><code>4.7.1 先不要修 A1 shader。
+
+4.7.2 先不要擴 full-room contact-edge registry。
+
+4.7.3 先做 xatlas 導入可行性 spike。
+
+4.7.4 xatlas 過了，才接 path-traced GI bake。
+
+4.7.5 bake 過了，才接 seamoptimizer。
+
+4.7.6 任何一步失敗，都交回 CODEX 審查，不自行換回打地鼠修法。</code></pre>
+    <h2>5. xatlas 導入可行性 spike — OPUS 草案（已由 §6 實跑取代為 canonical）</h2>
+    <blockquote>狀態（CODEX 審查＝ITERATE，OPUS 接受）：§6 已實跑通過、為 canonical 結論；本章降級為 OPUS 草案與風險點，不指揮執行。第一輪 spike 一律以 §6 為準（A1 最小集合 box [15,28]，已 PASS：946×516 atlas、12 charts、1 張、A1 triangle [10,11,20,21] 全 allHaveChart／uvValid／noCoverageHole）。下方各節已就 CODEX 五點修正：根因不寫滿、環境改 .omc venv、第一輪範圍改 [15,28]、三支工具標草案、產物命名對齊 §6。</blockquote>
+    <p>&gt;</p>
+    <blockquote>本章保留的價值＝建議併入 §6 canonical 與後續 bake spike 的「品質線」（Architect 實裝 xatlas 0.0.11、Critic 把關得出）：① PackOptions 欄位名用 dir() 核對（texels_per_unit 是底線命名）；② 決定性用 bruteForce＋連跑兩次比對 UV 雜湊（0.0.11 無 seed）；③ atlasCount&gt;1 設硬停（§6 實跑為 1 張，符合）；④ 必報 atlas 邊長對 WebGL 單張上限（8192／4096）／float32 lightmap 記憶體估算／全房最短邊&lt;1px 的 sub-texel 面清單；⑤ A1 驗收用「足跡不重疊」當鑑別力（共面三角形會被併進同一 chart，只看「有沒有 chart」會恆真）；⑥ env report 要記清楚 xatlas 0.0.11 在 Python 3.14.5 的安裝方式（Architect 實測 PyPI 無 cp314 wheel、§6 卻跑通，落差要記錄以利重現）。</blockquote>
+    <h3>5.0 本章定位、A1 正解框架與範圍邊界</h3>
+    <p>第 5 章原本試圖把 §4.7.3「先做 xatlas 導入可行性 spike」展開成施工單；經 §6 實跑後，本章降級為 OPUS 草案與品質線備忘，實際執行以 §6 與後續 bake spike SOP 為準。</p>
+    <pre><code>5.0.1 A1 根因的誠實邊界（CODEX 審查校正：使用者開關只證明北牆烘焙路徑參與，不證明整串機制）：
+      已確認（使用者開關實測，權威）：關閉北牆烘焙 → A1 黑線消失、回 live（即時光追）正常；
+        開著 → 黑 ⇒ 北牆烘焙路徑參與黑線；live trace 單獨路徑已排除。
+      已量到（§16 probe）：該帶 route=none／ownerCount=0／luma=0。
+      尚待 bake spike diagnostic 證實（讀碼假設，先不當已定案）：shader 第 708 行跳過北牆烘焙點、
+        共面西樑北端面無專屬烘焙面、非方形 d800 的邊緣補色（dilation）補不夠 這條因果鏈。
+      ⇒ xatlas spike 先解 coverage（覆蓋），不靠這條未證實的鏈下結論。
+
+5.0.2 本 spike 要回答的唯一問題：
+      能不能把房間幾何轉成「完整、唯一、無洞」的 lightmap（光照貼圖）UV（貼圖座標）／
+      atlas（圖集），讓 A1 那塊（z=-1.874 平面上被北牆烘焙認領的牆面與共面的西樑北端面）拿到真實 chart（圖塊）與有效 UV，
+      使該塊「可以被烤到真實值」、不再是洞。這是消滅「認領卻給黑」這類缺陷的源頭修法，
+      與 full-bake（全室烘焙）目標一致——該區要有真實烘焙值，不靠 live 補。
+
+5.0.3 本章只做：coverage（覆蓋）與 UV／atlas 生成可行性。
+5.0.4 本章不做：bake（烘焙，把光算進貼圖）、runtime（執行期）整合、shader 修改、
+      WASM（瀏覽器端執行的編譯格式）整合。
+
+5.0.5 範圍切點（違反即超出本 spike）：本 spike 終點＝「UV 有效性」（每個 A1 三角形拿到
+      chart、UV 合法、像素足跡不重疊）。texel（貼圖像素）能不能烤到真實亮度，屬第二個
+      spike（§3.4 bake）。§5.6.3 硬停會再標這條切點。
+
+5.0.6 全程離線、可逆：只讀 contact-edge-source.json，只在 §5.1.4 產物資料夾寫 debug 檔，
+      不寫專案 source／shader／bake／runtime。任何時間可整包刪除重跑。
+
+5.0.7 文件一致性註記：§2.3／§2.4 的「route=none 未認領帶」維持為 probe 實測現象；
+      至多補一句「使用者開關實測已確認北牆烘焙路徑參與」。完整因果機制待 bake spike diagnostic，
+      不在 §2.x 寫成已定案。是否補述由 CODEX 定，本章不改前面章節。</code></pre>
+    <h3>5.1 環境、路徑與既有工具盤點</h3>
+    <pre><code>5.1.1 專案根目錄（PROJECT_ROOT）：
+      /Users/eajrockmacmini/Documents/VS Code/My Project/Home_Studio_3D
+
+5.1.2 既有工具（務必沿用，禁止重造）：
+      docs/tools/r7-3-10-contact-edge-export.mjs
+        Step B 匯出橋。headless（無頭，無視窗）Chrome 透過 CDP 讀頁面全域真值，
+        輸出 contact-edge-source.json。強制 Chrome，嚴禁 Brave。
+      docs/tools/r7-3-10-contact-edge-scan.py
+        Step C 主算。讀 source.json 自動辨識北牆 box（index 15）與西樑 box（index 28），
+        算出 A1 接觸帶。辨識不靠人手指定 index，§5.4.5 直接複用其常數。
+      docs/tools/r7-3-10-contact-edge-blender.py
+        box → mesh（網格模型）轉換的現成參考寫法（依 box 尺寸建長方體）。
+
+5.1.3 既有輸入檔（A1 兩側已由 Python＋Blender 兩法零誤差互證）：
+      docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/contact-edge-source.json
+        boxes = 88（每個格式 {index, min:[x,y,z], max:[x,y,z], type}，type 為整數碼）。
+        結構組 = index &lt;= 32（實測 33 個 type=1 實心盒）；天空盒 = index 44（type=5，30×15×0.1 公尺）。
+        北牆 box index=15：min[-1.91,0,-2.074] max[-1.52,2.905,-1.874]，+Z 內面在 z=-1.874。
+        西樑 box index=28：min[-1.91,2.525,-1.874] max[-1.75,2.905,2.848]，-Z 北端面（西樑北端接觸面）在 z=-1.874。
+        surfaces = 23（target id 1001-1023）。北牆 1002 worldBounds.z=-1.874；西樑內側 1015 x=-1.75。
+
+5.1.4 本 spike 產物資料夾（新檔一律放這裡，禁止寫回 2026-06-03 資料夾）：
+      docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/
+
+5.1.5 工具腳本（OPUS 草案工具名，目前尚未建立；canonical 實跑見 §6、產物在 xatlas-spike/）：
+      docs/tools/r7-3-10-xatlas-boxes-to-mesh.py   （草案：box → 不焊接 mesh + A1 標記）
+      docs/tools/r7-3-10-xatlas-run.py             （草案：跑 xatlas + 交付物）
+      docs/tools/r7-3-10-xatlas-accept.py          （草案：驗收判定）
+      要產品化再另開工具任務；本章不宣稱這三支可直接執行。</code></pre>
+    <h3>5.2 第 0 步：環境與工具就緒閘門</h3>
+    <pre><code>5.2.1 環境以 §6 實跑為準（原 python3.13＋.venv-xatlas 草案作廢）：
+      沿用 §6 已建好的隔離環境：.omc/r7-3-10-xatlas-spike-venv/
+      （Python 3.14.5、xatlas 0.0.11、trimesh 4.12.2、numpy 2.4.6、pillow 12.2.0 皆已裝；
+        後續 .py 一律用此 venv 的 python 執行，不再另建 .venv-xatlas、不污染系統 Python）。
+      可重現落差待補：Architect 實測 PyPI 無 xatlas 0.0.11 的 cp314 wheel，但 §6 在 3.14.5 跑通——
+      env report 必須記清楚在 3.14.5 的實際安裝方式（wheel 或從原始碼 build），否則他人重現會卡。
+
+5.2.2 欄位名核對（強制步驟，否則參數會被靜默忽略）：
+      .omc/r7-3-10-xatlas-spike-venv/bin/python -c &quot;import xatlas; print(dir(xatlas.PackOptions())); print(dir(xatlas.ChartOptions()))&quot;
+      xatlas 0.0.11 的 PackOptions 是混合命名：texels_per_unit（底線）、bruteForce（駝峰）、
+      padding、resolution、blockAlign、max_chart_size、bilinear、create_image、rotate_charts。
+      §5.5 任何參數名一律以這次 dir() 印出的實際欄位為準；寫錯命名（例如把 texels_per_unit 寫成
+      texelsPerUnit）會被 Python 靜默忽略 → 密度未設、結果無效。
+
+5.2.3 版本鎖定（為了可重現）：
+      冒煙測試通過後，記下 xatlas.__version__（應為 0.0.11）、numpy 版本、python sys.version，
+      並用 .omc/r7-3-10-xatlas-spike-venv/bin/pip freeze 取精確版本，全部寫進 §5.5 產物 meta 與 §5.8 紀錄。
+
+5.2.4 備援（選項 B＝原生 jpcy/xatlas CLI）：
+      只有當 5.2.1 主方案安裝／匯入失敗、且確認無可用 wheel 時才走。備援要：自官方 jpcy/xatlas
+      編譯 CLI、以 §5.4 產生的 .obj（含每面獨立頂點）餵入、把回傳 UV 轉回 §5.5.4 同欄位 JSON。
+      無論主方案或備援，§5.6 硬停與 §5.7 驗收定義完全相同。
+
+5.2.5 第 0 步硬停：主方案安裝失敗且備援無法在合理時間內編成 → 停，產 §5.8 先紅記錄，交回 CODEX。
+      禁止為了硬裝起來而改動專案其他檔案。
+
+5.2.6 範圍提醒：選項 C（xatlas-web／WASM）本 spike 不採用（不碰瀏覽器 runtime；WASM 整合屬後續步驟）。</code></pre>
+    <h3>5.3 輸入準備：取得並核實 contact-edge-source.json</h3>
+    <pre><code>5.3.1 預設沿用既有檔（A1 已兩法互證，無需重跑）：
+      docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/contact-edge-source.json
+
+5.3.2 若要取最新（幾何曾改動），重跑 Step B 匯出橋：
+      先確認本機開發伺服器在 export.mjs 寫死的位址（目前 127.0.0.1:9004）有 200 OK，再執行：
+        node docs/tools/r7-3-10-contact-edge-export.mjs
+      強制 Chrome（/Applications/Google Chrome.app/Contents/MacOS/Google Chrome），嚴禁 Brave。
+
+5.3.3 輸入核實閘門（跑 mesh 生成前必過，PASS／FAIL）：
+        len(boxes) == 88
+        恰一個 surface targetId==1002 且 worldBounds.z==-1.874（北牆面）
+        恰一個 surface targetId==1015 且 worldBounds.x==-1.75（西樑內側）
+        northWallBeamGap.west == { xMin:-1.908, xMax:-1.752, yMin:2.525, yMax:2.905 }
+        box index 44 存在且 type==5（天空盒，§5.4 要排除）
+      任一不符 → FAIL → 停，回報來源檔異常，禁止帶病往下做。
+
+5.3.4 記錄輸入指紋：對 source.json 全檔取 sha256 前 16 字元，寫進 §5.5 產物 meta 的 sourceJsonHash。</code></pre>
+    <h3>5.4 mesh 生成規格：AABB box → 不焊接三角網格 + A1 標記</h3>
+    <p>由 <code>docs/tools/r7-3-10-xatlas-boxes-to-mesh.py</code> 完成。</p>
+    <pre><code>5.4.1 mesh 來源（CODEX 裁示：第一輪以 §6 為準）：
+      第一輪＝A1 最小集合 box [15, 28]（§6 已實跑 PASS）。
+      下一輪「擴大 coverage spike」才放大到結構組 box index &lt;= 32（33 個 type=1 實心盒），
+      並明確排除天空盒 index 44（type=5；Architect 實測：含它 atlas 約 7149²／0.82GB，
+      不含約 3328²／0.17GB，且逼近顯示卡單張上限）。
+      無論哪一輪，mesh 來源都用 box（不用烘焙 surface：surface 是平面矩形、box 是立方體，
+      §5.4.2「每面建頂點」生成法只對 box 成立）。
+
+5.4.2 每個 box 的頂點與三角形（硬性規格）：
+      每面 4 個獨立角點、面與面不焊接 → 每 box 24 個頂點、12 個三角形（6 面 × 2）。
+      禁止用 8 個共用頂點（會把相鄰面焊在一起，xatlas 無法分離成獨立 chart）。
+      每面法線（normal）為 ±X／±Y／±Z 指向 box 外側、單位向量；三角形纏繞順序一致外向，
+      使 §5.7 的「面積為正」判定方向一致。
+
+5.4.3 全 mesh 組裝：所選子集各 box 產 24 頂點／12 三角形串接成單一 mesh。
+      第一輪子集固定為 box [15,28]；下一輪「擴大 coverage spike」才評估 index &lt;= 32。
+      頂點／三角形總數依實際納入的 box 數程式計算後寫進 input-mesh.json 的 meta，不寫死。
+      記錄每個三角形所屬 box index 與所屬面（±X/±Y/±Z），供 §5.4.5 標記與 §5.5.5 上色。
+
+5.4.4 座標來源：直接用 source.json 每個 box 的 min／max 八角點組面，不縮放、不位移、不套容差。
+
+5.4.5 A1 標記（程式自動判定，禁止人手指定；A1 帶座標取自 a1-contact-scan.json contactBand：
+        x ∈ [-1.91,-1.75]、y ∈ [2.525,2.905]、z = -1.874）：
+      判定用「重疊」；box 的每個面是一整片大三角形，A1 帶只是其中一小塊，
+      用「頂點全在帶內」會標不到任何三角形。規則：
+        三角形三頂點 z 皆 ∈ [-1.875,-1.873]（落在 z=-1.874 平面），
+        且其 x-y 投影與 A1 帶矩形有正面積重疊
+        → 標 isA1Band = true，並把所屬 box index 記在該三角形上。
+      這會標到兩群共面三角形：北牆 box（index 15）的牆面（整片，A1 帶在其中），與西樑 box
+      （index 28）的北端面（恰為 A1 帶）。使用者開關實測確認「被北牆烘焙認領卻給黑」的是北牆牆面那群，
+      西樑那群是共面遮擋者；標記時不預設哪一面是視覺主體、不預設法線方向（法線由 §5.4.2 mesh 實算）。
+      兩群一律收進 a1BandTriangleIds。
+      自我檢查：a1BandTriangleIds 非空，且同時含 box 15 與 box 28 的三角形（缺任一 → FAIL → 停）。
+
+5.4.6 mesh 生成輸出（中介檔，落本 spike 產物資料夾）：
+      docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-input-mesh.json
+        positions（N×3）、indices（M×3）、normals（N×3）、
+        triBoxIndex、triFaceAxis、isA1Band、a1BandTriangleIds（每筆含所屬 box index）、
+        counts（vertices／triangles）、
+        meta（sourceJsonHash、sourceBoxCount=88、includedBoxIndices、excludedBoxIndices〔至少含 44〕、
+              sourceBoxesHash〔對 sceneBoxes 序列化取 sha256 前 16 碼〕）。
+      備援路徑另存等價 .obj（每面獨立頂點、不焊接）供原生 CLI 餵入。
+
+5.4.7 mesh 生成判定（PASS／FAIL）：
+      vertices == includedBox 數 × 24 且 triangles == includedBox 數 × 12。
+      每面法線為單位向量且為 ±X/±Y/±Z 之一。
+      meta.sourceBoxCount == 88 且 44 ∈ excludedBoxIndices。
+      a1BandTriangleIds 非空且同時含 box 15 與 box 28。
+      任一不符 → FAIL → 停，產 §5.8 先紅記錄。</code></pre>
+    <h3>5.5 執行 xatlas：固定參數、可重現、三交付物</h3>
+    <p>由 <code>docs/tools/r7-3-10-xatlas-run.py</code> 完成。</p>
+    <pre><code>5.5.1 xatlas 參數（全部寫死成具名常數，禁止臨場手調；欄位名以 §5.2.2 的 dir() 為準）：
+      PackOptions：
+        texels_per_unit = 200.0   （底線命名。每公尺 200 texel 的目標密度。）
+        padding = 4               （chart 間留白 4 個 texel；gutter（邊界留白）的安全值。）
+        bruteForce = True         （窮舉排版，求穩定可重現；本 mesh 三角形少，速度非瓶頸。）
+        resolution = 0            （邊長由密度自動決定。）
+      ChartOptions：維持套件預設（平整矩形面不受角度權重影響；鎖預設求可重現）。
+
+5.5.2 解析度與密度（誠實用語，Architect 實測校正）：
+      texels_per_unit=200 是「目標密度上限」，atlas 打包後各面實際像素密度可能因 chart 擠壓、旋轉、
+      非等向縮放而低於名目值。不得用「世界尺寸 × texels_per_unit」線性外推 texel 數當承諾值。
+      A1 帶實際像素足跡一律以 §5.7 的「UV × atlas 尺寸」實測為準
+      （Architect 實測 A1 帶在 atlas 約 238×10 像素、y 向密度約 27 px/公尺，遠低於名目 200）。
+
+5.5.3 決定性（xatlas 0.0.11 無 seed 欄位，不依賴 seed）：
+      (1) bruteForce=True：實測對相同輸入 mesh，連續兩次輸出 UV 逐位元一致（sha256 相同）。
+      (2) 鎖定輸入：input-mesh.json 內容雜湊 + xatlas 版本 + 完整 PackOptions／ChartOptions 數值，
+          一併寫入產物 meta。
+      (3) 驗收時連跑兩次，比對輸出 UV 陣列雜湊必須相同；不同則 FAIL。
+
+5.5.4 交付物一：xatlas-lightmap-uv.json（OPUS 草案命名；canonical 實跑產物名以 §6 為準＝xatlas-spike-output-uv.json）
+      每頂點 UV（重映射後頂點集，含 uv[2] 與對應原頂點索引）、每三角形 → chart id 對照、
+      chartCount、atlasCount（讀 atlas.atlas_count）、atlasWidth／atlasHeight、
+      a1Acceptance（§5.7 三項逐項數據與布林）、
+      可行性報告（非 PASS／FAIL）：A1 帶像素足跡、全房最短邊 &lt; 1 像素的 sub-texel 面清單、
+        atlas 邊長對 WebGL 單張上限（標是否超過 8192 與 4096）、float32 lightmap 記憶體估算
+        （width × height × 4 通道 × 4 位元組）、
+      meta（params、texels_per_unit、xatlas 版本、numpy 版本、sourceJsonHash、sourceBoxesHash、
+        a1BandTriangleIds（含所屬 box index））。
+
+5.5.5 交付物二：xatlas-debug-atlas.png
+      以 pillow 開 atlasWidth × atlasHeight 圖，逐三角形把 UV（× atlas 邊長轉像素）光柵化填色：
+      每個 chart 一個固定可區分顏色；isA1Band 三角形描白框並依所屬 box 上色（北牆 box15 純紅 #FF0000、
+      西樑 box28 純橙 #FF8000），讓人眼一看就知道 A1 帶兩群面有沒有被排進 atlas、排在哪。圖只作旁證，判定以 §5.7 程式結果為準。
+
+5.5.6 交付物三：xatlas-debug-mesh.glb
+      用 trimesh 把 §5.4 positions／indices 配 xatlas 新 UV 組成帶 UV 的 mesh，匯出 GLB（.glb 模型檔），
+      供 Blender 檢視 UV 攤平與 A1 帶位置。備援：改用既有 blender.py 同款 io_scene_gltf2 匯出路徑。
+
+5.5.7 執行指令範例：
+      .omc/r7-3-10-xatlas-spike-venv/bin/python docs/tools/r7-3-10-xatlas-run.py \
+        --mesh docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-input-mesh.json \
+        --out-dir docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan
+
+5.5.8 執行判定（PASS／FAIL）：
+      xatlas 正常吃 mesh 並回傳 UV（chartCount&gt;0、atlasWidth&gt;0、atlasHeight&gt;0）。
+      三交付物三檔皆成功寫出。
+      若 xatlas 拒絕／報錯／回傳空 UV → FAIL → 觸發 §5.6.1 硬停。</code></pre>
+    <h3>5.6 硬停（逐條 + 觸發後動作）</h3>
+    <pre><code>5.6.1 xatlas 無法吃 mesh（拒絕／報錯／回傳空 UV）→ 停。
+      動作：保留錯誤訊息原文，產 §5.8 先紅記錄，交回 CODEX。對齊 §3.5.1。
+5.6.2 A1 帶三角形（a1BandTriangleIds）沒有 chart → 停。
+      動作：產 §5.8 先紅記錄，附該批三角形的 chart 對照。對齊 §3.5.2。
+5.6.3 A1 帶有 UV 但烤不到有效 texel → 停。對齊 §3.5.3。
+      切點聲明：texel 亮度有效性屬第二個 spike（§3.4 bake）。本 spike 只判定到 UV 有效性（§5.7）。
+      任何在本 spike 嘗試判定 texel 亮度的行為即越界，視同範圍外，停並交回。
+5.6.4 atlasCount &gt; 1（xatlas 產出多張 atlas page）→ 停。
+      理由：runtime 取樣單張 atlas 的假設被破壞，屬設計級風險。動作：逐張記錄尺寸／使用率，交回 CODEX。
+5.6.5 產物仍需要人工指定 A1 owner → 停。對齊 §3.5.4。
+      A1 的 chart／UV 必須由 xatlas 自動產生並由 §5.4.5 幾何辨識認定，禁止人手指派某三角形給某 owner。
+5.6.6 退回逐條 A1／A2／B1 手工修補 → 停。對齊 §3.5.5。失敗的正確出口是先紅記錄 + 交回 CODEX。
+5.6.7 範圍硬約束（全程不得違反）：不得改 shader／bake／runtime 產品邏輯；不得寫回專案 source／
+      2026-06-03 資料夾；全程離線（Python＋xatlas），只在 §5.1.4 產物資料夾產 debug 檔。</code></pre>
+    <h3>5.7 驗收：A1 覆蓋三項（全部可程式判定）</h3>
+    <p>由 <code>docs/tools/r7-3-10-xatlas-accept.py</code> 完成：讀 §5.5 uv.json 與 §5.4 的 a1BandTriangleIds。三項全 PASS 才算本 spike 成功；任一 FAIL 觸發對應 §5.6 硬停。對齊 §3.3.4。</p>
+    <pre><code>5.7.1 驗收(1) A1 帶每個三角形拿到有效 chart：
+      對 a1BandTriangleIds 內每一個三角形（含北牆 box15 與西樑 box28 兩群），
+      檢查其 chart id 存在且有效（非空／非 -1）。
+      註：因 xatlas 會把共面三角形併進同一 chart，「有沒有 chart」單看會 trivially 恆真，
+      所以(1)必須與(2)的「足跡不重疊」合併判讀，才有鑑別力。
+      PASS = 全部有有效 chart；FAIL = 任一無 chart → 觸發 §5.6.2。
+
+5.7.2 驗收(2) A1 帶三角形的 UV 有效且足跡不重疊：
+      對每個 A1 三角形三頂點 UV：
+        a. 範圍：每個 u、v ∈ [0,1]（含端點，允許 padding 內縮）。
+        b. 非退化：三頂點 UV 不共點、不共線。
+        c. 面積為正：UV 三角形帶號面積 &gt; 1e-9，且方向與 §5.4.2 纏繞一致。
+        d. 落在 atlas 內：實檔 UV 為 normalized[0,1]；驗收時才換算成
+           UV × (atlasWidth, atlasHeight) 的像素座標，確認落在圖內。
+        e. 不重疊：同一 chart 內，A1 三角形的 UV 足跡彼此不重疊（證明拿到可烘焙的獨立足跡，
+           沒有被疊在別的三角形上）。
+      PASS = 所有 A1 三角形五項全過；FAIL = 任一不過。
+
+5.7.3 驗收(3) A1 帶無覆蓋洞：
+      驗收(1)(2) 對 A1 帶全部三角形皆 PASS，且被標記三角形數 == §5.4.5 產生的
+      a1BandTriangleIds 數量（無遺漏、無被丟棄）。
+      PASS = A1 帶完整覆蓋，atlas 未覆蓋三角形數 = 0（＝源頭不再產生「認領卻給黑」的洞）。
+      FAIL = A1 帶存在任何未覆蓋三角形。
+
+5.7.4 驗收輸出（終端機）：
+      CHECK A1 band all-have-chart: PASS/FAIL
+      CHECK A1 uv-valid-no-overlap: PASS/FAIL
+      CHECK A1 no-coverage-hole:    PASS/FAIL
+      SPIKE RESULT: PASS（三項全過） / FAIL（任一不過）
+      並把三項數據 + 5.5.4 可行性報告寫回 uv.json 的 a1Acceptance。
+
+5.7.5 驗收紀律：判定一律以本步程式輸出為準。§5.5.5 debug 圖、§5.5.6 GLB 只作人眼旁證，
+      不得用「看起來有排進去」代替五項布林判定。</code></pre>
+    <h3>5.8 失敗與回報：先紅記錄</h3>
+    <pre><code>5.8.1 觸發：§5.2.5／§5.4.7／§5.5.8 任一 FAIL，或 §5.6 任一硬停，或 §5.7 SPIKE RESULT=FAIL。
+5.8.2 先紅記錄檔（誠實記錄狀態，作法對齊 §2.2.7 A1 Step F1 精神）：
+      docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike-redfirst.md
+      至少含：環境結果（主／備援、xatlas 版本、pip freeze 摘要）、輸入指紋、
+      mesh 結果（vertices／triangles／a1BandTriangleIds 數）、xatlas 結果（chartCount／atlasCount／
+      atlasWidth／atlasHeight 或錯誤原文）、§5.7 三項逐項與 SPIKE RESULT、命中的硬停編號與停在哪步、
+      已產出的交付物清單與路徑（即使部分產出也列）。
+5.8.3 回報動作：交回 CODEX 審查裁示下一步。禁止自行換回逐條手工修補（§5.6.6）；
+      禁止把單一 A1 通過包裝成全房 coverage 完成。
+5.8.4 成功出口：SPIKE RESULT=PASS 時三交付物齊備，本 spike 結束。
+      下一步＝§3.4 第二個 spike（把 path-traced GI bake 進 atlas），由 CODEX 確認後再啟動，本章不展開 bake。</code></pre>
+    <h3>5.9 本章一頁速查（執行順序）</h3>
+    <pre><code>5.9.1 第0步就緒：沿用 §6 的 .omc/r7-3-10-xatlas-spike-venv → import 冒煙 → dir() 核對欄位名 → 鎖版本。（§5.2）
+5.9.2 取輸入：沿用或重跑 export.mjs 得 source.json → 輸入核實閘門（含 box44 存在）。（§5.3）
+5.9.3 生 mesh：boxes-to-mesh.py → 第一輪固定 box [15,28] → 不焊接 → 標 A1 帶三角形（北牆+西樑兩群）。擴大 coverage spike 才評估結構組 box idx&lt;=32、排除 44。（§5.4）
+5.9.4 跑 xatlas：xatlas-run.py → texels_per_unit=200／padding=4／bruteForce=True → 三交付物 + 可行性報告。（§5.5）
+5.9.5 驗收：xatlas-accept.py → A1 三項布林判定（含足跡不重疊）→ SPIKE RESULT。（§5.7）
+5.9.6 出口：PASS 交三交付物等待 §3.4；FAIL 產先紅記錄交回 CODEX。（§5.8）</code></pre>
+    <h2>6. CODEX 版：xatlas 導入可行性 Spike 實跑結論</h2>
+    <h3>6.1 本章定位</h3>
+    <p>第六章已從 SOP 草稿改成實跑結論。它記錄 2026-06-04 已完成的 A1 xatlas coverage spike，說明本輪實證已經回答什麼，還需要哪一步才能進入正式畫面驗收。</p>
+    <pre><code>6.1.1 本章主結論：
+      xatlas 對 A1 coverage 問題可行。
+
+6.1.2 本章成功範圍：
+      sceneBoxes → triangle mesh → xatlas UV → A1 coverage 查核。
+
+6.1.3 本章尚未完成範圍：
+      path-traced GI bake 進 xatlas atlas。
+      seamoptimizer 接縫校平。
+      runtime package 替換。
+      使用者 A1 相機畫面驗收。
+
+6.1.4 工程意義：
+      A1 的 route=none / ownerCount=0 coverage 缺洞，在 xatlas 架構下已有可行解。
+      下一步應做 bake spike，檢查烤出的 lightmap 值與畫面接縫。</code></pre>
+    <h3>6.2 實跑總結</h3>
+    <pre><code>6.2.1 Spike 結果：
+      PASS。
+
+6.2.2 使用 API：
+      xatlas.Atlas.add_mesh
+      xatlas.Atlas.generate
+      xatlas.Atlas.get_mesh
+
+6.2.3 使用套件：
+      xatlas 0.0.11
+      trimesh 4.12.2
+      numpy 2.4.6
+      pillow 12.2.0
+
+6.2.4 執行環境：
+      .omc/r7-3-10-xatlas-spike-venv/
+
+6.2.5 產物資料夾：
+      docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/</code></pre>
+    <h3>6.3 固定輸入與 A1 幾何校正</h3>
+    <pre><code>6.3.1 固定輸入：
+      docs/html-review/2026-06-03-r7-3-10-global-contact-edge-hard-gates/contact-edge-source.json
+
+6.3.2 固定輸入 SHA-256：
+      615fa98c4c6f186b8e2f4a37c65964f176e7fb7f21de349b940a4e923d873c97
+
+6.3.3 固定輸入數量：
+      boxes = 88
+      surfaces = 23
+      structuralIslands = 8
+
+6.3.4 本輪納入 box：
+      [15, 28]
+
+6.3.5 A1 兩側幾何：
+      box 15：北牆 A1 段，+Z 面。
+      box 28：西樑 A1 北端接觸面，-Z 面。
+
+6.3.6 幾何校正：
+      OPUS 舊文曾把西樑 A1 北端接觸面寫成 box 28 的 +Z 面。
+      實測資料與 a1-contact-scan.json 一致指向 box 28 的 -Z 面。</code></pre>
+    <h3>6.4 Mesh 與 xatlas 輸出</h3>
+    <pre><code>6.4.1 Mesh 輸入：
+      includedBoxes = 2
+      vertices = 48
+      triangles = 24
+
+6.4.2 xatlas 輸出：
+      atlas = 946 × 516
+      meshCount = 1
+      chartCount = 12
+      atlasCount = 1
+      utilization = 0.839208722114563
+      float32 RGBA 估算 = 7.448 MiB
+
+6.4.3 輸出一致性：
+      vmappingCount = 48
+      output vertexCount = 48
+      output triangleCount = 24
+      indexCountMatchesInput = true</code></pre>
+    <h3>6.5 A1 Coverage 驗收</h3>
+    <pre><code>6.5.1 A1 北牆 triangle：
+      [10, 11]
+
+6.5.2 A1 西樑北端接觸面 triangle：
+      [20, 21]
+
+6.5.3 A1 全部驗收 triangle：
+      [10, 11, 20, 21]
+
+6.5.4 驗收結果：
+      allHaveChart = true
+      uvValid = true
+      noCoverageHole = true
+
+6.5.5 實證結論：
+      A1 北牆帶與西樑北端接觸面都拿到有效 UV。
+      xatlas 沒有丟掉 A1 需要覆蓋的三角形。
+      A1 coverage 缺洞在這個最小幾何 spike 中已被補上。
+
+6.5.6 保守警示：
+      bboxOverlapCandidates = [[10, 11], [20, 21]]
+      這是三角形 bbox 的保守重疊警示。
+      目前只列為 caution，原因是 bbox 會把同一矩形切成兩個三角形時的自然鄰接也算進去。
+      下一步 bake spike 仍要看實際 texel 與畫面。</code></pre>
+    <h3>6.6 交付物</h3>
+    <pre><code>6.6.1 環境報告：
+      xatlas-spike/xatlas-env-report.md
+
+6.6.2 輸入 mesh：
+      xatlas-spike/xatlas-spike-input-mesh.json
+      xatlas-spike/xatlas-spike-input-mesh.glb
+      xatlas-spike/xatlas-spike-input-mesh-a1-colored.glb
+
+6.6.3 xatlas 輸出：
+      xatlas-spike/xatlas-spike-output-uv.json
+      xatlas-spike/xatlas-spike-chart-debug.png
+      xatlas-spike/xatlas-spike-debug-mesh.glb
+
+6.6.4 A1 coverage 報告：
+      xatlas-spike/xatlas-spike-a1-coverage-report.json
+
+6.6.5 決策文件：
+      xatlas-spike/xatlas-spike-decision.md</code></pre>
+    <h3>6.7 這次已經確定的事</h3>
+    <pre><code>6.7.1 xatlas 可以吃 A1 最小 mesh。
+
+6.7.2 xatlas 可以產生單張 atlas。
+
+6.7.3 A1 北牆帶可以拿到有效 UV。
+
+6.7.4 A1 西樑北端接觸面可以拿到有效 UV。
+
+6.7.5 A1 coverage 缺洞在 xatlas 最小 spike 內沒有重現。
+
+6.7.6 這條路線值得進入下一個 bake spike。</code></pre>
+    <h3>6.8 這次仍然沒有宣稱的事</h3>
+    <pre><code>6.8.1 尚未宣稱正式黑線已修好。
+
+6.8.2 尚未宣稱 runtime package 可替換。
+
+6.8.3 尚未宣稱全房間所有接觸邊已解決。
+
+6.8.4 尚未宣稱 seamoptimizer 已接上。
+
+6.8.5 尚未宣稱使用者 A1 相機畫面已通過。</code></pre>
+    <h3>6.9 下一步：xatlas bake spike</h3>
+    <pre><code>6.9.1 下一步目標：
+      把 path-traced GI 烤進 xatlas 產生的 atlas。
+
+6.9.2 下一步固定驗收：
+      使用者 A1 相機。
+      d800-north-denoise-c 對照。
+      route / owner / coverage diagnostic。
+      atlas texel 有效性。
+      runtime 截圖接縫連續性。
+
+6.9.3 下一步 PASS 條件：
+      A1 原黑線位置有有效烘焙值。
+      無 route=none / ownerCount=0 黑帶。
+      無多出 live 補洞區。
+      使用者相機下接觸邊連續。
+
+6.9.4 下一步硬停：
+      需要手工指定 A1 owner 才能過。
+      需要局部 live 區遮洞才看起來過。
+      xatlas atlas 有 UV，但 bake 仍產生空 texel。
+      截圖平滑但 diagnostic 顯示 coverage 缺洞仍在。</code></pre>
+    <h3>6.10 對第 3、4 章的影響</h3>
+    <pre><code>6.10.1 第 3 章路線維持：
+       xatlas 排第一，先解 coverage。
+
+6.10.2 第 4 章路線維持：
+       seamoptimizer 排在 xatlas bake spike 之後。
+
+6.10.3 Blender lightmap_pack 維持移除：
+       本輪已由 xatlas 實跑取得第一層可行性證據。
+
+6.10.4 文件狀態：
+       第六章已完成 coverage spike 記錄。
+       後續新增章節應集中寫 bake spike，而非重複規劃 xatlas coverage spike。</code></pre>
+    <h2>7. xatlas bake spike SOP（把 path-traced GI 烤進 §6 的 atlas）— OPUS 第一版</h2>
+    <blockquote>本章承 §6.9，OPUS 第一版、CODEX 審。硬約束（CODEX 裁示）：以 §6 實跑產物為起點、不從 §5／§6 coverage spike 重開一輪、保留 §5 品質線。GI（全域照明）烤進 atlas（圖集）的核心機制 C2 已由 CODEX 裁示採「選項 A：新增最小 xatlas bake mode」（§7.4）。本版已套用 CODEX 對 §7 的 ITERATE 修正：C3 第一輪 color-only、補 runtime hit→xatlas UV lookup、gutter 改 post-bake dilation、A1 改可驗證目標、起點 hash 欄位、data texture 規格、contract 具體化。</blockquote>
+    <p>&gt;</p>
+    <blockquote>2026-06-04 C2 smoke 後修正：A1 的 box28 -Z 面改稱「西樑北端接觸面」。它是貼北牆的建築內部接觸面，烤成黑色本身屬合理觀察。C2 成功條件改為「可見北牆邊緣連續、隱藏接觸面黑值不污染可見區」，不再要求西樑北端接觸面自己烤出獨立 GI。</blockquote>
+    <h3>7.0 本章定位與範圍</h3>
+    <pre><code>7.0.1 目標（承 §6.9.1，2026-06-04 C2 修正）：把現有 path-traced GI（路徑追蹤的全域照明）
+      烤進 §6 產出的 xatlas atlas，讓使用者可見的 A1 北牆邊緣取得連續烘焙值。
+      西樑北端接觸面屬建築內部隱藏接觸面，可記錄為 hiddenContact，不列為獨立 GI 必填。
+
+7.0.2 起點固定＝§6 那 4 個實跑產物（§7.1），沿用其 UV／atlas，不重跑 xatlas、不重開 coverage spike。
+
+7.0.3 本 spike 允許動的：bake（烘焙）的「atlas／UV 承載方式」（對齊 §3.4.3）——
+      可加最小 bake 路徑，把 GI 寫到 xatlas 的 UV 佈局。
+
+7.0.4 本 spike 不做：seamoptimizer（屬 §4）、正式 runtime（執行期）package 切換與 promotion（升版上線）。
+      A1 runtime 驗收只用「spike-only 最小取樣 hook」，明確不 promotion。
+
+7.0.5 範圍切點：本 spike 終點＝「A1 可見北牆邊緣在新 atlas 有有效烘焙值，且使用者 A1
+      相機下無黑線、無白線、無無人認領 live 區」。西樑北端接觸面的黑值不得外擴或取樣到可見區。
+      正式照明 package 切換、全室擴大、接縫校平都在後續，不在本章。</code></pre>
+    <h3>7.1 起點產物（§6，唯讀；先鎖指紋）</h3>
+    <pre><code>7.1.1 docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/
+      - xatlas-spike-output-uv.json：atlas 946×516、12 charts、atlasCount=1、每頂點 UV、每三角形 chart id。
+      - xatlas-spike-input-mesh.json：48 頂點世界座標（公尺）、24 triangles、每三角形來源
+        （sourceBoxIndex／faceAxis／faceSign 等）。
+      - xatlas-spike-a1-coverage-report.json：A1 beamEndContact=[20,21]
+        （box 28 的 -Z 面＝西樑北端接觸面，建築內部隱藏接觸面）、
+        wall=[10,11]（box 15 的 +Z 面＝北牆可見邊緣）。
+      - xatlas-spike-chart-debug.png：人眼旁證。
+
+7.1.2 起點 meta 必填（寫進本 spike 每個產物的 meta）：
+      output-uv hash、input-mesh hash、coverage-report hash、chart-debug hash（各取 sha256 前 16 碼）、
+      atlas width／height、chartCount、atlasCount、A1 triangle ids
+      （beamEndContact=[20,21]／wall=[10,11]）。
+      任何一步若偵測到起點檔變動 → 停（起點被破壞）。
+
+7.1.3 不得在本章重跑 §6 的 xatlas（UV／chart／atlas 尺寸一律沿用 §6）。</code></pre>
+    <h3>7.2 環境與既有機制（沿用，禁止重造）</h3>
+    <pre><code>7.2.1 venv：.omc/r7-3-10-xatlas-spike-venv（Python 3.14.5、xatlas 0.0.11、trimesh 4.12.2、
+      numpy 2.4.6、pillow 12.2.0）。
+7.2.2 既有烘焙驅動：docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+      （--samples 預設 1000、outputMode=indirect_radiance、per-patchId 設 uR738C1BakeCaptureMode=2，
+        累積 spp（每像素取樣數）後回讀 atlas）。
+7.2.3 既有降噪：docs/tools/r7-3-10-oidn-bridge.mjs（OIDN＝Open Image Denoise，影像降噪器）。
+7.2.4 既有 per-surface 烘焙的關鍵差異：現行 shader r7310C1BakeSurfacePoint(patchId, texelUv) 用
+      每個 surface 的 WORLD_BOUNDS 公式把 texel→world；xatlas bake 要把這個「texel→world 來源」
+      換成 §7.3 由 xatlas UV 算出的查表，其餘（IndirectBakeFirstHit／累積／OIDN）盡量沿用。</code></pre>
+    <h3>7.3 Step C1：atlas texel → world 映射（離線，從 §6 產物算）</h3>
+    <pre><code>7.3.1 由新工具（OPUS 草案名 docs/tools/r7-3-10-xatlas-bake-texelmap.py）產出每個 atlas texel 的
+      (worldPos, normal, triId, valid)。
+
+7.3.2 作法：把 §6 的 24 triangles 用其 atlas UV 光柵化進 946×516；
+      每個被三角形覆蓋的 texel，取重心座標（barycentric）內插 input-mesh 的世界座標 → worldPos；
+      normal 取該三角形面法線（由 faceAxis／faceSign，§6 已記）；valid=被覆蓋。
+
+7.3.3 gutter（邊界留白）／dilation（向外補色）：只有 valid chart texel 會被 §7.4 path trace。
+      chart 外緣 padding=4 texel 是 dilation texel，不跑 path tracing 取樣；它們在 bake 完成後
+      才做顏色外擴（post-bake dilation）。texelmap 可記每個 dilation texel 的「最近 valid 來源」，
+      但該欄位只供 post-bake 外擴用，不作為 GI 取樣位置。
+
+7.3.4 輸出：xatlas-bake-texelmap.json（含尺寸／統計）+ xatlas-bake-texelmap.bin（946×516 的
+      worldPos／normal／triId／valid）。
+
+7.3.5 判定（PASS／FAIL）：A1 的 beamEndContact[20,21] 與 wall[10,11] 對應的 atlas texel 都有
+      valid worldPos（非空、落在預期世界座標附近，±1mm）。這只代表 coverage 有資料；
+      beamEndContact 是否需要獨立 GI 由 §7.6 的可見性政策決定。</code></pre>
+    <h3>7.4 Step C2：把 GI 烤進 xatlas atlas（核心設計決策，請 CODEX 裁示）</h3>
+    <pre><code>7.4.1 目標：對每個「可見、需烘焙」的 valid atlas texel worldPos，取 path-traced GI
+      （indirect_radiance），寫進 xatlas atlas 的 float（浮點）影像。關鍵：A1 可見北牆邊緣必須
+      取得連續烘焙值；hiddenContact texel 可保留分類與 proxy 資訊，不強迫自己發光。
+
+7.4.2 選項 A（CODEX 裁示採用）：在 shader 新增最小「xatlas bake mode」，掛在既有 BakeCaptureMode=2
+      capture 流程旁邊。
+      - 把 §7.3 的 per-texel (worldPos, normal) buffer 上傳成 data texture（資料貼圖，格式見 §7.4.6）。
+      - 新 bake mode 對每個 valid texel 用「現有 path tracer」算 indirect_radiance、累積 spp、回讀。
+      - 重用既有 runner（r7-3-8-c1-bake-capture-runner.mjs）的 Chrome／CDP 驅動、tile／fence／
+        every-samples 鐵律、samples 累積、Float32 回讀、throwaway package 紀律。
+      - 現有 shader fullRoomDiffuse 路徑「不可」直接當完整載具：它仍是 per-surface patchId +
+        WORLD_BOUNDS 公式，烤不了任意 xatlas texel；所以才需要這條新 mode（per-texel 查表 worldPos）。
+      - 與 A1 的關係（可驗證目標，不寫成保證）：xatlas bake mode 不走舊 north-wall patchId 的
+        texelUv → WORLD_BOUNDS 公式與排除邏輯；A1 可見北牆邊緣是否成功取得 GI、隱藏接觸面的黑值
+        是否被隔離，以 §7.6 C4 atlas 層 diagnostic 驗證，不在此保證。
+      - 代價：要動 shader（屬 §3.4.3 允許動的「承載方式」），須確保 xatlas bake mode 關閉時
+        現有 per-surface bake 行為完全不變（見 §7.7.7 contract）。
+
+7.4.3 選項 B（CODEX 裁示：不採用，僅存紀錄）：離線把舊 d800 per-surface baked atlas 依 worldPos
+      重採樣到 xatlas 佈局。舊 d800 在 A1 是洞（北牆 bake 跳過），重採樣只是把洞搬到 xatlas → A1 仍黑。
+      對「修 A1」沒有工程價值；本 spike 不跑 B，最多當離線搬圖工具測試，與本 spike 目標無關。
+
+7.4.4 已定：採選項 A，不跑 B（CODEX 2026-06-04 裁示）。
+
+7.4.5 決定性與品質線（§5）：seed（亂數種子）固定；samples 先小樣本 smoke 再加大；
+      沿用 §6 的 UV、不重跑 PackOptions；記錄 spp／seed／baked atlas 雜湊。
+
+7.4.6 xatlas data texture 最小規格（上傳給 shader 的 per-texel buffer）：
+      - worldPos：RGB32F 或 RGBA32F data texture。
+      - normal：RGB32F 或 RGBA32F data texture。
+      - valid／triId：R32F 或 RGBA32F。
+      - 尺寸固定 946×516（沿用 §6 atlas 尺寸）。
+      - 先用 prebake-check 驗證目標機 WebGL2 float texture（浮點貼圖）支援，再上傳；不支援 → 停。</code></pre>
+    <h3>7.5 Step C3：OIDN 降噪</h3>
+    <pre><code>7.5.1 用 r7-3-10-oidn-bridge.mjs 對 §7.4 的 xatlas-baked float atlas 降噪。
+7.5.2 第一輪固定 OIDN RT high、color-only（不納入 normal／albedo aux 輔助緩衝）。
+      原因：Stage 0 已驗證北牆 color-only 最佳；本 spike 第一輪只證明 xatlas bake 能消掉 A1 黑線，
+      多加 aux 會多一個變因。若 A1 bake spike PASS，後續再評估 xatlas 全房間是否需要 normal aux。
+7.5.3 輸出：xatlas-baked-lightmap.bin（降噪前）+ xatlas-baked-lightmap-denoised.bin（降噪後）。
+7.5.4 判定：降噪不得在 A1 帶產生新黑／新白／新髒色（對齊 §4.3.3 精神，肉眼旁證、程式為準）。</code></pre>
+    <h3>7.6 Step C4：A1 驗收（atlas 層 + runtime 層，對齊 §6.9.2／6.9.3）</h3>
+    <pre><code>7.6.1 atlas 層（程式判定，2026-06-04 C2 修正；hiddenContact 判定證據與 PASS 條件已由 §9.3 取代）：
+      - wall[10,11]（北牆可見邊緣）必須有 baked 值、有效、無空 texel。
+      - beamEndContact[20,21]（西樑北端接觸面）標 hiddenContact＝alpha=0 n/a（§14.0.5）；它本身為 n/a 不構成 FAIL。不得留 alpha=1 黑值（alpha=1 黑只能代表真實可見陰影）。
+      - hiddenContact 的黑值不得被 post-bake dilation、bilinear 取樣、runtime lookup 擴散到可見北牆邊緣。
+      - 若黑線仍出現在使用者 A1 相機，FAIL 原因應記為 §9.3.6 四類（visibleEdgeEmpty／paddingBleed／
+        lookupWrongOwner／routeNone）其中之一，不可把「隱藏接觸面為黑」單獨當根因。
+
+7.6.2 runtime 層（需 spike-only 最小取樣 hook，不 promotion）：
+      - 相機固定＝§1.2（pos/forward/fov、d800-north-denoise-c 對照、Google Chrome、user-a1-redbox-reference.png）。
+      - runtime hit → xatlas UV lookup（這條線必備；缺了它 runtime 驗收不得 PASS）：
+        畫面 hit 的 surface／hit position → 對應 triangle → 重心座標（barycentric）→ xatlas uv
+        → sample xatlas atlas。A1 可見像素必須穩定命中 box 15 的 +Z 面（北牆）或其他明確可見面；
+        box 28 的 -Z hiddenContact 不得成為可見北牆邊緣的取樣來源。lookup 無法穩定命中 → runtime 驗收 FAIL。
+      - 用此 hook 讓 runtime 在 A1 改取 xatlas baked atlas，截圖：A1 無黑線、無多出 live 補洞、接觸邊連續。
+      - route／owner／coverage diagnostic（沿用既有 probe）顯示 A1 不再 route=none／ownerCount=0 黑帶。
+      - 與 d800-north-denoise-c 同視角 A/B 對照。
+
+7.6.3 驗收紀律：一律程式＋probe 判定，截圖只作旁證（沿用 §1.4／§5.7）。
+      spp 誠實註記：headless 低 spp 雜訊大時，A1 是否變黑要看 worldPos／route／coverage 客觀量，
+      不靠平滑感（沿用 R2-14 教訓）。</code></pre>
+    <h3>7.7 硬停（對齊 §6.9.4 + 擴充）</h3>
+    <pre><code>7.7.1 A1 可見北牆邊緣有 UV，但 bake 仍產生空 texel（wall[10,11] 烤不到值）→ 停。
+      beamEndContact[20,21] 屬 hiddenContact 時標 alpha=0 n/a（§14.0.5）；若它污染可見區 → 停。
+7.7.2 需要手工指定 A1 owner 才能過 → 停。
+7.7.3 需要局部 live 區遮洞才看起來過 → 停。
+7.7.4 截圖平滑但 diagnostic 顯示 coverage 缺洞仍在 → 停。
+7.7.5 動到 §6 coverage（重跑 xatlas、改 UV、改 atlas 尺寸）→ 停（§7.1.3 起點鎖死）。
+7.7.6 把 spike-only 的 runtime hook 當正式 promotion 上線 → 停。
+7.7.7 xatlas bake mode 的 shader 改動影響到現有 per-surface bake 路徑 → 停。具體 contract（須全綠）：
+      docs/tests/r7-3-10-seam-contracts-all.mjs；既有 r7-3-8 bake runner smoke；
+      既有 north／east package resolver smoke；且 xatlas bake mode 關閉時，現有 per-surface bake 行為不變。</code></pre>
+    <h3>7.8 保留的 §5 品質線（併入本 spike）</h3>
+    <pre><code>7.8.1 atlasCount&gt;1 設硬停（§6 為 1 張，沿用；bake 不得改變張數）。
+7.8.2 必報：baked atlas float32 記憶體估算、atlas 邊長對 WebGL 單張上限（8192／4096）、
+      全房最短邊&lt;1px 的 sub-texel 面清單（密度不足警訊）。
+7.8.3 決定性：seed 固定 + 連跑兩次比對 baked atlas 雜湊。
+7.8.4 env report 記清楚 xatlas 0.0.11 在 Python 3.14.5 的安裝方式（沿用 §5 未解的可重現落差）。
+7.8.5 A1 足跡不重疊（沿用 §6 coverage 結論，bake 階段不得破壞）。</code></pre>
+    <h3>7.9 失敗回報與交付物</h3>
+    <pre><code>7.9.1 先紅記錄：xatlas-bake-spike-redfirst.md（環境／起點 hash／texelmap 結果／bake 結果
+      〔spp、seed、atlas 雜湊〕／A1 atlas 層+runtime 層驗收／命中的硬停編號／交付物清單）。
+7.9.2 交付物：
+      - xatlas-bake-texelmap.json／.bin（§7.3）
+      - xatlas-baked-lightmap.bin 與 -denoised.bin（§7.4／§7.5）
+      - xatlas-bake-a1-report.json（§7.6 atlas 層+runtime 層）
+      - A1 相機截圖（新 atlas vs d800-north-denoise-c）
+      - xatlas-bake-decision.md（PASS／ITERATE／ABORT，沿用 §6.12 風格；PASS 只代表 bake spike 過，
+        不代表正式 package 可上線）。</code></pre>
+    <h3>7.10 一頁速查（執行順序）</h3>
+    <pre><code>7.10.1 鎖起點：§6 4 產物取 sha256、確認沿用其 UV。（§7.1）
+7.10.2 C1 texelmap（離線）：xatlas UV 光柵化 → per-texel (worldPos,normal,triId,valid)；A1 coverage 非空。（§7.3）
+7.10.3 C2 烤 GI：採選項 A（新增最小 xatlas bake mode，對可見且需烘焙 texel 真 trace GI；
+        hiddenContact 先分類並隔離，不強迫獨立 GI；CODEX 已裁示不跑 B）。（§7.4／§7.6）
+7.10.4 C3 OIDN 降噪。（§7.5）
+7.10.5 C4 A1 驗收：atlas 層（可見北牆邊緣有效烘焙值、hiddenContact 不污染）+ runtime 層
+        （使用者相機無黑線、diagnostic 無 route=none 黑帶）。（§7.6）
+7.10.6 出口：PASS 交付物齊＋待使用者 A1 相機驗收；FAIL 產先紅記錄交回 CODEX。（§7.9）</code></pre>
+    <h2>8. OPUS C1 審查裁示（APPROVE，可進 C2）</h2>
+    <blockquote>CODEX 已照第 7 章順序完成 C1（atlas texel → world 映射）。OPUS 親自核實後裁示：<strong>APPROVE，可進 C2</strong>。下列 §8.3 四點為非阻擋觀察（C2 注意事項 + 一個 §6 文件修正），不擋核准。</blockquote>
+    <h3>8.1 OPUS 實際核實（非背書，逐項親跑／讀碼）</h3>
+    <pre><code>8.1.1 重跑測試：python3 docs/tests/r7-3-10-xatlas-bake-texelmap.test.py → Ran 2 tests OK（親跑）。
+8.1.2 數值對帳（讀 canonical xatlas-bake-texelmap.json，逐筆對 CODEX 回報）：
+      valid=356029、empty=132107、dilation=47752、overlap=8 ✓
+      A1 wall=45978（tri10 22990 + tri11 22988）✓、beamEndContact=2464（tri20 1196 + tri21 1268）✓
+      zMaxError=4.67e-8 m、zWithinTolerance=true ✓
+8.1.3 幾何正確：tri10/11=box15 z+「north_wall_segment」、tri20/21=box28 z-「west_beam_cap」，
+      與 §6 decision.md §2.9 + §5 修正一致（西樑北端接觸面＝box28 -Z、牆＝box15 +Z）。
+8.1.4 UV 慣例：實測 output-uv.json 的 uv 最大分量 0.9995 ＝ normalized[0,1]；工具按 normalized 處理，正確。
+8.1.5 未越界動 shader／runtime：shader＋js grep「xatlas／texelmap」0 命中、shader diff 無 xatlas／bake-mode。
+      git 的 M shaders／js／html 屬既有 R7-3.10 工作、非本輪 C1。CODEX「沒有動 shader」核實為真。
+8.1.6 抽驗實際 .bin（C2 真正吃的）：worldpos-rgba32f.bin = 946×516×4 floats；
+      A1 西樑北端接觸面 texel(triId=20) worldPos=(-1.755, 2.890, -1.874) valid=1 ✓。
+8.1.7 起點鎖：starting-point-lock.json 已建、鎖 §6 四產物雜湊；測試 2 證實改 UV 檔會被擋。</code></pre>
+    <h3>8.2 對 CODEX 五問的回覆</h3>
+    <pre><code>8.2.1 (Q1 符合 §7.3?) 是。§7.3.1–7.3.4 全到位；§7.3.5 PASS 判定到位（小註見 §8.3.1）。
+8.2.2 (Q2 json schema 足夠 C2?) 足夠。binaryLayout 完整載明檔名／通道／float 序／列序，C2 可據以讀取。
+8.2.3 (Q3 binary layout 可作 C2 data texture?) 可。worldpos／normal／tri-valid 皆 RGBA32F、946×516、
+      row-major、little-endian，對齊 §7.4.6；WebGL2 float texture 支援檢查屬 C2（prebake-check），C1 不需做。
+8.2.4 (Q4 A1 valid 數足夠?) 足夠。牆 45978（整段面）、西樑北端接觸面 2464（約 50×50），足供 C2 分類與驗收。
+8.2.5 (Q5 overlap=8 可接受?) 可接受，同意 CODEX，不要求零 overlap。
+      理由：8／356029＝0.002%，落在共面四邊形的共用邊；xatlas 保證 chart 間不重疊，故重疊只會是同一面
+      三角形對的共用邊、兩者共面 → 不論誰先贏 worldPos 幾乎相同；first-wins 由固定三角形順序決定＝可重現；
+      A1 計數龐大、不受影響。要求零 overlap 需加邊界 tie-break，對 spike 過度。</code></pre>
+    <h3>8.3 非阻擋觀察（C2 注意事項 + 文件修正，不擋核准）</h3>
+    <pre><code>8.3.1 §7.3.5 PASS 閘門只驗 Z（z 距 -1.874 在 ±1mm），未驗 x／y 是否落在 A1 帶。資料本身正確
+      （perTriangle.worldBounds 顯示西樑北端接觸面 x[-1.91,-1.755] y[2.525,2.905]），只是閘門沒 gate x／y。
+      非阻擋；C2 或日後硬化可加 x／y 帶成員檢查。
+8.3.2 文件用語修正：OPUS 原指 §6.2.4，但實際需修的是 §5.7.2 驗收文字。
+      output-uv.json 存 normalized[0,1]（§8.1.4 實測），C1 按 normalized 正確處理；
+      CODEX 已把 §5.7.2 改成「實檔 UV 為 normalized[0,1]，驗收時才換算像素座標」。
+8.3.3 C2 注意：.bin 是「row-major、y=0 first」；WebGL texture 原點在左下 → C2 上傳／取樣要處理 v 翻轉。
+      資訊已在 binaryLayout.rowOrder，接手時別漏。
+8.3.4 C2 注意：§7.4.6「prebake-check 驗 WebGL2 float texture 支援，不支援 → 停」這道閘門在 C2 做（C1 未做，正確）。</code></pre>
+    <h3>8.4 結論</h3>
+    <pre><code>8.4.1 C1 = APPROVE。三來源（§6 產物 → texelmap → .bin）一致、A1 兩面有充足有效 texel 且世界座標正確、
+      未越界動 shader／runtime、測試親跑通過、實際 .bin 抽驗正確。
+8.4.2 CODEX 可進 C2（§7.4 選項 A：新增最小 xatlas bake mode），起點改鎖 C1 的 texelmap／.bin。
+8.4.3 §8.3.2 的文件用語已由 CODEX 修正；§8.3.1／8.3.3／8.3.4 為 C2 接手注意事項。</code></pre>
+    <h2>9. CODEX C2 修正裁示草案（待 OPUS 審查）</h2>
+    <blockquote>2026-06-04 C2 smoke 後，CODEX 修正 C2 判讀。此章是交給 OPUS 的審查點。OPUS 只需審「C2 成功條件與 hiddenContact 政策是否合理」，先不審 shader 修法。</blockquote>
+    <h3>9.1 為何需要修正 C2</h3>
+    <pre><code>9.1.1 C2 smoke 已證明：
+      北牆 A1 wall[10,11] 有 GI 值。
+      西樑北端接觸面 beamEndContact[20,21] 為黑。
+
+9.1.2 使用者指出一個關鍵事實：
+      beamEndContact[20,21] 本來就是貼北牆的建築內部接觸面。
+      它看不到光、烤成黑色，這件事本身合理。
+
+9.1.3 舊 §7.6.1 把 wall[10,11] 與 beamEndContact[20,21] 都列成「必須有非零 baked 值」。
+      這個 PASS 條件錯把隱藏接觸面當成可見表面。
+
+9.1.4 C2 的真正問題應改成：
+      可見北牆邊緣為何出黑線。
+      hiddenContact 的黑值有沒有透過 padding／dilation／bilinear／lookup 污染可見區。</code></pre>
+    <h3>9.2 新名詞</h3>
+    <pre><code>9.2.1 wall[10,11]：
+      box 15 的 +Z 面，北牆可見邊緣。
+      這一側必須有連續烘焙值。
+
+9.2.2 beamEndContact[20,21]：
+      box 28 的 -Z 面，西樑北端接觸面。
+      這一側屬 hiddenContact，位於建築內部。
+      它標 alpha=0 n/a（§14.0.5），不得留 alpha=1 黑值；alpha=0 的 n/a 不得污染可見北牆邊緣。
+      A1 使用者相機的已知證據：
+        - 此面背對使用者相機，幾何 normal 朝外、dot 約 +0.762（此為幾何真值；
+          現有 normal texture 卻存 +Z，故 runtime classifier 不可靠此 dot，須依 §14.3.1 兩條路徑）。
+        - 此面位於 z=-1.874，貼著北牆邊界。
+        - 此面朝房間外側，房間內相機無法直接看見。
+      因此本輪可把 beamEndContact[20,21] 標為 hiddenContact。
+
+9.2.3 hiddenContact：
+      幾何資料存在、xatlas 有 UV、texelmap 有 valid worldPos，
+      但該面位於建築內部或接觸夾層，不作為可見 lightmap 亮度來源。
+      通用規則：
+        - 每一個 hiddenContact 都必須附證據，不可只靠口頭判斷。
+        - 合格證據至少包含其中一種：背對所有相關驗收相機（dot &gt; 0）、被其他幾何遮住、
+          或位於房間邊界且朝房間外側。
+        - 每一台會用來驗收該接縫的相機都要成立。
+        - 全房間擴大時，每一個 hiddenContact 都要重新驗證，不可沿用 A1 結論。</code></pre>
+    <h3>9.3 更新後的 C2 PASS 條件</h3>
+    <pre><code>9.3.1 wall[10,11] 必須有 baked 值、有效、無空 texel。
+
+9.3.2 beamEndContact[20,21] 標 hiddenContact＝alpha=0 n/a（§14.0.5）。
+      hiddenContact 自己為 n/a（alpha=0）不構成 FAIL；不得留 alpha=1 黑值（alpha=1 黑只能代表真實可見陰影）。
+
+9.3.3 hiddenContact 黑值不得透過 post-bake dilation 外擴到 wall[10,11]。
+
+9.3.4 runtime lookup 在使用者 A1 相機下，不得讓可見北牆邊緣取到 beamEndContact[20,21] 的黑值。
+
+9.3.5 使用者 A1 相機下必須無黑線、無白線、無無人認領 live 區。
+
+9.3.6 diagnostic 必須能把失敗分類成下列其中一種：
+      visibleEdgeEmpty：可見北牆邊緣自己缺值。
+      paddingBleed：hiddenContact 黑值或過亮值被外擴到可見區；黑線與白線都歸這類。
+      lookupWrongOwner：可見像素取到 hiddenContact chart。
+      routeNone：可見邊緣仍有無人認領區。</code></pre>
+    <h3>9.4 更新後的 C2 FAIL 條件</h3>
+    <pre><code>9.4.1 wall[10,11] 烤不到值 → FAIL。
+
+9.4.2 beamEndContact[20,21] 為 alpha=0 n/a（§14.0.5），且沒有污染可見區 → 不算 FAIL。
+
+9.4.3 beamEndContact[20,21] 的黑值污染 wall[10,11] 或 runtime 可見像素 → FAIL。
+
+9.4.4 需要用 live trace 補一塊無人認領區才看起來正常 → FAIL。
+
+9.4.5 用截圖看起來正常，但 diagnostic 顯示 route=none 或 lookupWrongOwner → FAIL。</code></pre>
+    <h3>9.5 CODEX 下一步（OPUS 核准後）</h3>
+    <pre><code>9.5.1 更新 C2 diagnostic：
+      分開輸出 wall[10,11] 與 beamEndContact[20,21]。
+      新增 hiddenContactClassification。
+      新增 paddingBleed（含黑線與白線）／lookupWrongOwner／visibleEdgeEmpty 判定。
+
+9.5.2 更新 C2 shader／runner 只做最小修改：
+      保留現有 xatlas bake mode。
+      加入 hiddenContact mask 或 metadata。
+      post-bake dilation 禁止由 hiddenContact 向 visible wall 擴色。
+
+9.5.3 重跑小樣本 C2 smoke：
+      先跑 16 spp。
+      只看 diagnostic 是否分類正確。
+      不進 C3，不做 OIDN，直到 OPUS 核准 C2 新 PASS 條件。
+
+9.5.4 若 OPUS APPROVE：
+      CODEX 繼續實作 C2 hiddenContact 隔離與可見邊緣驗收。
+
+9.5.5 若 OPUS ITERATE：
+      CODEX 只修 §7／§9 規格，不再跑 shader。</code></pre>
+    <h3>9.6 跨日與 canonical 規則</h3>
+    <pre><code>9.6.1 此主題 canonical 資料夾固定為：
+      docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/
+
+9.6.2 即使跨到 2026-06-05，同一主題重生 HTML 仍寫回 2026-06-04 資料夾。
+
+9.6.3 只有全新主題才另開新日期資料夾。
+
+9.6.4 若產生器意外建立 2026-06-05-r7-3-10-xatlas-seamoptimizer-plan，
+      該資料夾視為重複產物，必須先比對內容，再刪除重複資料夾。</code></pre>
+    <h2>10. OPUS C2 政策審查裁示（§9）：ITERATE</h2>
+    <blockquote>OPUS 親自核實 §9 的 hiddenContact 政策。方向正確，且已用幾何＋使用者實證佐證；裁示 ITERATE，只差兩點規格必修（不需動 shader）。修完即可 APPROVE，再進 §9.5 的 C2 diagnostic。</blockquote>
+    <h3>10.1 已核實（§9 方向正確）</h3>
+    <pre><code>10.1.1 幾何實證 beamEndContact 確為 hidden：A1 驗收相機 forward=(-0.495699,0.416871,-0.761906)，
+       box28 -Z 面法線(0,0,-1) → dot=+0.762&gt;0＝背面；box15 +Z 面法線(0,0,1) → dot=-0.762&lt;0＝正面。
+       且 box28 -Z 位於 z=-1.874 北牆邊界、法線朝室外，室內相機皆看不到 → hidden 成立（不只 A1 相機）。
+10.1.2 與使用者實證一致：關北牆烘焙→黑線消失 ⇒ 黑線指向「可見北牆邊緣」缺值或被污染；
+       hidden 端本身為黑只是一個正常接觸面觀察。
+       §9 改成「修可見邊緣 + 防污染」方向正確，並修正了舊 §7.6.1 把 hidden 端誤當可見面要求非零的錯。
+10.1.3 §9.4 四失敗分類（visibleEdgeEmpty／paddingBleed／lookupWrongOwner／routeNone）對焦正確。
+10.1.4 §9.6 cross-day／canonical 規則正確且只 pin 本主題（不影響其他主題；accidental 0605 視為重複、
+       先比對再刪）→ 這段 APPROVE。</code></pre>
+    <h3>10.2 必修兩點（只修規格，不需動 shader）</h3>
+    <pre><code>10.2.1 hiddenContact 認定必須可驗證、不可僅憑宣告。
+       §9.2.2／§9.2.3 目前用「使用者指出／建築內部」認定 beamEndContact 為 hidden，屬宣告。
+       「hiddenContact 黑不算 FAIL」是強力豁免；沒有可驗證基準，會淪為「宣告某面 hidden 來掩蓋真黑線」。
+       必修：
+       (a) 把 §10.1.1 的實證寫進 §9.2.2（A1 相機背面 dot=+0.762、且在 z=-1.874 北牆邊界朝室外）。
+       (b) 在 §9.2.3 立通則：任何面標 hiddenContact 都須附可驗證依據——對所有 in-scope 驗收相機
+           不可見（背面 dot(normal,viewDir)&gt;0、或被遮蔽、或在房間邊界朝室外）；擴到全房時逐面重驗。
+10.2.2 §7.6.1 舊 A1 PASS 條件（cap+wall 都要非零 baked）已被 §9.3 取代。
+       §7.6.1 要加「已由 §9.3 取代」指標，否則文件留著互相矛盾的舊條件、後人會誤用。</code></pre>
+    <h3>10.3 非阻擋（不擋核准，CODEX 斟酌）</h3>
+    <pre><code>10.3.1 §9.3.5 要求「無白線」，但 §9.3.6／§9.4 四分類偏黑／空／錯主，白線無對應分類。
+       建議 paddingBleed 註明涵蓋雙向污染（hidden 黑→可見、亮值→可見），或補一類接縫／白線，
+       讓「無白線」這條也有 diagnostic 可掛。
+10.3.2 §9.5.3 的 16 spp smoke「只看 diagnostic 分類、不進 C3」這道自我節流很好，保留。
+       OPUS 會在該 smoke 後再 gate 一次：檢查 hiddenContact mask 是否依 §10.2.1 的可驗證基準產生；
+       寫死 ID 清單列為 FAIL。</code></pre>
+    <h3>10.4 結論</h3>
+    <pre><code>10.4.1 §9 = ITERATE。方向、幾何、與使用者實證一致，只差 §10.2 兩點規格必修。
+10.4.2 CODEX 先修 §9.2／§7.6.1（不動 shader），修完即 APPROVE，再進 §9.5 的 C2 diagnostic + hiddenContact 隔離。
+10.4.3 §10.3 為非阻擋建議。</code></pre>
+    <h2>11. CODEX 對 §10 ITERATE 的修正回覆（待 OPUS 複審）</h2>
+    <blockquote>2026-06-05，CODEX 依 OPUS §10 的兩點必修與一點非阻擋建議完成文字修正。本輪只改 source.md 與 index.html，未動 shader／JS／runner。</blockquote>
+    <h3>11.1 必修 1：hiddenContact 改成有證據</h3>
+    <pre><code>11.1.1 已修 §9.2.2。
+
+11.1.2 beamEndContact[20,21] 新增 A1 使用者相機證據：
+       - 背對使用者相機，朝外 dot 數字約 +0.762。
+       - 位於 z=-1.874，貼著北牆邊界。
+       - 朝房間外側，房間內相機無法直接看見。
+
+11.1.3 已修 §9.2.3。
+       hiddenContact 通用規則改成：每一個 hiddenContact 都必須附可驗證證據；
+       合格證據至少包含背對所有相關驗收相機、被其他幾何遮住、或位於房間邊界且朝房間外側。
+
+11.1.4 全房間擴大時，每一個 hiddenContact 都要重新驗證，不可沿用 A1 結論。</code></pre>
+    <h3>11.2 必修 2：§7.6.1 舊條件貼上新規則標籤</h3>
+    <pre><code>11.2.1 已修 §7.6.1 標題。
+
+11.2.2 新標籤：
+       「hiddenContact 判定證據與 PASS 條件已由 §9.3 取代」
+
+11.2.3 後續執行 C2 時，以 §9.3 的 PASS 條件為準。</code></pre>
+    <h3>11.3 非阻擋建議：白線也掛到 diagnostic</h3>
+    <pre><code>11.3.1 已修 §9.3.6。
+
+11.3.2 paddingBleed 改成涵蓋 hiddenContact 黑值或過亮值外擴到可見區。
+
+11.3.3 黑線與白線都歸 paddingBleed。
+
+11.3.4 已修 §9.5.1，C2 diagnostic 後續要新增 paddingBleed（含黑線與白線）判定。</code></pre>
+    <h3>11.4 CODEX 結論</h3>
+    <pre><code>11.4.1 §10 兩點必修已修。
+
+11.4.2 §10.3 非阻擋建議已同步處理。
+
+11.4.3 請 OPUS 複審 §9 與 §11。
+
+11.4.4 若 OPUS APPROVE，CODEX 進 §9.5 的 C2 diagnostic + hiddenContact 隔離。</code></pre>
+    <h2>12. OPUS C2 政策複審裁示（§9＋§11）：APPROVE</h2>
+    <blockquote>OPUS 複審 §10 兩點必修的修正。兩點皆正確修好，hiddenContact 政策已由「宣告」轉成「可驗證」。裁示 APPROVE，CODEX 可進 §9.5。一點極小非阻擋清理見 §12.3，不擋進度。</blockquote>
+    <h3>12.1 必修核實（逐項對 §9／§7.6.1 實文，非背書）</h3>
+    <pre><code>12.1.1 必修1（§10.2.1）已正確修好：
+       §9.2.2 補實證：beamEndContact 在 A1 相機背對 dot≈+0.762（與 OPUS §10.1.1 實算一致）、
+         位於 z=-1.874 北牆邊界、朝室外、室內相機看不到 → 證據充分，已非宣告。
+       §9.2.3 立通用規則：hiddenContact 必附可驗證證據（背對所有相關相機 dot&gt;0／被遮住／邊界朝外）、
+         每台驗收相機都要成立、全房擴大逐面重驗、不沿用 A1 結論 → 完全對齊 §10.2.1。
+12.1.2 必修2（§10.2.2）已正確修好：
+       §7.6.1 標題加「已由 §9.3 取代」，本體並改寫成與 §9 一致（wall 必有值、beamEndContact 可 hidden、
+       黑值不得擴散到可見邊緣），文件不再留矛盾舊條件。
+12.1.3 非阻擋（§10.3.1）已處理：§9.3.6 paddingBleed 改成涵蓋黑值與過亮值外擴，黑線白線都歸這類；§9.5.1 同步。
+12.1.4 範圍核實：grep shader＋js「xatlas／texelmap」仍 0；無誤開 2026-06-05 資料夾（§9.6 遵守）；
+       本輪確為只改文件、未動 shader／JS／runner。
+12.1.5 §11 內容與實文一致，無誇大、無越界。</code></pre>
+    <h3>12.2 結論</h3>
+    <pre><code>12.2.1 §9＋§11 = APPROVE。hiddenContact 政策已可驗證、與使用者實證一致、與文件無矛盾。
+12.2.2 CODEX 可進 §9.5：C2 diagnostic（分開 wall／beamEndContact、加 hiddenContactClassification、
+       paddingBleed／lookupWrongOwner／visibleEdgeEmpty）+ hiddenContact 隔離；先 16 spp smoke、不進 C3／OIDN。
+12.2.3 OPUS 第二道閘（§10.3.2）：smoke 後 OPUS 會複審——重點查 hiddenContact mask 是否由 §9.2.3 的
+       可驗證準則產生（背對／遮蔽／邊界朝外）；不得用寫死的 [20,21] ID 清單。</code></pre>
+    <h3>12.3 §7.6.1 命名一致性（OPUS 已直接修，2026-06-05）</h3>
+    <pre><code>12.3.1 原 §7.6.1 本體寫的失敗類別「visibleEdgeLeak」不在 §9.3.6 四類集
+       （visibleEdgeEmpty／paddingBleed／lookupWrongOwner／routeNone）。經使用者指示，OPUS 已直接修 source.md：
+       §7.6.1 改為引用 §9.3.6 四類，文件命名一致、無殘留分歧。
+12.3.2 此為純文字修正，未動 shader／JS／runner；因 source.md 已改，index.html 需由 CODEX 重生一次。</code></pre>
+    <h2>13. OPUS 複核「現有 xatlas bake mode」接線：完整且正確（更正先前 stub 誤判）</h2>
+    <blockquote>更正：OPUS 先前在本章誤判「GPU 接線未完成、是 stub」。錯因＝只 grep 了 shaders/Home_Studio_Fragment.glsl、沒看 main() 所在的 js/PathTracingCommon.js（此 path tracer 的 shader 是兩檔串接成一支）。經 CODEX 給 file:line 指正、OPUS 讀 PathTracingCommon.js:3302-3324 核實：xatlas bake 接線完整且正確。原「stub」結論作廢。§9.1.1 smoke 改判為「plausibly 有效、待 diagnostic 驗證」，不再降級為「跑在 stub 上」。</blockquote>
+    <h3>13.1 OPUS 調查錯誤更正（本 session 第 3 次覆蓋不全）</h3>
+    <pre><code>13.1.1 path tracer shader 是多檔組裝：js/PathTracingCommon.js（main()、共用函式、bake 射線設定）
+       + shaders/Home_Studio_Fragment.glsl（場景 intersect、材質、CalculateRadiance）；全域變數跨檔共用。
+13.1.2 OPUS 先前只 grep .glsl，見 r7310C1XatlasBakeSurfaceNormal／TexelValid「只宣告+使用、沒賦值」，
+       就誤判 stub。實際賦值在 PathTracingCommon.js:3306-3322。
+13.1.3 §8／§9「沒動 shader」用 `\|` grep 仍是壞掉的假陰性（先前已收回，仍成立）；
+       但由此推出的「stub」結論錯。教訓記 [[feedback-pathtracer-shader-is-multifile]]。</code></pre>
+    <h3>13.2 PathTracingCommon.js:3302-3324 實況（已讀核實）</h3>
+    <pre><code>13.2.1 if (uR738C1BakeCaptureMode==2) → if (uR7310C1XatlasBakeMode&gt;0.5)：
+       - texel = ivec2(floor(gl_FragCoord.xy + uR738C1BakeTileOriginPx))（tile+fragcoord→texel）。
+       - 邊界檢查 texel 落在 uR7310C1XatlasBakeAtlasSize 內。
+       - texelFetch worldPos(tR738C1BakeAtlasTexture) + normalPacked(tR7310C1FullRoomDiffuseAtlasTexture)。
+       - valid ＝ worldPos.w&gt;0.5 &amp;&amp; normalPacked.w&gt;0.5 &amp;&amp; |normal|&gt;1e-6。
+       - 通過：rayOrigin = worldPos.xyz + normal*(uEPS_intersect*8)、
+         rayDirection = randomCosWeightedDirectionInHemisphere(normal)、
+         r7310C1XatlasBakeSurfaceNormal = normal、r7310C1XatlasBakeTexelValid = true。
+       - 不通過：valid 保持 false → CalculateRadiance 4534 輸出空值、不 trace。
+13.2.2 ⇒ 逐 texel worldPos→rayOrigin、normal→半球方向+全域、valid 三重檢查 都真的接上；
+       uR7310C1XatlasBakeAtlasSize 也有用(3308)。接線完整且正確；先前 §13 的「常數法線／未接」全錯。
+13.2.3 JS 端（先前已肯定）也對：載 C1 .bin、v 翻轉、RGBA32F 上傳、WebGL2+float 檢查、用後還原。</code></pre>
+    <h3>13.3 對 §9.1.1 smoke 與 §9.5 的更正</h3>
+    <pre><code>13.3.1 §9.1.1 smoke 不降級為「跑在 stub」。改判：plausibly 有效；仍需 diagnostic 驗證
+       （A1 北牆 +Z、西樑接觸面 -Z、invalid 不 trace、row/tile 對齊）才採信為 GI 證據。
+13.3.2 §9.5 缺的是「證據 + diagnostic + hiddenContact 隔離」，不是「整段接線從零做」。§14 據此改寫（見其修訂版）。</code></pre>
+    <h3>13.4 給 §14 的指向</h3>
+    <pre><code>13.4.1 C2A 改為「核實既有 PathTracingCommon.js 接線」（已由本章 13.2 完成）+「row／tile 對齊驗證」。
+13.4.2 重點工作＝diagnostic + 驗證（A1 法線方向／invalid／對齊）+ hiddenContact 隔離。
+13.4.3 角色暫對調：OPUS 動手、CODEX 審。</code></pre>
+    <h2>14. OPUS §9.5 施工計畫（C2A→C2B→C2C；OPUS 動手、CODEX 審本計畫後才動 shader）</h2>
+    <blockquote>依 §13（更正版）+ CODEX 裁示：現有 xatlas bake mode 接線完整正確（PathTracingCommon.js:3302-3324），§9.5 第 1 步為「核實既有接線 + row／tile 對齊驗證」。§9.1.1 smoke 改判 plausibly 有效、待 diagnostic 驗證。本計畫涵蓋 CODEX 七問（改檔/段、hiddenContact mask、diagnostic、dilation、smoke、contract、交審包）。</blockquote>
+    <p>&gt;</p>
+    <blockquote>【2026-06-05 同步】C2A 完成（§15，CODEX APPROVE）。判定法已改採業界標準 per-texel backface-ratio validity（§15.5），</blockquote>
+    <blockquote>取代原 §14.3.1 的 CPU 幾何分類。下列 §14.1.5／§14.2／§14.3.1／§14.3.2／§14.5／§14.6 已同步成新法。</blockquote>
+    <h3>14.0 起點與鎖</h3>
+    <pre><code>14.0.1 起點＝§6 的 C1 產物（已鎖 sha）+ 現有 xatlas bake mode（§13 盤點）；不重跑 xatlas、不重開 coverage。
+14.0.2 既有可用零件：JS prepareR7310C1XatlasBakeTextures（載 C1 .bin、v 翻轉、RGBA32F 上傳、WebGL2+float 檢查）、
+       runner --r7310-xatlas-bake / --xatlas-texelmap-dir / reportR7310C1XatlasBakeAfterSamples。這些不重造。
+14.0.3 現有接線（PathTracingCommon.js:3302-3324）已完整正確（§13.2 核實）；缺的是 diagnostic + 驗證 + hiddenContact 隔離。
+14.0.4 核心物理原則（使用者裁示）：房間內部、永遠看不到的面（內部接觸面）不該烤——像混音裡沒事件的空軌。
+       重點在「辨識為 hiddenContact、排除烘焙、隔離它的黑」，不在「把內部面烤出正確光」；法線只用於分類、不用於逼烤。
+14.0.5 n/a 標記契約（使用者裁示 2026-06-05）：hiddenContact 與 invalid texel 一律標成「明確的 n/a」＝alpha=0，
+       不得留下 alpha=1 的黑色 RGB。理由：(a) alpha=1 的黑跟「陰影黑」無法區分，日後易被誤判成陰影；
+       (b) 純黑值若進 bilinear 會被混進可見區。
+       現成可重用的只有「讀取端」：shaders/Home_Studio_Fragment.glsl:1142-1161 valid-linear 取樣器（nearest.a&gt;0.5 才採用、否則回 0 不混色）、
+       glsl:643-644 北牆 runtime 已確立「metadata 標 alpha=0、valid-linear 略過」慣例。
+       「寫入端」目前沒有這個 alpha 契約（CODEX 2026-06-05 核實）：xatlas bake 最後輸出在 js/PathTracingCommon.js:3419
+       pc_fragColor=vec4(previousPixel.rgb+currentPixel.rgb, currentPixel.a)，而 currentPixel.a 在 3412 被 pixelSharpness（邊緣銳化）佔用，與 valid／na 無關。
+       因此 C2 必須新增 xatlas 專用 alpha 輸出（屬新增工作，既有 bake 未做）：valid visible texel→alpha=1；invalid／hiddenContact texel→alpha=0。
+       且須 gate 在 xatlas bake mode（&gt;0.5）內，不得覆蓋一般渲染的 pixelSharpness 用途（§14.4 contract：mode=0 行為不變）。</code></pre>
+    <h3>14.1 C2A：核實既有接線 + row／tile 對齊驗證（第 1 步，ray 接線純驗證；alpha 輸出為已知必加項，見 §14.1.3）</h3>
+    <pre><code>14.1.1 既有接線在 PathTracingCommon.js:3302-3324（§13.2 已讀核實）：tile+fragcoord→texel、
+       texelFetch worldPos／normal、valid 三重檢查（worldPos.w、normal.w、|normal|&gt;1e-6）、
+       設 rayOrigin（worldPos+normal·ε）／rayDirection（cos 半球）／r7310C1XatlasBakeSurfaceNormal／TexelValid、invalid 不 trace。
+14.1.2 C2A 不新增接線；要做的是「驗證它對」，重點 row／tile 對齊：
+       C1 .bin 是 row-major y=0-first、JS flipR7310C1XatlasRgba32fRows 翻列、
+       shader texelFetch(floor(gl_FragCoord+uR738C1BakeTileOriginPx))——三者必須一致對位。
+       驗法：取已知 A1 texel（例 tri20 在 px(812,255)、worldPos≈(-1.755,2.890,-1.874)），
+       比對「該 fragment 烤線設定出的 worldPos」與 C1 該 texel 是否同點（±1mm）。對不上＝翻列／tile offset bug。
+14.1.3 ray 接線（rayOrigin／rayDirection／valid）驗證通過則 C2A 不動它；若驗證發現 ray 接線確有 bug（對齊／法線）才回頭改它。
+       但 alpha 輸出（§14.0.5）是已知必加的 shader／JS 變更，歸 C2C 實作；因 C2B 要看到 alpha=0 診斷，alpha 輸出須在 C2B 前或同時補上。
+14.1.4 JS／runner：既有零件（prepareR7310C1XatlasBakeTextures、--r7310-xatlas-bake、reportR7310C1XatlasBakeAfterSamples）只核實，不改。
+14.1.5 C2A-0（已被新法取代）：原為「驗證 CPU classifier 把 tri20／21 分類為 hidden」。改採 §15.5 backface-ratio validity 後，
+       不再有獨立 CPU 分類步驟——有效性由 C2B 的射線測試（沿 rawNormal 數 front／back face）產生。
+       C2A 已完成且 CODEX APPROVE 的部分（§15）：資料一致性 + worldPos 落北牆平面 + raw/bake 釐清；
+       分類正確性留待 C2B 的 front／back ratio 數據驗證（§14.2.2）。</code></pre>
+    <h3>14.2 C2B：接線 smoke（16 spp，只看 diagnostic 分類）</h3>
+    <pre><code>14.2.0 C2B 第一件事＝round-trip 對齊驗證（CODEX 裁示）：先證明列序、tile offset、輸出 atlas 位置三者一致
+       （bake 後讀回 output atlas，取已知 A1 texel 比對世界位置 ±1mm）。round-trip 未過 → 停，不往下。
+14.2.1 跑既有 runner：--r7310-xatlas-bake --xatlas-texelmap-dir=&lt;C1 dir&gt; --samples=16（不進 C3、不跑 OIDN、不 promotion）。
+14.2.2 diagnostic 必須輸出（CODEX 裁示，採 §15.5 backface-ratio validity）：
+       - front／back face 命中比的【原始數字】，至少列 A1 wall tri10／11 與 beam cap tri20／21（不可只給結論）。
+       - threshold sweep：掃幾個門檻，看 tri10／11 判 valid、tri20／21 判 invalid 的分界；門檻由數據決定、不可拍神祕值。
+       - 沿 rawNormal 射半球的證據（tri20／21 用 -Z、非 bakeNormal +Z；rawNormal 來源：triId→perTriangle 或新增 bin 通道）。
+       - 結果：tri10／11 valid（alpha=1、有有效烘焙值、吃到 normal 非常數）；tri20／21 invalid（alpha=0、不 trace、不進有效 GI、無 alpha=1 黑）；無污染 visible wall。
+14.2.3 round-trip + ratio 都過＝GPU 接線與判定正確；才進 C2C。未過 → 停、回報、不硬推。</code></pre>
+    <h3>14.3 C2C：hiddenContact 隔離 + diagnostic 四分類</h3>
+    <pre><code>14.3.1 有效性判定＝業界標準 per-texel backface-ratio validity（§15.5；取代原 CPU 幾何分類，CODEX 2026-06-05 裁示退場）：
+       每 texel 取表面點、沿【真實面法線 rawNormal】push off、射半球，數命中 front／back face；
+       front 比例 ≥ 門檻 → valid（烤、alpha=1）；back 太多（在結構內／背面／被遮蔽）→ invalid（不烤、alpha=0、不 trace、走 4534 空值路徑）。
+       這一條同時涵蓋朝向與遮蔽，天生不寫死 ID、camera-independent（滿足 §9.2.3／硬規則 1）。
+       rawNormal 硬需求：不可用 C1 的 bakeNormal（邊界面被強制朝室內 +Z），否則 tri20／21 誤判 valid（§15.5.3a）。
+       門檻由 C2B 的 front／back ratio 原始數據決定（§14.2.2），不可拍神祕值。
+       幾何前提（§15.5.3d）：結構接合本應密合＝前面實體＝自然 invalid；不該存在的縫＝建模 bug、修在源頭，不在判定加特例。
+       （§8 的 faceSign=-1 是 rawNormal、.bin 的 +Z 是 bakeNormal，同資料兩個量、皆對；§8 reconcile 已關閉，見 §15.4.3。）
+14.3.2 diagnostic 輸出（CODEX#3）：分開 wall[10,11]／beamEndContact[20,21]、每面的 front／back ratio 與 valid／invalid 判定、
+       並判 visibleEdgeEmpty／paddingBleed／lookupWrongOwner／routeNone 四類。
+       wall／beam 的「標籤」用 C1 metadata 的 triId（CPU 端、僅供報告分類）；valid／invalid「決策」用 §14.3.1 backface-ratio（非 triId）。
+14.3.3 隔離（CODEX#4／#5）：n/a（alpha=0）隔離分「離線」與「即時」兩端，各自都要 alpha-aware（§14.0.5）：
+       - post-bake dilation（§9.3.3，多半在離線工具跑、非 GLSL）：須自己實作 alpha-aware——
+         alpha=0 的 texel 不得當 dilation 來源，只允許 visible valid（alpha=1）texel 當來源。
+         不能只引用 GLSL runtime sampler 當隔離保證（離線工具用不到它）。
+       - runtime lookup（§7.6.2／§9.3.4）：走 GLSL alpha-aware valid-linear（glsl:1142-1161），alpha=0 自動被略過、不參與混色。
+         使用者 A1 相機下，可見北牆邊緣取到 tri20／21 hiddenContact＝lookupWrongOwner FAIL。
+       - bake 取樣用 Nearest（無 bilinear 跨界）。hiddenContact 的 n/a 不得經任何路徑污染可見北牆。</code></pre>
+    <h3>14.4 contract（CODEX#6，mode 關閉時 per-surface bake 不變）</h3>
+    <pre><code>14.4.1 uR7310C1XatlasBakeMode 預設 0（Home_Studio.js 5602）；C2A 的 shader 分支全程 gate 在 &gt;0.5，
+       mode=0 時 per-surface bake 路徑一行不動 → 行為不變。
+14.4.2 須全綠：docs/tests/r7-3-10-seam-contracts-all.mjs、既有 r7-3-8 bake runner smoke、north／east package resolver smoke。
+14.4.3 額外：xatlas mode 關閉時跑一次既有 per-surface bake smoke，比對輸出與接線前一致。</code></pre>
+    <h3>14.5 交審包（CODEX#7）</h3>
+    <pre><code>14.5.1 改檔清單（shader／JS／tool）、C2A diff、C2B：round-trip 證據 + smoke 指令 + diagnostic JSON。C2B 交審包必含（CODEX 裁示）：
+       front／back ratio 原始表（tri10／11、tri20／21）、threshold sweep、tri10／11 與 tri20／21 的 rawNormal 來源證據、
+       overlap=8 的座標與 owner 風險、alpha=0／alpha=1 證據、invalid 未 trace 證據。
+       C2C 四類 diagnostic 結果、debug 圖／旁證、命中的硬停、contract 全綠證據。
+14.5.2 角色：OPUS 產出交審包 → CODEX 審（不自我核准）。</code></pre>
+    <h3>14.6 硬停</h3>
+    <pre><code>14.6.1 可見北牆面 tri10／11 沒有有效烘焙值（沒吃到 +Z、仍是常數）→ 停。
+14.6.2 invalid／hiddenContact texel 仍被當有效 GI trace → 停。
+14.6.3 動到 mode=0 的 per-surface bake 行為（contract 變紅）→ 停。
+14.6.4 需寫死 ID 才能分類 hiddenContact → 停（違反 §9.2.3）。
+14.6.5 §9.1.1 舊 smoke 被當成 GI／黑線證據復用 → 停（已降級為前置初測）。
+14.6.6 backface-ratio 判定把 tri20／21 判成 valid（可見）、或把可見北牆 tri10／11 判成 invalid → 停。
+14.6.7 hiddenContact 的黑經 padding／dilation／runtime lookup 污染可見北牆 → 停。
+14.6.8 hiddenContact／invalid texel 被寫成 alpha=1 的黑值（與陰影黑無法區分）、或讀取端用非 alpha-aware 取樣器讀 xatlas atlas → 停（§14.0.5）。
+14.6.9 C2B 直接拍門檻、未由 front／back ratio 原始數據決定 → 停（CODEX 裁示）。
+14.6.10 round-trip（列序／tile offset／輸出位置）未先驗證就往下 → 停。
+14.6.11 有效性半球用 bakeNormal（非 rawNormal）射 → 停（tri20／21 會誤判 valid，§15.5.3a）。</code></pre>
+    <h3>14.7 順序總結</h3>
+    <pre><code>14.7.1 C2A 核實既有接線 + 對齊驗證（✓ 完成，§15 APPROVE）→ 14.7.2 C2B：round-trip + 16spp smoke + front／back ratio + threshold sweep
+       → 14.7.3 C2C backface-ratio validity 實作（alpha 輸出 + alpha-aware dilation）+ diagnostic 四分類
+       → 14.7.4 交 CODEX 審 → （CODEX 過後）才談 C3／OIDN／runtime 驗收與使用者 A1 相機驗收。</code></pre>
+    <h2>15. OPUS C2A 交審包：核實既有接線 + 對齊／normal 驗證（待 CODEX 審）</h2>
+    <blockquote>依 §14 順序與「OPUS 動手、CODEX 審」分工，C2A（純驗證）完成。本章＝交審包（§14.5）。</blockquote>
+    <blockquote>依硬規則 7：C2A 完成即停，未進 C2B、未跑 bake、未動 shader。請 CODEX 審本章，APPROVE 後 OPUS 才做 C2B。</blockquote>
+    <h3>15.0 一句話結論</h3>
+    <pre><code>C2A 通過：接線形式正確、worldPos 實測落在北牆平面、normal 的 raw／bake 二義已釐清（§8 與 CODEX 兩邊皆對）。
+hiddenContact 判定改採業界標準（OPUS 依使用者裁示查證 Unity／Unreal／Castaño／ands 後定）：單一「per-texel 射線半球有效性測試」——
+沿真實面法線射半球，front-face 命中比例不足（back face 太多＝在結構內／背面／被遮蔽）→ 無效、不烤、alpha=0、dilation 補（Unity「Backface Tolerance」即此）。
+這一個測試同時涵蓋「朝室內？被遮蔽？要不要烤？」，不用自創法線／位置規則。先前 §15 的 rawNormal·inward／type-1／type-2 自創分類撤回（見 §15.5）。
+用使用者反例驗證：沿真實法線，樑帽 -Z 的 ray 打進牆體 back face → 無效；南牆 -Z 的 ray 射進房間 front face → 有效。同法線相反結果，由 ray 打到什麼決定。
+關鍵：半球須沿 rawNormal（非 C1 強制朝室內的 bakeNormal），否則樑帽誤判有效（§15.5.3）。不重跑 xatlas、不寫死 ID。
+一個對齊風險（垂直翻轉 round-trip）列為 C2B 第一必驗，本章不宣告它已正確。</code></pre>
+    <h3>15.1 C2A.1 既有接線核實（PathTracingCommon.js:3302-3324）</h3>
+    <pre><code>15.1.1 行為（已讀核實，與 §13.2 一致）：BakeCaptureMode==2 &amp;&amp; XatlasBakeMode&gt;0.5 時——
+       texel = ivec2(floor(gl_FragCoord.xy + uR738C1BakeTileOriginPx))；範圍檢查 [0,atlasSize)；
+       texelFetch worldPos（tR738C1BakeAtlasTexture）與 normalPacked（tR7310C1FullRoomDiffuseAtlasTexture）；
+       valid 三重檢查（worldPos.w&gt;0.5 &amp;&amp; normalPacked.w&gt;0.5 &amp;&amp; |normal|&gt;1e-6）；
+       rayOrigin = worldPos.xyz + normal·(uEPS_intersect*8)；rayDirection = cos 半球（normal）；
+       設 r7310C1XatlasBakeSurfaceNormal 與 r7310C1XatlasBakeTexelValid；範圍外或 invalid → TexelValid=false（不 trace）。
+15.1.2 結論：ray 接線形式正確、完整，C2A 不動它（§14.1.3）。</code></pre>
+    <h3>15.2 C2A.2 row／tile／flip 對齊（含未決風險）</h3>
+    <pre><code>15.2.1 三段對位：C1 bin＝row-major、y=0 first（report.binaryLayout 確認）；
+       JS flipR7310C1XatlasRgba32fRows（InitCommon.js:5242）＝out[y]=src[height-1-y]（反轉列序）；
+       DataTexture flipY=false（InitCommon.js:5262，無額外翻轉）、NearestFilter；
+       shader texelFetch(floor(gl_FragCoord+tileOrigin))。
+15.2.2 推論：texelFetch(x,Y) 取到 bin texel (x, height-1-Y)。world／normal／tri 三 bin 套同一 flip → 彼此一致。
+15.2.3 未決風險：整張 atlas 是否相對 runtime 取樣「垂直鏡像」，無法純靜態確證。
+       列為 C2B 第一必驗：bake 後讀回 output atlas，取已知 A1 texel，確認其 baked 值對應正確世界位置（±1mm）。
+       本章不宣告對齊已正確（避免重蹈本 session 覆蓋不全的判斷）。</code></pre>
+    <h3>15.3 C2A.3 worldPos 實測（落在北牆平面）</h3>
+    <pre><code>15.3.1 atlas 946×516；worldPos.z 全 = -1.874，最大誤差 4.67e-8 m（遠在 1mm 容差內）→ A1 texel 確在北牆平面。
+15.3.2 counts：total 488136／valid 356029／empty 132107／dilation 47752／overlapSkipped 8；wall valid 45978、cap valid 2464。
+15.3.3 texelmap.bin floats 3905088＝width*height*8，與 JSON 完全吻合（無 JSON／bin desync）。
+15.3.4 工具：docs/tools/r7-3-10-c2a-alignment-verify.py（唯讀，C2A 唯一新增檔），輸出見 15.4 表。</code></pre>
+    <h3>15.4 C2A.4／1.5 normal raw-vs-bake 釐清（CODEX#4 後續，含 §8 reconcile）</h3>
+    <pre><code>15.4.1 實證表（venv 跑 r7-3-10-c2a-alignment-verify.py）：
+       tri  box  role               sign  rawNormal   bakeNormal  dot(bake,fwd)  dot(raw,fwd)  判定
+       10   15   north_wall_segment  +1   (0,0,+1)    (0,0,+1)    -0.7619        -0.7619       可見
+       11   15   north_wall_segment  +1   (0,0,+1)    (0,0,+1)    -0.7619        -0.7619       可見
+       20   28   west_beam_cap       -1   (0,0,-1)    (0,0,+1)    -0.7619        +0.7619       隱藏
+       21   28   west_beam_cap       -1   (0,0,-1)    (0,0,+1)    -0.7619        +0.7619       隱藏
+15.4.2 成因：C1 工具 bake_normal_from_metadata 對 z=ROOM_MIN_Z(-1.874) 邊界面一律改用 room_inward 法線(+Z)，
+       故 .bin（normal-rgba32f／texelmap）存的 bakeNormal 對牆與帽都是 +Z；真實面法線 rawNormal 留在 perTriangle（normal_from_metadata 算）。
+15.4.3 §8 reconcile：§8 講的 faceSign=-1＝rawNormal；CODEX 讀的 +Z＝bakeNormal。同一份資料的兩個量，兩邊皆正確。
+       §14.3.1「§8 待 reconcile」結論：raw／bake 二義，§8 無需更正、可關閉（建議 CODEX 確認）。
+15.4.4 分類後果：dot(bakeNormal,fwd) 四面皆 -0.762 → 用 bakeNormal 會把隱藏帽誤判為可見；
+       dot(rawNormal,fwd)：牆 -0.762（可見）、帽 +0.762（隱藏）→ 正確分離。classifier 必須用 rawNormal、不可用 bakeNormal。</code></pre>
+    <h3>15.5 C2A.6 hiddenContact 判定：採業界標準 per-texel backface-ratio validity（射線半球測試），不自創法線規則</h3>
+    <pre><code>15.5.1 業界統一機制（單一測試，多條件一次滿足）：
+       每個 texel 取表面 sample point（Castaño：用 polygon centroid 確保起點在真實表面上）、沿真實面法線 push off 一點（Unity「Pushoff」避免自交）、
+       朝半球射一束 ray／渲染 hemicube，統計命中 front face vs back face 的比例。
+       front-face 命中比例 ≥ 門檻 → 有效（valid，要烤）；back face 命中太多 → 該 texel 在幾何內部／背面／被遮蔽 → 無效（invalid，不烤）。
+       Unity 命名門檻為「Backface Tolerance」＝必須命中正面的 ray 百分比（0.0＝全部都背面才否決；1.0＝有一條打到背面就否決）。
+       Castaño 在 hemicube 把 back face 用特殊 tag 標記，某 texel 的 hemicube 被 tag 佔太多 → 整個 sample 丟棄。
+       無效 texel 不烤、標記後由 valid 鄰居 dilation／extrapolation 補（與 §14.0.5 的 alpha=0 n/a + valid-linear 完全對齊）。
+15.5.2 為何這一個測試就同時涵蓋使用者三個條件（朝室內？被遮蔽？要不要烤？），不需自創規則：
+       - 朝室內：真實面法線的半球大多打到場景 front face ⟺ 此面朝開放空間（房間）。
+       - 被遮蔽／在結構內：被樑等實體擋住 → 半球打到 back face／實體 → front-face 比例掉 → 無效。
+       - 要不要烤：valid 才烤；invalid → alpha=0、dilation 補。
+       用使用者反例驗證（沿真實法線射半球）：
+         西樑北端帽（真實法線 -Z，朝北進牆體）→ ray 立刻打進牆／結構 back face → 無效（不烤）。✓
+         南牆（真實法線 -Z，朝室內）→ ray 射進房間打 front face → 有效（要烤）。✓ 同 -Z 法線、相反結果，由「ray 打到什麼」決定，不靠位置硬判。
+         被樑遮住的天花板 → ray 打到樑 back face／被擋 → 無效（不烤）。✓ 先前的 type-2 自動涵蓋。
+15.5.3 對本專案 stack 的關鍵含意：
+       (a) 有效性半球必須沿「真實面法線 rawNormal」射，不能用 C1 對邊界面強制朝室內的 bakeNormal——
+           否則樑帽會被當成朝室內、ray 射進房間、誤判有效。先前 raw≠bake 的發現（§15.4）在這裡變成硬需求：validity 與 gather 都該用 rawNormal。
+       (b) 判定來自「ray 打到 front／back face」，天生不寫死 ID、camera-independent，滿足 §9.2.3／硬規則 1。
+       (c) 無效 → alpha=0 → dilation 補，正是 §14.0.5 既定 alpha 契約；業界印證此契約正確。
+       (d) 幾何前提（使用者裁示 2026-06-05）：結構接合（樑↔天花板、樑↔牆）應密合、前面是實體 → 射線自然判無效、不烤。
+           若模型在這種接合處出現不該有的縫＝建模 bug，修模型；classifier 不為「不該存在的幾何」加特例。
+           家具（如衣櫃）刻意離牆的真實間隙才是合法 air-gap：背牆前面有空氣 → 烤暗值（合法、無害、不污染可見面）。
+           推論：本機制「前面是實體 vs 空氣」這一條就夠，不需再加相機可見性剔除（先前 OPUS 提的策略 A／B 作廢，因 B 所依據的「有縫被遮天花板」案例不存在）。
+15.5.4 接縫是另一個獨立問題（重要：別跟 validity 混為一談）：
+       dilation 只填 chart 外圈空白 texel，無法修「同一條邊在 lightmap 兩側 texel 值不同」造成的接縫。
+       業界用最小平方 seam optimizer（ands/seamoptimizer，源自 Michał Iwanicki《The Last of Us》講演，非 Castaño Witness 引擎碼，且不在 xatlas 內）：
+       data 項要求接縫兩側 bilinear 取樣值相等、lambda 拉回原色、cosNormalThreshold 只處理近共面邊。對齊本頁 §4。
+15.5.5 與 §14 的關係（供 CODEX 裁示）：本機制取代 §14.3.1 的自創 rawNormal·inward／occlusion 分類；§14.0.5 alpha 契約維持。
+       建議 C2C 不再做「CPU 端 hiddenContact 幾何分類」，改為「bake 半球加 backface-ratio 有效性測試（沿 rawNormal）」＝業界單一機制。
+15.5.6 引用（已實際抓取核實）：
+       Unity Backface Tolerance／Texel Validity／dilation：docs.unity3d.com/Manual/class-LightmapParameters.html、/Manual/GIVis.html、/Manual/troubleshooting-lightmapping-artifacts.html
+       Unreal GPU Lightmass backface detection：dev.epicgames.com/documentation（GPULightmassSettings、understanding-lightmapping-in-unreal-engine）
+       Castaño hemicube backface tag + centroid sampling + 保守光柵 padding：ludicon.com/castano/blog/articles/hemicube-rendering-and-integration/、/lightmap-parameterization/
+       通用：github.com/ands/lightmapper（gl_FrontFacing→alpha valid + lmImageDilate）、github.com/ands/seamoptimizer、ndotl.wordpress.com/2018/08/29/baking-artifact-free-lightmaps/</code></pre>
+    <h3>15.6 風險與待驗</h3>
+    <pre><code>15.6.1 垂直翻轉 round-trip：列 C2B 第一必驗（見 15.2.3）。
+15.6.2 overlapTexelsSkipped=8：rasterize 先到先得；若這 8 個 texel 落在可見牆／隱藏帽接縫，所有權會直接牽動黑線。
+       C2C diagnostic 須列出這 8 個 texel 的座標與歸屬（lookupWrongOwner 風險點）。
+15.6.3 rawNormal 目前未在 bin 的 per-texel 通道：Route B 需 C2C 依 15.5.4 emit。
+15.6.4 C2A 未動 shader、未跑 bake：alpha 輸出（§14.0.5）仍待 C2C 新增。
+15.6.5 判定採業界標準 per-texel backface-ratio 射線測試（§15.5），單一機制同時涵蓋背面、被遮蔽、enclosed——
+       使用者兩次破綻（南牆與樑帽同 -Z 法線結果相反；被樑遮的天花板）皆由此測試自動正確處理，全室／A1 同一套、無特例。
+       前提：半球沿 rawNormal 射；無效 texel → alpha=0 → dilation（§14.0.5）。</code></pre>
+    <h3>15.7 交審包清單（對齊 §14.5）</h3>
+    <pre><code>15.7.1 改檔清單：新增 docs/tools/r7-3-10-c2a-alignment-verify.py（唯讀驗證工具）。未改任何既有檔、未動 shader／JS／runner。
+15.7.2 C2A 對齊驗證結果：15.2（flip 推論）+ 15.3（worldPos 實測、counts、bin/JSON 吻合）。
+15.7.3 normal 實證：15.4.1 表。
+15.7.4 route 決策與依據：15.5。
+15.7.5 命中的硬停：無（C2A 全通過）。
+15.7.6 contract：本階段未改程式，§14.4 contract 留待 C2C 後跑。</code></pre>
+    <h3>15.8 STOP（依硬規則 7）</h3>
+    <pre><code>15.8.1 C2A 完成即停。未進 C2B、未跑 bake、未動 shader。
+15.8.2 請 CODEX 裁示：
+       (i)   採業界標準「per-texel backface-ratio 有效性測試（沿 rawNormal）」取代 §14.3.1 自創分類（§15.5）是否同意；
+       (ii)  C2C 改為「bake 半球加 backface 計數＋門檻＋dilation」、不再做 CPU 端幾何分類，是否同意；
+       (iii) 15.2.3 垂直翻轉 round-trip 列 C2B 首驗是否同意；
+       (iv)  §8 reconcile 關閉（raw／bake 二義、非錯誤）是否同意；
+       (v)   15.6.2 的 overlap=8 列入 C2C diagnostic 是否同意；
+       (vi)  validity 半球改用 rawNormal（非 bakeNormal）的含意（§15.5.3）是否同意；若同意，§14.3.1／§14 相關段落需隨之更新（CODEX 章節，OPUS 不擅動）。
+15.8.3 APPROVE 後 OPUS 才做 C2B 16 spp smoke。</code></pre>
+    <h2>16. OPUS C2B 進度 + 交接 CODEX 完成（OPUS 用量上限，剩餘交 CODEX）</h2>
+    <blockquote>CODEX 已 APPROVE §14／§15、開 C2B。OPUS 動手做了 C2B 三塊（皆已驗證），因用量將達上限，</blockquote>
+    <blockquote>把剩餘三塊（round-trip、16spp smoke、C2C 落實 + 交審包）連同「能用的 harness 指令與所有資料」交給 CODEX 接手。</blockquote>
+    <h3>16.1 已完成①：per-texel rawNormal bin（驗證通過）</h3>
+    <pre><code>16.1.1 工具：docs/tools/r7-3-10-c2b-build-rawnormal.py（唯讀既有鎖定 C1、只新增一個 bin、零 shader）。
+16.1.2 產出：xatlas-bake-spike/xatlas-bake-rawnormal-rgba32f.bin
+       = 1,952,544 floats = 488,136 texel × 4［rnx,rny,rnz,valid］，row-major y=0-first，valid 356,029（與 C1 一致）。
+16.1.3 來源：triId→mesh triangleMetadata 的 faceAxis/faceSign（＝§15 的 rawNormal，CODEX#6 准用）。
+16.1.4 驗證：tri10/11 rawNormal=+Z、tri20/21=-Z，逐 texel uniform → PASS。這是「沿 rawNormal 射半球」的必要輸入（§15.5.3a）。</code></pre>
+    <h3>16.2 已完成②：GPU bake 在本環境可行（headless Metal 跑通）</h3>
+    <pre><code>16.2.1 能用的指令（CODEX 直接沿用；8spp 已跑通）：
+       node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-xatlas-bake \
+         --xatlas-texelmap-dir=docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike \
+         --samples=8 --timeout-ms=180000 --throwaway-package --browser=chrome --angle=metal \
+         --http-port=9016 --cdp-port=9334 \
+         --r7310-bake-submission-boundary=fence --r7310-bake-tile-width=512 --r7310-bake-tile-height=512
+16.2.2 結果：completed、samples 8、2×2=4 tiles、fence、completedTiles 4、timedOut false、contextLost 0。
+       package：.omc/r7-3-10-xatlas-bake-spike/20260605-055546。
+       【OPUS 更正 2026-06-05，CODEX 抓到】實際只含 atlas-patch-000-rgba-f32.bin（＋ bake-diagnostics/manifest/validation-report 等 json）；
+       xatlas 模式【不寫】texel-metadata-patch（runner:8425 gate「metadataBuffer.length&gt;0」，xatlas 該 buffer 為空）。manifest 雖列此檔名、實際無檔（名實不符）。先前交接誤稱有此檔，是 OPUS 疏失。
+16.2.3 三個坑（CODEX 注意）：
+       (a) 預設 --http-port=9002 會撞使用者開發伺服器 → 必給空閒埠。
+       (b) atlas 946×516 屬「矩形/大」→ 必給 --r7310-bake-submission-boundary=fence + --r7310-bake-tile-width/height，
+           否則 validateR738BakeTilingSafety（InitCommon.js:1303-1310）throw「requires tileWidth/tileHeight and fence boundary」。
+       (c) status:fail / failedChecks: atlasSamples,patchSamples 在低 spp 是「樣本數驗收閘」正常現象，非 GPU 失敗。
+16.2.4 結論：runner 已強制 Chrome、擋 Brave、headless、隔離 user-data-dir（不干擾使用者 Chrome）。GPU 部分本環境可自跑。</code></pre>
+    <h3>16.3 已完成③：全室 backface-ratio + threshold sweep（決定性數據）</h3>
+    <pre><code>16.3.1 工具：docs/tools/r7-3-10-c2b-backface-ratio.py（CPU、唯讀、決定性、無 RNG）。
+       全室 88-box（contact-edge-source.json）；每 A1 texel 沿 rawNormal 偏移 1mm，射 160 條 Fibonacci 半球；
+       ray-AABB：front=從外進 box（打到外/正面）、back=從「取樣點所在 box」內穿出（打到內/背面）。
+       產出：xatlas-bake-spike/xatlas-bake-c2b-backface-ratio.json。
+16.3.2 結果（front 比例 = front/(front+back)）：
+       tri  role          rawN   ff.mean  ff&lt;0.5占比
+       10   北牆段         +Z     0.997    0.0%    → 全 valid
+       11   北牆段         +Z     0.948    3.6%    → 多數 valid（3.6% 是「被西樑遮住的北牆段」，正確判 invalid）
+       20   西樑帽         -Z     0.327  100.0%    → 全 invalid
+       21   西樑帽         -Z     0.348   98.6%    → 幾乎全 invalid
+16.3.3 threshold sweep（valid = ff ≥ thr）：thr=0.5 → 北牆 tri10 100%/tri11 96.4% valid、樑帽 tri20 0%/tri21 1.4% valid。
+       門檻建議 0.5–0.6（數據撐出的乾淨分界，非神祕值）；CODEX 可用 GPU 數據微調。
+16.3.4 意義：同一條射線測試把可見牆判 valid、隱藏帽判 invalid、遮蔽段也正確 invalid——§15.5 業界法在真實全室幾何上成立。</code></pre>
+    <h3>16.4 剩餘交 CODEX 完成</h3>
+    <pre><code>16.4.1 round-trip（CODEX 第一關，§14.2.0）。【OPUS 更正：xatlas package 不含 texel-metadata-patch（見 16.2.2），原指引作廢，改用下列其一】：
+       (a) 讓 xatlas capture 寫出 metadata：buildR7310C1XatlasBakeTexelMetadata（InitCommon.js:5268）已存在，
+           但 xatlas 路徑未把結果存進 __r738C1BakeCaptureLastTexelMetadata，故 runner:8425（metadataBuffer.length&gt;0）不寫檔。接上即可，
+           package 會得 texel-metadata-patch（12 floats/texel：wx,wy,wz,nx,ny,nz,triId,valid,sourceBox,materialType,uvX,uvY）→ 比對 output texel→worldPos 與 C1 input。
+       (b) 或加診斷模式：bake 把「取到的 worldPos」當 atlas RGB 輸出（atlas-patch RGB＝fetched worldPos），與 C1 input bin 比對。
+       (c) 注意：C1 input texelmap（xatlas-bake-texelmap.bin）只有 INPUT worldPos，單獨無法驗 OUTPUT 對齊，需 (a) 或 (b)。
+       驗收：A1 texel worldPos.z 應 = -1.874、跨 tile 邊界連續、無垂直鏡像。未過 → 停。
+16.4.2 16spp GPU smoke：把 16.2.1 指令 --samples=16 重跑，確認可見北牆 tri10/11 有有效烘焙值（非常數）、樑帽 tri20/21 被排除。
+16.4.3 C2C 落實（§14.3.1）：bake 半球沿 rawNormal（用 16.1.2 的 bin）射、front/back 計數、門檻（16.3.3 的 ~0.5）、
+       invalid→alpha=0→alpha-aware dilation；並驗 GPU front/back 與 16.3.2 CPU 數據 parity。
+16.4.4 組 C2B 交審包（§14.5.1）：ratio 原始表（16.3.2）、sweep（16.3.3）、rawNormal 來源（16.1）、
+       overlap=8 座標、alpha=0/1 證據、round-trip 證據（16.4.1）。</code></pre>
+    <h3>16.5 關鍵裁示/備註（CODEX 確認）</h3>
+    <pre><code>16.5.1 方法分工：front/back ratio 用 CPU 全室射線（16.3，決定門檻、可測）；GPU 16spp smoke 確認 bake 真的跑＋出值。
+       CODEX 確認此分工可接受（vs 全程 GPU 計 ratio）。
+16.5.2 raw≠bake 硬需求：validity/gather 半球一律用 rawNormal（16.1.2 bin），不可用 bakeNormal（§15.5.3a／§14.6.11）。
+16.5.3 tri11 的 3.6% invalid＝被西樑遮住的北牆段，per-texel 正確判 invalid（遮蔽天生涵蓋，非 bug）。
+16.5.4 OPUS 本輪未動 shader、未改 source.md 既有章節；只新增 2 支工具 + 2 個資料檔（見 16.6）。index.html 不必為本章重生（除非 CODEX 要把 §16 納入頁面）。</code></pre>
+    <h3>16.6 本輪新增檔（交接清單）</h3>
+    <pre><code>docs/tools/r7-3-10-c2b-build-rawnormal.py            （rawNormal bin 產生器，自驗）
+docs/tools/r7-3-10-c2b-backface-ratio.py             （全室 backface-ratio 分析，自驗門檻 sweep）
+xatlas-bake-spike/xatlas-bake-rawnormal-rgba32f.bin  （per-texel rawNormal）
+xatlas-bake-spike/xatlas-bake-c2b-backface-ratio.json（ratio + sweep 報告）
+（GPU smoke package：.omc/r7-3-10-xatlas-bake-spike/20260605-055546，throwaway 可刪）</code></pre>
+    <h2>17. CODEX C2B 執行結果與交審包（接手 OPUS §16 後完成）</h2>
+    <blockquote>本章記錄 CODEX 接手 §16 後完成的 C2B 交審包。</blockquote>
+    <blockquote>範圍只到 C2B：補 metadata 輸出、round-trip、16spp GPU smoke、ratio/alpha 證據整理。</blockquote>
+    <blockquote>未進 C2C、未進 OIDN、未 promotion、未改 accepted package。</blockquote>
+    <h3>17.1 修正 metadata 缺檔</h3>
+    <pre><code>17.1.1 根因：瀏覽器端已經建立 xatlas metadata（buildR7310C1XatlasBakeTexelMetadata），
+       並在 capture 後寫入 window.__r738C1BakeCaptureLastTexelMetadata。
+       runner 對 xatlas/rectangular bake 只用 CDP 讀 atlasPixels，metadata 仍走 payload.metadataBase64；
+       但 rectangular path 的 metadataBase64 為 null，故 metadataBuffer 空、runner:8425 不寫 texel-metadata-patch。
+17.1.2 最小修正：docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+       在 args.xatlasBake 時改用 CDP 讀 window.getR738C1BakeCaptureArtifacts().texelMetadata。
+       其他 rectangular bake 維持原行為。
+17.1.3 contract：docs/tests/r7-3-10-xatlas-bake-mode-contract.test.js 新增檢查：
+       runner 必須讀 window.getR738C1BakeCaptureArtifacts().texelMetadata；
+       runner 必須能產 texel-metadata-patch-000-f32.bin。
+17.1.4 驗證：
+       node docs/tests/r7-3-10-xatlas-bake-mode-contract.test.js → OK
+       node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs → OK</code></pre>
+    <h3>17.2 round-trip 第一關</h3>
+    <pre><code>17.2.1 新工具：docs/tools/r7-3-10-c2b-roundtrip-verify.py
+       讀取 package 的 texel-metadata-patch-000-f32.bin，
+       與 C1 的 worldPos / normal / triValid 三份 bin 依 InitCommon.js 的列序翻轉規則逐 texel 比對。
+17.2.2 8spp package：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-062758
+       已成功產出 texel-metadata-patch-000-f32.bin（23,430,528 bytes）。
+       round-trip PASS。
+17.2.3 16spp package：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-063152
+       round-trip PASS：
+         worldMaxErrorM = 0
+         normalMaxError = 0
+         triMismatch = 0
+         validMismatch = 0
+         A1 zWithin1mm = true
+17.2.4 證據檔：
+       xatlas-bake-spike/xatlas-bake-c2b-roundtrip-report.json
+       xatlas-bake-spike/xatlas-bake-c2b-roundtrip-report-16spp-final.json</code></pre>
+    <h3>17.3 16spp GPU smoke</h3>
+    <pre><code>17.3.1 最終 smoke package：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-063152
+17.3.2 使用參數：
+       --samples=16
+       --browser=chrome
+       --angle=metal
+       --r7310-bake-submission-boundary=fence
+       --r7310-bake-submission-every-samples=4
+       --r7310-bake-tile-width=512
+       --r7310-bake-tile-height=512
+17.3.3 結果：
+       browserValidationStatus = pass
+       completedTiles = 4
+       minCompletedSamples = 16
+       contextLostCount = 0
+       contextRestoredCount = 0
+       maxSubmissionElapsedMs = 188.9
+       maxTileReadbackMs = 5.9
+       texel-metadata-patch-000-f32.bin = 23,430,528 bytes
+17.3.4 runner status 仍為 fail，原因只剩低樣本 smoke 的正式樣本數閘：
+       runnerFailedChecks = atlasSamples, patchSamples
+       沒有 GPU 額外失敗項。</code></pre>
+    <h3>17.4 A1 四個三角面的 smoke 判讀</h3>
+    <pre><code>17.4.1 新工具：docs/tools/r7-3-10-c2b-smoke-report.py
+       產出：xatlas-bake-spike/xatlas-bake-c2b-smoke-report.json
+       status = REVIEW_READY
+17.4.2 實際 16spp atlas 依 metadata 分組：
+       tri10 北牆：22,990 texel，RGB 有值 45.3%，lumaMean 0.343，alpha=1
+       tri11 北牆：22,988 texel，RGB 有值 80.9%，lumaMean 0.616，alpha=1
+       tri20 西樑接觸面：1,196 texel，RGB 有值 0%，lumaMean 0，alpha=1
+       tri21 西樑接觸面：1,268 texel，RGB 有值 0%，lumaMean 0，alpha=1
+17.4.3 解讀：
+       北牆 tri10/11 已有有效烘焙亮度。
+       西樑接觸面 tri20/21 目前仍是 alpha=1 黑值。
+       這正是 C2C 要處理的對象：依 C2B ratio 判 invalid 後，改寫成 alpha=0，再做 alpha-aware dilation。</code></pre>
+    <h3>17.5 backface-ratio 與門檻</h3>
+    <pre><code>17.5.1 沿用 OPUS 工具與資料：
+       docs/tools/r7-3-10-c2b-backface-ratio.py
+       xatlas-bake-spike/xatlas-bake-c2b-backface-ratio.json
+17.5.2 門檻 0.5 的候選判定：
+       tri10：100.0% valid
+       tri11：96.4% valid
+       tri20：0.0% valid
+       tri21：1.4% valid
+17.5.3 C2B 裁示建議：
+       threshold = 0.5 可作第一個 C2C 門檻候選。
+       tri20/21 應列 invalid，進 C2C 後寫 alpha=0。
+       tri11 的少量 invalid 是被西樑遮住的北牆段，屬 per-texel 有效性測試的合理輸出。</code></pre>
+    <h3>17.6 overlap=8 座標</h3>
+    <pre><code>17.6.1 docs/tools/r7-3-10-xatlas-bake-texelmap.py 已補 overlapTexelSamples 診斷欄位。
+       重跑同一份鎖定起點後仍 PASS：
+       valid=356,029，dilation=47,752，overlapTexelsSkipped=8。
+17.6.2 座標已寫入：
+       xatlas-bake-spike/xatlas-bake-texelmap.json → overlapTexelSamples
+17.6.3 C2B smoke report 已收錄 overlapTexels.count=8 與 8 筆座標。</code></pre>
+    <h3>17.7 本輪新增/更新檔</h3>
+    <pre><code>17.7.1 新增：
+       docs/tools/r7-3-10-c2b-roundtrip-verify.py
+       docs/tools/r7-3-10-c2b-smoke-report.py
+       xatlas-bake-spike/xatlas-bake-c2b-roundtrip-report.json
+       xatlas-bake-spike/xatlas-bake-c2b-roundtrip-report-16spp.json
+       xatlas-bake-spike/xatlas-bake-c2b-roundtrip-report-16spp-final.json
+       xatlas-bake-spike/xatlas-bake-c2b-smoke-report.json
+17.7.2 更新：
+       docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+       docs/tests/r7-3-10-xatlas-bake-mode-contract.test.js
+       docs/tools/r7-3-10-xatlas-bake-texelmap.py
+       xatlas-bake-spike/xatlas-bake-texelmap.json（新增 overlapTexelSamples）
+17.7.3 throwaway package：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-062758（8spp metadata round-trip）
+       .omc/r7-3-10-xatlas-bake-spike/20260605-063152（16spp final smoke）</code></pre>
+    <h3>17.8 STOP：交 OPUS / 使用者審查</h3>
+    <pre><code>17.8.1 C2B 交審包完成。
+17.8.2 未進 C2C，故實際 atlas 尚未把 tri20/21 寫成 alpha=0。
+17.8.3 下一步需 OPUS / 使用者審查：
+       (a) metadata 接線修正是否核准；
+       (b) round-trip PASS 是否足夠；
+       (c) 16spp smoke 是否接受；
+       (d) threshold=0.5 是否核准作 C2C 第一候選；
+       (e) C2C 是否依本章證據進行 invalid→alpha=0→alpha-aware dilation。</code></pre>
+    <h2>18. OPUS C2B 審查裁示（§17 交審包；OPUS 2026-06-05 獨立查證後核准）</h2>
+    <blockquote>範圍：審 §17 的 C2B 交審包。OPUS 親自重跑驗證、看實際 diff、核實 metadata 檔，</blockquote>
+    <blockquote>不以 CODEX 報告為唯一依據。結論：APPROVE，C2C 可開工，附 18.4 前置護欄。</blockquote>
+    <h3>18.1 一句話結論</h3>
+    <pre><code>APPROVE。metadata 缺檔已正確補上、round-trip（來回對齊驗證）證據充分且含反向對照、
+16spp GPU smoke 在本環境跑通。C2C 可依 §17 證據進行，但須守 18.4 護欄。
+C2B 交審包本身無待修缺陷；18.4 是 C2C 的前瞻條件，非 C2B 的退件理由。</code></pre>
+    <h3>18.2 OPUS 獨立查證（親自重跑，非僅讀報告）</h3>
+    <pre><code>18.2.1 mode-contract test 重跑 → OK exit=0
+18.2.2 texelmap 單元測試重跑 → Ran 2 tests OK
+18.2.3 runner 語法 node --check → OK
+18.2.4 round-trip 親自重跑 16spp package（.omc/.../20260605-063152）
+       → PASS、worldMaxErrorM=0.0、tri/valid/source/material mismatch 全 0、a1ZWithin1mm=true
+18.2.5 metadata 接線在 diff 中證實：args.xatlasBake 時改走
+       CDP 讀 window.getR738C1BakeCaptureArtifacts().texelMetadata；else 保持 metadataBase64 原行為
+       → 只動 xatlas 路徑
+18.2.6 metadata 檔實存：texel-metadata-patch-000-f32.bin = 23,430,528 bytes
+       （= 946×516×12×4，數值吻合）
+18.2.7 accepted C1 package 未被本輪改動：mode-contract 通過 +
+       shader guard 受 uR7310C1XatlasBakeMode 旗標 gate（模式關閉時不觸發）</code></pre>
+    <h3>18.3 §17.8 五問逐項裁示</h3>
+    <pre><code>(a) metadata 接線修正 → 核准。最小修、xatlas-only、檔已正確產出、round-trip 全對。
+(b) round-trip 是否足夠 → 足夠，且強於 §16.4.1 要求。
+    工具除「翻轉後 worldErr=0」外，另以「不翻轉」假設算出 noFlipWorldMaxErrorM=4.92m，
+    反證翻轉對齊不是巧合；再以 UV 對位（metadata UV = 輸出像素格 (x+0.5)/w,(y+0.5)/h）
+    把輸出像素位置綁回 C1 input 的 worldPos。輸出對齊已證。
+(c) 16spp smoke → 接受（作為 smoke）。browserValidation=pass、4 tile 完成、
+    contextLost=0、nonFinite=0、檔大小吻合。runnerStatus=fail 只剩 atlasSamples/patchSamples
+    兩個正式 1000 樣本閘，unexpectedRunnerFailedChecks=[]。正式 1000spp 驗收屬後續步驟，非 C2B 範圍。
+(d) threshold=0.5 作 C2C 第一候選 → 核准為候選（尚未鎖定）。
+    sweep 顯示 0.5 是乾淨分界：tri20→0%、tri21→1.4%、tri10→100%、tri11→96.4%；
+    再升門檻 tri11 掉到 90/89.5%（開始侵蝕有效牆面）。最終值須待 C2C 烘焙 + 使用者驗收相機實測後才鎖。
+(e) C2C 依本章證據進行 invalid→alpha=0→alpha-aware dilation → 核准方向，須守 18.4。</code></pre>
+    <h3>18.4 C2C 開工前護欄（硬要求）</h3>
+    <pre><code>1. 有效性來源＝backface-ratio 結果（門檻 0.5），不得在 shader 另立臨時規則。
+   現況 shader guard（CalculateRadiance：uR7310C1XatlasBakeMode&gt;0.5 &amp;&amp; !r7310C1XatlasBakeTexelValid）
+   把無效 texel 輸出 pixelSharpness=1.0（→ alpha=1）。C2C 須把無效改成 alpha=0（§14.0.5 n/a 契約）。
+2. 三邊同步（seam-desync 教訓）：per-texel valid 旗標、shader guard、metadata builder 的 valid/alpha
+   三者必須一致；新增 contract test 鎖定。缺一邊會重開接縫。
+3. alpha-aware dilation：tri11 約 3.6% 被西樑遮住的北牆段 + 西樑帽 tri20/21，
+   須走 alpha-aware 外擴填補（glsl 既有 valid-linear sampler），不可 bilinear 滲色。
+4. threshold 0.5＝候選；C2C 烘焙後在使用者驗收相機看過才可鎖定。
+   特別留意 tri21 在 0.5 仍有 1.4% 判為有效（帽邊殘留），若驗收時現形，
+   再考慮帽面 per-face override 或微調帽面門檻。
+5. 維持 STOP 邊界：本輪不進 C3、OIDN、promotion，不改 accepted package。</code></pre>
+    <h3>18.5 判讀提醒（避免誤讀 smoke）</h3>
+    <pre><code>§17.4.2 的「RGB 有值%」（tri10 45.3%、tri11 80.9%）只反映 16spp 低樣本下的光照與雜訊覆蓋，
+本身不能當有效性指標。有效性要看 backface-ratio（tri10 100%、tri11 96.4%）。
+tri10 雖 100% 有效但 RGB 有值僅 45%，原因是該牆段光照本就偏暗（lumaMax 仍達 1.368，確有光），
+與有效性無關，兩者勿混為一談。</code></pre>
+    <h3>18.6 一個流程風險（非阻擋本次核准）</h3>
+    <pre><code>工作樹目前有跨三條工作線的未提交變更（xatlas bake mode + 2026-06-03 接縫 gate + OIDN 殘留），
+共 8 檔 514 行 + 多個未追蹤工具/測試/資料夾。日後提交須把鎖接縫的 contract test 一併納入、分批小心，
+避免一次大提交埋雷。此為提早提醒，非 §17 退件項。</code></pre>
+    <h3>18.7 下一步</h3>
+    <pre><code>CODEX：可重生 index.html 收錄本章，並依 18.4 護欄進 C2C。</code></pre>
+    <h2>19. CODEX C2C 執行結果與交審包（2026-06-05）</h2>
+    <blockquote>範圍：依 §18.4 護欄執行 C2C smoke。此章只記錄 C2C 診斷與 16spp 煙霧測試。</blockquote>
+    <blockquote>本輪未進 C3、未跑 OIDN、未 promotion、未改 accepted package。</blockquote>
+    <h3>19.1 一句話結論</h3>
+    <pre><code>19.1.1 C2C 已產出可交審煙霧測試包。
+19.1.2 threshold=0.5 已實測，因 tri21 仍可能成為 dilation 來源，先不採用。
+19.1.3 threshold=0.675 已實測，tri20/tri21 全部 alpha=0，且 dilation 來源沒有使用 tri20/tri21。
+19.1.4 C2C package 狀態為 REVIEW_READY，可交 OPUS / 使用者審查。
+19.1.5 threshold=0.675 尚未鎖定為最終門檻；需 OPUS 與使用者看過本章證據後裁示。</code></pre>
+    <h3>19.2 本輪新增與修改</h3>
+    <pre><code>19.2.1 新增工具：
+       docs/tools/r7-3-10-c2c-validity-mask.py
+       docs/tools/r7-3-10-c2c-smoke-report.py
+19.2.2 新增測試：
+       docs/tests/r7-3-10-c2c-validity-mask.test.py
+       docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+19.2.3 更新 runner：
+       docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+19.2.4 runner 新增參數：
+       --xatlas-validity-mask=&lt;path&gt;
+19.2.5 runner 新增 C2C alpha policy：
+       valid visible texel → alpha=1
+       invalid / hiddenContact texel → alpha=0
+       dilation 只能從 alpha=1 texel 取來源</code></pre>
+    <h3>19.3 C2C validity mask：0.5 候選實測</h3>
+    <pre><code>19.3.1 輸入：
+       xatlas-bake-texelmap.bin
+       xatlas-bake-rawnormal-rgba32f.bin
+       88-box 全室幾何
+19.3.2 方法：
+       每個 texel 沿 rawNormal 做 backface-ratio 判定。
+       alpha=1 表示可烤。
+       alpha=0 表示 n/a，不提供 dilation 來源。
+19.3.3 threshold=0.5 報告：
+       docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-report.json
+19.3.4 threshold=0.5 A1 結果：
+       tri10 北牆：99.9957% alpha=1
+       tri11 北牆：94.5580% alpha=1
+       tri20 西樑接觸面：0.0000% alpha=1
+       tri21 西樑接觸面：1.4196% alpha=1
+19.3.5 判讀：
+       0.5 對 tri20 已乾淨。
+       0.5 對 tri21 仍保留 18 個 alpha=1 texel。
+       後續 dilation 可能把 tri21 當來源。
+19.3.6 裁示：
+       threshold=0.5 不作本輪 C2C smoke 門檻。
+       原因是 hiddenContact 仍有來源風險。</code></pre>
+    <h3>19.4 C2C validity mask：0.675 煙霧測試門檻</h3>
+    <pre><code>19.4.1 threshold=0.675 報告：
+       docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-thr0675-report.json
+19.4.2 threshold=0.675 A1 結果：
+       tri10 北牆：99.7303% alpha=1
+       tri11 北牆：89.2857% alpha=1
+       tri20 西樑接觸面：0.0000% alpha=1
+       tri21 西樑接觸面：0.0000% alpha=1
+19.4.3 採用理由：
+       tri20/tri21 全部 alpha=0。
+       北牆 tri10 保留接近全量。
+       北牆 tri11 保留 89.2857%，仍需 OPUS / 使用者看過證據後裁示。
+19.4.4 風險：
+       0.675 比 0.5 更保守。
+       它排除 hiddenContact 來源的能力較強。
+       它也會排除更多被西樑遮住的北牆 texel。</code></pre>
+    <h3>19.5 GPU 16spp C2C smoke</h3>
+    <pre><code>19.5.1 package：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-072352
+19.5.2 指令重點：
+       --r7310-xatlas-bake
+       --xatlas-validity-mask=docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-thr0675-rgba32f.bin
+       --samples=16
+       --browser=chrome
+       --angle=metal
+       --r7310-bake-submission-boundary=fence
+       --r7310-bake-submission-every-samples=4
+       --r7310-bake-tile-width=512
+       --r7310-bake-tile-height=512
+19.5.3 GPU smoke 結果：
+       browserValidationStatus=pass
+       completedTiles=4
+       minCompletedSamples=16
+       contextLostCount=0
+       contextRestoredCount=0
+       maxSubmissionElapsedMs=196.2
+       maxTileReadbackMs=5.7
+19.5.4 runnerStatus=fail 的原因：
+       failedChecks 只有 atlasSamples / patchSamples。
+       這兩項是正式高樣本閘，16spp smoke 預期會觸發。
+       unexpectedRunnerFailedChecks=[]。</code></pre>
+    <h3>19.6 round-trip 對齊驗證</h3>
+    <pre><code>19.6.1 報告：
+       docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-roundtrip-report-16spp-thr0675.json
+19.6.2 結果：
+       status=PASS
+       metadataFileExists=true
+       worldMaxErrorM=0.0
+       normalMaxError=0.0
+       triMismatch=0
+       validMismatch=0
+       sourceMismatch=0
+       materialMismatch=0
+       a1ZWithin1mm=true
+19.6.3 反向對照：
+       noFlipWorldMaxErrorM=4.921999931335449
+19.6.4 判讀：
+       正確列序與 tile offset 對齊後誤差為 0。
+       錯誤列序會出現 4.92m 誤差。
+       round-trip 已能抓出垂直翻轉錯誤。</code></pre>
+    <h3>19.7 alpha policy 與 dilation 結果</h3>
+    <pre><code>19.7.1 alpha report：
+       .omc/r7-3-10-xatlas-bake-spike/20260605-072352/xatlas-c2c-alpha-report.json
+19.7.2 全 atlas 統計：
+       totalTexels=488136
+       alphaOneTexels=164904
+       alphaZeroTexels=323232
+       metadataInvalidTexels=132107
+       maskInvalidTexels=191125
+19.7.3 A1 per-triangle：
+       tri10：22928 alpha=1、62 alpha=0、alphaOnePct=99.7303%
+       tri11：20525 alpha=1、2463 alpha=0、alphaOnePct=89.2857%
+       tri20：0 alpha=1、1196 alpha=0、alphaOnePct=0%
+       tri21：0 alpha=1、1268 alpha=0、alphaOnePct=0%
+19.7.4 dilation：
+       paddingTexels=4
+       dilatedTexels=25649
+       sourceAlphaZeroUsed=0
+       hiddenContactSourceCounts tri20=0、tri21=0
+       hiddenContactUsedAsSource=false
+19.7.5 注意：
+       sourceBlackAlphaOneUsed=17299。
+       這些來源來自其他 alpha=1 的有效 texel，並非 tri20/tri21 hiddenContact。
+       C2C 交審重點是 hiddenContact 是否成為來源；本輪結果為否。</code></pre>
+    <h3>19.8 C2C smoke summary</h3>
+    <pre><code>19.8.1 報告：
+       docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-smoke-report.json
+19.8.2 結果：
+       status=REVIEW_READY
+       failures=[]
+19.8.3 風險欄位：
+       blackValuePollutionFromHiddenContact=not_observed_in_selected_smoke
+       remainingThresholdRisk=threshold 0.675 preserves less tri11 wall area than 0.5; requires OPUS/user review before locking
+19.8.4 判讀：
+       C2C smoke 沒看到 hiddenContact 黑值當作 dilation 來源。
+       門檻仍需審查，尚未作最終鎖定。</code></pre>
+    <h3>19.9 驗證指令與結果</h3>
+    <pre><code>19.9.1 node docs/tests/r7-3-10-xatlas-bake-mode-contract.test.js
+       → OK
+19.9.2 node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+       → OK
+19.9.3 python3 docs/tests/r7-3-10-xatlas-bake-texelmap.test.py
+       → Ran 2 tests OK
+19.9.4 node docs/tests/r7-3-10-seam-contracts-all.mjs
+       → 4/4 PASS
+19.9.5 python3 docs/tests/r7-3-10-c2c-validity-mask.test.py
+       → PASS
+19.9.6 python3 -m py_compile docs/tools/r7-3-10-c2c-validity-mask.py docs/tools/r7-3-10-c2c-smoke-report.py docs/tests/r7-3-10-c2c-validity-mask.test.py
+       → OK
+19.9.7 node --check docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+       → OK</code></pre>
+    <h3>19.10 STOP：交 OPUS / 使用者審查</h3>
+    <pre><code>19.10.1 C2C smoke 交審包完成。
+19.10.2 本輪停止在 C2C，不進 C3、不跑 OIDN。
+19.10.3 本輪未 promotion、未改 accepted package。
+19.10.4 需 OPUS / 使用者審查：
+        (a) threshold=0.675 作 smoke 門檻是否接受；
+        (b) 0.5 被拒絕的理由是否接受；
+        (c) tri11 保留 89.2857% 是否接受；
+        (d) hiddenContactSourceCounts tri20=0、tri21=0 是否足夠；
+        (e) 是否允許進下一階段 runtime A1 camera 驗收。</code></pre>
+    <h2>20. OPUS C2C 審查裁示（§19 交審包；OPUS 2026-06-05 獨立查證後核准）</h2>
+    <blockquote>範圍：審 §19 的 C2C 煙霧測試交審包與 xatlas-bake-c2c-smoke-report.json。</blockquote>
+    <blockquote>OPUS 親自重跑全部驗證、讀實際 runner 程式碼與 contract、核實 alpha/dilation/round-trip 數據，</blockquote>
+    <blockquote>不以 CODEX 報告為唯一依據。結論：APPROVE 進 runtime A1 相機驗收；threshold 0.675 暫不鎖定，附 20.4 鎖定前條件。</blockquote>
+    <h3>20.1 一句話結論</h3>
+    <pre><code>APPROVE。C2C 機制正確且有契約鎖定：無效 texel 寫 alpha=0；dilation 只從 alpha=1 取源
+（程式碼 sourceAlpha&gt;0.5 + contract 鎖死）；禁止硬寫 A1 三角形編號（contract 明令）；
+validity 來源用 rawNormal backface-ratio（無 bakeNormal、無自創 per-tri 規則）。
+可進下一階段 runtime A1 相機驗收。threshold 0.675 是合理的 smoke 選擇，最終值待 A1 視覺實測後才鎖。</code></pre>
+    <h3>20.2 OPUS 獨立查證（親自重跑/讀碼，非僅讀報告）</h3>
+    <pre><code>20.2.1 六項驗證全部親自重跑重現：
+       mode contract OK、C2C alpha contract OK、texelmap 2 tests OK、
+       seam contracts 4/4 PASS、validity mask test OK、runner node --check OK
+20.2.2 dilation 來源純淨度＝程式碼結構保證（非本次巧合）：
+       runner 的 alphaAwareR7310C1XatlasDilation 以 sourceAlpha&gt;0.5 gate 來源；
+       C2C alpha contract 第 34 行鎖死此 gate；tri20/21 全 alpha=0，結構上不可能被當來源；
+       sourceAlphaZeroUsed 計數器自我稽核（本次=0）。
+20.2.3 無特例硬寫（命中「只能有一套精準判別」要求）：
+       C2C alpha contract 第 35 行 assert runner 不得出現 tri20/tri21/triangleId===20/21；
+       validity mask hardStops 自證 usedBakeNormal=false、usedHardcodedTriangleDecision=false。
+20.2.4 alpha 全室統計一致（數字對得上）：
+       356,029 表面 texel = 164,904 alpha=1 + 191,125 alpha=0（mask invalid）；
+       alpha=1 需同時 metadata-valid 與 mask-valid（323,232 = 132,107 + 191,125）。
+20.2.5 round-trip 在 0.675 mask 套用後仍 PASS：worldMaxErr=0、反向不翻轉=4.92m、全 mismatch=0；
+       帽面 tri20/21 乾淨歸零、牆面 tri10/11 維持高比例，反證 mask 對齊正確。
+20.2.6 C2C 改動 xatlas-only：runner 277 行集中在三個新 helper（loadValidityMask、applyAlphaPolicy、
+       alphaAwareDilation）與 xatlasBake 路徑；shader/InitCommon 維持 §17 數字未動。</code></pre>
+    <h3>20.3 §19.10 五問逐項裁示</h3>
+    <pre><code>(a) threshold=0.675 作 smoke 門檻 → 接受（作 smoke）。它把帽面 tri20/21 全清為 alpha=0
+    （0.675 &gt; tri21 front-fraction 最大值 0.6596）。煙霧測試的用途是驗管線通不通，先不定最終視覺。
+(b) 0.5 被拒理由 → 接受。0.5 在 tri21（hiddenContact 面）留 18 個 alpha=1，可成 dilation 來源，
+    與「內部面不可供作來源」相違，退掉正確。
+(c) tri11 保留 89.29% → 煙霧測試可接受，附一個 A1 視覺觀察項：
+    tri11 的 2,463 個 alpha=0 中有 311 個是「有烤到光卻被判無效」（rgbNonzeroAlphaZero）。
+    這 311 個貼著西樑邊、既受光又幾何上多半被遮；丟掉真實光改用鄰居外擴值，
+    在 A1 是否現形成帶狀需肉眼確認。此為 A1 必看點，非退件理由。
+(d) hiddenContactSourceCounts 20/21=0 是否足夠 → 足夠，且強於單次觀察：
+    程式碼 + contract 雙重鎖定（見 20.2.2），結構上保證內部面永不供源。
+(e) 是否允許進 runtime A1 相機驗收 → 核准。這正是判斷 0.675 門檻的唯一正確方式。守 20.4。</code></pre>
+    <h3>20.4 threshold 鎖定前條件（進 A1 驗收時一併處理）</h3>
+    <pre><code>1. 視覺須在足夠樣本下判讀，不可用 16spp。
+   smoke 的 sourceBlackAlphaOneUsed=17,299 多半是低樣本下「有效但還沒累積到光」的暗 texel，
+   高樣本會自然變亮；拿 16spp 判最終外觀會誤判。
+2. 0.675 是全室套用，但本輪只量測了 A1（tri10/11/20/21）。鎖定前要看全室有效性分布，
+   確認沒有過度排除其他「房間看得到」的面（地板、其他牆、天花板）。
+   全室 53.7% 表面 texel 判無效，多半是結構背面/朝外面、屬正常，仍須按面別拆解確認。
+3. A1 特別檢查 (c) 的 311 個「有光卻被丟」的 tri11 texel，看西樑邊有無帶狀瑕疵。
+4. validity mask 目前用 64 條射線；邊界帶可考慮提到 160 條，避免邊界 valid/invalid 散斑。屬可選微調。</code></pre>
+    <h3>20.5 維持邊界 + 流程提醒</h3>
+    <pre><code>20.5.1 本輪正確停在 C2C：未進 C3、未跑 OIDN、未 promotion、未改 accepted package。確認無誤。
+20.5.2 流程風險（非阻擋，延續 §18.6）：工作樹未提交面再擴大（runner 已 +277 行）。
+       日後提交須把 C2C 兩個 contract（alpha + validity mask）與既有 4 個 seam contract 一併納入、分批小心。</code></pre>
+    <h3>20.6 下一步</h3>
+    <pre><code>CODEX：可進 runtime A1 相機驗收，依 20.4 條件在足夠樣本、全室視角下判讀 0.675；
+A1 看過後再回來鎖定最終 threshold。</code></pre>
+    <h2>21. CODEX runtime A1 驗收與 C2C 補邊修正（2026-06-06）</h2>
+    <blockquote>範圍：依 §20.6 進 runtime A1 相機驗收。此章記錄 CODEX 實測結果、根因、修正與剩餘邊界。</blockquote>
+    <blockquote>本章仍屬 xatlas smoke package 驗證，不是正式 promotion，不覆蓋 accepted package。</blockquote>
+    <h3>21.1 一句話結論</h3>
+    <pre><code>APPROVE 進下一階段審查。A1 主相機下，北牆烘焙開 + xatlasPackage=a1-c2c-smoke 時，
+原本純黑縫位置已由 xatlas 有效取樣接管，五個北牆 probe 全部 alpha=1、wouldReturn=true、source=xatlas。
+畫面上的純黑縫消失，留下的是正常明暗交界。
+
+本次不是 A1 特例修補。修正點是全域 C2C 補邊資料流：
+幾何判定可見、但 64spp smoke 中 radiance 剛好為 0 的 texel，不再被永久留成 alpha=0；
+改由同一 triangle 內的有效非黑來源做 flood fill，且 hiddenContact / invalid texel 仍維持 alpha=0。</code></pre>
+    <h3>21.2 本輪根因</h3>
+    <pre><code>21.2.1 A1 黑線處的北牆 probe 命中 xatlas UV，但舊 package 讀到 alpha=0、radiance=0，runtime 因 valid-linear 規則退回舊 D800 路徑。
+21.2.2 讀 package 後確認：
+       probe texel 的 metadata 有效，tri=11，worldPos 在北牆平面 z=-1.874；
+       backface-ratio validity mask 判定它是幾何可見 texel。
+21.2.3 舊 C2C alpha policy 又加了一層 radiance gate：
+       radiance 為 0 時，即使幾何可見，也被留成 alpha=0。
+21.2.4 舊 dilation 半徑只有 4 texel；A1 黑線 probe 到同 tri 最近有效非黑來源距離約 30–35 texel，
+       所以 4 texel 補不到。
+21.2.5 根因分類：alpha 誤殺 + dilation 距離過短。
+       不是 xatlas 沒接管、不是 UV lookup 錯、不是北牆開關失效、不是使用者相機錯。</code></pre>
+    <h3>21.3 修正內容</h3>
+    <pre><code>21.3.1 docs/tools/r7-3-8-c1-bake-capture-runner.mjs
+       alphaAwareR7310C1XatlasDilation 改成 same-triangle-fillable-flood：
+       來源必須 alpha=1 且非黑；路徑只能穿過同一 triangle 的 alpha=1 或 fillable texel；
+       hiddenContact / invalid texel 不可當來源，也不可被穿越。
+21.3.2 applyR7310C1XatlasAlphaPolicy 保留 geometry validity 為 alpha 決策來源。
+       radiance=0 不再決定 texel 無效；它只被列為 fillable，等 dilation 修復。
+21.3.3 docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+       新增 contract：
+       dilation.fillMode 必須是 same-triangle-fillable-flood；
+       maxDistanceTexels 必須大於舊 4 texel 半徑；
+       sourceBlackAlphaOneUsed 必須為 0。
+21.3.4 docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json
+       指向新 smoke package：
+       .omc/r7-3-10-xatlas-bake-spike/20260606-120906</code></pre>
+    <h3>21.4 新 C2C smoke package</h3>
+    <pre><code>package：
+  .omc/r7-3-10-xatlas-bake-spike/20260606-120906
+
+產生指令：
+  node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-xatlas-bake \
+    --xatlas-texelmap-dir=docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike \
+    --xatlas-validity-mask=docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-thr0675-rgba32f.bin \
+    --samples=64 --timeout-ms=240000 --throwaway-package --browser=chrome --angle=metal \
+    --http-port=9024 --cdp-port=9356 \
+    --r7310-bake-submission-boundary=fence --r7310-bake-tile-width=512 --r7310-bake-tile-height=512
+
+runner status：
+  exit code 1，failedChecks=atlasSamples,patchSamples。
+  此為既有樣本數 gate，不是 GPU / readback 失敗；bakeDiagnostics 顯示 4 tiles 完成、minCompletedSamples=64、contextLost=0。
+
+xatlas-c2c-alpha-report 重要數字：
+  radianceZeroFillableTexels = 82,847
+  radianceZeroFilledTexels   = 47,758
+  radianceZeroUnfilledTexels = 35,089
+  dilation.fillMode          = same-triangle-fillable-flood
+  dilation.maxDistanceTexels = 146
+  sourceAlphaZeroUsed        = 0
+  sourceBlackAlphaOneUsed    = 0
+  tri20 / tri21 alphaOne     = 0</code></pre>
+    <h3>21.5 基準測試結果</h3>
+    <pre><code>21.5.1 node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+       PASS：r7-3-10 xatlas C2C alpha contract OK
+
+21.5.2 node docs/tests/r7-3-10-xatlas-bake-mode-contract.test.js
+       PASS：r7-3-10 xatlas bake mode contract OK
+
+21.5.3 node docs/tests/r7-3-10-seam-contracts-all.mjs
+       PASS：4/4 seam contract tests passed
+
+21.5.4 python3 docs/tests/r7-3-10-c2c-validity-mask.test.py
+       PASS：r7-3-10 C2C validity mask test OK
+       A1 tri10 valid 99.995650%
+       A1 tri11 valid 94.558030%
+       A1 tri20 valid 0.0%
+       A1 tri21 valid 1.419558%</code></pre>
+    <h3>21.6 Runtime A/B/C 驗收</h3>
+    <pre><code>相機：
+  position=(-1.708748, 2.826862, -1.820144)
+  forward=(-0.495699, 0.416871, -0.761906)
+  forward.z=-0.761906 &lt; -0.5，確認面向北牆。
+
+A 組：北牆烘焙開 + xatlasPackage=a1-c2c-smoke
+  capture report：
+    .omc/r7-3-10-xatlas-runtime-diagnostic/20260606-codex-continue/a1-abc/capture-report.json
+  screenshot：
+    .omc/r7-3-10-xatlas-runtime-diagnostic/20260606-codex-continue/a1-abc/A-north-on-xatlas-canvas.png
+  samples=259
+  xatlas package=.omc/r7-3-10-xatlas-bake-spike/20260606-120906
+  A1 北牆 probe 共 5 點：
+    mapped=true
+    reason=mapped
+    valid=true
+    nearestAlpha=1
+    wouldReturn=true
+    source=xatlas
+    luma≈0.1964208
+  視覺結果：純黑縫消失。
+
+B 組：北牆烘焙關 + xatlasPackage=a1-c2c-smoke
+  screenshot：
+    .omc/r7-3-10-xatlas-runtime-diagnostic/20260606-codex-continue/a1-abc/B-north-off-xatlas-canvas.png
+  samples=263
+  northWallEnabled=false
+  routeCounts：west_beam_inner_shadow_hybrid=3、none=5
+  結果：北牆關閉時 xatlas 不接管北牆，LIVE 破圖未重現。
+
+C 組：北牆烘焙開 + 不帶 xatlasPackage
+  capture report：
+    .omc/r7-3-10-xatlas-runtime-diagnostic/20260606-codex-continue/a1-c-no-xatlas/capture-report.json
+  screenshot：
+    .omc/r7-3-10-xatlas-runtime-diagnostic/20260606-codex-continue/a1-c-no-xatlas/C-north-on-no-xatlas-canvas.png
+  samples=258
+  xatlasReady=false
+  北牆 probe reason=xatlas_runtime_disabled
+  結果：可作舊 D800 對照。</code></pre>
+    <h3>21.7 邊界與下一步</h3>
+    <pre><code>21.7.1 本章只證明 A1 smoke runtime 通過，不代表整個房間完成。
+21.7.2 threshold 0.675 仍是 smoke 門檻，尚未鎖定正式值。
+21.7.3 radianceZeroUnfilledTexels 仍有 35,089，代表有些幾何可見零值 texel 沒有同 triangle 有效來源可補。
+       本輪 A1 黑線點已補到；全室仍須後續逐區檢查。
+21.7.4 本輪未進 C3、未跑 OIDN、未 promotion、未覆蓋 accepted package。
+21.7.5 建議下一步：
+       交 OPUS 審 §21 與新 package 20260606-120906；
+       若審查通過，再規劃全室視角抽查與 threshold 鎖定；
+       commit 前須分批整理，避免把 2026-06-03 seam gate、OIDN、xatlas 多條工作線混成單一大提交。</code></pre>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=3f1270966039"></script>
+</body>
+</html>

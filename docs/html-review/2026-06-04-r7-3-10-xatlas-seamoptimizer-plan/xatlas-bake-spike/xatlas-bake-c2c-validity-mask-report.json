@@ -1,0 +1,76 @@
+{
+  "schema": "r7-3-10-c2c-validity-mask-v1",
+  "atlas": {
+    "width": 946,
+    "height": 516
+  },
+  "threshold": 0.5,
+  "raysPerTexel": 64,
+  "epsOffsetM": 0.001,
+  "roomBoxes": 88,
+  "normalSource": "rawNormal",
+  "decisionSource": "per-texel backface-ratio equivalent",
+  "counts": {
+    "inputValidTexels": 356029,
+    "alphaOneTexels": 179973,
+    "alphaZeroTexels": 176056
+  },
+  "normalGroups": {
+    "(-1.0, 0.0, 0.0)": 96122,
+    "(0.0, -1.0, 0.0)": 33432,
+    "(0.0, 0.0, -1.0)": 47860,
+    "(0.0, 0.0, 1.0)": 48519,
+    "(0.0, 1.0, 0.0)": 33392,
+    "(1.0, 0.0, 0.0)": 96704
+  },
+  "perTriangle": {
+    "10": {
+      "texels": 22990,
+      "validAlphaTexels": 22989,
+      "validAlphaPct": 99.99565028273162,
+      "frontFraction": {
+        "mean": 0.9986984830361026,
+        "min": 0.265625,
+        "max": 1.0
+      }
+    },
+    "11": {
+      "texels": 22988,
+      "validAlphaTexels": 21737,
+      "validAlphaPct": 94.55803027666609,
+      "frontFraction": {
+        "mean": 0.941656380502871,
+        "min": 0.0,
+        "max": 1.0
+      }
+    },
+    "20": {
+      "texels": 1196,
+      "validAlphaTexels": 0,
+      "validAlphaPct": 0.0,
+      "frontFraction": {
+        "mean": 0.32278166806020064,
+        "min": 0.03125,
+        "max": 0.484375
+      }
+    },
+    "21": {
+      "texels": 1268,
+      "validAlphaTexels": 18,
+      "validAlphaPct": 1.4195583596214512,
+      "frontFraction": {
+        "mean": 0.3512236076270427,
+        "min": 0.0,
+        "max": 0.6595744680851063
+      }
+    }
+  },
+  "hardStops": {
+    "usedBakeNormal": false,
+    "usedHardcodedTriangleDecision": false
+  },
+  "files": {
+    "mask": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-rgba32f.bin",
+    "report": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike/xatlas-bake-c2c-validity-mask-report.json"
+  }
+}
