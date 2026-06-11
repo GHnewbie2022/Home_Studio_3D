@@ -1,0 +1,274 @@
+{
+  "schema": "r7-3-10-xatlas-bake-texelmap-v1",
+  "result": "PASS",
+  "failures": [],
+  "startingPoint": {
+    "files": {
+      "inputMesh": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-input-mesh.json",
+        "sha256": "6ec89e9ce8a729c662fdf96d71160116caa8834178bb60881cd73d278484e2ec",
+        "sha16": "6ec89e9ce8a729c6",
+        "bytes": 19403
+      },
+      "outputUv": {
+        "path": ".omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/xatlas-spike-output-uv-full4x.json",
+        "sha256": "1ec043df046591fe8e00313a20211b066c73131d43bcce82648b439ea1388380",
+        "sha16": "1ec043df046591fe",
+        "bytes": 35237
+      },
+      "coverageReport": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-a1-coverage-report.json",
+        "sha256": "bd9dc533c2e3ad937624cc39bf56c3e708d331bb6a1a5b26a47a781dc6425dd3",
+        "sha16": "bd9dc533c2e3ad93",
+        "bytes": 440
+      },
+      "chartDebug": {
+        "path": "docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-spike/xatlas-spike-chart-debug.png",
+        "sha256": "a0fdf3b3004a8147a68a7a820a47b4bc02f2442391f29a453e3fa73708a88ffc",
+        "sha16": "a0fdf3b3004a8147",
+        "bytes": 4987
+      }
+    },
+    "atlas": {
+      "width": 3784,
+      "height": 2064,
+      "chartCount": 12,
+      "atlasCount": 1
+    },
+    "input": {
+      "positions": 48,
+      "triangles": 24,
+      "includedBoxes": 2
+    },
+    "a1": {
+      "capTriangleIds": [
+        20,
+        21
+      ],
+      "wallTriangleIds": [
+        10,
+        11
+      ],
+      "allTriangleIds": [
+        10,
+        11,
+        20,
+        21
+      ]
+    }
+  },
+  "startingPointLock": {
+    "status": "created"
+  },
+  "atlas": {
+    "width": 3784,
+    "height": 2064
+  },
+  "counts": {
+    "totalTexels": 7810176,
+    "validTexels": 5637440,
+    "emptyTexels": 2172736,
+    "dilationTexels": 207260,
+    "overlapTexelsSkipped": 0
+  },
+  "overlapTexelSamples": [],
+  "a1": {
+    "wallTriangleIds": [
+      10,
+      11
+    ],
+    "capTriangleIds": [
+      20,
+      21
+    ],
+    "allTriangleIds": [
+      10,
+      11,
+      20,
+      21
+    ],
+    "wallValidTexels": 725088,
+    "capValidTexels": 38912,
+    "expectedZ": -1.874,
+    "zMin": -1.873999953269959,
+    "zMax": -1.873999953269958,
+    "zMaxErrorM": 4.6730042058129584e-08,
+    "zToleranceM": 0.001,
+    "zWithinToleranceMm": true,
+    "perTriangle": {
+      "10": {
+        "validTexels": 362544,
+        "worldBounds": {
+          "min": [
+            -1.9093749476224209,
+            0.0006250792509560377,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.520624993965028,
+            2.8993749715643933,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 15,
+        "faceAxis": "z",
+        "faceSign": 1,
+        "faceName": "z+",
+        "surfaceHint": "north_wall",
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "11": {
+        "validTexels": 362544,
+        "worldBounds": {
+          "min": [
+            -1.9093749476224209,
+            0.0056250790652096075,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.520624993965028,
+            2.9043749713786466,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 15,
+        "faceAxis": "z",
+        "faceSign": 1,
+        "faceName": "z+",
+        "surfaceHint": "north_wall",
+        "a1Role": "north_wall_segment",
+        "rawNormal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "20": {
+        "validTexels": 19456,
+        "worldBounds": {
+          "min": [
+            -1.909374878138816,
+            2.5256251094235345,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.7506249615247558,
+            2.9031249590237724,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 28,
+        "faceAxis": "z",
+        "faceSign": -1,
+        "faceName": "z-",
+        "surfaceHint": "west_beam",
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "21": {
+        "validTexels": 19456,
+        "worldBounds": {
+          "min": [
+            -1.9093748781388162,
+            2.5268751089255224,
+            -1.873999953269959
+          ],
+          "max": [
+            -1.7506249615247562,
+            2.9043749585257608,
+            -1.873999953269958
+          ]
+        },
+        "sourceBoxIndex": 28,
+        "faceAxis": "z",
+        "faceSign": -1,
+        "faceName": "z-",
+        "surfaceHint": "west_beam",
+        "a1Role": "west_beam_cap",
+        "rawNormal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "bakeNormal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "dilation": {
+    "paddingTexels": 4,
+    "rule": "post-bake only; dilation texels do not provide GI sampling positions"
+  },
+  "binaryLayout": {
+    "rowOrder": "row-major, y=0 first, x increases fastest",
+    "texelmapFile": "xatlas-bake-texelmap.bin",
+    "texelmapFloatsPerTexel": 8,
+    "texelmapChannels": [
+      "worldX",
+      "worldY",
+      "worldZ",
+      "normalX",
+      "normalY",
+      "normalZ",
+      "triId",
+      "valid"
+    ],
+    "worldPosFile": "xatlas-bake-worldpos-rgba32f.bin",
+    "worldPosChannels": [
+      "worldX",
+      "worldY",
+      "worldZ",
+      "valid"
+    ],
+    "normalFile": "xatlas-bake-normal-rgba32f.bin",
+    "normalChannels": [
+      "normalX",
+      "normalY",
+      "normalZ",
+      "valid"
+    ],
+    "normalPolicy": "room-boundary faces use inward bake normals; other faces use metadata face normals",
+    "triValidFile": "xatlas-bake-tri-valid-rgba32f.bin",
+    "triValidChannels": [
+      "triId",
+      "sourceBoxIndex",
+      "materialType",
+      "valid"
+    ],
+    "dilationSourceFile": "xatlas-bake-dilation-source.bin",
+    "dilationSourceChannels": [
+      "sourceX",
+      "sourceY",
+      "distanceTexels",
+      "isDilationTexel"
+    ],
+    "floatByteOrder": "little"
+  }
+}

@@ -1513,6 +1513,8 @@ const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = 'docs/data/r7-3
 const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json?v=r7310-b-north-east-ab-v1';
 const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -1541,6 +1543,10 @@ function resolveR7310C1XatlasRuntimePackageUrl()
 	var url = null;
 	if (param === 'a1-c2c-smoke')
 		url = R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL;
+	if (param === 'a1-westbeam-full4x-raw')
+		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL;
+	if (param === 'a1-westbeam-full4x-oidn')
+		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL;
 
 	if (typeof window !== 'undefined')
 		window.__r7310C1XatlasSelectedPackageUrl = url;

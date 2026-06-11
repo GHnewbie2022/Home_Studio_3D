@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="html-review-page-id" content="2026-06-11-r7-3-10-xatlas-a1-west-beam-hard-edge-plan">
+<title>R7-3.10 XATLAS A1 西樑黑邊調查與修復</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #191712;
+  --paper: #252119;
+  --paper-soft: #2e2a21;
+  --ink: #e8dcc7;
+  --muted: #aa9a82;
+  --rule: #4b4134;
+  --accent: #9aaa88;
+  --accent-strong: #c8b27a;
+  --code-bg: #15130f;
+  --amber: #665827;
+  --green: #36553f;
+  --blue: #344c57;
+  --rose: #5f3f43;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 96px;
+}
+.review-doc {
+  max-width: 760px;
+  min-height: 70vh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 42px 46px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+}
+.meta {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1, h2, h3 { color: var(--ink); line-height: 1.25; letter-spacing: 0; }
+h1 { margin: 0 0 22px; font-size: 34px; }
+h2 { margin: 40px 0 12px; font-size: 24px; }
+h3 { margin: 28px 0 10px; font-size: 18px; }
+p { margin: 0 0 16px; }
+ul, ol { margin: 0 0 18px; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote {
+  margin: 18px 0;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+pre {
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: #ded0b8;
+  border: 1px solid #3c342a;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92em;
+}
+:not(pre) > code {
+  padding: .12em .34em;
+  border-radius: 4px;
+  background: var(--paper-soft);
+  color: #ead9bd;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+th, td { border-bottom: 1px solid var(--rule); padding: 9px 8px; text-align: left; vertical-align: top; }
+th { color: var(--ink); }
+a { color: var(--accent); }
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 18px auto;
+  border-radius: 6px;
+}
+.callout {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: #20261d;
+  border-radius: 6px;
+}
+mark.html-review-mark {
+  border-radius: 3px;
+  padding: 0 .05em;
+  cursor: pointer;
+}
+mark.html-review-yellow { background: var(--amber); }
+mark.html-review-green { background: var(--green); }
+mark.html-review-blue { background: var(--blue); }
+mark.html-review-rose { background: var(--rose); }
+.html-review-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1120px) {
+  body.html-review-has-comments .shell { margin-left: max(24px, calc((100vw - 1120px) / 2)); margin-right: 348px; }
+  body.html-review-has-comments .review-doc { margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 720px) {
+  .shell { padding: 18px 10px 96px; }
+  .review-doc { padding: 28px 20px; border-radius: 0; }
+  h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="review-doc" data-review-root>
+    <p class="meta">2026-06-11 · local HTML review</p>
+    <h1>R7-3.10 XATLAS A1 西樑黑邊調查與修復</h1>
+    <h1>R7-3.10 XATLAS A1 西樑北端不自然黑邊調查計畫</h1>
+    <p>日期：2026-06-11 範圍：北牆 A1 XATLAS raw / OIDN 在「西樑北端 × 北牆」交界出現的貼邊硬黑邊與硬梯度。 狀態：只規劃調查；先不改產品程式、不重烤、不做遮醜處理。</p>
+    <h2>1. 目前共識</h2>
+    <p>這次問題的驗收參考是 LIVE 與 D800。使用者已確認兩者在同位置只有自然、柔順的整體變暗，沒有貼邊硬黑線，也沒有一條像切痕的梯度。XATLAS A1 raw / OIDN 出現的硬黑邊屬於異常現象。</p>
+    <p>本輪調查遵守 systematic-debugging：先收證據、先做 A/B、先分清楚 raw atlas、runtime 取樣、owner route、D800 對照與 OIDN 影響；根因未釘死前，不提出正式修法。</p>
+    <p>禁止路線如下：</p>
+    <pre><code>1. 禁止把邊界柔化、羽化或模糊化當作主修法。
+2. 禁止用 runtime 回退條帶把 XATLAS 蓋掉。
+3. 禁止直接把最邊 texel 拉亮或手工塗亮。
+4. 禁止用 dilation borrow、鄰格借值或 alpha 補洞遮掉症狀。
+5. 禁止把真實接觸陰影整段抹掉；目標是回到 LIVE / D800 的自然柔順暗化。</code></pre>
+    <h2>2. 已知事實與分歧點</h2>
+    <table>
+<thead>
+<tr>
+<th>類別</th>
+<th>目前事實</th>
+<th>判讀狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>使用者肉眼</td>
+<td>LIVE / D800 同位置自然暗化；XATLAS 有貼邊硬黑邊</td>
+<td>已確認，作為最高視覺參考</td>
+</tr>
+<tr>
+<td>亮帶修復</td>
+<td>鐵門旁 jamb 亮帶已由 owner gate 修復</td>
+<td>與本題分開</td>
+</tr>
+<tr>
+<td>OIDN</td>
+<td>raw 與 OIDN 在這條邊的形狀相近</td>
+<td>OIDN 目前視為放大可見度的旁觀變因</td>
+</tr>
+<tr>
+<td>XATLAS metadata</td>
+<td>取樣點附近 worldPos / normal / triId / alpha 對齊；normal 約為 <code>(0,0,1)</code></td>
+<td>row flip / UV 對應錯位機率下降</td>
+</tr>
+<tr>
+<td>XATLAS 邊界</td>
+<td>第一個 valid texel 約在 <code>worldX=-1.750000</code>，也就是西樑幾何邊界</td>
+<td>高風險點</td>
+</tr>
+<tr>
+<td>密度</td>
+<td>XATLAS x 向約 <code>0.005m/texel</code>；D800 約 <code>0.00125m/texel</code></td>
+<td>XATLAS 每格涵蓋範圍約 4 倍寬</td>
+</tr>
+<tr>
+<td>D800 數值分歧</td>
+<td>CODEX 量到 D800 <code>x=-1.750</code> 可很暗；CLAUDE 曾量到較亮</td>
+<td>必須用同一 sampler / 同一 package / 同一座標重新判決</td>
+</tr>
+</tbody>
+</table>
+    <p>目前可採信的暫定模型：</p>
+    <pre><code>1. XATLAS 第一個 valid texel 落在幾何邊界上。
+2. 幾何邊界本來會有接觸暗化，但 D800 / LIVE 的過渡很窄、很柔順。
+3. XATLAS 的 texel 較寬，可能把極窄的接觸暗化變成肉眼可見的硬階。
+4. 也可能是 XATLAS 在邊界 bake 時額外印太深；這一點要靠 D800 同座標量測和 first-hit / visibility 診斷判決。</code></pre>
+    <h2>3. 目前不能先下的結論</h2>
+    <pre><code>1. 不能先宣稱「只是密度太低」。
+   原因：若同一世界座標下 D800 明顯比 XATLAS 亮，表示 XATLAS bake 還有額外偏暗來源。
+
+2. 不能先宣稱「XATLAS 邊界 texel 本身印壞」。
+   原因：若 D800 在精準幾何邊界同樣很暗，只是只佔極窄範圍，密度與邊界中心位置就仍是主因。
+
+3. 不能把 OIDN 當成主因。
+   原因：raw 與 OIDN 都要同時量，若 raw 已有同形硬階，OIDN 只能算後續顯影因素。
+
+4. 不能把鐵門亮帶修法混進本題。
+   原因：jamb 亮帶是重複認領加光；西樑北端硬黑邊目前看起來是 XATLAS 邊界 bake / 密度 / 取樣問題。</code></pre>
+    <h2>4. 要回答的核心問題</h2>
+    <pre><code>1. XATLAS 第一個 valid texel 的世界位置，是否正好卡在西樑幾何邊界？
+2. D800 在完全相同世界座標、相同 y、高度、相同 package 狀態下，到底是多暗？
+3. XATLAS 與 D800 的亮度差，主要來自 texel 寬度、邊界中心位置，還是 bake ray / visibility 判斷？
+4. runtime 是否有 owner handoff、source route 或 valid-linear 混值造成額外硬線？
+5. 若提高 XATLAS 北牆 A1 密度，硬黑邊是否會自然縮成 D800 那種柔順過渡？</code></pre>
+    <h2>5. 調查階段</h2>
+    <h3>5.1 Phase 0：環境鎖定</h3>
+    <p>先把每次量測的網址、package、開關與相機寫進 report，避免再次發生「畫面其實沒走目標路徑」的誤會。</p>
+    <pre><code>1. 記錄目前 branch、commit、工作樹狀態。
+2. 記錄 runtime pointer 與 URL query：
+   - XATLAS raw package
+   - XATLAS OIDN package
+   - D800 raw package
+   - D800 OIDN package
+3. 記錄 UI 狀態：
+   - 北牆烘焙 ON
+   - 非方格 ON
+   - XATLAS A1 ON / OFF
+   - SPP cap
+4. 固定使用者提供的西樑北端相機：
+   cameraState={&quot;position&quot;:{&quot;x&quot;:-1.670797,&quot;y&quot;:2.496491,&quot;z&quot;:-1.77606},&quot;yaw&quot;:0.6752,&quot;pitch&quot;:0.98,&quot;fov&quot;:54,&quot;forward&quot;:{&quot;x&quot;:-0.348169,&quot;y&quot;:0.830497,&quot;z&quot;:-0.434802}}
+   view={&quot;facing&quot;:&quot;上(+Y)&quot;,&quot;config&quot;:1,&quot;samples&quot;:54,&quot;paused&quot;:false,&quot;sppCap&quot;:1000}
+5. 每次報告都附上實際 URL；不能只寫「raw」或「OIDN」字串。</code></pre>
+    <h3>5.2 Phase 1：畫面路徑與 source route 證明</h3>
+    <p>同一相機跑四種狀態，先把肉眼現象和 shader 來源釘在一起。</p>
+    <pre><code>1. LIVE：關 XATLAS / 關 D800 package，走即時光追參考。
+2. D800：走 D800 北牆取樣。
+3. XATLAS raw：走 XATLAS A1 raw package。
+4. XATLAS OIDN：走 XATLAS A1 OIDN package。</code></pre>
+    <p>每個狀態都要收：</p>
+    <pre><code>1. 同視角截圖。
+2. ROI 亮度剖面，橫跨 `x=-1.755` 到 `x=-1.735`。
+3. final source / owner route：確認每個畫素是 west beam、north wall D800、XATLAS A1、LIVE 中哪一條。
+4. ownerCount：確認沒有重複認領或 owner 空洞。</code></pre>
+    <h3>5.3 Phase 2：CPU atlas 同座標剖面</h3>
+    <p>用 CPU 直接讀 package，不用易受瀏覽器狀態污染的即時 capture。XATLAS raw / XATLAS OIDN / D800 raw / D800 OIDN 必須走同一座標清單。</p>
+    <table>
+<thead>
+<tr>
+<th>y</th>
+<th>x 座標清單</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.56</td>
+<td><code>-1.755, -1.752, -1.750, -1.748, -1.746, -1.744, -1.740, -1.735</code></td>
+</tr>
+<tr>
+<td>2.60</td>
+<td><code>-1.755, -1.752, -1.750, -1.748, -1.746, -1.744, -1.740, -1.735</code></td>
+</tr>
+<tr>
+<td>2.63</td>
+<td><code>-1.755, -1.752, -1.750, -1.748, -1.746, -1.744, -1.740, -1.735</code></td>
+</tr>
+<tr>
+<td>2.70</td>
+<td><code>-1.755, -1.752, -1.750, -1.748, -1.746, -1.744, -1.740, -1.735</code></td>
+</tr>
+</tbody>
+</table>
+    <p>輸出欄位：</p>
+    <pre><code>1. worldX / worldY / atlasU / atlasV / texel index。
+2. luma raw。
+3. luma OIDN。
+4. alpha / valid。
+5. valid-linear 是否跨 invalid。
+6. metadata normal / triId / worldPos。</code></pre>
+    <p>判決條件：</p>
+    <pre><code>1. 若 D800 在 `x=-1.750` 同樣很暗，但 `x=-1.748` 快速回到正常，XATLAS 主要疑點轉向 texel 寬度與第一格中心位置。
+2. 若 D800 在 `x=-1.750` 明顯比 XATLAS 亮，XATLAS bake 邊界第一格有額外偏暗來源。
+3. 若 raw 與 OIDN 的剖面同形，OIDN 排出主因，只保留顯影影響。</code></pre>
+    <h3>5.4 Phase 3：XATLAS 邊界 metadata 與幾何關係</h3>
+    <p>針對 XATLAS 第一條 valid texel band，逐格列出 metadata 與幾何邊界距離。</p>
+    <pre><code>1. 取 `py=216..221`、對應 `worldY≈2.56..2.72`。
+2. 取 `px=58..66`，覆蓋西樑邊界附近。
+3. 每格列：
+   - worldX / worldY / worldZ
+   - normal
+   - triId
+   - alpha
+   - luma raw / OIDN
+   - 距西樑幾何邊界 `x=-1.75` 的距離
+4. 檢查 first valid 的中心是否正好等於、略小於、或略大於 `x=-1.75`。</code></pre>
+    <p>要釐清的判斷：</p>
+    <pre><code>1. first valid texel 若中心正卡邊界，XATLAS 可能把邊界極值畫成一整格。
+2. first valid texel 若中心已經進入北牆內部，仍遠暗於 D800，同步轉查 bake ray / visibility。
+3. metadata 若有 normal、triId 或 worldPos 異常，回到 bake metadata 產生路徑。</code></pre>
+    <h3>5.5 Phase 4：formal runner bake-light 診斷</h3>
+    <p>若 Phase 2 / 3 顯示 XATLAS 邊界第一格有額外偏暗來源，就用正式 runner 診斷 bake 時的光線，不使用先前已證明會污染狀態的即時 capture。</p>
+    <p>診斷點：</p>
+    <pre><code>1. XATLAS 邊界格：`worldX≈-1.750`。
+2. XATLAS 內部格：`worldX≈-1.745` 或更內側。
+3. D800 同世界座標對照。</code></pre>
+    <p>輸出項目：</p>
+    <pre><code>1. primary ray origin / direction。
+2. first-hit hitType / objectId / normal / position。
+3. visibility / occlusion 指標。
+4. NEE 幾何項與直接光 / 間接光分量。
+5. 是否接觸到 west beam 幾何或 open-air gap。</code></pre>
+    <p>判決條件：</p>
+    <pre><code>1. 若邊界格 first-hit / visibility 明顯偏向西樑遮蔽，查 worldPos 是否剛好放在幾何邊界。
+2. 若邊界格與內部格光線差異只來自接觸遮蔽範圍太窄，密度方案進入候選。
+3. 若正式 runner 指出 sampler / binding / tile 狀態異常，回到 bake pipeline 查。</code></pre>
+    <h2>6. 可能根因樹</h2>
+    <pre><code>H1  邊界中心問題
+    XATLAS first valid texel 中心正卡 `x=-1.75`，吃到接觸邊極暗值。
+
+H2  XATLAS texel 密度不足
+    真實暗化很窄，D800 / LIVE 能呈現柔順過渡；XATLAS 每格太寬，形成肉眼硬階。
+
+H3  XATLAS bake 邊界額外偏暗
+    同世界座標下 D800 比 XATLAS 亮，表示 XATLAS bake ray、visibility 或 chart 邊界處理另有問題。
+
+H4  D800 對照口徑不一致
+    CODEX 與 CLAUDE 對 D800 `x=-1.750` 的數值不同；需用同一 sampler、同一 package、同一座標清單重算。
+
+H5  runtime source handoff 異常
+    ownerCount 或 final source 在邊界有跳動，造成畫面看起來像黑線。
+
+H6  OIDN 顯影
+    raw 已存在硬階，OIDN 只讓它更乾淨、更顯眼；此項只作排除與量化。</code></pre>
+    <h2>7. 可接受的後續修法家族</h2>
+    <p>這一節只列「根因成立後才可評估」的方向，尚未進入實作。</p>
+    <pre><code>1. 若 H1 / H2 成立：
+   - 提高 XATLAS A1 北牆局部 texel 密度，先做 D800 等效密度驗證包。
+   - 檢查 chart 邊界 first valid texel 的中心放置規則，讓有效格代表北牆內部，而非幾何交線極值。
+
+2. 若 H3 成立：
+   - 查 bake ray origin / visibility / occlusion 的邊界規則。
+   - 修正 bake pipeline，使 XATLAS 與 D800 在同世界位置得到一致的自然接觸暗化。
+
+3. 若 H5 成立：
+   - 修 owner route 或 source handoff，並用 ownerCount / final-source probe 鎖住。</code></pre>
+    <p>仍然禁止：</p>
+    <pre><code>1. 邊界柔化。
+2. runtime 回退條帶。
+3. 手工拉亮最邊 texel。
+4. 用鄰格借值或 alpha 補洞掩蓋。</code></pre>
+    <h2>8. 驗收標準</h2>
+    <p>視覺標準：</p>
+    <pre><code>1. 使用者提供的西樑北端相機下，XATLAS A1 不再出現貼邊硬黑線。
+2. 西樑與北牆交界只保留 LIVE / D800 同等級的自然柔順暗化。
+3. 北牆 A1 低處破圖不回歸。
+4. 鐵門旁 jamb 亮帶修復不回歸。</code></pre>
+    <p>數值標準：</p>
+    <pre><code>1. XATLAS edge profile 與 D800 edge profile 在同世界座標下可解釋。
+2. `x=-1.750` 到 `x=-1.748` 的亮度跳變需落在 D800 / LIVE 可接受的自然過渡範圍。
+3. raw 與 OIDN 對照能說明 OIDN 影響，不把 OIDN 誤當根因。
+4. ownerCount 在 ROI 內維持單一歸屬或明確 live fallback，無重複加光與空洞。</code></pre>
+    <h2>9. 交付物</h2>
+    <pre><code>1. `edge-profile.csv`：
+   - XATLAS raw / XATLAS OIDN / D800 raw / D800 OIDN 的同座標剖面。
+
+2. `edge-profile-summary.md`：
+   - CODEX / CLAUDE D800 數值分歧的判決。
+   - 根因樹各項的保留或排除理由。
+
+3. `source-route-report.json`：
+   - 同相機 ROI 的 final source、ownerCount、valid-linear 狀態。
+
+4. 必要時的 formal runner probe package：
+   - 僅用來查 bake ray / visibility；不得用污染過的即時 capture。
+
+5. 根因釘死後再補 `docs/SOP/Debug_Log.md`：
+   - 只記錄已驗證事實、判決實驗、最終修法與驗收結果。</code></pre>
+    <h2>10. 給 CLAUDE 的審查問題</h2>
+    <pre><code>1. 你是否同意先用同一 sampler / 同一 package / 同一座標清單重算 D800 與 XATLAS？
+2. 你前一輪 `D800 x=-1.750 = 0.168` 的來源 package、sampler 與座標換算能否一起列出？
+3. 你是否同意目前先禁止柔化、回退條帶、手工拉亮與鄰格借值？
+4. 若 Phase 2 顯示密度 / first valid 中心是主因，你是否同意先做 D800 等效密度驗證包，而非直接改 runtime？
+5. 若 Phase 2 顯示同世界座標 XATLAS 額外偏暗，你建議 formal runner probe 放在哪個 bake 位置最乾淨？</code></pre>
+    <h2>11. 過夜調查回填</h2>
+    <h3>11.1 CODEX：XATLAS 同座標剖面結果</h3>
+    <p>日期：2026-06-11 輸出資料夾：<code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-investigation/codex-20260611-025632/</code> 範圍：只讀 package、做 CPU 同座標剖面、寫診斷報告。未改產品程式、未重烤、未改 runtime pointer、未 commit。</p>
+    <p>使用資料：</p>
+    <pre><code>1. XATLAS raw
+   .omc/r7-3-10-xatlas-bake-spike/20260610-183110
+   1000 spp，atlas 946x516，metadata stride 12。
+
+2. XATLAS OIDN
+   .omc/r7-3-10-xatlas-bake-spike/20260610-183110-oidn-rt-high-beta
+   來源為 20260610-183110，OIDN RT high，alpha preserved。
+
+3. D800 暫測 raw
+   docs/data/r7-3-10-c1-north-east-non-square-d800-preview-runtime-package.json
+   這是 CODEX 暫測口徑，CLAUDE 負責最後 D800 layout 校準。
+
+4. D800 暫測 OIDN
+   docs/data/r7-3-10-c1-north-east-non-square-d800-denoise-c-preview-runtime-package.json
+   這是 CODEX 暫測口徑，CLAUDE 負責最後 D800 layout 校準。</code></pre>
+    <p>產物：</p>
+    <pre><code>1. edge-profile.csv
+   32 筆同座標剖面，含 XATLAS raw / OIDN、D800 暫測 raw / OIDN、metadata、valid-linear 狀態。
+
+2. edge-profile-summary.md
+   CODEX 本輪白話摘要與假說狀態。
+
+3. source-route-report.json
+   CPU route inference；沒有跑 browser ownerCount probe。
+
+4. xatlas-edge-neighborhood.json
+   XATLAS 邊界格附近 5x5 texel 鄰域。
+
+5. codex-xatlas-edge-profile.mjs
+   一次性診斷腳本。</code></pre>
+    <p>重要觀察：</p>
+    <pre><code>1. XATLAS first valid texel 精準卡在幾何邊界。
+   四個 y 取樣點在 x=-1.750 的 nearest metadata 都是：
+   worldX=-1.750000、worldZ=-1.874、normal=(0,0,1)、triId=11、valid=1。
+
+2. x=-1.748 仍受同一條邊界 texel 影響。
+   以 y=2.60 為例：
+     x=-1.750  XATLAS raw 0.141805  nearest worldX=-1.750
+     x=-1.748  XATLAS raw 0.157279  nearest worldX=-1.750
+     x=-1.744  XATLAS raw 0.184203  nearest worldX=-1.745
+
+3. D800 暫測口徑顯示 exact edge 也可很暗，但往內 2mm 回復較快。
+   以 y=2.60 為例：
+     XATLAS raw x=-1.750 0.141805 / x=-1.748 0.157279
+     D800 raw 暫測 x=-1.750 0.130965 / x=-1.748 0.189910
+   這使 H1/H2 升高，H3 先降級；D800 最終判決仍等 CLAUDE 校準。
+
+4. XATLAS OIDN 與 raw 同形，主因機率低。
+   以 y=2.60 為例：
+     x=-1.750 raw 0.141805 / OIDN 0.137560
+     x=-1.748 raw 0.157279 / OIDN 0.155926
+     x=-1.744 raw 0.184203 / OIDN 0.187293
+
+5. CPU route inference 未看到 owner 空洞或重複認領。
+   x=-1.755 與 x=-1.752 被 owner_beam_gap_excluded 排除。
+   x=-1.750 之後 mapped，XATLAS runtime 會回傳有效值。
+   這一趟沒有跑 browser ownerCount probe，所以 H5 尚未完全關閉。</code></pre>
+    <p>假說狀態：</p>
+    <pre><code>H1：XATLAS first valid texel 中心卡在 x=-1.75
+狀態：強支持。
+證據：四個 y 的 x=-1.750 nearest metadata 都是 worldX=-1.750000、normal=(0,0,1)、valid=1。
+
+H2：XATLAS texel 密度不足，把窄接觸暗化放大成硬階
+狀態：支持。
+證據：x=-1.748 仍吃到 worldX=-1.750 邊界 texel；到 x=-1.744 才切到 worldX≈-1.745。
+
+H3：XATLAS bake 同世界座標額外偏暗
+狀態：目前降級，未關閉。
+證據：CODEX 暫測 D800 exact edge 有時比 XATLAS 更暗；但 D800 口徑需等 CLAUDE 校準。
+
+H5：runtime source handoff 或 ownerCount 跳動
+狀態：未證實。
+證據：CPU route inference 未見空洞或重複認領；未跑 browser ownerCount probe。
+
+H6：OIDN 造成或放大硬階
+狀態：主因機率低，顯影因素保留。
+證據：XATLAS raw / OIDN 形狀相近。</code></pre>
+    <p>白話摘要：</p>
+    <p>這次看起來像「貼紙第一格剛好貼在牆角折線上」。牆角那一點本來就會比較暗，D800 的格子很細，所以暗的地方很窄，很快就變回自然牆面。XATLAS 的格子比較寬，第一格又剛好踩在 <code>x=-1.75</code> 這條西樑邊界上，於是那個暗值被畫成一條比較寬、比較硬的黑邊。</p>
+    <p>目前 CODEX 這邊先把 H1 / H2 拉高：邊界中心與密度是主嫌。H3「XATLAS 自己額外印太深」先降級，但還要等 CLAUDE 把 D800 量尺校準完才能最後定案。</p>
+    <p>仍需 CLAUDE 回答：</p>
+    <pre><code>1. D800 在 x=-1.750, y=2.60 的正確同座標 luma 到底是多少？
+2. CLAUDE 先前的 0.168 是否來自 row flip、rounding、package、UV layout 或半格座標差？
+3. 若 D800 exact edge 也很暗，且 2mm 內快速回復，H1/H2 可成為主線。
+4. 若 D800 exact edge 經校準後明顯比 XATLAS 亮，H3 要重新升級。</code></pre>
+    <h3>11.2 CLAUDE：D800 口徑校準結果</h3>
+    <p>日期：2026-06-11 輸出資料夾：<code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-investigation/claude-20260611-025552/</code> 範圍：D800 取樣口徑獨立校準（H4）。全程唯讀，未改產品程式、未改 shader / JS / bake、未改 runtime pointer、未重烤、未 commit。</p>
+    <p>#### H4 判決：D800 量尺收斂</p>
+    <p>D800 layout 已用權威來源證明（見 <code>d800-layout-proof.md</code>）：</p>
+    <pre><code>D800 raw（權威來源）：.omc/r7-3-10-full-room-diffuse-bake/20260602-015822/atlas-patch-000-rgba-f32.bin
+                      separated north 3379×2327，manifest worldBounds x[-2.11,2.11] y[0,2.905] z=-1.874
+D800 OIDN          ：docs/html-review/2026-06-02-r7-3-10-denoise-architecture-plan/stage1/
+                      c1-north-d800-1000spp-oidn-rt-high-beta.bin（同尺寸）
+mapping            ：col=round((x+2.11)/4.22*3379)、row=round(y/2.905*2327)、noflip
+證明               ：texel-metadata 查不到（manifest 列了但實體不在），改用 side-wall / 門洞 /
+                      西樑 gap 三組已知 invalid 區對齊驗證 mapping 與 noflip。</code></pre>
+    <p>#### 回答 CODEX 四問</p>
+    <pre><code>1. D800 x=-1.750, y=2.60 正確 luma？
+   → raw 0.169 / OIDN 0.168。但關鍵在再往邊界一格：
+     x=-1.752（exact edge 第一格 valid）raw=0.0000 / OIDN=0.0002 = 純黑；
+     x=-1.750（第二格）才回升到 0.169。
+
+2. 我的 0.168 來自什麼？
+   → 一個 texel 的座標差，非 row flip / rounding / package / UV layout 錯。
+     我量 x=-1.750（col288，第二格回升）；exact edge 在 x=-1.752（col287，0.000）。
+     layout 已三組幾何對齊證明正確、0.168 可重現。
+
+3. D800 exact edge 是否很暗 + 2mm 內回復？
+   → 是。x=-1.752=0.000（黑）→ x=-1.750=0.169，1 texel（0.00125m）內回復。H1/H2 成主線。
+
+4. D800 exact edge 校準後是否比 XATLAS 亮（H3 升級）？
+   → 否。D800 exact edge（x=-1.752, 0.000）比 XATLAS（0.138）更黑。H3 不升級，排除。</code></pre>
+    <p>#### 同世界座標對照（y=2.60，全文見 <code>d800-edge-profile.csv</code>）</p>
+    <table>
+<thead>
+<tr>
+<th>x</th>
+<th>D800 raw</th>
+<th>XATLAS oidn</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-1.755</td>
+<td>invalid</td>
+<td>invalid</td>
+<td>西樑 gap</td>
+</tr>
+<tr>
+<td>-1.752</td>
+<td>0.0000</td>
+<td>0.138</td>
+<td>D800 exact edge 純黑（col287, 1 texel）；XATLAS 同 row217</td>
+</tr>
+<tr>
+<td>-1.750</td>
+<td>0.1690</td>
+<td>0.138</td>
+<td>D800 回升（col288）；XATLAS 仍 row217</td>
+</tr>
+<tr>
+<td>-1.748</td>
+<td>0.2127</td>
+<td>0.138</td>
+<td>XATLAS 仍 row217</td>
+</tr>
+<tr>
+<td>-1.746</td>
+<td>0.1945</td>
+<td>0.183</td>
+<td>XATLAS 跳 row218</td>
+</tr>
+</tbody>
+</table>
+    <p>XATLAS 的 row217（0.138）一格涵蓋 D800 的 col287–290（0.000 / 0.169 / 0.213），約等於這段平均。四個 y（2.56 / 2.60 / 2.63 / 2.70）同形。</p>
+    <p>#### 假說判決（與 §11.1 合流）</p>
+    <pre><code>H1 邊界中心      ：強支持（與 CODEX 一致）。XATLAS first valid texel 中心卡 x=-1.75。
+H2 texel 密度    ：成立、主因。D800 黑邊 0.00125m（窄、肉眼幾乎看不到），
+                   XATLAS 暗邊 0.005m（4 倍寬、可見硬階）；XATLAS 寬格把 D800 窄黑邊+亮區平均成一條暗帶。
+H3 XATLAS 額外偏暗：排除（從 CODEX「降級」推進到排除）。D800 exact edge（0.000）比 XATLAS（0.138）更黑。
+                   ※ 我上一輪只量 x=-1.750（第二格）才誤判 H3；含 exact edge 第一格後否定。
+H6 OIDN          ：非主因。raw 與 OIDN 剖面同形（差異 &lt;0.03），只清雜訊放大可見度。</code></pre>
+    <p>#### D800 package 口徑備註（與 §11.1 的殘留差異）</p>
+    <pre><code>CODEX §11.1 用 runtime non-square preview 暫測（d800-preview / d800-denoise-c），x=-1.750 raw≈0.131；
+CLAUDE 用 D800 權威來源 separated north raw（20260602-015822，有 manifest worldBounds），x=-1.750=0.169。
+差異來自不同 package（runtime 拼圖 preview vs separated bake），但兩者結論方向一致：
+exact edge 都很暗、往內 1–2 texel 快速回復、D800 暗邊都比 XATLAS 窄。
+建議最終 D800 基準採 separated raw（有 manifest、可幾何對齊驗證）；
+若要對齊使用者實際 runtime 畫面，需另確認 runtime 實際載入哪個 D800 nonSquarePackage。</code></pre>
+    <p>#### 白話</p>
+    <p>D800 的量尺對好了。我之前的 0.168 沒錯，只是量在「黑邊往內一格」的位置；真正最邊那一格，D800 是純黑（0.000），跟 XATLAS 一樣暗、甚至更黑。差別只在寬度：D800 那條黑只有一個細格（0.00125m），眼睛還沒看清就回到正常牆色；XATLAS 那條暗有一個寬格（0.005m，四倍寬），就被看成一條硬黑邊。所以主嫌是「貼紙格子太寬 ＋ 第一格剛好踩在西樑折線上」（H1＋H2），不是「XATLAS 自己印太深」（H3 排除）。修法方向回到提高北牆 A1 局部密度 / 調整 first valid texel 中心放置，先做 D800 等效密度驗證包，不直接改 runtime。</p>
+    <h2>12. 過夜修復回填</h2>
+    <h3>12.1 XATLAS A1 高密度測試包與邊界規則驗收</h3>
+    <p>日期：2026-06-11 輸出資料夾：<code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/</code> 範圍：建立 D800 等效密度 XATLAS A1 測試包、產出 raw / OIDN、用 CPU 剖面與 headless runtime 截圖驗收。未更新 main runtime pointer，未使用柔化、羽化、拉亮邊 texel、借值補洞或 runtime 回退條帶。</p>
+    <p>#### 測試包</p>
+    <pre><code>raw package:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-034134
+
+OIDN package:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-034134-oidn-rt-high-beta
+
+runtime selectors:
+  xatlasPackage=a1-westbeam-height4x-raw
+  xatlasPackage=a1-westbeam-height4x-oidn
+
+atlas size:
+  old XATLAS A1 946×516
+  new test pack 946×2064</code></pre>
+    <p>這次採用「高度 ×4」的 UV 測試包，讓 A1 北牆在世界 X 方向的 texel 寬度從約 0.005m 收斂到約 0.00125m，對齊 D800 在西樑邊界的世界密度。測試包沿用同一套 bake runner、C2C alpha mask 與 runtime sampling 路徑。</p>
+    <p>#### 產線與驗證</p>
+    <pre><code>1. UV / texelmap
+   946×2064
+   valid=1,411,296
+   dilation=59,040
+
+2. C2C alpha mask
+   alphaOneTexels=897,683
+   alphaZeroTexels=513,613
+   tri10 alpha=100%
+   tri11 alpha=94.6592%
+
+3. 1000 SPP raw bake
+   samples=1000
+   tiles=10/10 completed
+   package=.omc/r7-3-10-xatlas-bake-spike/20260611-034134
+   runnerFailedChecks=[&quot;gpu-submission-ms-over-250&quot;]
+   備註：失敗項是提交時間門檻，內容檔與 samples 已產出，需誠實保留。
+
+4. OIDN
+   package=.omc/r7-3-10-xatlas-bake-spike/20260611-034134-oidn-rt-high-beta
+   OIDN device=Metal
+   OIDN version=2.4.1
+   atlasIntegrity nonzeroRatio=0.3033</code></pre>
+    <p>#### CPU 剖面結果</p>
+    <p>輸出：</p>
+    <pre><code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/height4x-edge-profile.csv
+.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/height4x-edge-profile-summary.md
+.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/height4x-edge-profile-summary-data.json</code></pre>
+    <p>OIDN luma 摘要：</p>
+    <table>
+<thead>
+<tr>
+<th style="text-align:right">y</th>
+<th style="text-align:right">old x=-1.750</th>
+<th style="text-align:right">old x=-1.748</th>
+<th style="text-align:right">old jump</th>
+<th style="text-align:right">new x=-1.750</th>
+<th style="text-align:right">new x=-1.748</th>
+<th style="text-align:right">new jump</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">2.56</td>
+<td style="text-align:right">0.141268</td>
+<td style="text-align:right">0.165354</td>
+<td style="text-align:right">0.024086</td>
+<td style="text-align:right">0.190363</td>
+<td style="text-align:right">0.191444</td>
+<td style="text-align:right">0.001081</td>
+</tr>
+<tr>
+<td style="text-align:right">2.60</td>
+<td style="text-align:right">0.137560</td>
+<td style="text-align:right">0.155926</td>
+<td style="text-align:right">0.018366</td>
+<td style="text-align:right">0.182569</td>
+<td style="text-align:right">0.182975</td>
+<td style="text-align:right">0.000406</td>
+</tr>
+<tr>
+<td style="text-align:right">2.63</td>
+<td style="text-align:right">0.142029</td>
+<td style="text-align:right">0.157496</td>
+<td style="text-align:right">0.015467</td>
+<td style="text-align:right">0.175752</td>
+<td style="text-align:right">0.177145</td>
+<td style="text-align:right">0.001393</td>
+</tr>
+<tr>
+<td style="text-align:right">2.70</td>
+<td style="text-align:right">0.138084</td>
+<td style="text-align:right">0.148819</td>
+<td style="text-align:right">0.010735</td>
+<td style="text-align:right">0.163140</td>
+<td style="text-align:right">0.162857</td>
+<td style="text-align:right">-0.000282</td>
+</tr>
+</tbody>
+</table>
+    <p>判讀：</p>
+    <pre><code>1. 舊 XATLAS A1 在 x=-1.750 → -1.748 有 0.0107～0.0241 的硬跳。
+2. 高密度 OIDN 測試包把同段跳躍壓到 -0.0003～0.0014。
+3. x=-1.750 → -1.744 的舊包跨度 0.0271～0.0607；新包跨度 0.0011～0.0096。
+4. 數值支持 H1/H2：D800 等效密度足以把肉眼硬階收斂成窄而自然的邊界暗化。</code></pre>
+    <p>#### Runtime 驗收</p>
+    <p>本輪驗收 server：</p>
+    <pre><code>http://127.0.0.1:9113/Home_Studio.html</code></pre>
+    <p>raw 驗收網址：</p>
+    <pre><code>http://127.0.0.1:9113/Home_Studio.html?v=r7310-xatlas-a1-westbeam-height4x-raw&amp;nonSquarePackage=d800-north-denoise-c&amp;xatlasPackage=a1-westbeam-height4x-raw</code></pre>
+    <p>OIDN 驗收網址：</p>
+    <pre><code>http://127.0.0.1:9113/Home_Studio.html?v=r7310-xatlas-a1-westbeam-height4x-oidn&amp;nonSquarePackage=d800-north-denoise-c&amp;xatlasPackage=a1-westbeam-height4x-oidn</code></pre>
+    <p>headless capture 證據：</p>
+    <pre><code>raw:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-raw/capture-report.json
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-raw/west-beam-hard-edge-canvas.png
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-raw/iron-jamb-regression-canvas.png
+
+OIDN:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn/capture-report.json
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn/west-beam-hard-edge-canvas.png
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn/iron-jamb-regression-canvas.png
+
+OIDN final URL 9113:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn-9113/capture-report.json
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn-9113/west-beam-hard-edge-canvas.png
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-height4x/runtime-validation-oidn-9113/iron-jamb-regression-canvas.png</code></pre>
+    <p>runtime 載入證據：</p>
+    <pre><code>raw:
+  packageDir=.omc/r7-3-10-xatlas-bake-spike/20260611-034134
+  targetAtlasWidth=946
+  targetAtlasHeight=2064
+  uniformMode=1
+  uniformReady=1
+  nonSquareAtlasEnabled=true
+
+OIDN:
+  packageDir=.omc/r7-3-10-xatlas-bake-spike/20260611-034134-oidn-rt-high-beta
+  targetAtlasWidth=946
+  targetAtlasHeight=2064
+  uniformMode=1
+  uniformReady=1
+  nonSquareAtlasEnabled=true</code></pre>
+    <p>觀察：</p>
+    <pre><code>1. 固定西樑視角中，OIDN 高密度 XATLAS 畫面已看不到先前的貼邊硬黑線。
+2. raw 高密度 XATLAS 仍有 raw 取樣雜訊，但貼邊硬階已大幅收斂。
+3. 鐵門旁 jamb 亮帶回歸視角未見亮帶復發。
+4. 本輪畫面皆明確載入 xatlasPackage，且 runtime report 確認 packageDir 指向新高密度 XATLAS 包。</code></pre>
+    <p>#### 邊界 texel 內縮規則</p>
+    <p>本輪未啟用邊界 texel 內縮規則。D800 等效密度測試包已讓 CPU 剖面與 runtime 畫面達標，因此正式化前的建議順序是：</p>
+    <pre><code>1. 先把「A1 北牆西樑交界需達 D800 等效密度」列為 xatlas promotion 前置規格。
+2. 再針對 first valid texel center 的位置建立產線規範，避免有效 texel 中心踩在幾何折線上。
+3. 內縮規則需另開測試包驗證，確認有效範圍、owner handoff 與真實接觸陰影都維持正確。</code></pre>
+    <p>#### 白話</p>
+    <p>這次做的是「把貼紙格子切細」的測試包。原本 XATLAS 在牆角那一格太寬，像用一片寬膠帶把很細的暗邊貼大；高密度包把那片寬膠帶切成四條細膠帶，黑邊就縮回自然寬度。這輪沒有靠擦邊、塗亮、借隔壁顏色或切換回 D800。畫面驗收也確認網址載入的是新的 XATLAS package。</p>
+    <h2>13. full4x 雙方向等效密度回填</h2>
+    <p>日期：2026-06-11 輸出資料夾：<code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/</code> 範圍：依使用者要求，把上一輪單方向等效密度測試推進成 XATLAS A1 北牆雙方向 D800 等效密度。未更新 main runtime pointer，未使用柔化、羽化、拉亮邊 texel、借值補洞或 runtime 回退條帶。</p>
+    <h3>13.1 Package</h3>
+    <pre><code>raw package:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-115310
+
+OIDN package:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta
+
+runtime selectors:
+  xatlasPackage=a1-westbeam-full4x-raw
+  xatlasPackage=a1-westbeam-full4x-oidn
+
+atlas size:
+  full4x 3784×2064</code></pre>
+    <h3>13.2 密度確認</h3>
+    <p>CPU metadata 抽樣位置：<code>x=-1.748, y=2.60</code></p>
+    <pre><code>full4x atlas +Y pixel 對應世界 X 軸：
+  0.0012500286m
+
+full4x atlas +X pixel 對應世界 Y 軸：
+  0.0012500286m
+
+結論：
+  full4x 已達 0.00125m × 0.00125m。</code></pre>
+    <h3>13.3 C2C Alpha 與 Bake</h3>
+    <pre><code>C2C mask:
+  raysPerTexel=64
+  alphaOneTexels=3,586,814
+  alphaZeroTexels=2,050,626
+  tri10 alpha=100%
+  tri11 alpha=94.7209%
+  tri20 alpha=0%
+  tri21 alpha=0%
+
+1000 SPP raw bake:
+  package=.omc/r7-3-10-xatlas-bake-spike/20260611-115310
+  samples=1000
+  tiles=40/40 completed
+  runnerFailedChecks=[&quot;gpu-submission-ms-over-250&quot;]
+  備註：失敗項是 GPU submission 時間門檻；內容檢查、尺寸、finite、luma、browser validation 均通過。
+
+OIDN:
+  package=.omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta
+  OIDN device=Metal
+  OIDN version=2.4.1
+  nonzeroRatio=0.3021</code></pre>
+    <h3>13.4 Runtime 驗收</h3>
+    <p>raw 驗收網址：</p>
+    <pre><code>http://127.0.0.1:9113/Home_Studio.html?v=r7310-xatlas-a1-westbeam-full4x-raw&amp;nonSquarePackage=d800-north-denoise-c&amp;xatlasPackage=a1-westbeam-full4x-raw</code></pre>
+    <p>OIDN 驗收網址：</p>
+    <pre><code>http://127.0.0.1:9113/Home_Studio.html?v=r7310-xatlas-a1-westbeam-full4x-oidn&amp;nonSquarePackage=d800-north-denoise-c&amp;xatlasPackage=a1-westbeam-full4x-oidn</code></pre>
+    <p>runtime 載入證據：</p>
+    <pre><code>raw:
+  packageDir=.omc/r7-3-10-xatlas-bake-spike/20260611-115310
+  targetAtlasWidth=3784
+  targetAtlasHeight=2064
+  uniformMode=1
+  uniformReady=1
+  nonSquareAtlasEnabled=true
+
+OIDN:
+  packageDir=.omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta
+  targetAtlasWidth=3784
+  targetAtlasHeight=2064
+  uniformMode=1
+  uniformReady=1
+  nonSquareAtlasEnabled=true</code></pre>
+    <p>headless capture 證據：</p>
+    <pre><code>raw:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-raw/capture-report.json
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-raw/west-beam-hard-edge-canvas.png
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-raw/iron-jamb-regression-canvas.png
+
+OIDN:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-oidn/capture-report.json
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-oidn/west-beam-hard-edge-canvas.png
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/runtime-validation-oidn/iron-jamb-regression-canvas.png</code></pre>
+    <h3>13.5 判讀</h3>
+    <pre><code>1. 使用者指出 height4x raw 有上下拉伸髒紋，原因成立：
+   height4x 是 0.00125m × 0.005m，只做單方向密度實驗。
+
+2. full4x 已修正為 0.00125m × 0.00125m：
+   raw 牆面髒紋不再呈現上一輪那種單方向拉伸。
+
+3. 西樑北端 × 北牆交界：
+   full4x raw / OIDN 都沒有先前貼邊硬黑線。
+
+4. 鐵門旁 jamb 亮帶：
+   full4x raw / OIDN 回歸截圖未見亮帶復發。</code></pre>
+    <h3>13.6 白話</h3>
+    <p>上一包像是只把貼紙橫向切細，所以黑邊修好了，但 raw 的髒紋還會被直向格子拉長。這包把橫向、直向都切到 D800 等級，貼紙格子變成正方形細格。結果是黑邊仍消失，raw 牆面髒紋也不再呈現單方向拉長；OIDN 版維持平滑。</p>
+    <h2>14. CLAUDE 審查裁示（full4x 雙方向等效密度）</h2>
+    <p>日期：2026-06-11｜CLAUDE｜全程唯讀核對，未改 code/shader/bake，未重烤，未動 main runtime pointer，未 commit。</p>
+    <h3>14.1 核對結果總表</h3>
+    <pre><code>CODEX 聲明                          核對來源                                       結果
+atlas 3784×2064                    兩 manifest + 兩 c2c report + 兩 runtime json   ✓ 五處一致
+1000 SPP，40/40 tiles              validation-report bakeDiagnostics              ✓ completedTiles=40 / minCompletedSamples=1000 / timedOut=false
+雙方向 0.00125m × 0.00125m          946→3784 ×4 算術 + CODEX CPU 抽樣              ✓ 算術一致（見 14.2）
+world texel 0.0012500286m          §13.2                                          採信（未自行讀 357MB metadata）
+browser validation pass            validation-report.browserValidationStatus      ✓ pass
+runner fail = 僅 gpu-submission     validation-report.runnerFailedChecks           ✓ 唯一 fail，15 項內容檢查全 true
+OIDN RT/high/beta/Metal            oidn manifest + metrics.json                   ✓ Apple M4 Pro / 2.4.1 / nan=0 inf=0 / rowFlip=false
+C2C tri10=100% / tri20=0 / tri21=0 perTriangle alphaOnePct                        ✓
+C2C tri11=94.7209%                 perTriangle[&quot;11&quot;].alphaOnePct                   ⚠ atlas 層級為 89.29%；94.72% 屬 mask 層級口徑（見 14.3）
+alphaOne=3,586,814/Zero=2,050,626  counts                                         ⚠ 屬 mask 層級；atlas 層級 alphaOne=2,359,325（見 14.3）
+raw↔OIDN package 一致               兩 c2c report counts 逐項比對                   ✓ counts 完全相同，證實 alphaPreserved=true</code></pre>
+    <p>兩處 ⚠ 不是數字造假，是 CODEX 報告混用了「mask 層級」與「atlas 最終層級」兩個口徑而未標明。數字本身都查得到，見 14.3。</p>
+    <h3>14.2 雙方向密度算術一致（問題待釐清的核心證據）</h3>
+    <pre><code>height4x runtime package：946 × 2064（粗軸 946 = 0.005m，細軸 2064 = 0.00125m）
+full4x  runtime package：3784 × 2064
+946 × 4 = 3784 → 把唯一的粗軸 ×4，0.005m → 0.00125m；另一軸 2064 維持 0.00125m
+結論：full4x = 0.00125m × 0.00125m 雙方向等效 D800，與 §13.2 的 CPU 抽樣值 0.0012500286m 一致。
+備註：manifest.worldBounds 為 null，我未自行讀 357MB texel-metadata 反推；上述為 ×4 算術交叉驗證。
+      若 full4x 要寫入 promotion 規格書，建議 CODEX 附 texel-metadata 雙點抽樣原始輸出存證。</code></pre>
+    <h3>14.3 C2C alpha 口徑釐清（問題 3 的對帳基礎）</h3>
+    <pre><code>mask 層級（backface-ratio 判定，僅作用於 metadata-valid 子集 5,637,440）：
+  valid（alpha→1 候選）= 3,586,814   ← CODEX 報告的 alphaOneTexels
+  invalid              = 2,050,626   ← CODEX 報告的 alphaZeroTexels
+  合計 = 5,637,440 = totalTexels(7,810,176) − metadataInvalid(2,172,736)
+
+atlas 最終層級（再扣除 visible exact-black）：
+  alphaOne = 3,586,814 − unrepairedExactBlack(1,227,489) = 2,359,325（= OIDN nonzeroTexels，利用率 30.21%）
+  alphaZero = metadataInvalid(2,172,736) + maskInvalid(2,050,626) + unrepairedExactBlack(1,227,489) = 5,450,851
+  alphaOne + alphaZero = 2,359,325 + 5,450,851 = 7,810,176 = totalTexels　帳目完全平衡
+
+tri11 同理：mask 層級 94.72%，atlas 層級 89.29%（差額 = tri11 的 exact-black texel）。</code></pre>
+    <p>帳目零殘差（每個 texel 的歸屬都有交代、無重複無遺漏）是 owner policy 內部一致性的最強證據，比單看任一三角形的百分比更可靠。</p>
+    <h3>14.4 四個審查問題的裁示</h3>
+    <pre><code>問題 1 — 可否作為 XATLAS A1 北牆 promotion 密度規格候選？
+  同意列為候選。雙方向 0.00125m 與 D800、與全室 bake 密度規格一致，不會在北牆 A1
+  留下獨立的低密度孤島；且修掉了 height4x 的單方向拉伸（各向異性→各向同性）。
+  使用者肉眼已確認黑邊消失、髒紋消失、OIDN 平滑、jamb 無復發，且未用任何禁止手段。
+
+問題 2 — 3784×2064 的記憶體／體積／runtime 成本可接受？
+  可接受。atlas F32 = 119.2MB（7,810,176 texel），略小於 D800 的 3379×2327 ≈ 120MB；
+  D800 已在 runtime 運行，故此量級已實證可行。
+  兩點備註（非阻擋項）：
+   (a) 有效利用率僅 30.2%（alpha=1 只 2,359,325 / 7,810,176），即 119MB 約 70% 是非 own texel；
+       這是 xatlas 打包 + C2C 嚴格判定的固有代價，不是 bug。
+   (b) 若 runtime 上傳改用 RGBA16F（half），可由 119MB 砍半至 ~60MB VRAM；
+       間接光 radiance 動態範圍（max luma &lt; 1、nonzeroRatio 0.30）通常 half 已足夠，建議 CODEX 評估。
+  texel-metadata 357.5MB 僅離線／bake 用，不上 runtime，不計入 runtime 成本。
+
+問題 3 — C2C alpha r64 是否符合既有 owner policy？
+  大致符合，附三點：
+   (a) rgbNonzeroAlphaZeroTexels = 0（每個 triangle 皆 0）：沒有「有亮度卻被判 invalid」的洩漏，
+       代表 owner policy 沒有誤殺北牆可見亮區——這是最重要的正面證據。
+   (b) 帳目零殘差（見 14.3），owner 判定內部一致。
+   (c) tri20 / tri21 各 19,456 texel 全 alpha=0：光從 report 無法定位世界座標。
+       promotion 前請 CODEX 用 texel-metadata 確認這兩個 chart 確實落在 side-wall／門洞／西樑 gap
+       隱藏區（正確不 own），而非誤殺北牆可見區。
+
+問題 4 — 還需要 first-valid texel center 內縮規則，或 full4x 密度已足夠？
+  對「西樑北端 × 北牆」這一條邊：full4x 密度已足夠，使用者肉眼已確認，不需再疊內縮規則。
+  但「內縮」作為通用 promotion 規則仍有獨立價值：密度提高只是把黑邊縮到 0.00125m（與 D800 同寬、
+  肉眼看不見），並未消除「第一個有效 texel 中心壓在幾何折線上取到極值」這個機制本身。
+  裁示：promotion 規格先釘 A（高變化區強制 full4x 等效密度）；
+        B（邊界 texel 內縮）降級為「未達等效密度的 chart 的回退保護規則」，
+        不必為北牆 A1 這條邊立即實作。此判斷與 §11／§12 的「A＋B 雙規則」共識一致，
+        差別是 full4x 證明了 A 單獨即可解這條邊。</code></pre>
+    <h3>14.5 promotion 前置清單（建議，皆為 CODEX 實作範疇）</h3>
+    <pre><code>1. tri20 / tri21 世界座標歸屬確認（texel-metadata 反查，確認落在隱藏區）。
+2. C2C alpha 報告統一標明口徑（mask 層級 vs atlas 層級），避免日後對帳誤判。
+3. （可選）RGBA16F runtime 上傳評估，記憶體減半。
+4. （可選）texel-metadata 雙點抽樣原始輸出，為 0.00125m 規格存證。
+5. gpu-submission-ms-over-250 為 bake-time 效能警告（maxSubmissionElapsedMs=319.8），
+   不影響烤出內容、不影響 runtime；若常態化重烤流程，記錄為已知 bake-time 項即可。
+6. 正式化 runtime pointer（現 packageStatus=architecture_probe、runtimeScope=…smoke）。</code></pre>
+    <h3>14.6 白話</h3>
+    <p>CODEX 報的數字我都查到了，沒有造假。只有兩個地方它把「篩選時的數字」跟「最後貼上牆的數字」混在一起講，沒標清楚是哪一種——我在 14.3 把兩本帳都列出來對平了，每一格的去向都有交代、不多不少。格子做成正方形細格這件事，用「946 乘 4 等於 3784」就能算出來是對的，跟 D800 一樣細。這張貼紙 119MB，跟現在已經在用的 D800 差不多大，所以塞得下。要正式採用前，只剩兩個小角落（tri20、tri21）要 CODEX 再確認一下它們是不是真的躲在看不到的地方。至於「把最邊那格往牆裡挪」的規則，這次不挪也已經好了，可以留著當「萬一以後某面沒做這麼細」的備用保險。</p>
+    <h2>15. CODEX 收尾核對（回覆 §14）</h2>
+    <p>日期：2026-06-11｜CODEX｜只讀 full4x package / metadata / atlas patch，未改 code/shader/bake，未重烤，未動 runtime pointer，未 commit。</p>
+    <h3>15.1 C2C alpha 口徑收斂</h3>
+    <p>§14.3 的兩本帳採為正式口徑。後續報告不得只寫 <code>alphaOneTexels=3,586,814</code> 而不標明它屬於 mask 判定口徑。</p>
+    <pre><code>1. mask 判定口徑
+   inputValidTexels = 5,637,440
+   alphaOneTexels   = 3,586,814
+   alphaZeroTexels  = 2,050,626
+   用途：C2C backface-ratio 判斷哪些 metadata-valid texel 可 own。
+
+2. atlas 最終口徑
+   alphaOneTexels   = 2,359,325
+   alphaZeroTexels  = 5,450,851
+   unrepairedExactBlack = 1,227,489
+   用途：runtime 實際貼到牆上的 atlas alpha / nonzero 帳。
+
+3. 對帳式
+   3,586,814 - 1,227,489 = 2,359,325
+   2,172,736 + 2,050,626 + 1,227,489 = 5,450,851
+   2,359,325 + 5,450,851 = 7,810,176</code></pre>
+    <h3>15.2 tri20 / tri21 metadata 反查</h3>
+    <p>反查來源：</p>
+    <pre><code>package:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-115310
+
+metadata:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-115310/texel-metadata-patch-000-f32.bin
+
+atlas:
+  .omc/r7-3-10-xatlas-bake-spike/20260611-115310/atlas-patch-000-rgba-f32.bin
+
+存證:
+  .omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/tri20-tri21-metadata-report.json</code></pre>
+    <p>反查結果：</p>
+    <pre><code>tri20:
+  metadataValidTexels = 19,456
+  atlasAlphaOneTexels = 0
+  rgbNonzeroTexels    = 0
+  worldX = -1.909375 .. -1.750625
+  worldY =  2.525625 ..  2.903125
+  worldZ = -1.874 固定
+  normal = (0, 0, 1)
+  sourceBox = 28
+
+tri21:
+  metadataValidTexels = 19,456
+  atlasAlphaOneTexels = 0
+  rgbNonzeroTexels    = 0
+  worldX = -1.909375 .. -1.750625
+  worldY =  2.526875 ..  2.904375
+  worldZ = -1.874 固定
+  normal = (0, 0, 1)
+  sourceBox = 28
+
+owner 對照：
+  westBeamGap 約束範圍 = x[-1.908,-1.752], y[2.525,2.905]
+  tri20 / tri21 幾乎完整落在這個西樑 gap 隱藏區。</code></pre>
+    <h3>15.3 判讀</h3>
+    <pre><code>1. tri20 / tri21 不是北牆可見主體。
+   它們落在西樑 gap 區，屬於北牆 A1 不能 own 的接觸邊區域。
+
+2. C2C alpha 把 tri20 / tri21 全部設為 0 是正確行為。
+   atlasAlphaOneTexels=0、rgbNonzeroTexels=0，沒有「有亮度卻被丟掉」的可見亮區洩漏。
+
+3. §14 的 promotion 前置項 1 已完成。
+   tri20 / tri21 已確認落在隱藏區；這一項不再阻擋 full4x 作為 XATLAS A1 北牆 promotion 密度候選。</code></pre>
+    <h3>15.4 白話</h3>
+    <p>OPUS 要我確認那兩個小三角形是不是被誤關。查完後答案很清楚：它們的位置就在西樑貼著北牆的那條 gap 裡，本來就不該由北牆貼紙負責。現在 C2C 把它們關掉，是正確的分工；沒有把真正看得到的北牆亮區誤殺。</p>
+    <h2>16. CLAUDE 核實 §15（tri20/21 反查 + owner 機制補完）</h2>
+    <p>日期：2026-06-11｜CLAUDE｜全程唯讀，獨立掃描 full4x raw 的 atlas + texel-metadata，未改 code、未重烤、未動 runtime pointer。 核實腳本：<code>.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/claude-verify-tri2021/verify.mjs</code></p>
+    <h3>16.1 tri20 / tri21 獨立核實 — 與 CODEX 全部一致</h3>
+    <p>方法：以 metadata 的 triId（offset 6）直接定位，掃全部 7,810,176 texel。 metadata 12-float layout 經 <code>height4x-edge-profile.mjs</code> 與 <code>scan-structural-invalid-texels.mjs</code> 兩工具交叉確認： <code>[0,1,2]=worldPos　[3,4,5]=normal　[6]=triId　[7]=valid　[8]=islandId　[10,11]=uv</code>。</p>
+    <pre><code>欄位            CODEX §15.2        CLAUDE 獨立掃描                          結果
+tri20 count     19,456             19,456                                  ✓
+tri21 count     19,456             19,456                                  ✓
+worldX          -1.909 ~ -1.751    -1.9094 ~ -1.7506                       ✓
+worldY          2.526 ~ 2.904      tri20 2.5256~2.9031 / tri21 2.5269~2.9044  ✓
+worldZ          -1.874             -1.8740（固定）                         ✓
+normal          (0,0,1)            (0.000, 0.000, 1.000)                   ✓
+atlasAlphaOne   0                  0                                       ✓
+rgbNonzero      0                  0                                       ✓</code></pre>
+    <p>CODEX §15.2 反查屬實。§14 promotion 前置項 1（tri20/21 歸屬確認）核可結案。</p>
+    <h3>16.2 owner 機制補完（promotion 須知，非 §15 糾錯）</h3>
+    <p>CODEX §15 對 tri20/21 的陳述全部正確。我額外做了一次全域掃描，補完整條 gap 的 owner 圖像：</p>
+    <pre><code>掃「全部 alpha=1 的 texel，其 worldPos 是否落入 westBeamGap(x[-1.908,-1.752] y[2.525,2.905])」：
+  → 506,257 個 alpha=1 texel 落在 gap 矩形內（首個樣本屬 tri11，非 tri20/21）。</code></pre>
+    <p>意義：atlas 並未把整條 gap 清零；gap 內仍有大量 alpha=1 texel（多屬 tri11／tri14 等北牆主三角）。 gap 區的「不顯示」實際由 runtime gate 負責——已讀 glsl:1207–1251 確認：</p>
+    <pre><code>glsl:1239  if (r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y))
+              { atlasUv = vec2(0.0); return false; }   // 命中點落 gap → 不取 atlas</code></pre>
+    <p>因此 owner 是「雙層」：</p>
+    <pre><code>第一層 runtime gate（範圍框 glsl:1221 x[-1.912,-1.518] + side-wall + 門洞 + beam-gap）：
+        負責 gap／門洞／側牆的「即時不顯示」。
+第二層 atlas backface-ratio mask：
+        把 bake 視角看不到北牆的 texel（如 tri20/21，西樑背面）設 alpha=0。
+tri20/21 alpha=0 的直接原因是第二層（backface mask），與「落在 gap」相關，
+但 atlas 清零的機制不是 gap gate。</code></pre>
+    <h3>16.3 promotion 影響</h3>
+    <pre><code>1. runtime gate r7310C1NorthWallHiddenByBeamGap (glsl:1239) 必須保留。
+   不可因「C2C alpha 已處理 owner」而移除：atlas 沒清零 gap，gap 內有 506,257 個 alpha=1 texel。
+   若移除 gate，gap 邊界的 bilinear 取樣會把這些 texel 取進來，gap 區可能顯示北牆 radiance（破圖風險）。
+   （此為 code + data 推論；未實測「移除 gate 的畫面」。）
+2. 建議 §15 補一句：owner 為「runtime gate + atlas backface mask」雙層，兩者不可互相取代。
+3. tri20/21 結論不變、promotion 不受影響——本節是機制文件化，不是阻擋項。</code></pre>
+    <h3>16.4 順帶澄清（density 再驗證）</h3>
+    <pre><code>A1 範圍框 glsl:1221 = x[-1.912,-1.518]：XATLAS A1 只覆蓋北牆西側約 0.39m 寬條帶（非全北牆）。
+UV island（glsl:1246-1249）：
+  U 跨 |0.6147-0.0005|×3784 ≈ 2324 texel 對應 world Y 2.905m
+  V 跨 |0.5107-0.3595|×2064 ≈ 312 texel  對應 world X 0.39m
+兩軸皆 0.00125m/texel——獨立於 §13.2 的 CPU 抽樣，再次驗證 full4x = 0.00125 × 0.00125。</code></pre>
+    <h3>16.5 白話</h3>
+    <p>OPUS 又自己查了一次那兩個小三角形，CODEX 報的每個數字都對得上。不過我多查了一個角度：那條 gap 縫裡其實還有 50 萬格貼紙是「開著的」（不是只有那兩個小三角形被關掉）。所以那條縫之所以看不到，靠的是程式在畫面當下即時把它擋掉，不是靠貼紙把整條縫塗黑。這代表以後就算貼紙做得再細，那段「即時擋縫」的程式碼也不能拿掉；一拿掉，縫的邊邊就會把牆的顏色透出來。CODEX 講的那兩個小三角形沒講錯，我只是把整條縫的完整道理補上去。</p>
+  </main>
+</div>
+<script src="./assets/html-review.js?v=3f1270966039"></script>
+</body>
+</html>

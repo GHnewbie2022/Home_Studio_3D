@@ -1,7 +1,7 @@
 # Debug Log Index
 
 > 目的：讓接手代理先用本檔路由，再回 `Debug_Log.md` 讀必要章節。`Debug_Log.md` 保留為完整總帳，不建議每次接手全讀。
-> 更新日：2026-06-10
+> 更新日：2026-06-11
 
 ---
 
@@ -71,6 +71,14 @@ rtk rg -n '^## |^### |R7-3|v3k|effectiveStrength|sampleCounter|S2' docs/SOP/Debu
       - 北牆 A1 破圖來自 tile(1,0) normal sampler per-tile 狀態錯誤。
       - 修復宣告以正式 runner package + CPU 讀檔為準。
       - 新 probe 先做常數校準，shader cache-buster 要同步。
+
+7.  `Debug_Log.md` 的 `R7-3.10 XATLAS A1 鐵門旁亮帶`
+    何時讀：
+      - xatlas A1 runtime、鐵門旁 jamb 亮帶、owner 重複認領、XATLAS 與 dedicated surface 同時加光。
+    核心:
+      - 鐵門旁亮帶來自 XATLAS A1 越界認領 iron-door reveal north jamb。
+      - r7310C1XatlasA1NorthWallUv 與 JS mirror 必須同步舊北牆 owner gate。
+      - xatlas A1 promotion 前要統一北牆 owner 排除、補 XATLAS owner probe、升級架構 contract。
 ```
 
 ---

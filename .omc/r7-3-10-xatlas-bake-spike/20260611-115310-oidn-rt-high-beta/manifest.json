@@ -1,0 +1,45 @@
+{
+  "version": "r7-3-10-xatlas-bake-c2-oidn-rt-high-beta-full4x",
+  "config": 1,
+  "northeastFurnitureMode": null,
+  "batch": "xatlas_a1_bake_spike",
+  "targetId": 200000,
+  "surfaceName": "c1_xatlas_a1_bake_spike",
+  "worldBounds": null,
+  "createdAt": "2026-06-11T03:56:43.192Z",
+  "branch": "codex/r7-3-10-north-wall-denoise-spots",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 3784,
+  "targetAtlasWidth": 3784,
+  "targetAtlasHeight": 2064,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "oidnMetrics": "atlas-patch-000-rgba-f32.bin.metrics.json"
+  },
+  "xatlasC2CAlphaPolicy": {
+    "enabled": true,
+    "maskPath": ".omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/xatlas-bake-full4x/xatlas-bake-c2c-validity-mask-full4x-r64-rgba32f.bin",
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "sourcePackageDir": ".omc/r7-3-10-xatlas-bake-spike/20260611-115310",
+  "denoise": {
+    "tool": "r7-3-10-oidn-bridge",
+    "filter": "RT",
+    "quality": "high",
+    "auxStrategy": "color_only_beta",
+    "inputSamples": 1000,
+    "deviceUsed": "metal",
+    "version": "2.4.1",
+    "alphaPreserved": true
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schema": "r7-3-10-c2c-validity-mask-v1",
+  "atlas": {
+    "width": 3784,
+    "height": 2064
+  },
+  "threshold": 0.5,
+  "raysPerTexel": 16,
+  "epsOffsetM": 0.001,
+  "roomBoxes": 88,
+  "normalSource": "rawNormal",
+  "decisionSource": "per-texel backface-ratio equivalent",
+  "counts": {
+    "inputValidTexels": 5637440,
+    "alphaOneTexels": 3802654,
+    "alphaZeroTexels": 1834786
+  },
+  "normalGroups": {
+    "(-1.0, 0.0, 0.0)": 1520960,
+    "(0.0, -1.0, 0.0)": 533760,
+    "(0.0, 0.0, -1.0)": 764000,
+    "(0.0, 0.0, 1.0)": 764000,
+    "(0.0, 1.0, 0.0)": 533760,
+    "(1.0, 0.0, 0.0)": 1520960
+  },
+  "perTriangle": {
+    "10": {
+      "texels": 362544,
+      "validAlphaTexels": 362544,
+      "validAlphaPct": 100.0,
+      "frontFraction": {
+        "mean": 1.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "11": {
+      "texels": 362544,
+      "validAlphaTexels": 343455,
+      "validAlphaPct": 94.73470806302132,
+      "frontFraction": {
+        "mean": 0.9447065390683613,
+        "min": 0.25,
+        "max": 1.0
+      }
+    },
+    "20": {
+      "texels": 19456,
+      "validAlphaTexels": 866,
+      "validAlphaPct": 4.451069078947369,
+      "frontFraction": {
+        "mean": 0.3347103721217105,
+        "min": 0.1875,
+        "max": 0.5
+      }
+    },
+    "21": {
+      "texels": 19456,
+      "validAlphaTexels": 5684,
+      "validAlphaPct": 29.214638157894733,
+      "frontFraction": {
+        "mean": 0.3806088096217105,
+        "min": 0.1875,
+        "max": 0.5
+      }
+    }
+  },
+  "hardStops": {
+    "usedBakeNormal": false,
+    "usedHardcodedTriangleDecision": false
+  },
+  "files": {
+    "mask": ".omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/xatlas-bake-full4x/xatlas-bake-c2c-validity-mask-full4x-r16-rgba32f.bin",
+    "report": ".omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/xatlas-bake-full4x/xatlas-bake-c2c-validity-mask-full4x-r16-report.json"
+  }
+}
