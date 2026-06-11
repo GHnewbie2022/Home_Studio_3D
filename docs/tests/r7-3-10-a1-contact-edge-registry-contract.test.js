@@ -34,15 +34,21 @@ function parseSideRect(block, side) {
 }
 const jsWest = parseSideRect(jsBlockMatch[1], 'west');
 
-// ---- shader 真值：westBeamGap（同範本解析法）----
-function parseShaderRect(varName) {
-	const m = shader.match(new RegExp(
-		'bool[ \\t]+' + varName +
-		'[ \\t]*=[ \\t]*x[ \\t]*>=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*x[ \\t]*<=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*y[ \\t]*>=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*y[ \\t]*<=[ \\t]*(-?[0-9.]+)'));
-	assert.ok(m, `shader: ${varName} not found`);
-	return { xMin: parseFloat(m[1]), xMax: parseFloat(m[2]), yMin: parseFloat(m[3]), yMax: parseFloat(m[4]) };
+// ---- shader 真值：west beam-gap named constants ----
+function parseShaderConst(name) {
+	const m = shader.match(new RegExp('const\\s+float\\s+' + name + '\\s*=\\s*(-?[0-9.]+)\\s*;'));
+	assert.ok(m, `shader: ${name} not found`);
+	return parseFloat(m[1]);
 }
-const shaderWest = parseShaderRect('westBeamGap');
+function parseShaderRect(prefix) {
+	return {
+		xMin: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_X_MIN`),
+		xMax: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_X_MAX`),
+		yMin: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_Y_MIN`),
+		yMax: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_Y_MAX`)
+	};
+}
+const shaderWest = parseShaderRect('WEST');
 
 // ---- InitCommon: north/west-beam worldBounds、island worldFace、atlas UV rect ----
 function parseConstScalar(constName, key) {
@@ -73,9 +79,10 @@ eqRect('gate registry↔JS', regGateWest, jsWest);
 eqRect('gate registry↔shader', regShaderGateWest, shaderWest);
 eqRect('gate JS↔shader', jsWest, shaderWest);
 assert.equal(registry.lockedConstants.shaderWiringPresent, true, 'gate: registry.shaderWiringPresent must be true');
-// shader 真的 wiring 了該 gate（定義存在不算）
-assert.match(shader, /r7310C1NorthWallHiddenByBeamGap\(\s*visiblePosition\.x\s*,\s*visiblePosition\.y\s*\)/, 'shader: runtime gate must wire r7310C1NorthWallHiddenByBeamGap');
-assert.match(shader, /r7310C1NorthWallHiddenByBeamGap\(\s*x\s*,\s*y\s*\)/, 'shader: bake-surface-point must wire r7310C1NorthWallHiddenByBeamGap');
+// shader 真的 wiring 了總 owner gate（定義存在不算）
+assert.match(shader, /r7310C1NorthWallOwnerExcluded\(\s*visiblePosition\.x\s*,\s*visiblePosition\.y\s*\)/, 'shader: runtime gate must wire r7310C1NorthWallOwnerExcluded');
+assert.match(shader, /r7310C1NorthWallOwnerExcluded\(\s*x\s*,\s*y\s*\)/, 'shader: bake-surface-point must wire r7310C1NorthWallOwnerExcluded');
+assert.match(shader, /r7310C1NorthWallHiddenByBeamGap\(\s*x\s*,\s*y\s*\)/, 'shader: owner-excluded helper must include r7310C1NorthWallHiddenByBeamGap');
 
 // ===== metadata：island worldFace + atlasEdgePolicy =====
 const regIsland = registry.lockedConstants.westBeamInnerIsland;

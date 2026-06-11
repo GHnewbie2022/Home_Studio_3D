@@ -1,0 +1,1215 @@
+# R7-3.10 SurfaceOwnerPolicy 全域 Owner Registry 規格草案
+
+## 1. 目的
+
+```text
+這份規格要把 A1 成功案例抽成全域 owner 制度。
+
+目標不是繼續逐條邊界補洞，而是建立一套共同規則：
+  runtime gate
+  bake-point 產生器
+  JS metadata mirror
+  package alpha audit
+  browser final-source / ownerCount probe
+
+都要能對到同一份 SurfaceOwnerPolicy。
+```
+
+## 2. 背景與目前共識
+
+```text
+已確認事實：
+
+1. A1 full4x 是成功樣板。
+   西樑北端 × 北牆硬黑邊已由 0.00125m × 0.00125m full4x package 解掉。
+
+2. §14 已完成 A1 owner 規則共用化第一步。
+   A1 runtime gate / bake-point / JS metadata mirror 三邊已接齊。
+
+3. OPUS §15 裁示：
+   §14 可以收，但要帶走兩個 schema follow-up：
+     - 門洞常數 shader ↔ JS 數值對帳缺通用測試。
+     - r7310C1NorthWallOwnerExcluded 是正確入口形態，但目前沒被三邊實際呼叫。
+
+4. OPUS §16 裁示：
+   schema 凍結前必須補上 A1 XATLAS 與舊北牆 D800 的條件式優先權。
+   A1 窄條落在 D800 北牆範圍內，這是合法重疊，不能用「候選 owner 只能有一個」判準處理。
+
+5. 下一步應做全域 SurfaceOwnerPolicy registry。
+   第一批限定北牆族，並拆成：
+     1a 靜態北牆
+     1b 東北家具變體
+```
+
+## 3. 非目標
+
+```text
+本規格不做以下事情：
+
+1. 不重烤。
+2. 不改 runtime pointer。
+3. 不改 full4x 成功 package。
+4. 不導入柔化、羽化、模糊、拉亮 texel、借值補洞、回退條帶。
+5. 不一次遷移全房間。
+6. 不把東牆 / 西牆 / 南牆 / 天花板 / structural 一次納入第一批。
+7. 不直接修東北床邊縫隙；那屬於北牆族 1b 的調查與遷移範圍。
+```
+
+## 4. 核心名詞
+
+```text
+owner
+  某個世界座標點由哪個表面或 package 負責提供烘焙光。
+
+runtime gate
+  畫面執行時判斷「這個點能不能取某張 atlas」的 shader 函式。
+
+bake-point 產生器
+  烘焙時把 texel UV 轉回世界座標點，並決定該 texel 是否要被烤的函式。
+
+JS metadata mirror
+  JS 端建 metadata / 診斷 / CPU sampler 時使用的同一份 owner 判斷鏡像。
+
+package alpha audit
+  package 產出後檢查 alpha、有效格、黑值、owner mask 的報告。
+
+SurfaceOwnerPolicy
+  全域 owner registry 裡的一筆表面規則。
+```
+
+## 5. SurfaceOwnerPolicy 欄位草案
+
+```text
+type SurfaceOwnerPolicy = {
+  id: string,
+  surfaceId: string,
+  surfaceName: string,
+  precedence: number,
+  activationCondition?: string,
+
+  claimSurfacePredicate: string,
+  claimBounds: {
+    axis?: 'x' | 'y' | 'z',
+    xMin?: number,
+    xMax?: number,
+    yMin?: number,
+    yMax?: number,
+    zMin?: number,
+    zMax?: number,
+    z?: number,
+    zTolerance?: number
+  },
+
+  exclusions: [
+    {
+      id: string,
+      type: 'rectXY' | 'rectZY' | 'sideThreshold' | 'customPredicate',
+      helper: string,
+      shaderConstants?: Record<string, number>,
+      jsConstants?: string,
+      reason: string
+    }
+  ],
+
+  ownerEntry: {
+    shaderHelper: string,
+    jsHelper: string
+  },
+
+  bakePointMirror: {
+    shaderFunction: string,
+    patchId: number
+  },
+
+  runtimeMirrors: string[],
+  jsMirrors: string[],
+
+  metadataMirror: {
+    functionName: string,
+    validityField: string
+  },
+
+  packageRefs: [
+    {
+      id: string,
+      pointerPath: string,
+      packageDir?: string,
+      role: 'd800' | 'xatlas' | 'variant'
+    }
+  ],
+
+  packagePolicy: {
+    alphaMode: string,
+    validLinearMode: string,
+    c2cAlphaReport?: string
+  },
+
+  furnitureStateRef?: {
+    modeKey: string,
+    allowedValues: string[],
+    packageByMode: Record<string, string>
+  },
+
+  tests: {
+    staticContract: string,
+    parityContract: string,
+    ownerGridSweep?: string,
+    packageAlphaAudit?: string,
+    browserProbe?: string
+  }
+}
+```
+
+## 6. Owner 入口規則
+
+### 6.1 總入口 helper
+
+```text
+每個 surface family 必須有一個總入口 helper：
+
+shader:
+  r7310C1NorthWallOwnerExcluded(float x, float y)
+
+JS:
+  r7310C1NorthWallOwnerExcluded(x, y)
+
+規則：
+  1. runtime gate 必須呼叫總入口 helper。
+  2. bake-point 產生器必須呼叫總入口 helper。
+  3. JS metadata mirror 必須呼叫總入口 helper。
+  4. CPU diagnostic mirror 必須呼叫總入口 helper。
+  5. contract 必須驗「總入口 helper 被呼叫」，只驗存在不夠。
+```
+
+### 6.2 子 helper
+
+```text
+北牆族 1a 目前有三個子 helper：
+
+1. r7310C1NorthWallHiddenBySideWall
+2. r7310C1NorthWallHiddenByDoorHole
+3. r7310C1NorthWallHiddenByBeamGap
+
+子 helper 是規則零件。
+三邊入口應問總入口 helper，不逐一問三個子 helper。
+```
+
+## 7. 常數對帳規則
+
+```text
+每個 exclusion 的常數都要有 shader ↔ JS 數值對帳。
+
+最低要求：
+  1. JS registry 是主資料。
+  2. shader 端若仍鏡像常數，必須被 contract 解析並比對 JS 值。
+  3. contract 要能抓到：
+     - JS 改值、shader 沒改
+     - shader 改值、JS 沒改
+     - helper 名字存在但常數漂移
+     - 入口繞過總 helper
+
+北牆族 1a 第一個 blocker：
+  r7310C1NorthWallHiddenByDoorHole 的四個 shader 常數：
+    R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN
+    R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX
+    R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN
+    R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX
+
+  必須與 JS：
+    R7310_C1_NORTH_WALL_DOOR_HOLE
+
+  做數值對帳。
+
+北牆族 1a 同批 blocker：
+  side-wall 與 beam-gap 的 shader 端也要提升為具名常數。
+  目標是三個 exclusion 都用同一種「shader 具名常數 ↔ JS 常數」對帳方式，
+  不再靠 fragile 的裸數字解析。
+```
+
+## 8. 通用 Parity Contract 設計
+
+```text
+新增一支通用契約：
+
+docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+
+它的工作不是只驗 A1，而是讀 SurfaceOwnerPolicy registry，
+逐筆檢查以下項目：
+
+1. 欄位完整
+   id / surfaceId / claimBounds / exclusions / ownerEntry /
+   bakePointMirror / runtimeMirrors / jsMirrors / packageRefs / tests
+
+2. helper 存在
+   shader ownerEntry.shaderHelper 存在
+   JS ownerEntry.jsHelper 存在
+
+3. helper 被使用
+   runtimeMirrors 指向的 shader body 必須呼叫 ownerEntry.shaderHelper
+   bakePointMirror 指向的 patch body 必須呼叫 ownerEntry.shaderHelper
+   jsMirrors 指向的 JS body 必須呼叫 ownerEntry.jsHelper
+
+4. 常數對帳
+   對每個 exclusion：
+     解析 shaderConstants
+     解析 JS constants
+     用 EPS 比對數值
+
+5. 禁止重新內聯
+   mirror body 內不可出現與 exclusion 同型的裸常數判斷。
+
+6. package 指標存在
+   packageRefs.pointerPath 必須存在。
+
+7. alpha audit 指標存在
+   若 packagePolicy.c2cAlphaReport 有指定，package 內必須有該報告。
+
+8. claim 重疊不變式
+   任兩筆 policy 的 claimBounds 若幾何重疊，必須符合其中一項：
+     - precedence 存在且數值不同
+     - activationCondition 互斥
+   這條先用靜態檢查守住 A1 XATLAS 與舊北牆 D800 的合法重疊。
+```
+
+## 9. 六項自動檢查與責任分工
+
+```text
+1. 有沒有重複認領
+   工具：CPU owner grid sweep
+   判準：啟用條件成立的 owner 中，最高 precedence 必須唯一。
+   備註：A1 XATLAS 與舊北牆 D800 是合法重疊，不能用 ownerCandidates.length <= 1。
+
+2. 有沒有越界認領
+   工具：CPU owner grid sweep + runtime mirror
+   判準：exclusion 區 mapped 必須 false
+
+3. 有沒有該顯示卻 alpha=0
+   工具：package alpha audit
+   判準：visible rgbNonzeroAlphaZeroTexels = 0
+
+4. 有沒有 gap 被 atlas 偷偷吃進來
+   工具：runtime final-source / owner route probe + package alpha audit
+   判準：gap 區 runtime source 不可為該 atlas owner
+
+5. bake-point 與 runtime gate 是否同排除
+   工具：通用 parity contract
+   判準：bakePointMirror body 與 runtimeMirrors body 都呼叫 ownerEntry helper；
+         進一步可由 CPU sweep 對同世界點做 truth table。
+
+6. 家具狀態與 package 是否一致
+   工具：furnitureStateRef 對帳
+   判準：目前 mode 對應的 runtime package、shadow package、metadata variant 必須一致。
+   狀態：北牆族 1b 才啟用。
+```
+
+## 10. 北牆族 1a 範圍
+
+```text
+1a 只處理靜態北牆規則：
+
+包含：
+  - A1 XATLAS
+  - 舊北牆 D800
+  - r7310C1NorthWallDiffuseUv
+  - r7310C1XatlasA1NorthWallUv
+  - r7310C1BakeSurfacePoint patchId 1002
+  - buildR7310C1NorthWallTexelMetadataRect
+  - r7310C1XatlasA1NorthWallUvFromWorldPosition
+
+exclusions：
+  - side-wall
+  - door-hole
+  - beam-gap
+
+1a blocker：
+  1. SurfaceOwnerPolicy registry 有 north-wall-static policy。
+  2. SurfaceOwnerPolicy registry 能表達 A1 XATLAS 優先於 D800 的條件式覆蓋：
+     A1 有較高 precedence，且 activationCondition 綁 XATLAS runtime ready。
+  3. §9.1 判準改為「啟用條件成立者中，最高 precedence 唯一」。
+  4. §8 加 claim 重疊不變式。
+  5. 門洞常數 shader ↔ JS 數值對帳。
+  6. side-wall / beam-gap shader 端提升為具名常數，並納入同一套數值對帳。
+  7. r7310C1NorthWallOwnerExcluded 被 runtime / bake-point / JS mirror 實際呼叫。
+  8. 既有 A1 owner-policy contract 改為驗總入口 helper。
+  9. 既有 xatlas-c2c / full-room contract 同步更新。
+  10. 所有現有 seam contract 綠燈。
+```
+
+## 11. 北牆族 1b 範圍
+
+```text
+1b 處理東北家具變體。
+
+包含：
+  - bed / wardrobe 狀態
+  - 北牆 bed package
+  - 北牆 wardrobe package
+  - 東牆家具變體只做對照，不在 1b 主遷移範圍
+  - bed contact / wardrobe contact owner policy
+
+1b 新增 schema：
+  furnitureStateRef
+
+1b 啟動條件：
+  1. 1a 已合併。
+  2. 通用 parity contract 已能跑北牆靜態 policy。
+  3. OPUS 審過 furnitureStateRef 欄位。
+
+1b 要回答：
+  1. 北牆 × 床交界目前由誰負責？
+  2. bed 狀態下是否應由北牆 atlas 認領該 contact 區？
+  3. 若不該認領，是 live-trace 還是家具專用 package？
+  4. bed / wardrobe package 是否跟 UI 狀態同步？
+```
+
+## 12. Migration 順序
+
+```text
+Phase 0：規格審查
+  產出本 HTML Review。
+  OPUS 審 SurfaceOwnerPolicy 欄位、1a/1b 拆分、六項自動檢查。
+
+Phase 0.5：schema 凍結補強
+  依 OPUS §16 補 precedence / activationCondition。
+  改寫重複認領判準。
+  加 claim 重疊不變式。
+  將 side-wall / beam-gap shader 端提升具名常數列入 1a。
+
+Phase 1：北牆族 1a test-first
+  新增 / 改寫通用 parity contract。
+  先看它在目前程式上紅燈：
+    - 門洞數值未對帳
+    - side-wall / beam-gap shader 端尚未具名化
+    - OwnerExcluded 未被使用
+    - A1 / D800 條件式優先權尚未進 registry
+
+Phase 2：北牆族 1a 實作
+  讓三邊入口改呼叫 r7310C1NorthWallOwnerExcluded。
+  補門洞 shader ↔ JS 數值對帳。
+  既有 bespoke tests 改為讀 registry 或引用通用 helper。
+
+Phase 3：北牆族 1a 驗證
+  跑：
+    - 通用 parity contract
+    - xatlas owner policy contract
+    - xatlas c2c contract
+    - full-room diffuse bake contract
+    - seam-contracts-all
+    - xatlas runtime uv contract
+    - final-source probe contract
+
+Phase 4：北牆族 1b 規格補強
+  加 furnitureStateRef。
+  先查東北床邊縫隙 owner route。
+
+Phase 5：北牆族 1b 實作
+  只在 1b 規格審過後進行。
+```
+
+## 13. 風險與保護
+
+```text
+主要風險：
+
+1. ownerEntry 一次改太多入口。
+   保護：1a 限定北牆靜態；不碰家具狀態。
+
+2. 通用 parity contract 解析 shader body 錨點不穩。
+   保護：第一版只支援北牆族已知 pattern；不要硬吃全房間。
+
+3. bespoke tests 與新通用 contract 口徑不同。
+   保護：Phase 1 明寫既有 tests 對帳；不是平行新建。
+
+4. 東北床縫被誤判成 1a 問題。
+   保護：床縫歸 1b furnitureStateRef，不在 1a 動。
+
+5. package 內容與 runtime route 混淆。
+   保護：package alpha audit 與 browser final-source probe 分開記錄。
+```
+
+## 14. OPUS 審查問題
+
+```text
+請 OPUS 審以下問題：
+
+1. SurfaceOwnerPolicy 欄位是否足夠？
+   特別是 ownerEntry / bakePointMirror / runtimeMirrors / jsMirrors /
+   metadataMirror / packageRefs / furnitureStateRef。
+
+2. 北牆族 1a 是否應以「靜態北牆」為第一批？
+   是否同意先處理 A1 XATLAS + 舊北牆 D800 + 門洞 / side-wall / beam-gap？
+
+3. 是否同意 bed / wardrobe 與床邊縫隙放到 1b？
+   理由是家具狀態是新維度，需要 furnitureStateRef 先定義。
+
+4. 通用 parity contract 的檢查項是否足夠？
+   是否還需要加入 owner truth table grid sweep 當 blocker？
+
+5. `r7310C1NorthWallOwnerExcluded` 是否應在 1a 改成三邊總入口？
+   runtime / bake-point / JS mirror 都直接呼叫它。
+
+6. 門洞常數 shader ↔ JS 數值對帳是否應比照 beam-gap contract？
+```
+
+## 15. CODEX 建議裁示
+
+```text
+1. 接受 §15 對 §14 的裁示：
+   A1 樣板合格，但不宣稱全域完成。
+
+2. 下一個實作 GOAL 只做北牆族 1a。
+
+3. 北牆族 1a 的 blocker 是：
+   - precedence / activationCondition 表達 A1 XATLAS 與 D800 的條件式優先權
+   - registry 級 claim 重疊不變式
+   - 門洞 / side-wall / beam-gap 常數 shader ↔ JS 數值對帳
+   - OwnerExcluded 成為三邊總入口
+   - 通用 parity contract 初版
+
+4. 東北床邊縫隙不在 1a 直接修。
+   1a 完成後，用 1b 的 furnitureStateRef 去查它。
+
+5. 全房間 owner registry 不一次推進。
+   先北牆靜態，後北牆家具，再考慮其他牆與 structural。
+```
+
+---
+
+## 16. OPUS 審查裁示（2026-06-11）
+
+全程唯讀核實，已比對 glsl / InitCommon.js / docs/tests 實際內容，未改產品程式、未重烤、未動 runtime pointer。
+
+### 16.0 一句話裁示
+
+```text
+方向、1a/1b 拆分、總入口、門洞對帳都正確，可往實作走。
+但 schema 凍結前有一個會直接卡住 1a 的缺口必須先補：
+1a 同時含 A1 XATLAS 與舊北牆 D800，兩者在北牆平面「重疊」——
+A1 窄條 x[-1.912,-1.518] 完整落在 D800（整面北牆）之內，
+目前靠 shader 敘述順序（glsl:3195 A1 先、glsl:3206 D800 後）決定誰贏，
+而 SurfaceOwnerPolicy 沒有任何欄位表達這個「優先權／條件覆蓋」。
+更嚴重：§9.1 自己訂的判準 ownerCandidates.length <= 1，
+在這個重疊區會對「合法的 A1+D800 重疊」誤紅。
+schema 要先長出 precedence + 啟用條件，否則 1a 第一筆 policy 就描述不了自己。
+```
+
+### 16.1 審查點 5 / 6 + 兩個 §15 follow-up — 全部同意，方向正確
+
+```text
+Q5 OwnerExcluded 改三邊總入口：同意，且這正是 §15 鬆動2 的正解。
+  現況實證：shader:672 / js:2056 已定義組合 helper，但全 repo 零呼叫；
+            三入口仍各自呼叫三子 helper。1a 改成三邊都呼叫總入口正確。
+  追加要求（規格已部分涵蓋）：
+    既有 owner-policy-contract:47-56 現在強制每個 body 出現「三個子 helper 名字」。
+    一旦 body 改成只呼叫 OwnerExcluded，那條舊契約會反過來紅。
+    §10 blocker 4「改為驗總入口 helper」必須與 Phase 2 同一個 commit 落，
+    否則 RED→GREEN 之間舊契約自相矛盾。規格有抓到，這裡再標一次時序。
+
+Q6 門洞數值對帳比照 beam-gap：同意。
+  補一個事實：beam-gap 已有 shader↔JS 數值對帳（bespoke
+  north-wall-beam-gap-contract，讀的是 shader 裸數字）。
+  門洞要拿到同等級數值鎖——最乾淨的做法見 16.2(B)，
+  讓通用契約一次涵蓋三個 exclusion，再讓 bespoke beam-gap 契約退役或委派。
+
+兩個 §15 follow-up 在本規格都有正面接住（§7、§10 blocker 2/3），方向無誤。
+```
+
+### 16.2 審查點 1 — 欄位「大致夠」，但有兩個具體缺口，第一個是 1a blocker
+
+```text
+缺口 A【1a blocker，凍結前必補】：缺「同表面多 owner 的優先權／條件覆蓋」欄位。
+  事實：1a 範圍同時列了 A1 XATLAS 與舊北牆 D800（§10）。
+    A1   claimBounds = x[-1.912,-1.518]（窄條）
+    D800 = RuntimeSurfaceIsNorthWall 整面北牆 − 排除（glsl:1790，無窄框）
+    → A1 ⊂ D800，兩者在窄條「同時 own」。
+  目前怎麼解：純靠 shader 敘述順序——
+    glsl:3195 先試 A1，命中就 return；glsl:3206 才輪到 D800。
+    這是「程式順序隱含優先權」，registry schema 完全沒表達它。
+  而且這個優先權是「條件式」的：A1 只在
+    uR7310C1XatlasRuntimeReady / XatlasRuntimeMode / NorthWallDiffuseMode 都開時才贏；
+    XATLAS 沒 ready 時，窄條必須回退給 D800 覆蓋。
+  兩個後果：
+    1. schema 描述不了自己的第一批：A1 與 D800 兩筆 policy 各自獨立，
+       無法表達「重疊時 A1 優先、且只在 runtime ready 時優先」。
+    2. §9.1 判準 ownerCandidates.length <= 1 會對這個合法重疊誤紅。
+  修法（建議用條件優先權，不要用靜態切割）：
+    SurfaceOwnerPolicy 加：
+      precedence: number            // 同表面重疊時誰先，數字大者贏
+      activationCondition?: string  // 例如 'uR7310C1XatlasRuntimeReady>0.5'，未滿足則讓位
+    §9.1 判準改寫成：
+      「每個世界點，啟用條件成立的 owner 中，最高 precedence 只能有一個」。
+    為什麼不用靜態切割（讓 D800 把窄條 exclude 掉）：
+      A1↔D800 是 runtime 條件切換，不是固定分區；
+      XATLAS 一關，窄條就會變成零 owner（破圖）。所以必須條件優先權。
+
+缺口 B【1a 應順手補，影響通用契約能否真的「通用」】：
+  exclusion.shaderConstants 假設 shader 端是「具名常數」，但實況不對稱：
+    door-hole   shader 具名常數 glsl:645-648 ✓
+    side-wall   shader 裸數字 glsl:643 `x <= -1.91 || x >= 1.91`（無具名）
+    beam-gap    shader 裸數字 glsl:668-669（無具名）
+    JS 端三個都有具名常數（SIDE_WALL_BACKS / BEAM_GAP_INVALID_REGIONS / DOOR_HOLE）。
+  後果：通用 parity 契約若只會讀「具名 shaderConstants」，三個 exclusion 只有 door-hole 能對帳，
+        side-wall / beam-gap 仍得走「解析裸數字」——這正是 §13 風險2 點名的脆弱錨點，
+        且從第一天就變成 load-bearing。
+  修法：1a 內把 side-wall / beam-gap 的 shader 端也提升為具名常數（比照 door-hole，機械工），
+        讓 registry 的 shaderConstants 欄位三個 exclusion 一致填滿，
+        通用契約只需一種「讀具名常數」模式。beam-gap 也因此白拿與門洞同級的數值鎖。
+
+缺口 C【1b 才需要，現在先標記】：furnitureStateRef 只表達 mode→package，
+  表達不了「mode 相依的 exclusion」。若 bed 在場才多一塊 bed-contact 排除區，
+  exclusions[] 需要 per-exclusion 的 activeWhen / mode 條件。
+  規格已把 furnitureStateRef 審查延到 1b（§11 啟動條件3），可接受；
+  這裡先記下：1b 審查時 furnitureStateRef 要連同「exclusions 的 mode 門控」一起定，
+  不是只加一個 packageByMode 對照表。
+```
+
+### 16.3 審查點 2 / 3 — 同意 1a 只做靜態北牆、bed/wardrobe 放 1b
+
+```text
+Q2 1a 只做靜態北牆：同意，與 §15.3 1a 一致。
+Q3 bed/wardrobe + 床縫放 1b：同意，與 §15.3 1b 一致。
+  理由不變：家具狀態是 A1 模型沒有的新維度（full-room 契約現在斷言
+  wardrobeContact===undefined，代表家具接觸還不是北牆 invalid region），
+  該維度要先把 schema（furnitureStateRef + 16.2 缺口C 的 mode 門控）定清楚再動。
+  §3.7「不直接修東北床縫、歸 1b」這條守得很對，是避免把家具問題誤當靜態縫補的關鍵紀律。
+```
+
+### 16.4 審查點 4 — 通用 parity 契約「結構檢查」夠，但要補兩項；grid sweep 分階段當 blocker
+
+```text
+parity 契約現在的七項（§8）是「結構 + 常數」檢查，對「單一表面三鏡像一致」夠用：
+  因為三個 shader 入口都呼叫同一支 helper → shader 內部行為必然一致；
+  JS 同理；跨語言靠常數對帳補上。對 A1+D800 各自的三鏡像，這層成立。
+
+但它對「跨表面」是結構盲的，要補兩項：
+  補項 1【靜態，凍結前加進 §8】：registry 級「claim 重疊／優先權」不變式檢查。
+    對任兩筆 policy：若 claimBounds 幾何重疊，則必須兩者都有 precedence 且不相等
+    （或有互斥的 activationCondition）。這條純靜態、便宜，能在規格層先擋掉
+    「兩 owner 重疊又沒定誰先」——正是缺口 A 的自動守門。
+  補項 2【行為，CPU owner grid sweep】：parity 契約證不了「實際世界點只有一個生效 owner」。
+    對 Q4 直接回答——grid sweep 是否該當 blocker：分階段。
+      1a：registry 內只有北牆族一個 family，跨 family 重複認領還不會發生，
+          grid sweep 當「1a 交付物（建立 truth-table 基線）」即可，不必當硬 blocker。
+      1b 起：bed×北牆正是兩 owner 可能同時認領同一點的場景，
+          grid sweep 從 1b 起列為 blocker（判準採 16.2 改寫後的「最高 precedence 唯一」）。
+  也就是說：§9.1 那六項分工方向對，但「重複認領」這項在 1a 由「補項1 靜態不變式」守，
+            到 1b 才升級成「grid sweep 行為驗證」當 blocker。
+```
+
+### 16.5 凍結前必補清單（給 CODEX）
+
+```text
+進實作 GOAL 前，schema 與 §8/§9 要先補這幾項再凍：
+  1.（blocker）SurfaceOwnerPolicy 加 precedence + activationCondition，
+     用來表達 A1⊂D800 的條件式優先權。
+  2.（blocker）§9.1 判準改寫：「啟用條件成立者中，最高 precedence 唯一」，
+     取代會對合法重疊誤紅的 ownerCandidates.length<=1。
+  3.（blocker）§8 加 registry 級「重疊必須有不等 precedence 或互斥條件」靜態不變式。
+  4.（1a 應做）side-wall / beam-gap 的 shader 端提升為具名常數，
+     讓通用契約三個 exclusion 一致讀具名常數、退役 bespoke beam-gap 解析。
+  5.（時序）OwnerExcluded 改三入口呼叫，與「owner-policy-contract 改驗總入口」同一 commit。
+  6.（1b 標記）furnitureStateRef 連同 exclusions 的 mode 門控一起定，不只 packageByMode。
+  以上 1–3 是「schema 描述得了自己第一批」的前提，務必凍結前補。
+```
+
+### 16.6 結論
+
+```text
+1. 規格可以走，方向（全域 registry / 1a 靜態 / 1b 家具 / 總入口 / 門洞對帳）全部正確。
+2. 但 schema 凍結前必補三件 blocker（16.5 第1–3）：precedence、判準改寫、重疊不變式。
+   根因是 1a 自己就含 A1⊂D800 的條件式重疊，現行 schema 描述不了，§9.1 判準還會誤紅。
+3. 1a 應順手把 side-wall / beam-gap shader 端提升為具名常數，讓「通用」契約真的通用（16.2 B）。
+4. grid sweep：1a 當交付物建基線，1b 起當 blocker。
+5. 同意 Q2/Q3/Q5/Q6；furnitureStateRef 的 mode 門控延到 1b 審查可接受，但先標記範圍。
+6. 本節唯讀核實，未改產品程式、未重烤、未動 runtime pointer；index.html 交 CODEX 由本 source.md 重生。
+```
+
+## 17. CODEX 整合回填（2026-06-11）
+
+依 OPUS §16 裁示，已把 blocker 從審查附錄整合回規格正文。
+
+```text
+已整合項目：
+
+1. §2 背景新增 OPUS §16 共識：
+   A1 XATLAS 與舊北牆 D800 是合法重疊，必須用條件式優先權表達。
+
+2. §5 SurfaceOwnerPolicy 欄位新增：
+   precedence: number
+   activationCondition?: string
+
+3. §7 常數對帳新增：
+   side-wall / beam-gap shader 端也要提升為具名常數，
+   讓三個 exclusion 都走同一套 shader ↔ JS 數值對帳。
+
+4. §8 通用 parity contract 新增：
+   claim 重疊不變式。
+   幾何重疊的 policy 必須有不同 precedence，或互斥 activationCondition。
+
+5. §9 重複認領判準已改寫：
+   從 ownerCandidates.length <= 1
+   改成「啟用條件成立的 owner 中，最高 precedence 必須唯一」。
+
+6. §10 北牆族 1a blocker 已補：
+   A1 優先於 D800 的條件式覆蓋、
+   重疊不變式、
+   side-wall / beam-gap 具名常數、
+   總入口 helper 實際被三邊呼叫。
+
+7. §12 migration 新增 Phase 0.5：
+   先做 schema 凍結補強，再進 Phase 1 test-first。
+
+8. §15 CODEX 建議裁示已更新：
+   下一個實作 GOAL 的 blocker 改為
+   precedence / activationCondition、
+   claim 重疊不變式、
+   三組 exclusion 常數對帳、
+   OwnerExcluded 三邊總入口、
+   通用 parity contract 初版。
+```
+
+目前狀態：
+
+```text
+1. 這次只更新規格文件與 HTML Review。
+2. 尚未改產品程式、shader、JS runtime、bake pipeline、runtime pointer。
+3. 下一步若 OPUS 接受 §17，才進入北牆族 1a code GOAL。
+```
+
+---
+
+## 18. OPUS 凍結簽結（2026-06-11）
+
+唯讀核實 §17 整合與前文一致性，未改產品程式、未重烤、未動 runtime pointer。
+
+### 18.0 結論：規格可凍結
+
+```text
+§17 八項回填已逐項對照正文核實，全部落實且無新矛盾。
+我 §16.5 的三件凍結 blocker（precedence + activationCondition、§9.1 判準改寫、§8 重疊不變式）
+全部進入規格正文，schema 現在描述得了自己的第一批（A1⊂D800 條件式重疊）。
+准予凍結，下一步可進北牆族 1a code GOAL。
+```
+
+### 18.1 凍結 blocker 落實核對（全綠）
+
+```text
+16.5 第1（precedence + activationCondition） → §5 L87-88   ✓
+16.5 第2（§9.1 判準改寫）                    → §9 L277-280  ✓（含 A1/D800 合法重疊備註）
+16.5 第3（§8 重疊不變式）                    → §8 L267-272  ✓
+16.5 第4（side-wall/beam-gap 具名常數）       → §7 + §10 blocker6 ✓
+16.5 第5（OwnerExcluded 與 contract 同步）    → §10 blocker7/8 + Phase 2 同階段 ✓
+一致性：§9.1「最高 precedence 唯一」與 §8 item8「重疊須不等 precedence」互不衝突。
+```
+
+### 18.2 帶進 1a GOAL 的精度點（非凍結 blocker，凍結後於實作處理）
+
+```text
+1. activationCondition 是「三 uniform 連言」，不是單一條件。
+   實證 glsl:1209-1215：A1 閘同時要求
+     uR7310C1NorthWallDiffuseMode>0.5 且 uR7310C1XatlasRuntimeMode>0.5 且 uR7310C1XatlasRuntimeReady>0.5。
+   §10 blocker2 與 §5 範例只寫到 XatlasRuntimeReady。
+   1a 實作時 A1 的 activationCondition 必須填完整連言；
+   parity 契約要驗「registry 宣告的 activationCondition == runtime gate 實際 uniform 閘」，
+   否則宣告少一個 uniform、shader 多檢一個，會出現宣告與實機不符而契約抓不到。
+   D800 的 activationCondition = uR7310C1NorthWallDiffuseMode>0.5（glsl:3206），一併登記。
+
+2. grid sweep 基線應排進 Phase 3 當 1a 交付物（非 blocker）。
+   §12 Phase 3 目前只列既有契約，沒列 CPU owner grid sweep。
+   precedence 模型剛被設為核心，1a 至少要有一份 truth-table 基線「實機證明」
+   重疊區在 XATLAS ready 時 A1 贏、not ready 時 D800 接手；
+   純結構契約證不到這件事（16.4 補項2）。建議 Phase 3 加一行跑 grid sweep 存基線。
+   仍維持原裁示：grid sweep 1a 當基線、1b 起當 blocker。
+
+3. §11 1b 啟動條件宜引用 16.2 缺口C。
+   1b 審 furnitureStateRef 時要連「exclusions 的 mode 門控（activeWhen）」一起定，
+   不只 packageByMode 對照表。此點目前只在 §16.2C，未進 §11 正文；
+   非凍結 blocker，1b 開審前補即可。
+```
+
+### 18.3 簽結
+
+```text
+1. 規格凍結通過。三件 blocker 已落正文，schema 一致描述第一批。
+2. 18.2 三點為實作精度提醒，凍結後於 1a GOAL 內處理，不阻擋凍結。
+3. 下一步：進北牆族 1a code GOAL（Phase 1 test-first → Phase 2 實作 → Phase 3 驗證）。
+4. 本節唯讀核實，未改產品程式、未重烤、未動 runtime pointer；index.html 交 CODEX 由本 source.md 重生。
+```
+
+## 19. 北牆族 1a code GOAL 實作回填（2026-06-11）
+
+### 19.1 改動範圍
+
+```text
+產品程式：
+1. Home_Studio.html
+   - InitCommon.js / Home_Studio.js cache-buster 升到 r7310-xatlas-owner-unification-v2。
+
+2. js/Home_Studio.js
+   - Fragment shader cache-buster 升到 r7310-xatlas-owner-unification-v2。
+
+3. shaders/Home_Studio_Fragment.glsl
+   - side-wall shader 端提升為具名常數。
+   - beam-gap shader 端提升為具名常數。
+   - bake-point patchId 1002 改呼叫 r7310C1NorthWallOwnerExcluded(x, y)。
+   - A1 XATLAS runtime gate 改呼叫 r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y)。
+   - 舊北牆 D800 runtime gate 改呼叫 r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y)。
+
+4. js/InitCommon.js
+   - R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY 補成完整 SurfaceOwnerPolicy。
+   - 新增 R7310_C1_D800_NORTH_WALL_OWNER_POLICY。
+   - 新增 R7310_C1_SURFACE_OWNER_POLICIES registry。
+   - JS A1 CPU mirror 改呼叫 r7310C1NorthWallOwnerExcluded(x, y)。
+   - 北牆 metadata builder 改呼叫 r7310C1NorthWallOwnerExcluded(worldX, worldY)。
+
+測試：
+5. docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+   - 改為驗三邊入口呼叫總 helper。
+   - 驗總 helper 內含三個子 helper。
+   - 驗 precedence / activationCondition / D800 policy / registry。
+
+6. docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+   - 新增通用 registry contract 初版。
+   - 驗欄位完整、A1 / D800 優先權、三組常數 shader ↔ JS 對帳。
+
+7. docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js
+   - 新增 CPU truth-table 基線。
+   - 驗 ready 時 A1 勝出，not ready 時 D800 接手。
+   - 驗 side-wall / door-hole / beam-gap 不被北牆 atlas 認領。
+
+8. docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+   - A1 runtime / CPU mirror 檢查改成總 helper 口徑。
+
+9. docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js
+   - beam-gap 對帳改為讀 shader 具名常數。
+   - wiring 改驗 r7310C1NorthWallOwnerExcluded。
+
+10. docs/tests/r7-3-10-a1-contact-edge-registry-contract.test.js
+    - beam-gap 對帳改為讀 shader 具名常數。
+    - wiring 改驗 r7310C1NorthWallOwnerExcluded。
+```
+
+### 19.2 Registry 實作方式
+
+```text
+新增 / 補完整兩筆 policy：
+
+1. R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY
+   id: r7310-c1-xatlas-a1-north-wall
+   surfaceId: north_wall
+   surfaceName: c1_north_wall
+   precedence: 200
+   activationCondition:
+     uR7310C1NorthWallDiffuseMode>0.5 &&
+     uR7310C1XatlasRuntimeMode>0.5 &&
+     uR7310C1XatlasRuntimeReady>0.5
+   claimBounds:
+     x[-1.912, -1.518]
+     y[-0.002, 2.907]
+     z=-1.874 ± 0.006
+
+2. R7310_C1_D800_NORTH_WALL_OWNER_POLICY
+   id: r7310-c1-d800-north-wall
+   surfaceId: north_wall
+   surfaceName: c1_north_wall
+   precedence: 100
+   activationCondition:
+     uR7310C1NorthWallDiffuseMode>0.5
+   claimBounds:
+     R7310_C1_NORTH_WALL_WORLD_BOUNDS
+
+3. R7310_C1_SURFACE_OWNER_POLICIES
+   目前登記：
+     - A1 XATLAS north wall
+     - D800 north wall
+```
+
+### 19.3 三邊總入口 helper 接線
+
+```text
+總入口：
+  shader: r7310C1NorthWallOwnerExcluded(float x, float y)
+  JS:     r7310C1NorthWallOwnerExcluded(x, y)
+
+總入口內含：
+  1. r7310C1NorthWallHiddenBySideWall
+  2. r7310C1NorthWallHiddenByDoorHole
+  3. r7310C1NorthWallHiddenByBeamGap
+
+已接三邊：
+  1. shader bake-point patchId 1002
+  2. shader A1 XATLAS runtime gate
+  3. shader 舊北牆 D800 runtime gate
+  4. JS A1 CPU mirror
+  5. JS 北牆 metadata builder
+```
+
+### 19.4 常數對帳
+
+```text
+已納入 shader ↔ JS 對帳：
+
+1. side-wall
+   shader:
+     R7310_C1_NORTH_WALL_SIDE_WALL_WEST_X_MAX = -1.91
+     R7310_C1_NORTH_WALL_SIDE_WALL_EAST_X_MIN = 1.91
+   JS:
+     R7310_C1_NORTH_WALL_SIDE_WALL_BACKS
+
+2. door-hole
+   shader:
+     R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN = -1.52
+     R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX = -0.73
+     R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN = 0.0
+     R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX = 2.03
+   JS:
+     R7310_C1_NORTH_WALL_DOOR_HOLE
+
+3. beam-gap
+   shader:
+     R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MIN = -1.908
+     R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MAX = -1.752
+     R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MIN = 2.525
+     R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MAX = 2.905
+     R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MIN = 1.850
+     R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MAX = 1.908
+     R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MIN = 2.516
+     R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MAX = 2.905
+   JS:
+     R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS
+```
+
+### 19.5 Grid sweep 基線
+
+```text
+新增 docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js。
+
+已驗：
+1. A1 內部點：
+   XATLAS ready 時 → xatlas-a1-north-wall 勝出。
+
+2. 同一點：
+   XATLAS not ready 時 → d800-north-wall 接手。
+
+3. side-wall exclusion：
+   回傳 none。
+
+4. door-hole exclusion：
+   回傳 none。
+
+5. beam-gap exclusion：
+   回傳 none。
+
+判準：
+  啟用條件成立的 owner 中，最高 precedence 必須唯一。
+```
+
+### 19.6 驗證結果
+
+```text
+已跑並通過：
+
+1. node --check js/InitCommon.js
+2. node --check js/Home_Studio.js
+3. node --check docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+4. node --check docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+5. node --check docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js
+6. node docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+7. node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+8. node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+9. node docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js
+10. node docs/tests/r7-3-10-seam-contracts-all.mjs
+11. node docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+12. node docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js
+13. node docs/tests/r7-3-10-xatlas-runtime-uv-contract.test.js
+14. node docs/tests/r7-3-10-xatlas-final-source-probe.test.js
+15. node docs/tests/r7-3-10-hybrid-owner-probe.test.js
+
+伺服器檢查：
+  curl -s -I http://127.0.0.1:9002/Home_Studio.html
+  回應 200 OK。
+```
+
+### 19.7 未處理事項
+
+```text
+本輪照 1a 範圍收斂，仍保留：
+
+1. 東北床邊縫隙。
+   歸北牆族 1b，需 furnitureStateRef 與 per-exclusion activeWhen。
+
+2. 衣櫃 / 床 package mode。
+   歸 1b。
+
+3. 其他牆、樑柱、門框的全域 registry 遷移。
+   需等北牆族 1a 穩定後分批做。
+
+4. 正式重烤與 runtime pointer promotion。
+   本輪未重烤、未改 pointer。
+```
+
+---
+
+## 20. OPUS 1a 實作審查裁示（2026-06-11）
+
+唯讀核實實際 code diff，並親自重跑 12 支契約 + seam + node --check（全綠），未改產品程式、未重烤、未動 runtime pointer。
+
+### 20.0 一句話裁示
+
+```text
+產品程式正確、可收；§19 描述與實機 diff 一致；門洞 4 份內聯確實已消除。
+但測試覆蓋有兩個缺口，剛好對應到兩個「凍結 blocker」未被任何測試強制：
+  缺口1：門洞常數 shader↔JS 數值對帳——測試中 DOOR_HOLE 零引用（§10 blocker5 未滿足）。
+  缺口2：§8 claim 重疊不變式——只字串檢查 'precedence: 200/100' 存在，
+         沒有真的算 claimBounds 重疊並斷言 precedence 不等（§16.5 凍結 blocker3 未在實作中達成）。
+裁示：產品 diff 收；但 1a 不算「對齊自己凍結清單完成」，
+      要補這兩支「純測試、零產品改動」的斷言再標 1a done。
+```
+
+### 20.1 產品程式：核實通過，可收
+
+```text
+我親讀 git diff，與 §19 描述逐項一致：
+
+shader（glsl）：
+  1. side-wall / door-hole / beam-gap 三組常數提升為具名 const ✓
+  2. 新增 r7310C1NorthWallOwnerExcluded = sideWall||doorHole||beamGap ✓
+  3. 三個呼叫點都改呼叫總入口：
+     - bake-point patchId 1002（原本 3 個內聯 if → 1 行 OwnerExcluded）✓
+     - A1 XATLAS runtime gate（原本含裸數字門洞 if → OwnerExcluded）✓
+     - 舊北牆 D800 runtime gate（同上）✓
+  4. 歷史上 4 份內聯門洞框（§13 我點名的 desync 主源）已全部消除 ✓
+
+JS（InitCommon.js）：
+  5. 新增 r7310C1NorthWallHiddenByDoorHole + r7310C1NorthWallOwnerExcluded ✓
+  6. A1 policy：precedence=200，activationCondition 為完整三 uniform 連言
+     'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5'
+     ——正中我 §18.2 第1點要求，與實機 glsl:1209-1215 閘一致 ✓
+  7. D800 policy：precedence=100，activationCondition='uR7310C1NorthWallDiffuseMode>0.5'
+     ——與 glsl D800 閘一致 ✓
+  8. A1 CPU mirror + metadata builder 都改呼叫 OwnerExcluded；
+     JS 端門洞內聯也消除 ✓
+
+我重跑（全綠）：
+  surface-owner-policy-registry-contract / surface-owner-policy-grid-sweep /
+  xatlas-owner-policy / xatlas-c2c / full-room-diffuse-bake / north-wall-beam-gap /
+  a1-contact-edge / xatlas-runtime-uv / xatlas-final-source / hybrid-owner /
+  seam-contracts-all / node --check ×2 ── 12 契約 + seam + 語法全 PASS。
+
+限制遵守核實：未重烤、未改 runtime pointer、未碰 1b、未 commit。✓
+
+結論：產品 diff 行為正確、邊界保留、unification 達成，產品層面可收。
+```
+
+### 20.2 測試缺口：兩個凍結 blocker 未被測試強制【收尾前必補】
+
+```text
+缺口1【對應 §10 blocker5 + §7「第一個 blocker」，未滿足】：門洞數值對帳缺席。
+  證據：grep DOOR_HOLE docs/tests/ = 0 命中（整個測試目錄零引用）。
+  registry-contract 的常數對帳（L109-132）只做了 side-wall（2 常數）+ beam-gap（8 常數），
+  唯獨跳過 door-hole。而 door-hole 正是歷史上 4 份內聯、最會漂的那組常數，
+  §7 還把它列為「北牆族 1a 第一個 blocker」。
+  現在 shader 端 R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN.. 與 JS R7310_C1_NORTH_WALL_DOOR_HOLE
+  沒有任何測試做數值對帳——改其中一邊不會紅。
+  修法（純測試、約 6 行）：在 registry-contract 比照 side-wall 區塊，
+    parseShaderConst('R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN') 等 4 個
+    vs parseJsNestedObjectConst/parseJsObjectConst('R7310_C1_NORTH_WALL_DOOR_HOLE', 'xMin'..)
+    approxEqual 對帳。
+
+缺口2【對應 §16.5 凍結 blocker3 / §8 item8，實作未達成】：重疊不變式只有字串檢查。
+  證據：registry-contract 對 claimBounds 只做欄位存在 requireText（L83），
+        precedence 只做字串 'precedence: 200'/'precedence: 100' 存在（L102-103）。
+        沒有任何程式真的「解析兩筆 policy 的 claimBounds、判定幾何重疊、
+        斷言重疊時 precedence 不等或 activationCondition 互斥」。
+  grid-sweep 的 unique-precedence 斷言（L77-79）是對「測試自己寫的模型」斷言，
+  不是對 registry 資料斷言。
+  後果：§8 item8 是這套 registry 的核心價值（下一片牆加 policy 時自動擋重疊未定序），
+        現在它是「規格有字、機器不檢」。對 1a 兩筆手寫正確的 policy 是潛伏風險；
+        對「第 3、第 4 筆 policy」就是漏接——加一筆 precedence=200 又重疊 A1 的 policy，
+        全部測試仍綠。
+  修法（純測試）：registry-contract 解析所有 policy 的 claimBounds + precedence +
+    activationCondition，對每一對 claimBounds 幾何重疊者，
+    斷言 precedence 不等（或 activationCondition 互斥）。
+```
+
+### 20.3 兩個耐久性缺口（非 1a blocker，標記後續）
+
+```text
+缺口3【§8 item5「禁止重新內聯」未實作，耐久性】：
+  沒有任何測試斷言三個 mirror body「不得再出現裸常數門洞/beam-gap 判斷」。
+  現在 body 乾淨，但未來一次手改可以把 if(x>=-1.52&&x<=-0.73..) 重新內聯回去而保持全綠——
+  正是 unification 要永久防的回潮。建議補一條 guard：mirror body 內含 OwnerExcluded 呼叫，
+  且不含與 exclusion 同型的裸數字比較。非 1a blocker（現況乾淨），但這條才讓 unification 不可逆。
+
+缺口4【grid-sweep 不碰產品，1b 升 blocker 前必須升級】：
+  grid-sweep 把 owner 邏輯在測試裡重寫一份（L23-43 硬寫常數、L61-82 自寫優先權模型），
+  只用 4 個字串檢查碰 InitCommon.js。它證的是「測試一致」，不是產品實機 resolution。
+  依我原裁示 grid-sweep 在 1a 只當基線（非 blocker），此現況可接受；
+  但 1b 起它要當 blocker（bed×北牆兩 owner 撞點），届時必須升級成
+  真的驅動產品 r7310C1NorthWallOwnerExcluded / 解析 shader 敘述順序，否則 blocker 名不副實。
+```
+
+### 20.4 簽結
+
+```text
+1. 產品程式（shader + JS diff）核實正確、可收：unification 達成、4 份內聯消除、
+   activationCondition 對齊實機、12 契約全綠、限制全守。
+2. 但 1a 尚未「對齊自己的凍結 blocker 清單」：
+   §10 blocker5（門洞數值對帳）與 §16.5 blocker3（重疊不變式）
+   只有規格文字與欄位，沒有測試強制。要補 20.2 兩支純測試斷言（零產品改動、不重烤），
+   重跑全綠後，1a 才算 done。
+3. 20.3 兩個耐久性缺口（禁止重新內聯、grid-sweep 升級）標記後續：
+   缺口3 建議 1a 順補；缺口4 限 1b 升 blocker 前必補。
+4. 本節唯讀核實 + 親自重跑測試，未改產品程式、未重烤、未動 runtime pointer；
+   index.html 交 CODEX 由本 source.md 重生。
+```
+
+## 21. CODEX 測試補強回填（2026-06-11）
+
+依 OPUS §20 實作審查裁示，本節只補測試與文件，不改產品程式、不重烤、不改 runtime pointer。
+
+### 21.1 已補缺口1：門洞數值對帳
+
+```text
+檔案：
+  docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+
+新增對帳：
+  shader R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN ↔ JS R7310_C1_NORTH_WALL_DOOR_HOLE.xMin
+  shader R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX ↔ JS R7310_C1_NORTH_WALL_DOOR_HOLE.xMax
+  shader R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN ↔ JS R7310_C1_NORTH_WALL_DOOR_HOLE.yMin
+  shader R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX ↔ JS R7310_C1_NORTH_WALL_DOOR_HOLE.yMax
+
+作用：
+  門洞 shader 與 JS 任一邊漂移，registry contract 會紅。
+```
+
+### 21.2 已補缺口2：claimBounds 重疊不變式
+
+```text
+檔案：
+  docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+
+新增內容：
+  1. 解析 A1 policy 的 claimBounds / precedence / activationCondition。
+  2. 解析 D800 policy 的 claimBounds / precedence / activationCondition。
+  3. 計算兩筆 policy 的 x / y / z 範圍是否重疊。
+  4. 若重疊，斷言 precedence 不相等。
+
+目前驗到：
+  A1 與 D800 幾何範圍重疊。
+  A1 precedence = 200。
+  D800 precedence = 100。
+  因 precedence 不相等，合法通過。
+```
+
+### 21.3 已順補缺口3：mirror body 禁止重新內聯
+
+```text
+檔案：
+  docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+
+新增 guard：
+  1. shader bake patch 1002 body 必須呼叫 r7310C1NorthWallOwnerExcluded。
+  2. shader A1 gate body 必須呼叫 r7310C1NorthWallOwnerExcluded。
+  3. shader D800 gate body 必須呼叫 r7310C1NorthWallOwnerExcluded。
+  4. JS A1 mirror body 必須呼叫 r7310C1NorthWallOwnerExcluded。
+  5. JS metadata builder body 必須呼叫 r7310C1NorthWallOwnerExcluded。
+  6. 上述 mirror body 不可重新出現 side-wall / door-hole / beam-gap 裸數字判斷。
+
+作用：
+  未來有人把門洞或 beam-gap 常數直接寫回 mirror body，測試會紅。
+```
+
+### 21.4 缺口4 保留到 1b
+
+```text
+grid sweep 目前仍是 1a 基線。
+它驗的是 precedence 模型與 exclusion truth-table。
+
+依 OPUS §20 裁示：
+  1a 可接受。
+  1b 起若要當 blocker，需要升級成真的驅動產品函式或解析 shader 實際 route。
+
+因此本輪不擴大 grid sweep 實作範圍。
+```
+
+### 21.5 驗證結果
+
+```text
+已重新跑完整組合並通過：
+
+1. node docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js
+2. node docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+3. node --check js/InitCommon.js
+4. node --check js/Home_Studio.js
+5. node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+6. node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+7. node docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js
+8. node docs/tests/r7-3-10-seam-contracts-all.mjs
+9. node docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js
+10. node docs/tests/r7-3-10-xatlas-runtime-uv-contract.test.js
+11. node docs/tests/r7-3-10-xatlas-final-source-probe.test.js
+12. node docs/tests/r7-3-10-hybrid-owner-probe.test.js
+13. node --check docs/html-review/2026-06-11-r7-3-10-surface-owner-policy-registry-plan/assets/html-review.js
+
+HTML Review：
+  index.html 已由 source.md 重生。
+```
+
+---
+
+## 22. OPUS 1a 收尾簽結（2026-06-11）
+
+唯讀核實 §21 三支補丁的實際斷言，並親自重跑 11 契約 + seam + node --check ×2（全綠），未改產品程式、未重烤、未動 runtime pointer。
+
+### 22.0 結論：1a 完成，可收
+
+```text
+§20 兩個 blocker 缺口已用真斷言關閉，缺口3 順補、缺口4 依裁示延 1b。
+產品程式本輪未再動，1a 現在對齊自己的凍結 blocker 清單，1a DONE。
+```
+
+### 22.1 三支補丁逐項核實（讀實際斷言，非只信描述）
+
+```text
+缺口1（§10 blocker5 門洞數值對帳）：已關。
+  registry-contract L189-205：parseShaderConst(DOOR_HOLE_X_MIN/X_MAX/Y_MIN/Y_MAX)
+  vs parseJsObjectConst(R7310_C1_NORTH_WALL_DOOR_HOLE, xMin/xMax/yMin/yMax) + approxEqual。
+  是真數值對帳，改任一邊會紅。
+
+缺口2（§16.5 blocker3 / §8 item8 重疊不變式）：已關。
+  registry-contract L223-240：parsePolicy 抽 claimBounds+precedence，
+  boundsOverlap 算幾何重疊，重疊對 assert.notEqual(precedence)。
+  D800 claimBounds 走 R7310_C1_NORTH_WALL_WORLD_BOUNDS 參照已正確解析（L83）。
+  實機驗到 A1(200)∩D800(100) 重疊且 precedence 不等而通過——是對 registry 資料斷言，非自寫模型。
+  一點說明：實作只走「重疊⇒precedence 不等」，未實作 §8「或 activationCondition 互斥」逃生口。
+  這比規格更嚴（不會假綠，最多對等 precedence+互斥條件的邊角誤紅），對 invariant 守門是安全方向，接受。
+
+缺口3（§8 item5 禁止重新內聯）：順補完成。
+  owner-policy-contract L31-64 forbidInline*，以 assert.doesNotMatch 對切片後的 mirror body 比對。
+  作用域正確：L96-98/L109-111 套在閘 body（非整份 shader），
+  所以南牆等合法使用 -1.91 的程式不會誤命中；重新內聯門洞/beam-gap 會紅。
+
+缺口4（grid-sweep 驅動產品）：依 §20 裁示保留到 1b，本輪不擴大，正確。
+```
+
+### 22.2 獨立重跑（全綠）
+
+```text
+surface-owner-policy-registry-contract / surface-owner-policy-grid-sweep /
+xatlas-owner-policy / xatlas-c2c / full-room-diffuse-bake / north-wall-beam-gap /
+a1-contact-edge / xatlas-runtime-uv / xatlas-final-source / hybrid-owner /
+seam-contracts-all / node --check ×2 ── 11 契約 + seam + 語法全 PASS。
+```
+
+### 22.3 簽結
+
+```text
+1. 1a DONE：產品 unification 正確、四份內聯門洞消除、三支防漂移測試（門洞對帳 /
+   重疊不變式 / 禁止重新內聯）以真斷言落實、12 契約全綠、限制全守。
+2. grid-sweep 1a 基線可接受；1b 升 blocker 前要升級成驅動產品函式（缺口4）。
+3. 後續 1b 開審前要補：furnitureStateRef + exclusions 的 mode 門控（§16.2C）。
+4. 本節唯讀核實 + 親自重跑，未改產品程式、未重烤、未動 runtime pointer；
+   index.html 交 CODEX 由本 source.md 重生（本輪已重生）。
+```
