@@ -1,0 +1,1025 @@
+# R7-3.10 XATLAS Owner 規則共用化計畫
+
+日期：2026-06-11  
+分支：`codex/r7-3-10-xatlas-owner-unification`  
+基準：`main` 已合併 PR #11，A1 full4x raw / OIDN 成功案例已用 Git LFS 存檔。  
+目的：把 A1 這次學到的 owner 規則整理成正式規格，並在處理下一片牆前先補上共用規則與自動檢查。
+
+---
+
+## 1. 一句話
+
+A1 已經證明 XATLAS 可以修到肉眼可驗收；下一步要把「誰可以貼哪一塊」變成共用規則與自動檢查，避免下一片牆、其他牆、樑柱再靠手工補洞。
+
+---
+
+## 2. 現況基準
+
+```text
+1. A1 full4x 已成功
+   - full4x atlas：3784 × 2064
+   - 密度：0.00125m × 0.00125m
+   - raw 與 OIDN 都已消除西樑北端硬黑邊
+   - OIDN 牆面平滑
+   - 鐵門旁 jamb 亮帶無復發
+
+2. 成功案例已存檔
+   - GitHub PR #11 已合併 main
+   - raw / OIDN package 已進 Git LFS
+   - HTML Review、Debug_Log、runtime package JSON、validation report 已進 main
+
+3. owner 現況是雙層保護
+   - 第一層：runtime gate
+     看到 gap / 門洞 / 側牆區，直接不取北牆 XATLAS。
+   - 第二層：atlas backface mask
+     把 bake 視角不該 own 的 texel 設 alpha=0。
+   - 兩者不能互相取代。
+
+4. 目前主要風險
+   - A1 正常，不代表下一片牆天然安全。
+   - owner 規則仍分散在 shader、JS mirror、metadata / bake 工具、contract test。
+   - 新增下一個 XATLAS runtime 入口時，仍可能漏 gate。
+```
+
+---
+
+## 3. 本任務目標
+
+```text
+1. 把 A1 當成成功樣板
+   定義 A1 promotion 前至少要滿足的 owner、密度、alpha、runtime 驗收條件。
+
+2. 把 A1 學到的規則寫成正式規格
+   包含：
+   - runtime gate 不可移除
+   - atlas backface mask 不可替代 runtime gate
+   - full4x 等效密度適用於高變化接觸邊
+   - C2C alpha 報告要分清 mask 判定口徑與 atlas 最終口徑
+
+3. 下一片牆開始前先共用 owner 規則
+   先處理北牆 A1 目前已知入口，再設計可擴充到整片北牆與其他牆面。
+
+4. 每新增一片都要有自動檢查
+   檢查：
+   - 有沒有重複認領
+   - 有沒有越界認領
+   - 有沒有該顯示卻 alpha=0
+   - 有沒有 gap 被 atlas 偷偷吃進來
+```
+
+---
+
+## 4. 不做的事
+
+本任務不是新的視覺修補任務。禁止把下列作法混進此分支：
+
+```text
+1. 不做柔化、羽化、模糊化。
+2. 不做 runtime 回退條帶。
+3. 不直接拉亮最邊 texel。
+4. 不用 dilation borrow 或鄰格借值補洞。
+5. 不把真實接觸陰影整段抹掉。
+6. 不重烤新的正式 package，除非計畫審過後另開明確子任務。
+7. 不把 A1 runtime pointer 從 architecture_probe 升成正式指標，除非 promotion 條件另行通過。
+```
+
+---
+
+## 5. 問題整理
+
+### 5.1 已知成功條件
+
+```text
+A1 成功不是單一修法造成，而是幾件事一起成立：
+
+1. full4x 密度
+   0.00125m × 0.00125m 讓西樑接觸邊不再變成粗黑線。
+
+2. owner gate
+   XATLAS A1 不再越界認領 iron-door reveal north jamb。
+
+3. runtime gate + atlas backface mask
+   gap 不顯示靠 runtime gate；
+   tri20 / tri21 alpha=0 靠 backface mask。
+
+4. C2C alpha
+   C2C r64 沒有 rgbNonzeroAlphaZeroTexels，表示沒有把可見亮區誤關。
+
+5. 自動與肉眼驗收
+   raw / OIDN package、runtime capture、HTML Review、Debug_Log 都已留下證據。
+```
+
+### 5.2 尚未治本的架構問題
+
+```text
+1. 同一套 owner 規則目前分散在多個入口。
+
+2. 門洞範圍仍有內聯座標，容易漏改。
+
+3. XATLAS owner 沒有完整納入 ownerCount / final-source 自動檢查。
+
+4. 現有 contract 多半鎖已知入口，不能保證未來新入口也會套同一套規則。
+
+5. atlas alpha 只回答「貼紙格子可不可用」；
+   runtime gate 才回答「這個世界位置現在該不該取這張貼紙」。
+```
+
+---
+
+## 6. 建議架構方向
+
+### 6.1 核心原則
+
+```text
+1. 每個世界位置只能有一個主要 owner。
+
+2. XATLAS 不能用矩形範圍直接認領。
+   它必須先通過對應 surface 的 owner policy。
+
+3. runtime gate 與 atlas mask 都是正式規格。
+   它們負責不同問題，不可互相替代。
+
+4. JS diagnostic mirror 與 shader 必須同規則。
+   不允許 shader 擋掉、JS 卻說 mapped，或相反。
+
+5. 新增 XATLAS 入口時，必須先通過 owner policy contract。
+```
+
+### 6.2 建議資料模型
+
+先建立 owner policy registry，作為人與工具都能讀的規格來源。建議內容：
+
+```text
+SurfaceOwnerPolicy:
+  id:
+    例如 north_wall, iron_door_reveal, west_beam_cap
+
+  claimSurface:
+    這個 owner 本來負責哪一種表面。
+    例如 north_wall 要先通過 RuntimeSurfaceIsNorthWall。
+
+  claimBounds:
+    這個 package 的世界座標範圍。
+    例如 A1 x[-1.912,-1.518], y[-0.002,2.907], z≈-1.874。
+
+  exclusions:
+    不能由這個 owner 負責的區域。
+    例如 side-wall、door、west/east beam gap。
+
+  fallback:
+    被排除後要交給誰。
+    例如 live trace、iron-door reveal、beam cap。
+
+  packagePolicy:
+    atlas mask / C2C alpha / density / OIDN / row flip 等契約。
+
+  tests:
+    這個 owner 必須通過哪些 static / CPU / browser probe 檢查。
+```
+
+### 6.3 單一真相的兩種選項
+
+請 OPUS 審這裡要選哪條：
+
+```text
+方案 A：先做規格中心 + 鏡像測試
+  - 以 JS registry / JSON spec 當規格來源。
+  - shader 與 JS mirror 仍各自有函式。
+  - contract test 嚴格檢查兩邊常數與 gate 呼叫都一致。
+  - 優點：變動小，適合先把 A1 整理穩。
+  - 代價：仍有人工同步，只是用測試防止漂移。
+
+方案 B：建立小型產生器
+  - 用 registry 產生 shader owner predicate 與 JS mirror。
+  - 手寫入口只呼叫產生出的 policy 函式。
+  - 優點：最接近真正單一真相。
+  - 代價：要引入產生流程，PR 較大。
+
+CODEX 初步建議：
+  先走方案 A，把北牆 A1 的 owner policy 收斂並補自動檢查。
+  等 OPUS 確認規格穩定後，再評估方案 B 是否值得做。
+```
+
+---
+
+## 7. 分階段計畫
+
+### Phase 0：基準凍結
+
+```text
+目標：
+  確認 owner 共用化前，A1 成功案例可重現。
+
+輸入：
+  - PR #11 main
+  - full4x raw / OIDN package
+  - HTML Review §13~§16
+  - Debug_Log 亮帶與 full4x 記錄
+
+工作：
+  1. 寫 A1 promotion baseline 摘要。
+  2. 列出必留 runtime gate。
+  3. 列出 full4x package 與 LFS 路徑。
+  4. 重跑現有 contract。
+
+完成條件：
+  1. A1 成功條件可由文件與檔案路徑重建。
+  2. 沒有未記錄的口頭前提。
+```
+
+### Phase 1：owner 規則盤點
+
+```text
+目標：
+  找出目前所有北牆 owner 相關入口與重複座標。
+
+盤點範圍：
+  1. shader runtime route
+     - r7310C1XatlasA1NorthWallUv
+     - r7310C1NorthWallDiffuseUv
+     - r7310C1RuntimeSurfaceIsNorthWall
+     - iron-door reveal / beam / side-wall 相關路徑
+
+  2. JS mirror
+     - r7310C1XatlasA1NorthWallUvFromWorldPosition
+     - CPU valid-linear sampling helpers
+     - runtime DOM diagnostic state
+
+  3. bake / metadata / package tools
+     - C2C validity mask
+     - texel-metadata layout
+     - xatlas package manifest
+
+  4. tests
+     - seam contracts
+     - xatlas C2C contract
+     - hybrid owner probe contract
+     - north-wall beam-gap contract
+
+輸出：
+  owner-entry-inventory.md
+
+完成條件：
+  每一個會「認領北牆或北牆相鄰區域」的入口都有列出。
+```
+
+### Phase 2：寫 owner policy 規格
+
+```text
+目標：
+  把 A1 owner 規則寫成正式規格，不再只散在程式碼註解。
+
+內容：
+  1. north_wall A1 claim bounds
+  2. side-wall exclusion
+  3. door exclusion
+  4. beam-gap exclusion
+  5. runtime gate 與 backface mask 的分工
+  6. full4x density 規格
+  7. C2C alpha 兩種口徑
+  8. fallback 規則
+
+輸出：
+  docs/specs/r7-3-10-xatlas-owner-policy.md
+
+完成條件：
+  OPUS 可只讀規格，就知道下一片牆要套哪些 owner 檢查。
+```
+
+### Phase 3：先共用北牆 A1 owner predicate
+
+```text
+目標：
+  讓 XATLAS A1、舊北牆、JS mirror 都明確走同一組 owner policy。
+
+工作：
+  1. 建立命名清楚的 policy 函式。
+     例如：
+       r7310C1NorthWallOwnerAllowsRuntimeSample(...)
+       r7310C1NorthWallOwnerExclusionReason(...)
+
+  2. 把門洞座標從內聯散點收斂。
+
+  3. 讓 XATLAS A1 route 只做兩件事：
+     - 先問 owner policy
+     - 通過後才算 atlasUv
+
+  4. JS mirror 回傳同樣 reason：
+     - outside_package_bounds
+     - owner_side_wall_excluded
+     - owner_door_excluded
+     - owner_beam_gap_excluded
+     - mapped
+
+完成條件：
+  1. A1 runtime 畫面不變。
+  2. shader 與 JS mirror reason 對齊。
+  3. 不新增任何視覺補丁。
+```
+
+### Phase 4：自動檢查補齊
+
+```text
+目標：
+  讓「重複認領、越界認領、alpha 誤關、gap 偷吃」都能自動檢查。
+
+檢查 1：static contract
+  - 每個 XATLAS runtime route 必須呼叫 owner policy。
+  - JS mirror 與 shader gate 常數一致。
+  - 不允許門洞座標在多處內聯漂移。
+
+檢查 2：CPU owner grid sweep
+  - 在 A1 與接觸邊附近掃世界座標。
+  - 每點輸出：
+    ownerCandidates
+    selectedOwner
+    exclusionReason
+    xatlasMapped
+    validLinearResult
+  - 失敗條件：
+    重複認領
+    應顯示區 alpha=0
+    排除區 mapped=true
+    gap 內 valid-linear 可被取用
+
+檢查 3：package alpha audit
+  - 檢查 C2C report：
+    rgbNonzeroAlphaZeroTexels = 0
+    mask 口徑與 atlas 口徑可對帳
+    hidden tri 是否落在已知 exclusion
+
+檢查 4：browser probe
+  - 在使用者已驗收相機與 seam ROI 讀 final source / ownerCount。
+  - 確認：
+    A1 main area = XATLAS
+    gap = live / non-XATLAS
+    iron jamb = iron-door reveal，不和 XATLAS 疊加
+
+完成條件：
+  owner 規則錯了，測試會先紅，不靠肉眼最後才發現。
+```
+
+### Phase 5：下一片牆開工前 gate
+
+```text
+目標：
+  下一片 XATLAS 不可直接進 bake / runtime，必須先通過 owner checklist。
+
+Checklist：
+  1. surface owner policy 已登記。
+  2. claim bounds 已登記。
+  3. exclusion regions 已登記。
+  4. runtime gate 已接。
+  5. JS mirror 已接。
+  6. package alpha audit 已接。
+  7. ownerCount / final-source probe 已能看到這個新 owner。
+  8. HTML Review 記錄已建立。
+
+完成條件：
+  沒有 owner policy 的新牆面，不進 promotion。
+```
+
+---
+
+## 8. 驗收標準
+
+```text
+1. A1 不退化
+   - full4x raw / OIDN 仍無西樑硬黑邊。
+   - 鐵門旁 jamb 亮帶不復發。
+   - gap 不被 XATLAS 偷吃。
+
+2. owner 規則可讀
+   - OPUS 可以從一份規格知道北牆 owner 的所有排除區。
+   - 不必到 shader、JS、metadata、測試裡各找一份。
+
+3. 自動檢查可抓錯
+   - 手動刪掉 XATLAS A1 beam-gap gate 時，測試必須紅。
+   - 手動刪掉 side-wall gate 時，鐵門 jamb owner 檢查必須紅。
+   - 手動讓 visible alpha=0 區有 nonzero radiance 時，package audit 必須紅。
+
+4. 下一片牆有進場門檻
+   - 新 XATLAS route 沒接 owner policy 時，static contract 必須紅。
+```
+
+---
+
+## 9. 風險與處理
+
+```text
+風險 1：重構 owner 規則時讓 A1 畫面退化
+處理：
+  先跑 A1 baseline captures，再做改動；每個階段都用同一組相機回歸。
+
+風險 2：為了追求單一真相，一次引入太大產生流程
+處理：
+  先讓 OPUS 審方案 A / B；本輪只做必要範圍，不把工具鏈一次改太大。
+
+風險 3：ownerCount 定義不清
+處理：
+  在規格裡明確定義：
+    atlas owner
+    dedicated surface owner
+    live fallback
+    excluded owner
+
+風險 4：atlas alpha audit 與 runtime gate audit 混為一談
+處理：
+  文件與測試都拆成兩層：
+    runtime gate 決定是否取用
+    atlas mask 決定 texel 是否可用
+```
+
+---
+
+## 10. OPUS 審查問題
+
+請 OPUS 主要審這幾點：
+
+```text
+1. 方案 A / B 選擇
+   先做「規格中心 + 鏡像測試」是否足夠？
+   還是 promotion 前就應該導入產生器？
+
+2. owner policy registry 欄位
+   SurfaceOwnerPolicy 的欄位是否足夠描述北牆、其他牆、樑柱、門框？
+
+3. runtime gate + atlas mask
+   這兩層分工是否描述準確？
+   是否還需要第三層，例如 package-level owner metadata？
+
+4. 自動檢查範圍
+   CPU grid sweep、package alpha audit、browser probe 是否足以擋住：
+   - 重複認領
+   - 越界認領
+   - 應顯示卻 alpha=0
+   - gap 被 atlas 取用
+
+5. 下一片牆進場門檻
+   checklist 是否太寬或太窄？
+   哪些項目應列為 promotion blocker？
+```
+
+---
+
+## 11. CODEX 初步裁示
+
+```text
+1. A1 可以當成功樣板，但不能當整套 XATLAS 天然安全的證明。
+
+2. 下一片牆前，先做 owner 規則共用化。
+
+3. 本輪建議先採方案 A：
+   規格中心 + shader/JS mirror 合約 + owner 自動檢查。
+
+4. 若 OPUS 判定方案 A 仍太容易漂移，再升級到方案 B：
+   registry 產生 shader / JS owner predicate。
+
+5. 在 owner 共用化完成前，不建議開下一片正式 XATLAS promotion。
+```
+
+---
+
+## 12. 預期交付物
+
+```text
+1. docs/specs/r7-3-10-xatlas-owner-policy.md
+   Owner 規格。
+
+2. owner-entry-inventory.md
+   現有入口盤點。
+
+3. updated shader / JS owner predicates
+   北牆 A1 先收斂。
+
+4. tests
+   - static owner policy contract
+   - CPU owner grid sweep
+   - package alpha audit
+   - browser final-source / ownerCount probe
+
+5. HTML Review
+   記錄 OPUS 審查、CODEX 實作、驗收結果。
+```
+
+---
+
+## 13. OPUS 審查裁示（2026-06-11）
+
+全程唯讀，已對照 glsl 與 InitCommon.js 實際程式碼核實，未改產品程式、未重烤。
+核實依據：`shaders/Home_Studio_Fragment.glsl` 與 `js/InitCommon.js` 現行內容、`docs/tests/` 現有契約、前一輪 §16 核實結論。
+
+### 13.0 一句話裁示
+
+```text
+方向正確、欄位大致夠用、§16 分工描述準確；但有一個結構性缺口必須先補：
+計畫用「runtime gate + atlas mask」兩層描述 owner，
+但本專案已記錄的破圖根因是「gate / bake-point / metadata 三邊 desync」。
+少算的第三邊就是 bake-point 產生器（BakeSurfacePoint），
+它決定哪些 texel 被烤、進而決定 atlas mask 的 alpha——它才是 atlas mask 的上游生產者。
+一個只統一「runtime gate + JS mirror」、把 atlas mask 當旁路稽核的 registry，
+擋不住 bake-point 漂移。這是 promotion 前必須修正的範圍問題。
+```
+
+### 13.1 審查點 3（runtime gate + atlas mask 分工）— 準確，但少一層【最高優先】
+
+```text
+先確認準確的部分：
+  計畫 §2.3 / §3.2 / §6.1.3 對「兩層」的描述，與我前一輪 §16 核實逐字一致：
+    - 第一層 runtime gate：決定世界位置當下能不能取 XATLAS。
+      實證：glsl:1207 r7310C1XatlasA1NorthWallUv，早退條件含
+      claimBounds 框(glsl:1221)、side-wall(1228)、門洞(1233)、beam-gap(1239)。
+    - 第二層 atlas backface mask：決定 atlas 這格 texel 可不可用（alpha）。
+      實證：glsl:1176 r7310C1XatlasRuntimeSampleValidLinear，weightSum 由 c.a 加權，
+      全 0 則 return false → 落 LIVE。
+  §16.2 已確認：gap 不顯示「主要靠 runtime gate」（gap 內仍有 506,257 個 alpha=1 texel），
+  tri20/21 alpha=0「靠 backface mask」。兩層不可互相取代——這句計畫寫對了。
+
+問題：這兩層都是「runtime 當下可觀察」的層。
+  但 atlas mask 的 alpha=0／alpha=1 不是天上掉下來的，是 bake 時決定的：
+    glsl:699 r7310C1BakeSurfacePoint，patchId==1002（北牆）在 glsl:716–721
+    用「同一組」門洞 / side-wall / beam-gap 排除，決定哪些 texel 進烤、哪些 return false。
+  也就是說，真正的 owner 架構是「三邊」：
+    (a) runtime gate     → 即時取不取
+    (b) bake-point 產生器 → 哪些 texel 被烤（= 生產 atlas mask）
+    (c) atlas / metadata  → 每格 texel 最終 alpha
+  你們自己的 seam-desync 記憶寫的根因就是「gate / bake-point / metadata 三邊 desync」，
+  計畫卻把它收斂成兩層。對「owner 共用化」這種目的就是要殺 desync 的計畫，
+  漏掉 bake-point 這一邊，等於沒蓋到最會漂的接縫。
+
+裁示：
+  審查點 3 的兩層分工「描述準確」，可照寫進規格；
+  但 §10 問題 3 自己問的「是否還需要第三層」——答案是「要」：
+  第三層不是 package-level metadata（那只是 (c) 的存放處），
+  而是 bake-point 產生器 (b)，它是 atlas mask 的上游。
+  規格與 registry 必須把 (b) 列為一等鏡像，不能只統一 runtime+JS。
+```
+
+### 13.2 審查點 2（SurfaceOwnerPolicy 欄位）— 七欄不足，缺兩欄
+
+```text
+現有七欄（id / claimSurface / claimBounds / exclusions / fallback / packagePolicy / tests）
+足以描述「runtime 端」的北牆、其他牆、樑柱、門框 owner。
+但要當「單一真相」就缺兩欄：
+
+  缺欄 1：bakePointMirror（對應 13.1 的第三邊）
+    這個 owner 的 bake-point 產生器入口（如 BakeSurfacePoint patchId 1002）
+    必須由同一份 policy 驅動，否則 runtime 改了排除框、bake 端沒跟 → desync。
+
+  缺欄 2：mirrors（所有必須同步上鎖的點位清單）
+    實證：門洞框 x[-1.52,-0.73] y[0,2.03] 目前是「四份內聯複本」，且都沒集中化：
+      glsl:716   （bake-point）
+      glsl:1233  （XATLAS A1 runtime gate）
+      glsl:1786  （舊北牆 NorthWallDiffuseUv runtime gate）
+      js:2239    （JS mirror）
+    對比 beam-gap 已半集中（JS 端 R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS
+    + 兩端 helper 函式），門洞框完全沒集中。計畫 §5.2.2 有點到「門洞仍有內聯座標」，
+    但低估了規模（是 4 份、跨 runtime×2 + bake + JS），
+    且 §6.3 的單一真相選項只講「shader 與 JS mirror」，沒把 bake-point 算進去。
+    mirrors 欄要逐一列出這 N 個點位，contract 才能逐點比對是否同值。
+
+  packagePolicy 內已含 density / atlas mask / C2C alpha / OIDN / row flip，這部分夠。
+  其餘五欄維持即可。
+```
+
+### 13.3 審查點 1（方案 A / B）— 同意先 A，但 A 必須含 bake-point；補 A 的 promotion 門檻
+
+```text
+同意「先 A 再視漂移升 B」。理由：A1 已穩、變動面小、適合先把規格與 contract 立起來。
+
+但有條件：
+  1. 方案 A 的「鏡像測試」範圍，必須包含 bake-point（13.1）。
+     若 A 只鎖 runtime gate ↔ JS mirror 兩邊常數，門洞 / beam-gap 仍可能在
+     bake-point（glsl:716 那一份）獨自漂移，A1 型破圖會從烘焙端重演。
+     這不是「升不升 B」的問題，是 A 的最小正確範圍。
+
+  2. A→B 的升級門檻要先寫死、避免無限留在 A：
+     建議「同一組 owner 常數的內聯複本 ≥ 3 處」就是升 B 的硬訊號。
+     門洞框現在就是 4 處——換句話說，北牆這一個 surface 本身已經達到 B 的觸發門檻。
+     折衷做法：本輪 A 先把門洞 / side-wall / beam-gap 三組常數集中成
+     「單一 shared constant + 兩端 helper」（beam-gap 已是此形，照抄即可），
+     四份內聯改成四處引用同一來源。這在 A 的範圍內就能把最大漂移源關掉，
+     不必等 B 的產生器。
+```
+
+### 13.4 審查點 4（自動檢查）— 四項方向對，但要先對帳既有 16 個 contract，且要加 bake-point sweep
+
+```text
+計畫四項（static contract / CPU owner grid sweep / package alpha audit / browser probe）
+方向能覆蓋題目要抓的四類錯，但有兩個缺口：
+
+  缺口 1：沒對帳既有測試，有重造輪子風險。
+    docs/tests/ 目前已有 16 個相關 contract，至少這幾個與計畫四項高度重疊：
+      r7-3-10-seam-shared-constant-contract.test.js  （≈ static 常數一致）
+      r7-3-10-hybrid-owner-probe.test.js             （≈ owner 歸屬）
+      r7-3-10-north-wall-beam-gap-contract.test.js   （≈ beam-gap 雙端鎖）
+      r7-3-10-xatlas-c2c-contract.test.js            （≈ package alpha）
+      r7-3-10-xatlas-final-source-probe.test.js      （≈ browser final-source）
+      r7-3-10-xatlas-runtime-uv-contract.test.js     （≈ runtime UV）
+    Phase 1 已排「盤點 tests」很好，但要明寫：Phase 4 是「擴充既有」而非「平行新建」，
+    否則會出現兩套口徑不一致的 owner 檢查，反而製造新 desync。
+
+  缺口 2：四項檢查沒有一項直接驗「bake-point ↔ runtime gate 同排除」。
+    對應 13.1，要加第五項（或併入 static contract）：
+      bake-point parity check：
+        對北牆 patch 掃同一組世界座標，
+        斷言 BakeSurfacePoint 的 return false 區域 == runtime gate 的排除區域。
+    這項才是擋「烤了不該烤 / 該烤沒烤 → atlas mask 與 runtime 對不上」的那一刀。
+
+  對四類錯的覆蓋判定（補上第五項後）：
+    重複認領      → CPU grid sweep 的 ownerCandidates>1 可抓 ✓
+    越界認領      → grid sweep 排除區 mapped=true 可抓 ✓
+    該顯示卻 alpha=0 → package alpha audit + grid sweep validLinear 可抓 ✓
+    gap 被 atlas 取用 → browser probe(final source) + grid sweep ✓
+                       但「為什麼被取用」的上游（bake-point 漏排除）要靠第五項才定位得到。
+```
+
+### 13.5 審查點 5（下一片牆進場門檻）— 八項偏寬，指定 5 項為 blocker，補 1 項
+
+```text
+現有八項 checklist 方向對，但全部並列、沒分「blocker / 建議」，偏寬。
+建議分級如下：
+
+  列為 promotion BLOCKER（缺一不可進）：
+    1. surface owner policy 已登記（id/claimSurface/claimBounds/exclusions/fallback）
+    2. runtime gate 已接，且與 policy 常數一致（static contract 綠）
+    3. bake-point 已接，且與 runtime gate 同排除（13.4 第五項 parity 綠）← 新增 blocker
+    4. JS mirror 已接，reason 與 shader 對齊
+    5. package alpha audit 綠（rgbNonzeroAlphaZeroTexels=0、mask↔atlas 可對帳）
+
+  列為「建議、可隨 PR 補」（不擋 promotion）：
+    6. ownerCount / final-source probe 能看到新 owner
+    7. HTML Review 記錄已建立
+    8. claim bounds 已登記（其實併入 1，不必獨立列）
+
+  理由：6/7 是可觀測性與文件，缺了不會直接造成破圖；
+  1–5 缺任一項，都會讓 A1 型（含烘焙端）破圖在新牆復發，必須擋。
+  原 checklist 把 8 拆出來、卻沒把「bake-point parity」列進去——
+  剛好漏掉最會漂的那一項，所以是「偏寬又漏關鍵」。
+```
+
+### 13.6 數值與符號核實（供 CODEX 對照，全部已驗）
+
+```text
+計畫引用              核實結果
+A1 claimBounds        glsl:1221 x[-1.912,-1.518] y[-0.002,2.907] z≈-1.874 ✓ 與計畫一致
+門洞框                x[-1.52,-0.73] y[0,2.03]，內聯 4 份：glsl 716/1233/1786 + js:2239 ✓
+side-wall gate        glsl:643 x<=-1.91 || x>=1.91 ✓
+beam-gap(west)        glsl:657 x[-1.908,-1.752] y[2.525,2.905] ✓（已半集中）
+runtime gate 函式     r7310C1XatlasA1NorthWallUv(glsl:1207) ✓ 存在
+atlas mask 函式       r7310C1XatlasRuntimeSampleValidLinear(glsl:1176) ✓ 存在
+bake-point 產生器      r7310C1BakeSurfacePoint patchId 1002(glsl:699/716) ✓ 第三邊實證
+§16 兩層結論          506,257 alpha=1 / tri20·21 各 19,456 / alpha=0 ✓ 與本計畫引用一致
+既有 contract 數       docs/tests/ 16 個 r7-3-10-*相關檔 ✓
+```
+
+### 13.7 結論
+
+```text
+1. 計畫可進入實作，方案 A 正確，A1 樣板化方向正確。
+2. 進實作前，三件事列為硬修正（promotion 前必補）：
+   (1) owner 模型補第三邊 bake-point，SurfaceOwnerPolicy 加 bakePointMirror / mirrors 兩欄。
+   (2) 門洞 / side-wall / beam-gap 三組常數在本輪 A 內就集中成 shared constant + 兩端 helper，
+       把現存 4 份內聯門洞框收斂掉。
+   (3) Phase 4 加 bake-point↔runtime parity 檢查，並明寫「擴充既有 16 個 contract」而非平行新建。
+3. checklist 採 13.5 分級，1–5 為 blocker（含新增的 bake-point parity），6–8 為建議。
+4. 本節為唯讀核實 + 規格裁示，未改產品程式、未重烤、未動 runtime pointer。
+   index.html 依分工交 CODEX 由本 source.md 重生。
+```
+
+## 14. CODEX 實作回填（2026-06-11）
+
+### 14.1 實作範圍
+
+```text
+本輪照 §13 裁示，只做 A1 owner 規則共用化的第一步：
+
+1. shader 新增 north-wall door-hole helper：
+   r7310C1NorthWallHiddenByDoorHole(float x, float y)
+
+2. shader 新增 north-wall owner helper：
+   r7310C1NorthWallOwnerExcluded(float x, float y)
+
+3. shader 三個入口改用命名 helper：
+   - r7310C1BakeSurfacePoint patchId 1002
+   - r7310C1XatlasA1NorthWallUv
+   - r7310C1NorthWallDiffuseUv
+
+4. JS 新增對應 helper：
+   - r7310C1NorthWallHiddenByDoorHole(x, y)
+   - r7310C1NorthWallOwnerExcluded(x, y)
+
+5. JS 兩個 mirror 改用同一組 helper：
+   - r7310C1XatlasA1NorthWallUvFromWorldPosition
+   - buildR7310C1NorthWallTexelMetadataRect
+
+6. JS 新增 A1 owner policy registry：
+   R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY
+   其中明列：
+   - claimBounds
+   - exclusions
+   - fallback
+   - packagePolicy
+   - bakePointMirror
+   - mirrors
+```
+
+### 14.2 對 §13 三個硬修正的回應
+
+```text
+§13 硬修正 1：
+  owner 模型補第三邊 bake-point；policy 加 bakePointMirror / mirrors。
+
+CODEX 回應：
+  已在 R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY 加入：
+    bakePointMirror: shader:r7310C1BakeSurfacePoint:patchId=1002
+    mirrors:
+      shader:r7310C1XatlasA1NorthWallUv
+      shader:r7310C1NorthWallDiffuseUv
+      shader:r7310C1BakeSurfacePoint:patchId=1002
+      js:r7310C1XatlasA1NorthWallUvFromWorldPosition
+      js:buildR7310C1NorthWallTexelMetadataRect
+
+§13 硬修正 2：
+  門洞 / side-wall / beam-gap 三組 owner 規則在本輪 A 內集中成 shared constant + helper。
+
+CODEX 回應：
+  side-wall 與 beam-gap 原本已有 helper。
+  本輪補上 door-hole helper，並把目標入口內的門洞內聯判斷移除。
+  目標檔掃描已確認沒有殘留：
+    x >= -1.52 / visiblePosition.x >= -1.52
+  這組門洞判斷目前只留在命名 helper 與 JS 常數中。
+
+§13 硬修正 3：
+  Phase 4 加 bake-point↔runtime parity 檢查，並擴充既有 contract。
+
+CODEX 回應：
+  新增 docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js。
+  同時更新既有：
+    docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+    docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+  新測試會鎖：
+    - shader / JS 都有 door-hole helper
+    - bake-point / runtime gate / JS mirror / metadata builder 都使用同一組 exclusion helper
+    - policy registry 含 bakePointMirror 與 mirrors
+```
+
+### 14.3 TDD 記錄
+
+```text
+RED：
+  新增 r7-3-10-xatlas-owner-policy-contract.test.js 後先跑：
+    node docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+
+  預期失敗：
+    shader helper missing bool r7310C1NorthWallHiddenByDoorHole(float x, float y)
+
+GREEN：
+  實作 shader / JS helper、policy registry、既有 contract 更新後，
+  新增測試與受影響測試全部轉綠。
+```
+
+### 14.4 驗證結果
+
+```text
+已通過：
+
+1. node docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+   → R7-3.10 xatlas owner policy contract passed
+
+2. node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+   → r7-3-10 xatlas C2C alpha contract OK
+
+3. node docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js
+   → R7-3.10 north-wall beam-gap JS<->shader contract passed
+
+4. node docs/tests/r7-3-10-a1-contact-edge-registry-contract.test.js
+   → R7-3.10 A1 contact-edge registry three-source contract passed
+
+5. node docs/tests/r7-3-10-seam-contracts-all.mjs
+   → All 4 seam contract tests passed
+
+6. node docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js
+   → R7-3.10 full-room diffuse bake architecture contract passed
+
+7. node docs/tests/r7-3-10-xatlas-runtime-uv-contract.test.js
+   → r7-3-10-xatlas-runtime-uv-contract OK
+
+8. node docs/tests/r7-3-10-xatlas-final-source-probe.test.js
+   → pass
+
+9. node docs/tests/r7-3-10-hybrid-owner-probe.test.js
+   → R7-3.10 hybrid owner probe contract passed
+
+10. node --check js/InitCommon.js
+    → pass
+
+11. node --check docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+    → pass
+```
+
+### 14.5 未碰範圍
+
+```text
+本輪沒有做以下事情：
+
+1. 沒重烤 package。
+2. 沒改 runtime pointer。
+3. 沒改 xatlas full4x 成功 package。
+4. 沒動 OIDN。
+5. 沒改 A1 UV 映射。
+6. 沒加入任何柔化、回退條帶、拉亮 texel、借值補洞策略。
+```
+
+### 14.6 CODEX 給 OPUS 的審查重點
+
+```text
+請 OPUS 審三件事：
+
+1. 三邊 owner mirror 是否已符合 §13：
+   runtime gate / bake-point 產生器 / JS metadata mirror
+   是否都接到同一組 north-wall exclusion helper。
+
+2. R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY 的欄位是否足夠：
+   尤其是 bakePointMirror / mirrors 的命名與範圍，
+   是否可作為下一片牆的 policy 樣板。
+
+3. 新增 contract 的檢查力是否足夠：
+   r7-3-10-xatlas-owner-policy-contract.test.js
+   是否真正擋得住：
+     - 門洞常數重新內聯
+     - bake-point 漏接排除
+     - runtime gate 與 JS mirror 漂移
+     - policy 忘記登記 bakePointMirror / mirrors
+```
+
+### 14.7 CODEX 裁示
+
+```text
+本輪是 owner 規則共用化的第一步，屬 A1 樣板的規格化，不是下一片牆的擴張。
+
+目前 A1 成功案例已從「能跑」提升到「有命名 owner policy、三邊 mirror、contract 鎖住」。
+下一片牆開始前，仍要先做 Phase 1 的既有 contract 盤點，
+再把這套 policy 型態套到新牆，不直接複製 A1 入口。
+```
+
+---
+
+## 15. OPUS 審查 §14 + 下一步方向裁示（2026-06-11）
+
+全程唯讀核實，已比對 glsl / InitCommon.js / docs/tests 實際內容，未改產品程式、未重烤、未動 runtime pointer。
+
+### 15.1 §14 可否收 — 合格，帶兩個 schema 層級 follow-up（非破圖阻擋）
+
+```text
+三邊接齊核實（CODEX 審查重點 1）— 通過：
+  門洞具名常數      glsl:645-648 R7310_C1_NORTH_WALL_DOOR_HOLE_X/Y_MIN/MAX ✓
+  shader helper     glsl:649 r7310C1NorthWallHiddenByDoorHole ✓
+  三個 shader 入口都改用具名 helper、無殘留內聯：
+    bake-point        glsl:733-738（sideWall/doorHole/beamGap 三具名）✓
+    A1 runtime gate   glsl:1245-1253 ✓
+    舊北牆 gate       glsl:1797-1808 ✓
+  JS helper + 兩 mirror 同組 helper：js:2047 / 2276 / 5962 ✓
+  policy registry    js:2062 欄位齊（claimBounds/exclusions/fallback/
+                     packagePolicy/bakePointMirror/mirrors）✓
+  新 contract        docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js
+                     鎖三 shader body + 二 JS body 都引用三 helper、
+                     forbidInlineDoorHole 擋重新內聯、policy 含 bakePointMirror/mirrors ✓
+  結論：A1 三邊（runtime gate / bake-point / JS metadata mirror）這次是真的接齊了，
+        §13 三個硬修正都有回應。§14 可以收。
+
+但有兩個 schema 層級鬆動，必須帶進下一步 registry 設計（不是 A1 破圖風險）：
+
+  鬆動 1：門洞常數的 shader↔JS「數值對帳」沒有測試守住。
+    現況：JS 端門洞數值被 full-room-diffuse-bake-contract:252-257 鎖死
+          （doorHole {xMin:-1.52,xMax:-0.73,yMin:0.0,yMax:2.03}）。
+          shader 端只被 owner-policy-contract 檢查「helper 名字有被引用」與
+          「沒有舊格式內聯」，但 shader 的 4 個具名常數值(glsl:645-648)
+          沒有任何測試斷言其數值，也沒有與 JS 對帳。
+    後果：把 glsl:646 改成 -0.70，所有測試仍綠，shader/JS 門洞就 desync。
+          beam-gap 有專屬 north-wall-beam-gap-contract 做這層 shader↔JS 數值對帳，
+          門洞缺這一層。這正是本計畫要殺的 desync 軸線，目前對門洞只擋了「重新內聯」、
+          沒擋「常數改值」。
+    修法：比照 beam-gap 契約，加 shader 端門洞常數值斷言 + shader↔JS 對帳。
+
+  鬆動 2：r7310C1NorthWallOwnerExcluded 是「contract 要求存在、卻沒人呼叫」的死碼。
+    現況：shader:672 / js:2056 都定義了組合 helper，
+          owner-policy-contract:43/45 強制它存在，
+          但全 repo 找不到任何呼叫點——三個入口仍各自呼叫三個子 helper。
+    後果：未來要加第 4 條排除，仍得改 3 入口 ×2 語言 = 5 處，組合 helper 形同養鏽。
+    取捨：這顆死碼剛好是下一步 registry 的正確入口形態。
+          建議「不要刪」，而是在 registry 遷移時讓三入口改呼叫它，
+          並把 contract 從「檢查存在」升級成「檢查被使用」。
+          若 registry 遷移不立刻做，則它就是純鏽碼，應移除。
+    → 這條直接連到 15.2 的方向判斷。
+```
+
+### 15.2 全域 SurfaceOwnerPolicy registry 是否正確下一步 — 是，且它已半自然長出來
+
+```text
+判斷：是。不再逐條邊界打地鼠、改走全域 registry，方向正確。
+
+關鍵證據（registry 其實已經半成形，這降低風險）：
+  現存程式碼裡，owner 規則已是「散落的事實上 registry」：
+    HiddenBy* helpers：north/south/east/west wall + beam + column + AC-shadow
+    invalidTexelRegions：full-room 契約的 c1NorthWallBatch / c1EastWallBatch /
+                         c1WestWallBatch / c1SouthWallBatch（已是結構化 per-surface 物件）
+    R7310_C1_STRUCTURAL_ISLANDS：js:2113 已是 per-island 結構化登記
+    R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY：js:2062 本輪新增
+  也就是說，這件事是「把已經散落的四套結構收斂成一份 schema」，
+  不是無中生有的綠地工程——這讓它比聽起來低風險，也明顯優於繼續點補。
+
+但要分清你描述的終局屬於哪個方案（§6.3）：
+  「runtime gate / bake-point / metadata / package-audit 都問同一份規則」
+  GLSL runtime 讀不到 JS，要做到 shader 也「問同一份」只有兩條路：
+    方案 A（mirror + 通用對帳契約）：JS 直接讀 registry；shader 仍鏡像，
+      但用「一支通用 parity 契約」迭代 registry 自動比對每個 surface 的 shader↔JS 常數。
+    方案 B（codegen）：用 registry 產生 shader predicate，shader 不再手寫鏡像。
+  §14 對北牆做的是方案 A 的單面版。你的終局描述實質是 B。
+
+建議分三步，先 A 後視情況 B（不要一次跳 B）：
+  Step 1 規格凍結：把 SurfaceOwnerPolicy 定為唯一 JS 真相來源，欄位在現有六欄上補：
+    claimSurfacePredicate（如 RuntimeSurfaceIsNorthWall，取代散落的 surface 判定）
+    mapping / atlasRect（planar_xy 等，併入現 invalidTexelRegions 的角色）
+    packageRef（指向 full4x / D800 哪個 package + LFS 路徑）
+    furnitureStateRef（家具變體用，見 15.3——這是新軸線，先在 schema 預留）
+  Step 2 收斂（仍方案 A，不 codegen）：
+    讓現存四套散落結構都改成「讀 registry 當單一來源」；
+    把「一支通用 parity 契約」做出來——迭代 registry 對每個 surface 自動比對
+    shader 常數 == JS 常數。這支通用契約取代未來 N 支 bespoke seam 契約，
+    這才是在「測試層」也終結打地鼠的關鍵。
+  Step 3 codegen（方案 B，選用）：
+    只有當 Step 2 之後 mirror 仍反覆漂移，才值得引入產生器。
+
+  本輪 §14 留下的兩顆鬆動（15.1）正是這步要順手解掉的：
+  通用 parity 契約涵蓋門洞數值對帳（解鬆動 1）；
+  registry 入口讓三入口改呼叫 OwnerExcluded（解鬆動 2）。
+```
+
+### 15.3 第一批 migration 範圍 — 北牆族正確，但要拆成 1a 靜態 / 1b 家具兩段
+
+```text
+你列的四項（A1 XATLAS、舊北牆 D800、東北家具 bed/wardrobe 北牆變體、
+門洞/side-wall/beam-gap/bed contact）方向對，但不要一次做完，理由是其中夾了一條新軸線。
+
+  Batch 1a（靜態牆面，最低風險，先做）：
+    A1 XATLAS + 舊北牆 D800 + 門洞 / side-wall / beam-gap。
+    這幾個本來就共用「同一組」exclusion helper（§14 已證），
+    是純收斂、零新概念，最適合拿來驗證 registry schema。
+
+  Batch 1b（家具變體，含新軸線，後做）：
+    bed / wardrobe 北牆變體 + bed contact。
+    這裡帶進「家具狀態」這條 A1 模型沒有的新維度：
+      家具在／不在，會改變牆面 texel 由誰認領，也改變 package 對應。
+    實證：full-room 契約 c1NorthWallBatch:276 目前斷言 wardrobeContact === undefined，
+          代表「家具接觸」現在根本還不是北牆的 invalid region。
+    所以 1b 需要 schema 先長出 furnitureStateRef / variant 維度（你列的自動檢查第 6 項
+    「家具狀態與 package 是否一致」就靠這條），這是 schema 擴充，不該和 1a 的首次收斂混做。
+
+  裁示：第一批＝北牆族沒錯，但「1a 靜態先收斂、證明 schema」→「1b 家具變體再擴 schema」。
+        把唯一一條未驗證的新軸線（家具狀態）獨立成第二段，
+        避免首次 registry 上線同時背一個沒驗過的維度。
+```
+
+### 15.4 先寫 HTML Review 規格，還是直接 GOAL 實作 — 先寫規格
+
+```text
+判斷：先寫 HTML Review 規格，凍結 schema 後再讓 CODEX 用 GOAL 逐 batch 實作。
+
+理由（對齊本專案 R-stage×OMC 既有規則：schema/架構決策＝spec-first）：
+  1. 這是會被四個 consumer（runtime gate / bake-point / metadata / package-audit）
+     同時依賴的 schema；schema 選錯，要跨四個 consumer × N 個 surface 回退，代價高。
+  2. 它還要引入家具狀態這條沒驗過的新維度（15.3），更該先把模型講清楚。
+  3. 直接證據：§14 是一次很謹慎的單面 GOAL，仍留下兩顆 schema 層鬆動
+     （門洞數值未對帳、OwnerExcluded 死碼）。把同樣的 GOAL 直接放大到所有 surface、
+     沒有先凍結 schema，只會把這類鬆動乘以 surface 數。
+
+  規格（HTML Review）要先鎖死這幾項，才放 GOAL：
+    a. SurfaceOwnerPolicy 最終欄位集（含 15.2 補的欄位）。
+    b. 通用 shader↔JS parity 契約的設計（一支迭代 registry，取代 bespoke seam 契約）。
+    c. 家具狀態 / variant 模型（package 對應規則）。
+    d. migration 批次：1a 靜態 → 1b 家具。
+    e. 你列的六項自動檢查各自由誰跑：
+       重複認領 / 越界認領 → CPU owner grid sweep
+       該顯示卻 alpha=0 / gap 被 atlas 吃 → package alpha audit + browser final-source probe
+       bake-point↔runtime 同排除 → 通用 parity 契約
+       家具狀態↔package 一致 → furnitureStateRef 對帳（1b 才上線）
+    schema 凍結後，每個 batch 的填充是機械工，適合 GOAL 逐面跑。
+
+  一句話：schema 與通用契約的「設計」先 spec-first 審過；
+         「填充」再交 CODEX GOAL 逐 batch。
+```
+
+### 15.5 結論
+
+```text
+1. §14 合格，可以收。A1 三邊 owner 真正接齊，三個硬修正都有回應。
+2. 收前帶走兩顆 schema 鬆動，併入下一步解：
+   (1) 門洞常數補 shader 端數值鎖 + shader↔JS 對帳（比照 beam-gap 契約）。
+   (2) OwnerExcluded 死碼：registry 遷移時改成三入口實際呼叫，contract 升級成「檢查被使用」。
+3. 全域 SurfaceOwnerPolicy registry 是正確下一步；它已半自然長出（四套散落結構待收斂）。
+   走方案 A（registry + 通用 parity 契約）先，視漂移再升方案 B（codegen）。
+4. 第一批＝北牆族，但拆 1a 靜態（先證 schema）→ 1b 家具變體（再擴家具狀態維度）。
+5. 先寫 HTML Review 規格凍結 schema，再讓 CODEX GOAL 逐 batch 填充。
+6. 本節唯讀核實，未改產品程式、未重烤、未動 runtime pointer；index.html 交 CODEX 由本 source.md 重生。
+```

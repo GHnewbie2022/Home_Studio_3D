@@ -2044,11 +2044,168 @@ function r7310C1NorthWallHiddenBySideWall(x)
 	return x <= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.westXMax ||
 		x >= R7310_C1_NORTH_WALL_SIDE_WALL_BACKS.eastXMin;
 }
+function r7310C1NorthWallHiddenByDoorHole(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_DOOR_HOLE);
+}
 function r7310C1NorthWallHiddenByBeamGap(x, y)
 {
 	return r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.west) ||
 		r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS.east);
 }
+function r7310C1NorthWallOwnerExcluded(x, y)
+{
+	return r7310C1NorthWallHiddenBySideWall(x) ||
+		r7310C1NorthWallHiddenByDoorHole(x, y) ||
+		r7310C1NorthWallHiddenByBeamGap(x, y);
+}
+const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
+	id: 'r7310-c1-xatlas-a1-north-wall',
+	surfaceId: 'north_wall',
+	surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
+	precedence: 200,
+	activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5',
+	claimSurfacePredicate: 'r7310C1RuntimeSurfaceIsNorthWall',
+	claimBounds: Object.freeze({
+		xMin: -1.912,
+		xMax: -1.518,
+		yMin: -0.002,
+		yMax: 2.907,
+		z: -1.874,
+		zTolerance: 0.006
+	}),
+	exclusions: Object.freeze([
+		Object.freeze({
+			id: 'north-wall-side-wall',
+			type: 'sideThreshold',
+			helper: 'r7310C1NorthWallHiddenBySideWall',
+			shaderConstants: Object.freeze({
+				westXMax: 'R7310_C1_NORTH_WALL_SIDE_WALL_WEST_X_MAX',
+				eastXMin: 'R7310_C1_NORTH_WALL_SIDE_WALL_EAST_X_MIN'
+			}),
+			jsConstants: 'R7310_C1_NORTH_WALL_SIDE_WALL_BACKS',
+			reason: 'north-wall side boundary belongs to adjacent surfaces'
+		}),
+		Object.freeze({
+			id: 'north-wall-door-hole',
+			type: 'rectXY',
+			helper: 'r7310C1NorthWallHiddenByDoorHole',
+			shaderConstants: Object.freeze({
+				xMin: 'R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN',
+				xMax: 'R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX',
+				yMin: 'R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN',
+				yMax: 'R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX'
+			}),
+			jsConstants: 'R7310_C1_NORTH_WALL_DOOR_HOLE',
+			reason: 'north-wall door opening belongs to dedicated reveal or live path'
+		}),
+		Object.freeze({
+			id: 'north-wall-beam-gap',
+			type: 'rectXY',
+			helper: 'r7310C1NorthWallHiddenByBeamGap',
+			shaderConstants: Object.freeze({
+				westXMin: 'R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MIN',
+				westXMax: 'R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MAX',
+				westYMin: 'R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MIN',
+				westYMax: 'R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MAX',
+				eastXMin: 'R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MIN',
+				eastXMax: 'R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MAX',
+				eastYMin: 'R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MIN',
+				eastYMax: 'R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MAX'
+			}),
+			jsConstants: 'R7310_C1_NORTH_WALL_BEAM_GAP_INVALID_REGIONS',
+			reason: 'beam north cap must live-trace instead of sampling north-wall atlas'
+		})
+	]),
+	ownerEntry: Object.freeze({
+		shaderHelper: 'r7310C1NorthWallOwnerExcluded',
+		jsHelper: 'r7310C1NorthWallOwnerExcluded'
+	}),
+	bakePointMirror: Object.freeze({
+		shaderFunction: 'r7310C1BakeSurfacePoint',
+		patchId: 1002
+	}),
+	runtimeMirrors: Object.freeze([
+		'shader:r7310C1XatlasA1NorthWallUv',
+		'shader:r7310C1BakeSurfacePoint:patchId=1002'
+	]),
+	jsMirrors: Object.freeze([
+		'js:r7310C1XatlasA1NorthWallUvFromWorldPosition',
+		'js:buildR7310C1NorthWallTexelMetadataRect'
+	]),
+	metadataMirror: Object.freeze({
+		functionName: 'buildR7310C1NorthWallTexelMetadataRect',
+		validityField: 'metadata[offset + 7]'
+	}),
+	packageRefs: Object.freeze([
+		Object.freeze({
+			id: 'a1-xatlas-runtime',
+			pointerPath: 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json',
+			role: 'xatlas'
+		})
+	]),
+	packagePolicy: Object.freeze({
+		alphaMode: 'xatlas-c2c-alpha-r64',
+		validLinearMode: 'alpha-aware-valid-linear',
+		c2cAlphaReport: 'xatlas-c2c-alpha-report.json'
+	}),
+	tests: Object.freeze({
+		staticContract: 'docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js',
+		parityContract: 'docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js',
+		ownerGridSweep: 'docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js',
+		packageAlphaAudit: 'docs/tests/r7-3-10-xatlas-c2c-contract.test.js'
+	})
+});
+const R7310_C1_D800_NORTH_WALL_OWNER_POLICY = Object.freeze({
+	id: 'r7310-c1-d800-north-wall',
+	surfaceId: 'north_wall',
+	surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
+	precedence: 100,
+	activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5',
+	claimSurfacePredicate: 'r7310C1RuntimeSurfaceIsNorthWall',
+	claimBounds: R7310_C1_NORTH_WALL_WORLD_BOUNDS,
+	exclusions: R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.exclusions,
+	ownerEntry: Object.freeze({
+		shaderHelper: 'r7310C1NorthWallOwnerExcluded',
+		jsHelper: 'r7310C1NorthWallOwnerExcluded'
+	}),
+	bakePointMirror: Object.freeze({
+		shaderFunction: 'r7310C1BakeSurfacePoint',
+		patchId: 1002
+	}),
+	runtimeMirrors: Object.freeze([
+		'shader:r7310C1NorthWallDiffuseUv',
+		'shader:r7310C1BakeSurfacePoint:patchId=1002'
+	]),
+	jsMirrors: Object.freeze([
+		'js:buildR7310C1NorthWallTexelMetadataRect'
+	]),
+	metadataMirror: Object.freeze({
+		functionName: 'buildR7310C1NorthWallTexelMetadataRect',
+		validityField: 'metadata[offset + 7]'
+	}),
+	packageRefs: Object.freeze([
+		Object.freeze({
+			id: 'd800-north-wall-runtime',
+			pointerPath: R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL,
+			role: 'd800'
+		})
+	]),
+	packagePolicy: Object.freeze({
+		alphaMode: 'd800-north-wall-alpha',
+		validLinearMode: 'non-square-runtime-valid-linear'
+	}),
+	tests: Object.freeze({
+		staticContract: 'docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js',
+		parityContract: 'docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js',
+		ownerGridSweep: 'docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js',
+		packageAlphaAudit: 'docs/tests/r7-3-10-full-room-diffuse-bake-contract.test.js'
+	})
+});
+const R7310_C1_SURFACE_OWNER_POLICIES = Object.freeze([
+	R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY,
+	R7310_C1_D800_NORTH_WALL_OWNER_POLICY
+]);
 function r7310C1SouthWallHiddenBySideColumn(x, y)
 {
 	return r7310C1InsideRectXY(x, y, R7310_C1_SOUTH_WALL_SW_COLUMN_BACK) ||
@@ -2234,12 +2391,8 @@ function r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition)
 		return { mapped: false, reason: 'xatlas_runtime_not_ready' };
 	if (x < -1.912 || x > -1.518 || y < -0.002 || y > 2.907 || Math.abs(z + 1.874) > 0.006)
 		return { mapped: false, reason: 'outside_a1_smoke_bounds' };
-	if (r7310C1NorthWallHiddenBySideWall(x))
-		return { mapped: false, reason: 'owner_side_wall_excluded' };
-	if (x >= -1.52 && x <= -0.73 && y >= 0.0 && y <= 2.03)
-		return { mapped: false, reason: 'owner_door_excluded' };
-	if (r7310C1NorthWallHiddenByBeamGap(x, y))
-		return { mapped: false, reason: 'owner_beam_gap_excluded' };
+	if (r7310C1NorthWallOwnerExcluded(x, y))
+		return { mapped: false, reason: 'owner_excluded' };
 	var y01 = Math.max(0, Math.min(1, y / 2.905));
 	var x01 = Math.max(0, Math.min(1, (x + 1.91) / 0.39));
 	return {
@@ -5913,7 +6066,6 @@ function buildR7310C1NorthWallTexelMetadataRect(width, height)
 	var safeHeight = Math.max(1, Math.trunc(Number(height) || 1));
 	var metadata = new Float32Array(safeWidth * safeHeight * 12);
 	var b = R7310_C1_NORTH_WALL_WORLD_BOUNDS;
-	var hole = R7310_C1_NORTH_WALL_DOOR_HOLE;
 	var valid = 0;
 	for (var y = 0; y < safeHeight; y += 1)
 	{
@@ -5923,10 +6075,7 @@ function buildR7310C1NorthWallTexelMetadataRect(width, height)
 			var v = (y + 0.5) / safeHeight;
 			var worldX = b.xMin + (b.xMax - b.xMin) * u;
 			var worldY = b.yMin + (b.yMax - b.yMin) * v;
-			var isDoorHole = worldX >= hole.xMin && worldX <= hole.xMax && worldY >= hole.yMin && worldY <= hole.yMax;
-			var isSideWallBack = r7310C1NorthWallHiddenBySideWall(worldX);
-			var isBeamGapInvalid = r7310C1NorthWallHiddenByBeamGap(worldX, worldY);
-			var isValid = !isDoorHole && !isSideWallBack && !isBeamGapInvalid;
+			var isValid = !r7310C1NorthWallOwnerExcluded(worldX, worldY);
 			var offset = (y * safeWidth + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = worldY;

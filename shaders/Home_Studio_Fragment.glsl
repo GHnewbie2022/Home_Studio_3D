@@ -638,10 +638,32 @@ bool r7310C1StructuralSeColumnInnerHiddenByBookshelf(float z, float y)
 {
 	return z >= 2.73 && y <= 2.04;
 }
+const float R7310_C1_NORTH_WALL_SIDE_WALL_WEST_X_MAX = -1.91;
+const float R7310_C1_NORTH_WALL_SIDE_WALL_EAST_X_MIN = 1.91;
 bool r7310C1NorthWallHiddenBySideWall(float x)
 {
-	return x <= -1.91 || x >= 1.91;
+	return x <= R7310_C1_NORTH_WALL_SIDE_WALL_WEST_X_MAX ||
+		x >= R7310_C1_NORTH_WALL_SIDE_WALL_EAST_X_MIN;
 }
+const float R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN = -1.52;
+const float R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX = -0.73;
+const float R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN = 0.0;
+const float R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX = 2.03;
+bool r7310C1NorthWallHiddenByDoorHole(float x, float y)
+{
+	return x >= R7310_C1_NORTH_WALL_DOOR_HOLE_X_MIN &&
+		x <= R7310_C1_NORTH_WALL_DOOR_HOLE_X_MAX &&
+		y >= R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MIN &&
+		y <= R7310_C1_NORTH_WALL_DOOR_HOLE_Y_MAX;
+}
+const float R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MIN = -1.908;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MAX = -1.752;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MIN = 2.525;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MAX = 2.905;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MIN = 1.850;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MAX = 1.908;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MIN = 2.516;
+const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MAX = 2.905;
 bool r7310C1NorthWallHiddenByBeamGap(float x, float y)
 {
 	// R7-3.10 global seam hardening (OPUS 2026-06-03): mirror JS
@@ -654,9 +676,21 @@ bool r7310C1NorthWallHiddenByBeamGap(float x, float y)
 	// MUST exclude the same region so the cap LIVE-TRACES instead. The two sides are locked
 	// by docs/tests/r7-3-10-north-wall-beam-gap-contract.test.js -- changing one constant
 	// without the other reopens the seam.
-	bool westBeamGap = x >= -1.908 && x <= -1.752 && y >= 2.525 && y <= 2.905;
-	bool eastBeamGap = x >= 1.850 && x <= 1.908 && y >= 2.516 && y <= 2.905;
+	bool westBeamGap = x >= R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MIN &&
+		x <= R7310_C1_NORTH_WALL_BEAM_GAP_WEST_X_MAX &&
+		y >= R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MIN &&
+		y <= R7310_C1_NORTH_WALL_BEAM_GAP_WEST_Y_MAX;
+	bool eastBeamGap = x >= R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MIN &&
+		x <= R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MAX &&
+		y >= R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MIN &&
+		y <= R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MAX;
 	return westBeamGap || eastBeamGap;
+}
+bool r7310C1NorthWallOwnerExcluded(float x, float y)
+{
+	return r7310C1NorthWallHiddenBySideWall(x) ||
+		r7310C1NorthWallHiddenByDoorHole(x, y) ||
+		r7310C1NorthWallHiddenByBeamGap(x, y);
 }
 bool r7310C1SouthWallHiddenBySideColumn(float x, float y)
 {
@@ -713,11 +747,7 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	{
 		float x = mix(-2.11, 2.11, uv.x);
 		float y = mix(0.0, 2.905, uv.y);
-		if (x >= -1.52 && x <= -0.73 && y >= 0.0 && y <= 2.03)
-			return false;
-		if (r7310C1NorthWallHiddenBySideWall(x))
-			return false;
-		if (r7310C1NorthWallHiddenByBeamGap(x, y))
+		if (r7310C1NorthWallOwnerExcluded(x, y))
 			return false;
 		position = vec3(x, y, -1.874);
 		normal = vec3(0.0, 0.0, 1.0);
@@ -1225,18 +1255,7 @@ bool r7310C1XatlasA1NorthWallUv(int visibleHitType, float visibleObjectID, vec3 
 		atlasUv = vec2(0.0);
 		return false;
 	}
-	if (r7310C1NorthWallHiddenBySideWall(visiblePosition.x))
-	{
-		atlasUv = vec2(0.0);
-		return false;
-	}
-	if (visiblePosition.x >= -1.52 && visiblePosition.x <= -0.73 &&
-		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.03)
-	{
-		atlasUv = vec2(0.0);
-		return false;
-	}
-	if (r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y))
+	if (r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y))
 	{
 		atlasUv = vec2(0.0);
 		return false;
@@ -1778,17 +1797,7 @@ bool r7310C1NorthWallDiffuseUv(vec3 visiblePosition, out vec2 atlasUv)
 		atlasUv = vec2(0.0);
 		return false;
 	}
-	if (r7310C1NorthWallHiddenBySideWall(visiblePosition.x))
-	{
-		atlasUv = vec2(0.0);
-		return false;
-	}
-	if (visiblePosition.x >= -1.52 && visiblePosition.x <= -0.73 && visiblePosition.y >= 0.0 && visiblePosition.y <= 2.03)
-	{
-		atlasUv = vec2(0.0);
-		return false;
-	}
-	if (r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y))
+	if (r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y))
 	{
 		// West/east beam north cap -> not owned by the north wall; let it live-trace.
 		atlasUv = vec2(0.0);

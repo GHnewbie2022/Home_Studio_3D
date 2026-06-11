@@ -57,13 +57,7 @@ requireRegex(
   shader,
   /bool\s+r7310C1XatlasA1NorthWallUv[\s\S]*uR7310C1NorthWallDiffuseMode\s*<\s*0\.5[\s\S]*return\s+false;/
 );
-requireText('shader xatlas A1 side-wall owner gate', xatlasA1UvBody, 'r7310C1NorthWallHiddenBySideWall(visiblePosition.x)');
-requireRegex(
-  'shader xatlas A1 door owner gate',
-  xatlasA1UvBody,
-  /visiblePosition\.x\s*>=\s*-1\.52[\s\S]*visiblePosition\.x\s*<=\s*-0\.73[\s\S]*visiblePosition\.y\s*>=\s*0\.0[\s\S]*visiblePosition\.y\s*<=\s*2\.03/
-);
-requireText('shader xatlas A1 beam-gap owner gate', xatlasA1UvBody, 'r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y)');
+requireText('shader xatlas A1 owner gate', xatlasA1UvBody, 'r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y)');
 requireText('shader xatlas A1 v min matches C1 metadata', shader, '0.3594961166');
 requireText('shader xatlas A1 v max matches C1 metadata', shader, '0.5106589198');
 
@@ -73,13 +67,7 @@ requireText('InitCommon xatlas diagnostic', initCommon, 'window.reportR7310C1Xat
 requireRegex('InitCommon xatlas diagnostic source classification', initCommon, /likelyRuntimeSource:\s*xatlasWouldReturn \? 'xatlas'/);
 requireText('InitCommon xatlas A1 v min matches C1 metadata', initCommon, '0.3594961166');
 requireText('InitCommon xatlas A1 v max matches C1 metadata', initCommon, '0.5106589198');
-requireText('InitCommon xatlas A1 side-wall owner gate', xatlasA1CpuUvBody, 'r7310C1NorthWallHiddenBySideWall(x)');
-requireRegex(
-  'InitCommon xatlas A1 door owner gate',
-  xatlasA1CpuUvBody,
-  /x\s*>=\s*-1\.52[\s\S]*x\s*<=\s*-0\.73[\s\S]*y\s*>=\s*0\.0[\s\S]*y\s*<=\s*2\.03/
-);
-requireText('InitCommon xatlas A1 beam-gap owner gate', xatlasA1CpuUvBody, 'r7310C1NorthWallHiddenByBeamGap(x, y)');
+requireText('InitCommon xatlas A1 owner gate', xatlasA1CpuUvBody, 'r7310C1NorthWallOwnerExcluded(x, y)');
 
 if (fs.existsSync(runtimePointerPath)) {
   const pointer = JSON.parse(fs.readFileSync(runtimePointerPath, 'utf8'));

@@ -44,27 +44,30 @@ function parseJsRect(block, side) {
 const jsWest = parseJsRect(jsBlock, 'west');
 const jsEast = parseJsRect(jsBlock, 'east');
 
-// ---- 2. shader side: parse r7310C1NorthWallHiddenByBeamGap west/east comparisons ----
+// ---- 2. shader side: parse named beam-gap constants ----
 assert.match(
 	shader,
 	/bool\s+r7310C1NorthWallHiddenByBeamGap\s*\(\s*float\s+x\s*,\s*float\s+y\s*\)/,
 	'shader: r7310C1NorthWallHiddenByBeamGap(float x, float y) definition missing'
 );
 
-function parseShaderRect(varName) {
-	// [ \t] (not \s) so the match cannot span newlines onto a different similarly-named var.
-	const m = shader.match(
-		new RegExp(
-			'bool[ \\t]+' + varName +
-			'[ \\t]*=[ \\t]*x[ \\t]*>=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*x[ \\t]*<=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*y[ \\t]*>=[ \\t]*(-?[0-9.]+)[ \\t]*&&[ \\t]*y[ \\t]*<=[ \\t]*(-?[0-9.]+)'
-		)
-	);
-	assert.ok(m, `shader: ${varName} comparison line not found in r7310C1NorthWallHiddenByBeamGap`);
-	return { xMin: parseFloat(m[1]), xMax: parseFloat(m[2]), yMin: parseFloat(m[3]), yMax: parseFloat(m[4]) };
+function parseShaderConst(name) {
+	const m = shader.match(new RegExp('const\\s+float\\s+' + name + '\\s*=\\s*(-?[0-9.]+)\\s*;'));
+	assert.ok(m, `shader: ${name} const not found`);
+	return parseFloat(m[1]);
 }
 
-const shaderWest = parseShaderRect('westBeamGap');
-const shaderEast = parseShaderRect('eastBeamGap');
+function parseShaderRect(prefix) {
+	return {
+		xMin: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_X_MIN`),
+		xMax: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_X_MAX`),
+		yMin: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_Y_MIN`),
+		yMax: parseShaderConst(`R7310_C1_NORTH_WALL_BEAM_GAP_${prefix}_Y_MAX`)
+	};
+}
+
+const shaderWest = parseShaderRect('WEST');
+const shaderEast = parseShaderRect('EAST');
 
 // ---- 3. assert JS and shader constants are identical ----
 for (const key of ['xMin', 'xMax', 'yMin', 'yMax']) {
@@ -78,25 +81,28 @@ for (const key of ['xMin', 'xMax', 'yMin', 'yMax']) {
 	);
 }
 
-// ---- 4. assert the shader actually WIRES the gate (definition alone is not enough) ----
-// runtime ownership gate must call it (this is the line that kills the black line)
+// ---- 4. assert the shader actually WIRES the owner gate (definition alone is not enough) ----
 assert.match(
 	shader,
-	/r7310C1NorthWallHiddenByBeamGap\(\s*visiblePosition\.x\s*,\s*visiblePosition\.y\s*\)/,
-	'shader: r7310C1NorthWallDiffuseUv must call r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y)'
+	/r7310C1NorthWallOwnerExcluded\(\s*visiblePosition\.x\s*,\s*visiblePosition\.y\s*\)/,
+	'shader: runtime gates must call r7310C1NorthWallOwnerExcluded(visiblePosition.x, visiblePosition.y)'
 );
-// bake-surface-point (patchId 1002) must exclude the same region so future re-bakes stay consistent
+assert.match(
+	shader,
+	/r7310C1NorthWallOwnerExcluded\(\s*x\s*,\s*y\s*\)/,
+	'shader: r7310C1BakeSurfacePoint(1002) must call r7310C1NorthWallOwnerExcluded(x, y)'
+);
 assert.match(
 	shader,
 	/r7310C1NorthWallHiddenByBeamGap\(\s*x\s*,\s*y\s*\)/,
-	'shader: r7310C1BakeSurfacePoint(1002) must call r7310C1NorthWallHiddenByBeamGap(x, y)'
+	'shader: r7310C1NorthWallOwnerExcluded must include r7310C1NorthWallHiddenByBeamGap(x, y)'
 );
 
 // ---- 5. assert JS metadata builder still marks the same region invalid (the authority) ----
 assert.match(
 	initCommon,
-	/r7310C1NorthWallHiddenByBeamGap\(\s*worldX\s*,\s*worldY\s*\)/,
-	'InitCommon.js: north-wall metadata builder must mark beam gap invalid via r7310C1NorthWallHiddenByBeamGap(worldX, worldY)'
+	/r7310C1NorthWallOwnerExcluded\(\s*worldX\s*,\s*worldY\s*\)/,
+	'InitCommon.js: north-wall metadata builder must use r7310C1NorthWallOwnerExcluded(worldX, worldY)'
 );
 
 console.log('R7-3.10 north-wall beam-gap JS<->shader contract passed');
