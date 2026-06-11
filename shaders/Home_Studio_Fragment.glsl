@@ -1225,9 +1225,25 @@ bool r7310C1XatlasA1NorthWallUv(int visibleHitType, float visibleObjectID, vec3 
 		atlasUv = vec2(0.0);
 		return false;
 	}
+	if (r7310C1NorthWallHiddenBySideWall(visiblePosition.x))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (visiblePosition.x >= -1.52 && visiblePosition.x <= -0.73 &&
+		visiblePosition.y >= 0.0 && visiblePosition.y <= 2.03)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
 	float x01 = clamp((visiblePosition.x + 1.91) / 0.39, 0.0, 1.0);
-		atlasUv = vec2(
+	atlasUv = vec2(
 			mix(0.6146934628, 0.0005285412, y01),
 			mix(0.3594961166, 0.5106589198, x01)
 		);

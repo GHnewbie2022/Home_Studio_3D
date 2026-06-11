@@ -1513,6 +1513,8 @@ const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = 'docs/data/r7-3
 const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json?v=r7310-b-north-east-ab-v1';
 const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -1541,6 +1543,10 @@ function resolveR7310C1XatlasRuntimePackageUrl()
 	var url = null;
 	if (param === 'a1-c2c-smoke')
 		url = R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL;
+	if (param === 'a1-westbeam-full4x-raw')
+		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL;
+	if (param === 'a1-westbeam-full4x-oidn')
+		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL;
 
 	if (typeof window !== 'undefined')
 		window.__r7310C1XatlasSelectedPackageUrl = url;
@@ -2156,7 +2162,7 @@ let r7310C1FullRoomDiffuseRuntimePackage = null;
 let r7310C1FloorDiffuseRuntimePixels = null;
 let r7310C1FullRoomDiffuseRuntimeTexture = null;
 let r7310C1FullRoomDiffuseRuntimeError = null;
-let r7310C1UseNonSquareAtlas = false;
+let r7310C1UseNonSquareAtlas = true;
 let r7310C1NonSquareAtlasRuntimeReady = false;
 let r7310C1NonSquareAtlasRuntimeLoadPromise = null;
 let r7310C1NonSquareAtlasRuntimePackage = null;
@@ -2228,6 +2234,12 @@ function r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition)
 		return { mapped: false, reason: 'xatlas_runtime_not_ready' };
 	if (x < -1.912 || x > -1.518 || y < -0.002 || y > 2.907 || Math.abs(z + 1.874) > 0.006)
 		return { mapped: false, reason: 'outside_a1_smoke_bounds' };
+	if (r7310C1NorthWallHiddenBySideWall(x))
+		return { mapped: false, reason: 'owner_side_wall_excluded' };
+	if (x >= -1.52 && x <= -0.73 && y >= 0.0 && y <= 2.03)
+		return { mapped: false, reason: 'owner_door_excluded' };
+	if (r7310C1NorthWallHiddenByBeamGap(x, y))
+		return { mapped: false, reason: 'owner_beam_gap_excluded' };
 	var y01 = Math.max(0, Math.min(1, y / 2.905));
 	var x01 = Math.max(0, Math.min(1, (x + 1.91) / 0.39));
 	return {

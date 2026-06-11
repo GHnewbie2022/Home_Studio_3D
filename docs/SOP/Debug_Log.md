@@ -11276,6 +11276,53 @@ lesson:
   atlas 正確仍可能因兩個 surface 同時認領同一條空間而變亮。
 ```
 
+## R7-3.10 XATLAS A1 鐵門旁亮帶：新 runtime 入口越界認領 iron-door reveal north jamb（2026-06-11）
+```text
+symptom:
+  使用者在 raw XATLAS、1000SPP、無 OIDN 的 A1 北牆狀態下，看到鐵門旁 west jamb 出現亮帶。
+  OIDN 前的 raw XATLAS 已可重現，主因落在 runtime owner 認領。
+  修補後，使用者以同區域視角肉眼驗收，亮帶已消失。
+root_cause:
+  這是 2026-05-27 鐵門 reveal 北邊亮條的同型復發。
+  iron-door reveal northJamb 原本負責 x∈[-1.965,-1.91]、normal +Z、z 約 -1.874、y∈[0.09,2.04]。
+  舊北牆路徑會用 r7310C1NorthWallHiddenBySideWall(x) 排除 x<=-1.91，讓 iron-door reveal 成為唯一 owner。
+  新增的 r7310C1XatlasA1NorthWallUv 只用矩形 x∈[-1.912,-1.518]、y∈[-0.002,2.907] 認領 A1，漏接舊北牆 owner gate。
+  因此 x∈[-1.912,-1.91] 這條 0.002 寬窄帶同時被 XATLAS A1 與 iron-door reveal 認領。
+  shader accum 先加 XATLAS radiance，再加 iron-door reveal radiance，形成亮帶。
+fix:
+  在 shaders/Home_Studio_Fragment.glsl 的 r7310C1XatlasA1NorthWallUv() 中補回舊北牆 owner gate：
+    r7310C1NorthWallHiddenBySideWall(visiblePosition.x)
+    door gate x[-1.52,-0.73], y[0,2.03]
+    r7310C1NorthWallHiddenByBeamGap(visiblePosition.x, visiblePosition.y)
+  在 js/InitCommon.js 的 r7310C1XatlasA1NorthWallUvFromWorldPosition() 同步三個 gate，讓 CPU diagnostic mirror 與 shader 一致。
+  更新 cache-buster 到 r7310-xatlas-a1-owner-gate-v1。
+verification:
+  使用者肉眼驗收：
+    raw XATLAS、1000SPP、無 OIDN、owner-gate 版本下，鐵門旁亮帶消失。
+  本機頁面確認：
+    xatlasEnabled=1
+    xatlasReady=1
+    xatlasApplied=1
+    packageDir=.omc/r7-3-10-xatlas-bake-spike/20260610-183110
+    atlasSize=946x516
+  自動檢查：
+    node --check js/Home_Studio.js
+    node --check js/InitCommon.js
+    node docs/tests/r7-3-10-xatlas-c2c-contract.test.js
+    node docs/tests/r7-3-10-seam-contracts-all.mjs
+    node docs/tests/r7-3-10-hybrid-owner-probe.test.js
+    node docs/tests/r7-3-10-non-square-atlas-contract.test.js
+lesson:
+  病灶已修：XATLAS A1 不再越界認領 iron-door reveal north jamb。
+  架構債仍在：北牆 owner 規則分散在多個入口，門洞範圍仍有內聯複製。
+  xatlas A1 promotion 前置條件：
+    1. 北牆 owner 排除收斂成單一真相函式，含門洞。
+    2. ownerCount / final-source probe 納入 XATLAS owner。
+    3. contract 升級成所有北牆 runtime 入口必須過統一 owner gate。
+  process 教訓：
+    同類視覺缺陷要先鎖定使用者畫面的確切 URL、開關狀態、runtime 取用路徑，再往 atlas 或烘焙層查。
+```
+
 ## R7-3.10 C2C xatlas runtime 全黑：fragment shader sampler 超過 MAX_TEXTURE_IMAGE_UNITS(16)（2026-06-05）
 ```text
 symptom:

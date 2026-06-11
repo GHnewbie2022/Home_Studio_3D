@@ -145,7 +145,7 @@ assert.match(home, /setR7310C1UseNonSquareAtlas/);
 assert.match(home, /btn-r7310-non-square-atlas/);
 
 const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
-assert.match(initCommon, /let r7310C1UseNonSquareAtlas\s*=\s*false;/);
+assert.match(initCommon, /let r7310C1UseNonSquareAtlas\s*=\s*true;/);
 assert.match(initCommon, /window\.setR7310C1UseNonSquareAtlas\s*=/);
 assert.match(initCommon, /nonSquareAtlasEnabled:\s*r7310C1UseNonSquareAtlas/);
 assert.match(initCommon, /uR7310C1UseNonSquareAtlas\.value\s*=\s*r7310C1UseNonSquareAtlas\s*\?\s*1\.0\s*:\s*0\.0/);
