@@ -676,17 +676,14 @@ const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM = 3;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN = -0.027;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX = 1.910;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y = 0.280;
-const vec3 R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_ESCAPE_DIR = vec3(0.0, 1.0, 0.0);
 // R7-3.10 west-beam whole seam trial: user LIVE found residuals above and below the §63 mid-band.
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X = -1.750;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MIN = 2.515;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX = 2.905;
-const vec3 R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_ESCAPE_DIR = vec3(1.0, 0.0, 0.0);
 // R7-3.10 east-beam whole seam trial: mirror west-beam contact, escaping inward from the east beam.
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X = 1.850;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN = 2.516;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX = 2.905;
-const vec3 R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_ESCAPE_DIR = vec3(-1.0, 0.0, 0.0);
 bool r7310C1NorthWallHiddenByBeamGap(float x, float y)
 {
 	// R7-3.10 global seam hardening (OPUS 2026-06-03): mirror JS
@@ -1730,6 +1727,67 @@ bool r7310C1XatlasBakeCoplanarContactCandidate(
 		visiblePosition
 	) != R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 }
+bool r7310C1XatlasBakeCoplanarSeamAabb(int confirmedLineId, out vec3 seamMin, out vec3 seamMax)
+{
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN, R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y, -1.874);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX, R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y, -1.874);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MIN, -1.874);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX, -1.874);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN, -1.874);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX, -1.874);
+		return true;
+	}
+	seamMin = vec3(0.0);
+	seamMax = vec3(0.0);
+	return false;
+}
+bool r7310C1XatlasBakeCoplanarNeighborAabb(int confirmedLineId, out vec3 neighborMin, out vec3 neighborMax)
+{
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP)
+	{
+		neighborMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN, 0.0, -1.874);
+		neighborMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX, R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y, -0.314);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM)
+	{
+		neighborMin = vec3(-1.910, 2.525, -1.874);
+		neighborMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X, 2.905, 2.848);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM)
+	{
+		neighborMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X, 2.515, -1.874);
+		neighborMax = vec3(2.110, 2.905, 3.056);
+		return true;
+	}
+	neighborMin = vec3(0.0);
+	neighborMax = vec3(0.0);
+	return false;
+}
+vec3 r7310C1XatlasBakeCoplanarEscapeFromNeighborAabb(vec3 seamMin, vec3 seamMax, vec3 neighborMin, vec3 neighborMax)
+{
+	vec2 seamCenter = (seamMin.xy + seamMax.xy) * 0.5;
+	vec2 seamExtent = abs(seamMax.xy - seamMin.xy);
+	vec2 neighborCenter = (neighborMin.xy + neighborMax.xy) * 0.5;
+	if (seamExtent.x >= seamExtent.y)
+	{
+		float dirY = seamCenter.y >= neighborCenter.y ? 1.0 : -1.0;
+		return vec3(0.0, dirY, 0.0);
+	}
+	float dirX = seamCenter.x >= neighborCenter.x ? 1.0 : -1.0;
+	return vec3(dirX, 0.0, 0.0);
+}
 vec3 r7310C1XatlasBakeCoplanarLiftDirection(
 	int visibleHitType,
 	float visibleObjectID,
@@ -1742,13 +1800,15 @@ vec3 r7310C1XatlasBakeCoplanarLiftDirection(
 		visibleNormal,
 		visiblePosition
 	);
-	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP)
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_ESCAPE_DIR;
-	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM)
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_ESCAPE_DIR;
-	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM)
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_ESCAPE_DIR;
-	return vec3(0.0);
+	vec3 seamMin;
+	vec3 seamMax;
+	if (!r7310C1XatlasBakeCoplanarSeamAabb(confirmedLineId, seamMin, seamMax))
+		return vec3(0.0);
+	vec3 neighborMin;
+	vec3 neighborMax;
+	if (!r7310C1XatlasBakeCoplanarNeighborAabb(confirmedLineId, neighborMin, neighborMax))
+		return vec3(0.0);
+	return r7310C1XatlasBakeCoplanarEscapeFromNeighborAabb(seamMin, seamMax, neighborMin, neighborMax);
 }
 vec3 r7310C1XatlasBakeCoplanarLiftedSurfacePoint(
 	int visibleHitType,

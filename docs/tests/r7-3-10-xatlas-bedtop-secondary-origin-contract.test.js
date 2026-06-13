@@ -15,17 +15,17 @@ for (const needle of [
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN = -0.027',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX = 1.910',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y = 0.280',
-	'R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_ESCAPE_DIR = vec3(0.0, 1.0, 0.0)',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X = -1.750',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MIN = 2.515',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX = 2.905',
-	'R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_ESCAPE_DIR = vec3(1.0, 0.0, 0.0)',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X = 1.850',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN = 2.516',
 	'R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX = 2.905',
-	'R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_ESCAPE_DIR = vec3(-1.0, 0.0, 0.0)',
 	'int r7310C1XatlasBakeCoplanarConfirmedLineId',
 	'bool r7310C1XatlasBakeCoplanarContactCandidate',
+	'bool r7310C1XatlasBakeCoplanarSeamAabb',
+	'bool r7310C1XatlasBakeCoplanarNeighborAabb',
+	'vec3 r7310C1XatlasBakeCoplanarEscapeFromNeighborAabb',
 	'vec3 r7310C1XatlasBakeCoplanarLiftDirection',
 	'vec3 r7310C1XatlasBakeSecondaryRayOrigin',
 	'vec3 r7310C1XatlasBakeNeeShadowRayOrigin'
@@ -49,10 +49,11 @@ const helper = shader.slice(helperStart, helperEnd);
 assert.match(helper, /r7310C1RuntimeSurfaceIsNorthWall/);
 assert.match(helper, /r7310C1XatlasBakeCoplanarConfirmedLineId/);
 assert.match(helper, /r7310C1XatlasBakeCoplanarContactCandidate/);
+assert.match(helper, /r7310C1XatlasBakeCoplanarSeamAabb/);
+assert.match(helper, /r7310C1XatlasBakeCoplanarNeighborAabb/);
+assert.match(helper, /r7310C1XatlasBakeCoplanarEscapeFromNeighborAabb/);
 assert.match(helper, /r7310C1XatlasBakeCoplanarLiftDirection/);
-assert.match(helper, /R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_ESCAPE_DIR/);
-assert.match(helper, /R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_ESCAPE_DIR/);
-assert.match(helper, /R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_ESCAPE_DIR/);
+assert.doesNotMatch(helper, /R7310_C1_XATLAS_BAKE_CONFIRMED_[A-Z_]+_ESCAPE_DIR/);
 assert.match(helper, /confirmedLineId\s*==\s*R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM/);
 assert.match(helper, /confirmedLineId\s*==\s*R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM/);
 assert.match(helper, /dot\(outgoingDir,\s*liftDirection\)\s*<\s*-R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_DIR_EPS/);
