@@ -52,6 +52,19 @@ def write_f32(path: Path, values: array.array) -> None:
         values.tofile(handle)
 
 
+def parse_report_triangles(value: str) -> tuple[int, ...]:
+    cleaned = value.strip()
+    if cleaned == "":
+        return REPORT_TRIS
+    out: list[int] = []
+    for part in cleaned.split(","):
+        part = part.strip()
+        if part == "":
+            continue
+        out.append(int(part))
+    return tuple(out) if out else REPORT_TRIS
+
+
 def fib_hemisphere(n: int) -> np.ndarray:
     out = np.empty((n, 3), dtype=np.float64)
     golden = math.pi * (3.0 - math.sqrt(5.0))
@@ -164,6 +177,7 @@ def main() -> int:
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--rays", type=int, default=64)
     parser.add_argument("--chunk-size", type=int, default=4096)
+    parser.add_argument("--report-triangles", type=str, default="10,11,20,21")
     parser.add_argument("--out-mask", type=Path, default=DEFAULT_OUT_MASK)
     parser.add_argument("--out-report", type=Path, default=DEFAULT_OUT_REPORT)
     args = parser.parse_args()
@@ -172,6 +186,7 @@ def main() -> int:
         raise SystemExit("--threshold must be between 0 and 1")
     if args.rays <= 0:
         raise SystemExit("--rays must be > 0")
+    report_tris = parse_report_triangles(args.report_triangles)
 
     texelmap_json = read_json(args.bake_dir / "xatlas-bake-texelmap.json")
     width = int(texelmap_json["atlas"]["width"])
@@ -190,7 +205,7 @@ def main() -> int:
     box_max = np.array([box["max"] for box in boxes], dtype=np.float64)
 
     groups: dict[tuple[float, float, float], list[int]] = {}
-    indices_by_tri: dict[int, list[int]] = {tri: [] for tri in REPORT_TRIS}
+    indices_by_tri: dict[int, list[int]] = {tri: [] for tri in report_tris}
     for idx in range(total):
         base8 = idx * FLOATS_PER_TEXELMAP_TEXEL
         if texelmap[base8 + 7] <= 0.5:
@@ -242,7 +257,7 @@ def main() -> int:
 
     per_triangle = {
         str(tri): summarize_triangle(tri, indices_by_tri[tri], alpha_by_index, front_by_index)
-        for tri in REPORT_TRIS
+        for tri in report_tris
     }
     report = {
         "schema": "r7-3-10-c2c-validity-mask-v1",
@@ -259,6 +274,7 @@ def main() -> int:
             "alphaZeroTexels": invalid_texels,
         },
         "normalGroups": {str(raw): len(indices) for raw, indices in sorted(groups.items())},
+        "reportedTriangles": list(report_tris),
         "perTriangle": per_triangle,
         "hardStops": {
             "usedBakeNormal": False,

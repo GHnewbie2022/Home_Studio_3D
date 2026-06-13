@@ -63,7 +63,7 @@ const shaderXatlasA1 = sliceBetween(shader, 'bool r7310C1XatlasA1NorthWallUv', '
 const shaderNorthWallUv = sliceBetween(shader, 'bool r7310C1NorthWallDiffuseUv', 'bool r7310C1NorthWallHybridActive', 'shader north-wall diffuse uv');
 const shaderOwnerExcluded = sliceBetween(shader, 'bool r7310C1NorthWallOwnerExcluded', 'bool r7310C1SouthWallHiddenBySideColumn', 'shader north-wall owner-excluded');
 const jsXatlasA1 = sliceBetween(initCommon, 'function r7310C1XatlasA1NorthWallUvFromWorldPosition', 'function r7310C1XatlasRuntimeCpuTexel', 'JS xatlas A1');
-const jsNorthWallMetadata = sliceBetween(initCommon, 'function buildR7310C1NorthWallTexelMetadataRect', 'function buildR7310C1NorthWallTexelMetadata(size)', 'JS north-wall metadata');
+const jsNorthWallMetadata = sliceBetween(initCommon, 'function buildR7310C1NorthWallTexelMetadataRect', 'function buildR7310C1NorthWallTexelMetadata(size, options)', 'JS north-wall metadata');
 const jsOwnerExcluded = sliceBetween(initCommon, 'function r7310C1NorthWallOwnerExcluded', 'const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY', 'JS north-wall owner-excluded');
 
 requireText('shader helper', shader, 'bool r7310C1NorthWallHiddenByDoorHole(float x, float y)');
@@ -112,10 +112,17 @@ for (const [label, body] of [
 }
 
 requireText('JS owner policy registry', initCommon, 'R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY');
+requireText('JS owner policy registry', initCommon, 'R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY');
 requireText('JS owner policy registry', initCommon, 'R7310_C1_D800_NORTH_WALL_OWNER_POLICY');
 requireText('JS owner policy registry', initCommon, 'R7310_C1_SURFACE_OWNER_POLICIES');
 requireText('JS owner policy registry', initCommon, 'precedence: 200');
+requireText('JS owner policy registry', initCommon, 'precedence: 150');
 requireText('JS owner policy registry', initCommon, 'precedence: 100');
+requireText('JS owner policy registry', initCommon, "status: 'provisional'");
+requireText('JS owner policy registry', initCommon, "packageScope: 'full-surface'");
+requireText('JS owner policy registry', initCommon, "packageScope: 'sub-region'");
+requireText('JS owner policy registry', initCommon, 'supersededBy: null');
+requireText('JS owner policy registry', initCommon, "supersedes: Object.freeze(['r7310-c1-xatlas-a1-north-wall'])");
 requireText('JS owner policy registry', initCommon, "activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5'");
 requireText('JS owner policy registry', initCommon, "activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5'");
 requireText('JS owner policy registry', initCommon, "shaderHelper: 'r7310C1NorthWallOwnerExcluded'");

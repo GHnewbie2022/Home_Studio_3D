@@ -132,15 +132,40 @@ const d800Policy = sliceBetween(
 	'});',
 	'D800 SurfaceOwnerPolicy'
 );
+const fullXatlasPolicy = sliceBetween(
+	initCommon,
+	'const R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY = Object.freeze({',
+	'});',
+	'full north-wall XATLAS SurfaceOwnerPolicy'
+);
 const policiesBlock = sliceBetween(
 	initCommon,
 	'const R7310_C1_SURFACE_OWNER_POLICIES = Object.freeze([',
 	']);',
 	'SurfaceOwnerPolicy registry'
 );
+const furnitureStateRef = sliceBetween(
+	initCommon,
+	'const R7310_C1_NORTHEAST_FURNITURE_STATE_REF = Object.freeze({',
+	'});',
+	'northeast furniture state ref'
+);
+const furnitureContactExclusions = sliceBetween(
+	initCommon,
+	'const R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS = Object.freeze([',
+	']);',
+	'north-wall furniture contact exclusions'
+);
+const northWallMetadataBuilder = sliceBetween(
+	initCommon,
+	'function buildR7310C1NorthWallTexelMetadataRect',
+	'function buildR7310C1NorthWallTexelMetadata(size, options)',
+	'north-wall metadata builder'
+);
 
 for (const [label, body] of [
 	['A1 policy', a1Policy],
+	['full north-wall XATLAS policy', fullXatlasPolicy],
 	['D800 policy', d800Policy]
 ]) {
 	for (const field of [
@@ -149,6 +174,10 @@ for (const [label, body] of [
 		'surfaceName:',
 		'precedence:',
 		'activationCondition:',
+		'status:',
+		'packageScope:',
+		'supersedes:',
+		'supersededBy:',
 		'claimBounds:',
 		'exclusions:',
 		'ownerEntry:',
@@ -157,6 +186,9 @@ for (const [label, body] of [
 		'jsMirrors:',
 		'metadataMirror:',
 		'packageRefs:',
+		'furnitureStateRef:',
+		'packageByMode:',
+		'modeAwareExclusions:',
 		'packagePolicy:',
 		'tests:'
 	]) {
@@ -166,14 +198,75 @@ for (const [label, body] of [
 	requireText(label, body, "jsHelper: 'r7310C1NorthWallOwnerExcluded'");
 	requireText(label, body, "shaderFunction: 'r7310C1BakeSurfacePoint'");
 	requireText(label, body, 'patchId: 1002');
+	requireText(label, body, 'furnitureStateRef: R7310_C1_NORTHEAST_FURNITURE_STATE_REF');
+	requireText(label, body, 'modeAwareExclusions: R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS');
 }
 
+for (const field of [
+	"modeKey: 'northeastFurnitureMode'",
+	"ui: 'c2NortheastFurnitureMode'",
+	"runtime: 'r7310C1NortheastFurnitureRuntimeMode'",
+	"setter: 'window.setR7310C1NortheastFurnitureRuntimeMode'",
+	"allowedValues: Object.freeze(['bed', 'wardrobe'])",
+	"defaultValue: 'bed'",
+	"northWall: 'R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL'",
+	"northWall: 'R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL'"
+]) {
+	requireText('northeast furniture state ref', furnitureStateRef, field);
+}
+
+for (const field of [
+	"id: 'bedContact'",
+	"helper: 'r7310C1NorthWallHiddenByBedContact'",
+	"executionLayer: 'diagnosticPackageMetadata'",
+	"status: 'diagnostic-frozen-superseded-by-full-north-wall-xatlas'",
+	"furnitureStateRef: 'northeastFurnitureMode'",
+	"equals: 'bed'",
+	"id: 'wardrobeContact'",
+	"helper: 'r7310C1NorthWallHiddenByWardrobeContact'",
+	"equals: 'wardrobe'"
+]) {
+	requireText('north-wall furniture contact exclusions', furnitureContactExclusions, field);
+}
+
+approxEqual(parseJsObjectConst('R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE', 'xMin'), -0.035, 'bedContact xMin');
+approxEqual(parseJsObjectConst('R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE', 'xMax'), 1.91, 'bedContact xMax');
+approxEqual(parseJsObjectConst('R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE', 'yMin'), 0.0, 'bedContact yMin');
+approxEqual(parseJsObjectConst('R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE', 'yMax'), 0.29, 'bedContact yMax');
+requireText('mode-aware metadata helper', initCommon, 'function r7310C1NorthWallOwnerExcludedForMetadata(x, y, mode)');
+requireText('mode-aware metadata helper', initCommon, "mode === 'wardrobe'");
+requireText('north-wall metadata builder signature', northWallMetadataBuilder, 'function buildR7310C1NorthWallTexelMetadataRect(width, height, options)');
+requireText('north-wall metadata builder official helper', northWallMetadataBuilder, 'r7310C1NorthWallOwnerExcluded(worldX, worldY)');
+assert.doesNotMatch(
+	northWallMetadataBuilder,
+	/r7310C1NorthWallOwnerExcludedForMetadata|options\.northeastFurnitureMode/,
+	'official north-wall metadata builder must leave frozen D800 contact out of the full-room baseline'
+);
+
 requireText('A1 policy', a1Policy, 'precedence: 200');
+requireText('full north-wall XATLAS policy', fullXatlasPolicy, 'precedence: 150');
 requireText('D800 policy', d800Policy, 'precedence: 100');
+requireText('A1 policy status', a1Policy, "status: 'active'");
+requireText('full north-wall XATLAS policy status', fullXatlasPolicy, "status: 'provisional'");
+requireText('D800 policy status', d800Policy, "status: 'active'");
+requireText('A1 package scope', a1Policy, "packageScope: 'sub-region'");
+requireText('full north-wall package scope', fullXatlasPolicy, "packageScope: 'full-surface'");
+requireText('D800 package scope', d800Policy, "packageScope: 'full-surface'");
+requireText('A1 migration field', a1Policy, 'supersededBy: null');
+requireText('full north-wall supersedes A1', fullXatlasPolicy, "supersedes: Object.freeze(['r7310-c1-xatlas-a1-north-wall'])");
 requireText('A1 activation condition', a1Policy, "activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5'");
+requireText('full north-wall activation condition', fullXatlasPolicy, "activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5'");
 requireText('D800 activation condition', d800Policy, "activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5'");
+requireText('D800 packageByMode bed', d800Policy, "bed: Object.freeze({");
+requireText('D800 packageByMode bed package', d800Policy, 'pointerPath: R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL');
+requireText('D800 packageByMode wardrobe package', d800Policy, 'pointerPath: R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL');
+requireText('A1 packageByMode bed', a1Policy, "bed: Object.freeze({");
+requireText('A1 packageByMode shared selector', a1Policy, "packageSelector: 'resolveR7310C1XatlasRuntimePackageUrl'");
 requireText('SurfaceOwnerPolicy registry', policiesBlock, 'R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY');
+requireText('SurfaceOwnerPolicy registry', policiesBlock, 'R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY');
 requireText('SurfaceOwnerPolicy registry', policiesBlock, 'R7310_C1_D800_NORTH_WALL_OWNER_POLICY');
+requireText('furniture route helper', initCommon, 'function r7310C1NorthWallFurnitureOwnerRouteForPoint(point, options)');
+requireText('furniture route browser report', initCommon, 'window.reportR7310C1NorthWallFurnitureOwnerRouteProbe = function(point, options)');
 
 approxEqual(
 	parseShaderConst('R7310_C1_NORTH_WALL_SIDE_WALL_WEST_X_MAX'),
@@ -222,6 +315,7 @@ for (const [prefix, nestedName] of [
 
 const policyEntries = [
 	parsePolicy(a1Policy, 'A1'),
+	parsePolicy(fullXatlasPolicy, 'full north-wall XATLAS'),
 	parsePolicy(d800Policy, 'D800')
 ];
 for (let i = 0; i < policyEntries.length; i += 1) {

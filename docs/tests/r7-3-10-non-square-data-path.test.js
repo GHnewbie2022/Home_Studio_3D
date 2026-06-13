@@ -15,8 +15,20 @@ function bodyOf(source, signature, nextSignature)
 
 assert.match(initCommon, /R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL/);
 assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-b-alpha-raw/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-raw-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-b-alpha-oidn/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-oidn-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-y279-alpha-raw/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-raw-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-y279-alpha-oidn/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-oidn-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-x027-y279-alpha-raw/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-runtime-package\.json/);
+assert.match(initCommon, /d800-bed-contact-x027-y279-alpha-oidn/);
+assert.match(initCommon, /docs\/data\/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-oidn-runtime-package\.json/);
 
-assert.match(initCommon, /function buildR7310C1NorthWallTexelMetadataRect\(width,\s*height\)/);
+assert.match(initCommon, /function buildR7310C1NorthWallTexelMetadataRect\(width,\s*height,\s*options\)/);
 assert.match(initCommon, /function buildR7310C1EastWallTexelMetadataRect\(width,\s*height\)/);
 assert.match(initCommon, /function syncR7310C1AtlasAlphaToTexelMetadataRect\(pixels,\s*metadata,\s*width,\s*height\)/);
 assert.match(initCommon, /function copyR738TilePixelsToAtlasPixels\(tilePixels,\s*tileWidth,\s*tileHeight,\s*atlasPixels,\s*atlasWidth,\s*atlasHeight,\s*tileX,\s*tileY\)/);

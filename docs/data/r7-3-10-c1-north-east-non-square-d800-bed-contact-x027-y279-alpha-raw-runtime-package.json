@@ -1,0 +1,142 @@
+{
+  "packageStatus": "architecture_probe",
+  "generatedAt": "2026-05-31T17:13:28.758Z",
+  "note": "D800 throwaway A/B: north 3379x2327 separated non-square Metal bake (.omc/r7-3-10-full-room-diffuse-bake/20260602-015822) + east block resampled from p5d preview rows 1716..3431. Throwaway, not for promotion.",
+  "runtimeScope": "c1_north_east_non_square_first_hit_hybrid",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTextureNonSquare",
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-3379x4043-1000spp",
+  "targetAtlasWidth": 3379,
+  "targetAtlasHeight": 4043,
+  "requestedSamples": 1000,
+  "actualSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "multiplyAlbedoAfterBakeLookup": true,
+  "sourceBuild": {
+    "north": ".omc/r7-3-10-full-room-diffuse-bake/20260602-015822/atlas-patch-000-rgba-f32.bin",
+    "east": "assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-p5d-runtime-preview (rows 1716..3431)"
+  },
+  "uvRects": {
+    "northWall": {
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "w": 0.5755627009646302
+    },
+    "eastWall": {
+      "x": 0,
+      "y": 0.5755627009646302,
+      "z": 0.8617934300088783,
+      "w": 1
+    }
+  },
+  "faceSizePx": {
+    "northWall": {
+      "width": 3379,
+      "height": 2327
+    },
+    "eastWall": {
+      "width": 2912,
+      "height": 1716
+    }
+  },
+  "artifacts": {
+    "atlas": "atlas-patch-000-rgba-f32.bin",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin"
+  },
+  "validation": {
+    "northSource": {
+      "status": "pass",
+      "sourceDir": ".omc/r7-3-10-full-room-diffuse-bake/20260531-233623",
+      "contextLost": 0,
+      "minCompletedSamples": 1000,
+      "maxSubmissionElapsedMs": 171.3,
+      "maxTileReadbackMs": 15.4
+    },
+    "eastSource": {
+      "status": "preview-resampled-square-placeholder"
+    }
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "6a900a3bd4611e0ff71cfa0be4a33d187ff1867147e933cc486d026185e72a9d"
+  },
+  "worldBounds": {
+    "northWall": {
+      "xMin": -2.11,
+      "xMax": 2.11,
+      "yMin": 0,
+      "yMax": 2.905,
+      "z": -1.874
+    }
+  },
+  "invalidTexelRegions": {
+    "bedContact": {
+      "id": "bedContact",
+      "xMin": -0.027,
+      "xMax": 1.91,
+      "yMin": 0,
+      "yMax": 0.279,
+      "activeWhen": {
+        "northeastFurnitureMode": "bed"
+      },
+      "executionLayer": "nonSquareAtlasAlpha",
+      "status": "diagnostic-xmin-ymax-probe"
+    },
+    "wardrobeContact": {
+      "id": "wardrobeContact",
+      "xMin": 1.35,
+      "xMax": 1.91,
+      "yMin": 0,
+      "yMax": 1.955,
+      "activeWhen": {
+        "northeastFurnitureMode": "wardrobe"
+      },
+      "executionLayer": "nonSquareAtlasAlpha",
+      "status": "diagnostic-frozen-superseded-by-full-north-wall-xatlas"
+    }
+  },
+  "modeAwareNonSquareAlpha": {
+    "kind": "raw",
+    "mode": "bed",
+    "contact": {
+      "id": "bedContact",
+      "xMin": -0.027,
+      "xMax": 1.91,
+      "yMin": 0,
+      "yMax": 0.279
+    },
+    "status": "diagnostic-xmin-ymax-probe",
+    "diagnosticOverride": {
+      "contactXMin": -0.027,
+      "sourceContactXMin": -0.035,
+      "contactYMax": 0.279,
+      "sourceContactYMax": 0.29
+    },
+    "sourcePointerPath": "docs/data/r7-3-10-c1-north-east-non-square-d800-preview-runtime-package.json",
+    "sourcePackageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-d800-preview-3379x4043-1000spp",
+    "outputPointerPath": "docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-runtime-package.json",
+    "outputPackageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-3379x4043-1000spp",
+    "targetAtlasWidth": 3379,
+    "targetAtlasHeight": 4043,
+    "northWallFaceSizePx": {
+      "width": 3379,
+      "height": 2327
+    },
+    "worldBounds": {
+      "northWall": {
+        "xMin": -2.11,
+        "xMax": 2.11,
+        "yMin": 0,
+        "yMax": 2.905,
+        "z": -1.874
+      }
+    },
+    "contactTexels": 345873,
+    "contactAlphaOneBefore": 345873,
+    "contactBrightTexelsBefore": 1,
+    "maxContactLumaBefore": 0.00033698351351195015,
+    "contactAlphaOneAfter": 0,
+    "contactBrightTexelsAfter": 0
+  }
+}

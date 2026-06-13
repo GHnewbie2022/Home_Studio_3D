@@ -1512,9 +1512,17 @@ const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-no
 const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
 const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json?v=r7310-b-north-east-ab-v1';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-raw-runtime-package.json';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-oidn-runtime-package.json';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-raw-runtime-package.json';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-oidn-runtime-package.json';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-runtime-package.json';
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -1547,11 +1555,55 @@ function resolveR7310C1XatlasRuntimePackageUrl()
 		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL;
 	if (param === 'a1-westbeam-full4x-oidn')
 		url = R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL;
+	if (param === 'full-north-wall-raw')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL;
+	if (param === 'full-north-wall-oidn')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL;
 
 	if (typeof window !== 'undefined')
 		window.__r7310C1XatlasSelectedPackageUrl = url;
 
 	return url;
+}
+
+function sanitizeR7310C1LocalRuntimePointerParam(param)
+{
+	if (!param || param === '') return null;
+	if (param.indexOf('..') !== -1 ||
+		param.indexOf('\\') !== -1 ||
+		param.indexOf('http://') !== -1 ||
+		param.indexOf('https://') !== -1 ||
+		param.charAt(0) === '/')
+	{
+		return null;
+	}
+	return param;
+}
+
+function resolveR7310C1NorthWallRuntimePackageUrlForMode(mode)
+{
+	var normalizedMode = r7310C1NormalizeNortheastFurnitureMode(mode);
+	var defaultUrl = normalizedMode === 'wardrobe'
+		? R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL
+		: R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL;
+	var param = null;
+	try
+	{
+		if (typeof location !== 'undefined')
+		{
+			var search = new URLSearchParams(location.search);
+			param = normalizedMode === 'wardrobe'
+				? search.get('northWallWardrobePackage')
+				: search.get('northWallBedPackage');
+			if (!param)
+				param = new URLSearchParams(location.search).get('northWallPackage');
+		}
+	}
+	catch (e)
+	{
+		return defaultUrl;
+	}
+	return sanitizeR7310C1LocalRuntimePointerParam(param) || defaultUrl;
 }
 
 function resolveR7310C1NonSquarePackageUrl()
@@ -1619,6 +1671,30 @@ function resolveR7310C1NonSquarePackageUrl()
 	else if (param === 'd800-north-denoise-c')
 	{
 		url = 'docs/data/r7-3-10-c1-north-east-non-square-d800-denoise-c-preview-runtime-package.json';
+	}
+	else if (param === 'd800-bed-contact-b-alpha-raw')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_RAW_PACKAGE_URL;
+	}
+	else if (param === 'd800-bed-contact-b-alpha-oidn')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_OIDN_PACKAGE_URL;
+	}
+	else if (param === 'd800-bed-contact-y279-alpha-raw')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_RAW_PACKAGE_URL;
+	}
+	else if (param === 'd800-bed-contact-y279-alpha-oidn')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_OIDN_PACKAGE_URL;
+	}
+	else if (param === 'd800-bed-contact-x027-y279-alpha-raw')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_RAW_PACKAGE_URL;
+	}
+	else if (param === 'd800-bed-contact-x027-y279-alpha-oidn')
+	{
+		url = R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_OIDN_PACKAGE_URL;
 	}
 	else if (param === 'd800-north-spike-color-only')
 	{
@@ -2059,12 +2135,97 @@ function r7310C1NorthWallOwnerExcluded(x, y)
 		r7310C1NorthWallHiddenByDoorHole(x, y) ||
 		r7310C1NorthWallHiddenByBeamGap(x, y);
 }
+const R7310_C1_NORTHEAST_FURNITURE_STATE_REF = Object.freeze({
+	modeKey: 'northeastFurnitureMode',
+	source: Object.freeze({
+		ui: 'c2NortheastFurnitureMode',
+		runtime: 'r7310C1NortheastFurnitureRuntimeMode',
+		setter: 'window.setR7310C1NortheastFurnitureRuntimeMode'
+	}),
+	allowedValues: Object.freeze(['bed', 'wardrobe']),
+	defaultValue: 'bed',
+	packageByMode: Object.freeze({
+		bed: Object.freeze({
+			northWall: 'R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL',
+			eastWall: 'R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL',
+			eastWallBeamShadow: 'R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL'
+		}),
+		wardrobe: Object.freeze({
+			northWall: 'R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL',
+			eastWall: 'R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL',
+			eastWallBeamShadow: 'R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL'
+		})
+	})
+});
+const R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE = Object.freeze({
+	xMin: -0.035,
+	xMax: 1.91,
+	yMin: 0.0,
+	yMax: 0.29
+});
+const R7310_C1_NORTH_WALL_WARDROBE_CONTACT_CANDIDATE = Object.freeze({
+	xMin: 1.35,
+	xMax: 1.91,
+	yMin: 0.0,
+	yMax: 1.955
+});
+function r7310C1NorthWallHiddenByBedContact(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE);
+}
+function r7310C1NorthWallHiddenByWardrobeContact(x, y)
+{
+	return r7310C1InsideRectXY(x, y, R7310_C1_NORTH_WALL_WARDROBE_CONTACT_CANDIDATE);
+}
+const R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS = Object.freeze([
+	Object.freeze({
+		id: 'bedContact',
+		type: 'rectXY',
+		helper: 'r7310C1NorthWallHiddenByBedContact',
+		jsConstants: 'R7310_C1_NORTH_WALL_BED_CONTACT_CANDIDATE',
+		activeWhen: Object.freeze({
+			furnitureStateRef: 'northeastFurnitureMode',
+			equals: 'bed'
+		}),
+		executionLayer: 'diagnosticPackageMetadata',
+		status: 'diagnostic-frozen-superseded-by-full-north-wall-xatlas',
+		reason: 'bed mode D800 contact is retained only for 1b diagnostic package comparison'
+	}),
+	Object.freeze({
+		id: 'wardrobeContact',
+		type: 'rectXY',
+		helper: 'r7310C1NorthWallHiddenByWardrobeContact',
+		jsConstants: 'R7310_C1_NORTH_WALL_WARDROBE_CONTACT_CANDIDATE',
+		activeWhen: Object.freeze({
+			furnitureStateRef: 'northeastFurnitureMode',
+			equals: 'wardrobe'
+		}),
+		executionLayer: 'diagnosticPackageMetadata',
+		status: 'diagnostic-frozen-superseded-by-full-north-wall-xatlas',
+		reason: 'wardrobe mode D800 contact is retained only for 1b diagnostic package comparison'
+	})
+]);
+function r7310C1NormalizeNortheastFurnitureMode(mode)
+{
+	return mode === 'wardrobe' ? 'wardrobe' : 'bed';
+}
+function r7310C1NorthWallOwnerExcludedForMetadata(x, y, mode)
+{
+	var furnitureMode = r7310C1NormalizeNortheastFurnitureMode(mode);
+	return r7310C1NorthWallOwnerExcluded(x, y) ||
+		(furnitureMode === 'wardrobe' && r7310C1NorthWallHiddenByWardrobeContact(x, y)) ||
+		(furnitureMode === 'bed' && r7310C1NorthWallHiddenByBedContact(x, y));
+}
 const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
 	id: 'r7310-c1-xatlas-a1-north-wall',
 	surfaceId: 'north_wall',
 	surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
 	precedence: 200,
 	activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5',
+	status: 'active',
+	packageScope: 'sub-region',
+	supersedes: Object.freeze([]),
+	supersededBy: null,
 	claimSurfacePredicate: 'r7310C1RuntimeSurfaceIsNorthWall',
 	claimBounds: Object.freeze({
 		xMin: -1.912,
@@ -2137,6 +2298,7 @@ const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
 		functionName: 'buildR7310C1NorthWallTexelMetadataRect',
 		validityField: 'metadata[offset + 7]'
 	}),
+	furnitureStateRef: R7310_C1_NORTHEAST_FURNITURE_STATE_REF,
 	packageRefs: Object.freeze([
 		Object.freeze({
 			id: 'a1-xatlas-runtime',
@@ -2144,6 +2306,17 @@ const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
 			role: 'xatlas'
 		})
 	]),
+	packageByMode: Object.freeze({
+		bed: Object.freeze({
+			packageSelector: 'resolveR7310C1XatlasRuntimePackageUrl',
+			modePolicy: 'shared-a1-full4x-package'
+		}),
+		wardrobe: Object.freeze({
+			packageSelector: 'resolveR7310C1XatlasRuntimePackageUrl',
+			modePolicy: 'shared-a1-full4x-package'
+		})
+	}),
+	modeAwareExclusions: R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS,
 	packagePolicy: Object.freeze({
 		alphaMode: 'xatlas-c2c-alpha-r64',
 		validLinearMode: 'alpha-aware-valid-linear',
@@ -2156,12 +2329,77 @@ const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
 		packageAlphaAudit: 'docs/tests/r7-3-10-xatlas-c2c-contract.test.js'
 	})
 });
+const R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY = Object.freeze({
+	id: 'r7310-c1-xatlas-full-north-wall',
+	surfaceId: 'north_wall',
+	surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
+	precedence: 150,
+	activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5 && uR7310C1XatlasRuntimeMode>0.5 && uR7310C1XatlasRuntimeReady>0.5',
+	status: 'provisional',
+	packageScope: 'full-surface',
+	supersedes: Object.freeze(['r7310-c1-xatlas-a1-north-wall']),
+	supersededBy: null,
+	claimSurfacePredicate: 'r7310C1RuntimeSurfaceIsNorthWall',
+	claimBounds: R7310_C1_NORTH_WALL_WORLD_BOUNDS,
+	exclusions: R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.exclusions,
+	ownerEntry: Object.freeze({
+		shaderHelper: 'r7310C1NorthWallOwnerExcluded',
+		jsHelper: 'r7310C1NorthWallOwnerExcluded'
+	}),
+	bakePointMirror: Object.freeze({
+		shaderFunction: 'r7310C1BakeSurfacePoint',
+		patchId: 1002
+	}),
+	runtimeMirrors: Object.freeze([
+		'shader:r7310C1XatlasFullNorthWallUv:planned',
+		'shader:r7310C1BakeSurfacePoint:patchId=1002'
+	]),
+	jsMirrors: Object.freeze([
+		'js:r7310C1XatlasFullNorthWallUvFromWorldPosition:planned',
+		'js:buildR7310C1NorthWallTexelMetadataRect'
+	]),
+	metadataMirror: Object.freeze({
+		functionName: 'buildR7310C1NorthWallTexelMetadataRect',
+		validityField: 'metadata[offset + 7]'
+	}),
+	furnitureStateRef: R7310_C1_NORTHEAST_FURNITURE_STATE_REF,
+	packageRefs: Object.freeze([]),
+	packageByMode: Object.freeze({
+		bed: Object.freeze({
+			packageSelector: 'resolveR7310C1XatlasRuntimePackageUrl',
+			modePolicy: 'full-north-wall-package-pending'
+		}),
+		wardrobe: Object.freeze({
+			packageSelector: 'resolveR7310C1XatlasRuntimePackageUrl',
+			modePolicy: 'full-north-wall-package-pending'
+		})
+	}),
+	modeAwareExclusions: R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS,
+	packagePolicy: Object.freeze({
+		alphaMode: 'xatlas-c2c-alpha-r64',
+		validLinearMode: 'alpha-aware-valid-linear',
+		c2cAlphaReport: 'xatlas-c2c-alpha-report.json',
+		densityTargetMeters: 0.00125
+	}),
+	tests: Object.freeze({
+		staticContract: 'docs/tests/r7-3-10-xatlas-owner-policy-contract.test.js',
+		parityContract: 'docs/tests/r7-3-10-surface-owner-policy-registry-contract.test.js',
+		ownerGridSweep: 'docs/tests/r7-3-10-surface-owner-policy-grid-sweep.test.js',
+		packageAlphaAudit: 'docs/tests/r7-3-10-xatlas-c2c-contract.test.js',
+		normalLenAudit: 'phase2-full-wall-package-validation',
+		firstHitDirectLightAudit: 'docs/tests/r7-3-10-xatlas-final-source-probe.test.js'
+	})
+});
 const R7310_C1_D800_NORTH_WALL_OWNER_POLICY = Object.freeze({
 	id: 'r7310-c1-d800-north-wall',
 	surfaceId: 'north_wall',
 	surfaceName: R7310_C1_NORTH_WALL_SURFACE_NAME,
 	precedence: 100,
 	activationCondition: 'uR7310C1NorthWallDiffuseMode>0.5',
+	status: 'active',
+	packageScope: 'full-surface',
+	supersedes: Object.freeze([]),
+	supersededBy: null,
 	claimSurfacePredicate: 'r7310C1RuntimeSurfaceIsNorthWall',
 	claimBounds: R7310_C1_NORTH_WALL_WORLD_BOUNDS,
 	exclusions: R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.exclusions,
@@ -2184,13 +2422,34 @@ const R7310_C1_D800_NORTH_WALL_OWNER_POLICY = Object.freeze({
 		functionName: 'buildR7310C1NorthWallTexelMetadataRect',
 		validityField: 'metadata[offset + 7]'
 	}),
+	furnitureStateRef: R7310_C1_NORTHEAST_FURNITURE_STATE_REF,
 	packageRefs: Object.freeze([
 		Object.freeze({
-			id: 'd800-north-wall-runtime',
+			id: 'd800-north-wall-runtime-bed',
 			pointerPath: R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL,
-			role: 'd800'
+			role: 'd800',
+			expectedPointerMode: 'bed'
+		}),
+		Object.freeze({
+			id: 'd800-north-wall-runtime-wardrobe',
+			pointerPath: R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL,
+			role: 'd800',
+			expectedPointerMode: 'wardrobe'
 		})
 	]),
+	packageByMode: Object.freeze({
+		bed: Object.freeze({
+			packageRefId: 'd800-north-wall-runtime-bed',
+			pointerPath: R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL,
+			expectedPointerMode: 'bed'
+		}),
+		wardrobe: Object.freeze({
+			packageRefId: 'd800-north-wall-runtime-wardrobe',
+			pointerPath: R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL,
+			expectedPointerMode: 'wardrobe'
+		})
+	}),
+	modeAwareExclusions: R7310_C1_NORTH_WALL_FURNITURE_CONTACT_EXCLUSIONS,
 	packagePolicy: Object.freeze({
 		alphaMode: 'd800-north-wall-alpha',
 		validLinearMode: 'non-square-runtime-valid-linear'
@@ -2204,6 +2463,7 @@ const R7310_C1_D800_NORTH_WALL_OWNER_POLICY = Object.freeze({
 });
 const R7310_C1_SURFACE_OWNER_POLICIES = Object.freeze([
 	R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY,
+	R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY,
 	R7310_C1_D800_NORTH_WALL_OWNER_POLICY
 ]);
 function r7310C1SouthWallHiddenBySideColumn(x, y)
@@ -2357,6 +2617,7 @@ let r7310C1XatlasRuntimeDataTexture = null;
 let r7310C1XatlasRuntimePixels = null;
 let r7310C1XatlasRuntimeError = null;
 let r7310C1XatlasRuntimeSeparatedAlbedo = true;
+let r7310C1XatlasRuntimeFullNorthWallActive = false;
 
 function updateR7310C1XatlasRuntimeDomState(applied)
 {
@@ -2367,6 +2628,10 @@ function updateR7310C1XatlasRuntimeDomState(applied)
 	dataset.r7310XatlasRuntimeReady = r7310C1XatlasRuntimeReady ? '1' : '0';
 	dataset.r7310XatlasRuntimeApplied = applied ? '1' : '0';
 	dataset.r7310XatlasRuntimeError = r7310C1XatlasRuntimeError || '';
+	dataset.r7310XatlasRuntimeFullNorthWall = r7310C1XatlasRuntimeFullNorthWallActive ? '1' : '0';
+	dataset.r7310XatlasRuntimeScope = r7310C1XatlasRuntimePackage && r7310C1XatlasRuntimePackage.runtimeScope
+		? String(r7310C1XatlasRuntimePackage.runtimeScope)
+		: '';
 	dataset.r7310XatlasRuntimePackageDir = r7310C1XatlasRuntimePackage && r7310C1XatlasRuntimePackage.packageDir
 		? r7310C1XatlasRuntimePackage.packageDir
 		: '';
@@ -2404,6 +2669,46 @@ function r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition)
 			},
 		local01: { x: x01, y: y01 }
 	};
+}
+
+function r7310C1XatlasFullNorthWallUvFromWorldPosition(worldPosition)
+{
+	var p = worldPosition || {};
+	var x = Number(p.x);
+	var y = Number(p.y);
+	var z = Number(p.z);
+	if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z))
+		return { mapped: false, reason: 'non_finite_world_position' };
+	if (!r7310C1NorthWallDiffuseRuntimeEnabled)
+		return { mapped: false, reason: 'north_wall_runtime_off' };
+	if (!r7310C1XatlasRuntimeEnabled)
+		return { mapped: false, reason: 'xatlas_runtime_disabled' };
+	if (!r7310C1XatlasRuntimeReady || !r7310C1XatlasRuntimePackage || !r7310C1XatlasRuntimePixels)
+		return { mapped: false, reason: 'xatlas_runtime_not_ready' };
+	if (!r7310C1XatlasRuntimeFullNorthWallActive)
+		return { mapped: false, reason: 'xatlas_full_north_wall_scope_off' };
+	if (x < -2.11 || x > 2.11 || y < -0.002 || y > 2.907 || Math.abs(z + 1.874) > 0.006)
+		return { mapped: false, reason: 'outside_full_north_wall_bounds' };
+	if (r7310C1NorthWallOwnerExcluded(x, y))
+		return { mapped: false, reason: 'owner_excluded' };
+	var y01 = Math.max(0, Math.min(1, y / 2.905));
+	var x01 = Math.max(0, Math.min(1, (x + 2.11) / 4.22));
+	return {
+		mapped: true,
+		reason: 'mapped',
+		atlasUv: {
+			u: (0.9997849464 * (1 - y01)) + (0.0002150538 * y01),
+			v: (0.0001480604 * (1 - x01)) + (0.9998519421 * x01)
+		},
+		local01: { x: x01, y: y01 }
+	};
+}
+
+function r7310C1XatlasNorthWallUvFromWorldPosition(worldPosition)
+{
+	if (r7310C1XatlasRuntimeFullNorthWallActive)
+		return r7310C1XatlasFullNorthWallUvFromWorldPosition(worldPosition);
+	return r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition);
 }
 
 function r7310C1XatlasRuntimeCpuTexel(pixelX, pixelY)
@@ -2923,6 +3228,8 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 			pathTracingUniforms.uR7310C1XatlasRuntimeReady.value = r7310C1XatlasRuntimeReady ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo)
 			pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo.value = r7310C1XatlasRuntimeSeparatedAlbedo ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullNorthWallActive ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize && r7310C1XatlasRuntimePackage)
 			pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(
 				Math.max(1, Math.trunc(Number(r7310C1XatlasRuntimePackage.targetAtlasWidth) || 1)),
@@ -3281,6 +3588,92 @@ function r7310C1EastWallBeamShadowActiveRuntimeError()
 	return r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'
 		? r7310C1EastWallBeamShadowWardrobeRuntimeError
 		: r7310C1EastWallBeamShadowRuntimeError;
+}
+
+function r7310C1NorthWallPackageUrlForMode(mode)
+{
+	return resolveR7310C1NorthWallRuntimePackageUrlForMode(mode);
+}
+
+function r7310C1PointInPolicyBounds(point, bounds)
+{
+	if (!point || !bounds)
+		return false;
+	var x = Number(point.x);
+	var y = Number(point.y);
+	var z = Number(point.z);
+	if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z))
+		return false;
+	var zTolerance = Number.isFinite(Number(bounds.zTolerance)) ? Number(bounds.zTolerance) : 0.006;
+	return x >= bounds.xMin && x <= bounds.xMax &&
+		y >= bounds.yMin && y <= bounds.yMax &&
+		Math.abs(z - bounds.z) <= zTolerance;
+}
+
+function r7310C1NorthWallFurnitureOwnerRouteForPoint(point, options)
+{
+	var opts = options || {};
+	var mode = opts.mode === 'wardrobe' ? 'wardrobe' : 'bed';
+	if (!Object.prototype.hasOwnProperty.call(opts, 'mode'))
+		mode = r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' ? 'wardrobe' : 'bed';
+	var northWallEnabled = Object.prototype.hasOwnProperty.call(opts, 'northWallDiffuseMode')
+		? !!opts.northWallDiffuseMode
+		: !!r7310C1NorthWallDiffuseRuntimeEnabled;
+	var xatlasEnabled = Object.prototype.hasOwnProperty.call(opts, 'xatlasRuntimeMode')
+		? !!opts.xatlasRuntimeMode
+		: !!r7310C1XatlasRuntimeEnabled;
+	var xatlasReady = Object.prototype.hasOwnProperty.call(opts, 'xatlasRuntimeReady')
+		? !!opts.xatlasRuntimeReady
+		: !!r7310C1XatlasRuntimeReady;
+	var ownerExcluded = !!(point && r7310C1NorthWallOwnerExcluded(Number(point.x), Number(point.y)));
+	var d800InBounds = r7310C1PointInPolicyBounds(point, R7310_C1_D800_NORTH_WALL_OWNER_POLICY.claimBounds);
+	var fullXatlasInBounds = r7310C1PointInPolicyBounds(point, R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY.claimBounds);
+	var a1InBounds = r7310C1PointInPolicyBounds(point, R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.claimBounds);
+	var activeOwners = [];
+	var d800PackageUrl = r7310C1NorthWallPackageUrlForMode(mode);
+	var xatlasPackageUrl = Object.prototype.hasOwnProperty.call(opts, 'xatlasPackageUrl')
+		? opts.xatlasPackageUrl
+		: resolveR7310C1XatlasRuntimePackageUrl();
+	if (northWallEnabled && d800InBounds && !ownerExcluded)
+	{
+		activeOwners.push({
+			id: R7310_C1_D800_NORTH_WALL_OWNER_POLICY.id,
+			precedence: R7310_C1_D800_NORTH_WALL_OWNER_POLICY.precedence,
+			mode: mode,
+			pointerPath: d800PackageUrl,
+			ready: r7310C1NorthWallActiveDiffuseRuntimeReady()
+		});
+	}
+	if (northWallEnabled && xatlasEnabled && xatlasReady && a1InBounds && !ownerExcluded)
+	{
+		activeOwners.push({
+			id: R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.id,
+			precedence: R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY.precedence,
+			mode: mode,
+			pointerPath: xatlasPackageUrl,
+			ready: !!r7310C1XatlasRuntimeReady
+		});
+	}
+	activeOwners.sort(function(a, b) { return b.precedence - a.precedence; });
+	return {
+		mode: mode,
+		point: point || null,
+		ownerExcluded: ownerExcluded,
+		northWallPackageUrl: d800PackageUrl,
+		activeNorthWallPackageMode: r7310C1NorthWallActiveDiffuseRuntimePackage()
+			? r7310C1NorthWallActiveDiffuseRuntimePackage().northeastFurnitureMode
+			: null,
+		xatlasPackageUrl: xatlasPackageUrl,
+		xatlasReady: !!r7310C1XatlasRuntimeReady,
+		d800InBounds: d800InBounds,
+		fullXatlasInBounds: fullXatlasInBounds,
+		fullXatlasPolicyStatus: R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY.status,
+		fullXatlasTransitionPrecedence: R7310_C1_XATLAS_FULL_NORTH_WALL_OWNER_POLICY.precedence,
+		a1InBounds: a1InBounds,
+		activeOwners: activeOwners,
+		winner: activeOwners.length ? activeOwners[0].id : 'none',
+		phase: 'phase1-route-probe'
+	};
 }
 
 function createR7310C1BlackRuntimeSlot(resolution)
@@ -3981,32 +4374,35 @@ async function loadR7310C1XatlasRuntimePackage()
 				r7310C1XatlasRuntimeEnabled = false;
 				r7310C1XatlasRuntimeReady = false;
 				r7310C1XatlasRuntimePixels = null;
+				r7310C1XatlasRuntimeFullNorthWallActive = false;
 				updateR7310C1FullRoomDiffuseRuntimeUniforms();
 				return null;
 			}
 			r7310C1XatlasRuntimeEnabled = true;
 			var pointerResponse = await fetch(packageUrl, { cache: 'no-store' });
 			if (!pointerResponse.ok)
-				throw new Error('R7-3.10 xatlas A1 runtime pointer not found');
+				throw new Error('R7-3.10 xatlas runtime pointer not found');
 			var pointer = await pointerResponse.json();
 			var targetAtlasWidth = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
 			var targetAtlasHeight = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
-			if (pointer.packageStatus !== 'architecture_probe' || pointer.runtimeScope !== 'c1_xatlas_a1_c2c_runtime_smoke')
-				throw new Error('R7-3.10 xatlas A1 runtime pointer failed contract');
+			var allowedRuntimeScope = pointer.runtimeScope === 'c1_xatlas_a1_c2c_runtime_smoke' ||
+				pointer.runtimeScope === 'c1_xatlas_full_north_wall_runtime';
+			if (pointer.packageStatus !== 'architecture_probe' || !allowedRuntimeScope)
+				throw new Error('R7-3.10 xatlas runtime pointer failed contract');
 			if (pointer.runtimeTexture !== 'tR7310C1XatlasRuntimeAtlasTexture')
-				throw new Error('R7-3.10 xatlas A1 runtime texture contract mismatch');
+				throw new Error('R7-3.10 xatlas runtime texture contract mismatch');
 			if (targetAtlasWidth <= 0 || targetAtlasHeight <= 0)
-				throw new Error('R7-3.10 xatlas A1 runtime atlas size mismatch');
+				throw new Error('R7-3.10 xatlas runtime atlas size mismatch');
 			var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
 			if (!atlasArtifact)
-				throw new Error('R7-3.10 xatlas A1 runtime atlas artifact missing');
+				throw new Error('R7-3.10 xatlas runtime atlas artifact missing');
 			var expectedBytes = targetAtlasWidth * targetAtlasHeight * 4 * 4;
 			var atlasResponse = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
 			if (!atlasResponse.ok)
-				throw new Error('R7-3.10 xatlas A1 runtime atlas binary not found');
+				throw new Error('R7-3.10 xatlas runtime atlas binary not found');
 			var atlasBuffer = await atlasResponse.arrayBuffer();
 			if (atlasBuffer.byteLength !== expectedBytes)
-				throw new Error('R7-3.10 xatlas A1 runtime atlas binary length mismatch');
+				throw new Error('R7-3.10 xatlas runtime atlas binary length mismatch');
 			var atlasPixels = new Float32Array(atlasBuffer);
 			// R7-3.10 C2C 根因修復(CC 2026-06-07)：atlas-patch 是 runner readback 產物，
 			// bake prepare(prepareR7310C1XatlasBakeTextures 5595-5597)已對 worldpos/normal
@@ -4017,10 +4413,11 @@ async function loadR7310C1XatlasRuntimePackage()
 			var uploadPixels = atlasPixels;
 			r7310C1XatlasRuntimePackage = pointer;
 			r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
+			r7310C1XatlasRuntimeFullNorthWallActive = pointer.runtimeScope === 'c1_xatlas_full_north_wall_runtime';
 			r7310C1XatlasRuntimePixels = uploadPixels;
 			r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(uploadPixels, targetAtlasWidth, targetAtlasHeight);
 			if (!r7310C1XatlasRuntimeDataTexture)
-				throw new Error('R7-3.10 xatlas A1 runtime DataTexture failed');
+				throw new Error('R7-3.10 xatlas runtime DataTexture failed');
 			r7310C1XatlasRuntimeReady = true;
 			updateR7310C1FullRoomDiffuseRuntimeUniforms();
 			resetR738MainAccumulation();
@@ -4031,6 +4428,7 @@ async function loadR7310C1XatlasRuntimePackage()
 		{
 			r7310C1XatlasRuntimeReady = false;
 			r7310C1XatlasRuntimePixels = null;
+			r7310C1XatlasRuntimeFullNorthWallActive = false;
 			r7310C1XatlasRuntimeError = error && error.message ? error.message : String(error);
 			updateR7310C1FullRoomDiffuseRuntimeUniforms();
 			throw error;
@@ -4104,8 +4502,9 @@ async function loadR7310C1NorthWallDiffuseRuntimePackage()
 		try
 		{
 			r7310C1NorthWallDiffuseRuntimeError = null;
-			var pointerResponse = await fetch(R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
-			if (!pointerResponse.ok)
+			var pointerUrl = resolveR7310C1NorthWallRuntimePackageUrlForMode('bed');
+			var pointerResponse = await fetch(pointerUrl, { cache: 'no-store' });
+			if (!pointerResponse.ok && pointerUrl === R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL)
 				pointerResponse = await fetch(R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL, { cache: 'no-store' });
 			if (!pointerResponse.ok)
 				throw new Error('R7-3.10 north wall diffuse runtime pointer not found');
@@ -4214,7 +4613,7 @@ async function loadR7310C1NorthWallWardrobeDiffuseRuntimePackage()
 		try
 		{
 			r7310C1NorthWallWardrobeDiffuseRuntimeError = null;
-			var pointerResponse = await fetch(R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL, { cache: 'no-store' });
+			var pointerResponse = await fetch(resolveR7310C1NorthWallRuntimePackageUrlForMode('wardrobe'), { cache: 'no-store' });
 			if (!pointerResponse.ok)
 				throw new Error('R7-3.10 north wall wardrobe diffuse runtime pointer not found');
 			var pointer = await pointerResponse.json();
@@ -6060,7 +6459,7 @@ function buildR7310C1FloorTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
-function buildR7310C1NorthWallTexelMetadataRect(width, height)
+function buildR7310C1NorthWallTexelMetadataRect(width, height, options)
 {
 	var safeWidth = Math.max(1, Math.trunc(Number(width) || 1));
 	var safeHeight = Math.max(1, Math.trunc(Number(height) || 1));
@@ -6095,9 +6494,9 @@ function buildR7310C1NorthWallTexelMetadataRect(width, height)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, safeWidth * safeHeight) };
 }
 
-function buildR7310C1NorthWallTexelMetadata(size)
+function buildR7310C1NorthWallTexelMetadata(size, options)
 {
-	return buildR7310C1NorthWallTexelMetadataRect(size, size);
+	return buildR7310C1NorthWallTexelMetadataRect(size, size, options);
 }
 
 function buildR7310C1EastWallTexelMetadataRect(width, height)
@@ -10458,6 +10857,11 @@ window.setR7310C1NortheastFurnitureRuntimeMode = function(mode)
 	return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
 };
 
+window.reportR7310C1NorthWallFurnitureOwnerRouteProbe = function(point, options)
+{
+	return r7310C1NorthWallFurnitureOwnerRouteForPoint(point, options);
+};
+
 window.setR7310C1WestWallDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1WestWallDiffuseRuntimeEnabled = !!enabled;
@@ -10702,11 +11106,14 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 			xatlasRuntime: {
 				enabled: r7310C1XatlasRuntimeEnabled,
 				ready: r7310C1XatlasRuntimeReady,
+				fullNorthWallActive: r7310C1XatlasRuntimeFullNorthWallActive,
 				packageDir: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.packageDir : null,
+				runtimeScope: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.runtimeScope : null,
 				targetAtlasWidth: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.targetAtlasWidth : null,
 				targetAtlasHeight: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.targetAtlasHeight : null,
 				uniformMode: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeMode ? pathTracingUniforms.uR7310C1XatlasRuntimeMode.value : null,
 				uniformReady: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeReady ? pathTracingUniforms.uR7310C1XatlasRuntimeReady.value : null,
+				uniformFullNorthWall: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode ? pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode.value : null,
 				error: r7310C1XatlasRuntimeError
 			},
 			enabled: r7310C1AnyFullRoomDiffuseSurfaceEnabled(),
@@ -12158,7 +12565,7 @@ window.reportR7310C1XatlasRuntimeDiagnostic = async function(options)
 		var baseSample = sampleSourceReport && sampleSourceReport.samplePoints ? (sampleSourceReport.samplePoints[sampleIndex] || {}) : {};
 		var worldPosition = worldSample.decoded || null;
 		var mapping = worldPosition
-			? r7310C1XatlasA1NorthWallUvFromWorldPosition(worldPosition)
+			? r7310C1XatlasNorthWallUvFromWorldPosition(worldPosition)
 			: { mapped: false, reason: 'world_probe_not_requested' };
 		var xatlasSample = mapping.mapped
 			? r7310C1XatlasRuntimeCpuSampleValidLinear(mapping.atlasUv)

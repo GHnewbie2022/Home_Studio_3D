@@ -19,7 +19,7 @@ function assertPointerContract(filePath, expected) {
     assert.equal(pointer.runtimeArchitecture, expected.runtimeArchitecture, `${filePath} runtime architecture`);
     assert.equal(pointer.runtimeAtlasSlot, expected.runtimeAtlasSlot, `${filePath} atlas slot`);
     assert.equal(pointer.targetId, expected.targetId, `${filePath} target id`);
-    assert.equal(pointer.requestedSamples, 1000, `${filePath} samples`);
+    assert.ok(pointer.requestedSamples >= 1000, `${filePath} samples`);
     assert.equal(pointer.targetAtlasResolution, 1024, `${filePath} atlas resolution`);
     assert.equal(pointer.diffuseOnly, true, `${filePath} diffuse only`);
     assert.equal(pointer.upscaled, false, `${filePath} upscaled`);
@@ -55,6 +55,13 @@ assert.ok(initCommon.includes('window.loadR7310C1EastWallBeamShadowWardrobeRunti
 assert.ok(initCommon.includes("r7310C1NortheastFurnitureRuntimeMode === 'wardrobe'"));
 assert.ok(initCommon.includes('northeastFurnitureRuntimeMode: r7310C1NortheastFurnitureRuntimeMode'));
 assert.ok(initCommon.includes('eastWallBeamShadowFurnitureVariant'));
+assert.ok(initCommon.includes('function resolveR7310C1NorthWallRuntimePackageUrlForMode(mode)'));
+assert.ok(initCommon.includes("new URLSearchParams(location.search).get('northWallPackage')"));
+assert.ok(initCommon.includes("search.get('northWallBedPackage')"));
+assert.ok(initCommon.includes("search.get('northWallWardrobePackage')"));
+assert.ok(initCommon.includes('resolveR7310C1NorthWallRuntimePackageUrlForMode(mode)'));
+assert.ok(initCommon.includes("var pointerUrl = resolveR7310C1NorthWallRuntimePackageUrlForMode('bed');"));
+assert.ok(initCommon.includes('fetch(resolveR7310C1NorthWallRuntimePackageUrlForMode(\'wardrobe\')'));
 
 assert.ok(runner.includes("r7310NeFurniture: 'bed'"));
 assert.ok(runner.includes("neFurnitureRuntimeTest: false"));

@@ -102,7 +102,7 @@ assert.match(
 assert.match(
 	initCommon,
 	/r7310C1NorthWallOwnerExcluded\(\s*worldX\s*,\s*worldY\s*\)/,
-	'InitCommon.js: north-wall metadata builder must use r7310C1NorthWallOwnerExcluded(worldX, worldY)'
+	'InitCommon.js: north-wall metadata builder must use owner exclusion'
 );
 
 console.log('R7-3.10 north-wall beam-gap JS<->shader contract passed');

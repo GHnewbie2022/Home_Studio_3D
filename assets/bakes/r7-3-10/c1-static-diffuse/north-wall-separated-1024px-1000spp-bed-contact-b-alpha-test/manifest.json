@@ -1,0 +1,62 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "config": 1,
+  "northeastFurnitureMode": "bed",
+  "batch": "north_wall",
+  "targetId": 1002,
+  "surfaceName": "c1_north_wall",
+  "worldBounds": {
+    "xMin": -2.11,
+    "xMax": 2.11,
+    "yMin": 0,
+    "yMax": 2.905,
+    "z": -1.874
+  },
+  "createdAt": "2026-06-11T16:27:26.722Z",
+  "branch": "codex-r7-3-10-b-safe-phase0",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 1024,
+  "targetAtlasWidth": 1024,
+  "targetAtlasHeight": 1024,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "packageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-wall-separated-1024px-1000spp-bed-contact-b-alpha-test",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  },
+  "modeAwareMetadataAlpha": {
+    "mode": "bed",
+    "contact": {
+      "id": "bedContact",
+      "xMin": -0.035,
+      "xMax": 1.91,
+      "yMin": 0,
+      "yMax": 0.29
+    },
+    "sourcePointerPath": "docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json",
+    "sourcePackageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-wall-separated-1024px-1000spp",
+    "outputPointerPath": "docs/data/r7-3-10-c1-north-wall-separated-bed-contact-b-alpha-test-runtime-package.json",
+    "outputPackageDir": "assets/bakes/r7-3-10/c1-static-diffuse/north-wall-separated-1024px-1000spp-bed-contact-b-alpha-test",
+    "texelCount": 1048576,
+    "contactTexels": 48042,
+    "newlyInvalidatedTexels": 48042,
+    "invalidTexels": 292876,
+    "validTexels": 755700,
+    "validTexelRatio": 0.7206916809082031,
+    "invalidAtlasAlphaOneBefore": 48042,
+    "invalidBrightTexelsBefore": 1513,
+    "maxInvalidLumaBefore": 0.4934264205634594,
+    "invalidAtlasAlphaOneAfter": 0,
+    "invalidBrightTexelsAfter": 0
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "ccd655d65f677cedf0565603127f16e29d1ddf0ad4babee4afc65945aa703c21",
+    "texelMetadataPatch0Sha256": "71135d68e389bba4bf6dfc1f9e050e9bd056cedd4991da227c3922c19bad70b3"
+  }
+}

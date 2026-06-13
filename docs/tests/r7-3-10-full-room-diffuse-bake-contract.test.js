@@ -157,6 +157,10 @@ const r7310RuntimeLoader = initCommon.slice(
   initCommon.indexOf('async function loadR7310C1FullRoomDiffuseRuntimePackage'),
   initCommon.indexOf('async function loadR7310C1NorthWallDiffuseRuntimePackage')
 );
+const northWallBakeReportBlock = initCommon.slice(
+  initCommon.indexOf('window.reportR7310C1NorthWallDiffuseBakeAfterSamples'),
+  initCommon.indexOf('window.reportR7310C1EastWallDiffuseBakeAfterSamples')
+);
 function runtimeLoaderBlock(functionName, nextFunctionName)
 {
   const start = initCommon.indexOf(`async function ${functionName}`);
@@ -273,7 +277,13 @@ assert.deepEqual(contract.c1NorthWallBatch.invalidTexelRegions.beamGapSlivers, {
     yMax: 2.905
   }
 });
+assert.equal(contract.c1NorthWallBatch.invalidTexelRegions.bedContact, undefined);
 assert.equal(contract.c1NorthWallBatch.invalidTexelRegions.wardrobeContact, undefined);
+assert.doesNotMatch(
+  northWallBakeReportBlock,
+  /\bbedContact\b|\bwardrobeContact\b/,
+  'official north-wall full-room bake report must not reintroduce frozen D800 contact regions'
+);
 assert.deepEqual(contract.c1EastWallBatch.worldBounds, {
   zMin: -1.874,
   zMax: 3.056,

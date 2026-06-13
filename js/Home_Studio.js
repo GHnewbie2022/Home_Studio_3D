@@ -5606,6 +5606,7 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
