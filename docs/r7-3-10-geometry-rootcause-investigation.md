@@ -4,7 +4,7 @@
 
 用途：回答使用者就寢前指定的調查——「把『剛好重合』改成 Blender 那種『重疊穿透』的幾何，能不能根治烘焙黑線?」並依結果路由到三情境之一。供 CODEX 流量重置後跟上、審查、討論。
 
-狀態（紅線遵守）：本檔為 read-only 分析。未動 shader / JS / 幾何、未重烤、未 commit、未 push、未碰 Brave。LIVE 原樣。下方「實證確認測試」屬『指定但未執行』，理由見 §5。
+狀態（紅線遵守）：分析 + 實證蓋章已完成。§5 實證測試已於『拋棄分支 experiment/r7-3-10-interpenetration-stamp』執行（helper-disable 與床幾何穿透均為拋棄改動，測完已 git checkout 全部回滾，工作區確認乾淨）。main 與 arch-cure 未動、未重烤 production、未 push、未碰 Brave、LIVE 原樣。
 
 接手必讀順序：本檔 → `docs/r7-3-10-arch-cure-plain-consensus-for-opus.md`（V6 多階段計畫主準，§3 階段地圖、§6 PASS 條件）→ `docs/r7-3-10-b1-preflight-design.md`（B1 前評）。
 
@@ -13,11 +13,14 @@
 ## 0. 結論與三情境路由
 
 ```text
-調查結論：重疊穿透（interpenetration）預期『治不了』這條黑線。
+調查結論：重疊穿透（interpenetration）『治不了』這條黑線。已實證蓋章。
 路由：→ 情境 2（回頭開發「跳過接觸邊鄰體第一次命中」的防護，即 Blender 缺、需自製的那把刀＝B1）。
 
-把握度：本結論為『分析＋既有量測數據』推得，非本輪新烤。但有一條決定性的『實測既成事實』背書（見 §4 第 2 點），
-       故信賴度高。仍指定一個最終實證確認測試（§5），待使用者醒後或 CODEX 重置後執行以蓋章。
+實證蓋章（2026-06-14 夜，OPUS 自主烤測，bed_top）：
+  helper-ON（治好）      mean 0.4117（= spike oracle 0.412，count 7750 完全吻合）
+  OFF（黑線原貌）        mean 0.2730（= spike OFF 0.273）
+  OFF + 重疊穿透         mean 0.2730（與 OFF 逐位元同，連 p50 0.2595 都一樣）
+  → 重疊穿透對黑線零作用，分析與實測完全一致。詳見 §5。
 ```
 
 理由一句話：黑線發生在『兩個互相垂直的面相接的那條邊』（牆面 vs 床頂面／樑側面），是「接觸邊退化」；重疊穿透只動鄰體『沿法線方向、藏在牆裡的背面』，動不到那條接觸邊，所以治不了。
@@ -119,26 +122,35 @@ C. coincident（剛好重合）vs overlapping（重疊穿透）有別。
 
 ---
 
-## 5. 實證確認測試（指定，但本夜未執行；理由在內）
+## 5. 實證確認測試（已執行，2026-06-14 夜，OPUS 自主）
 
 ```text
-為何未自主執行（三個具體阻塞）：
-  1. helper-OFF baseline 不可得：要看「黑線在不在」，需把手動 helper 關掉跑;但 OFF/guard 切換鷹架
-     已在 A-narrow 收尾（BLOCKER 2）整批移除，現行 shader 無 OFF 旗標。要重做 A/B 得先重加一段 throwaway 鷹架。
-  2. xatlas 烤管線參數多（--xatlas-bake / texelmap-dir / validity-mask / 非預設 angle）本輪未握實值;
-     且 Metal headless 有 17 sampler>16 既知風險。
-  3. 幾何與 LIVE 共用，改了須確實還原。無人看顧下硬跑，有『改了沒還原、留髒樹給使用者醒來收拾』的風險。
-  依使用者一貫偏好（乾淨交接、勿留半成品狀態），改為『指定測試、待醒後或 CODEX 執行』。
-  註：上述三阻塞反而強化 §4 結論——真要實測得先重建鷹架，成本不低，而分析（含 ray_offset 零作用實測）已足以路由。
+結果（bed_top，xatlas 2325×3377、10 SPP、phase2 一致三件組 texelmap+mask）：
+  helper-ON（治好基準）   count 7750  mean 0.4117  p50 0.4050   ← 對齊 spike oracle 0.412，管線驗證通過
+  OFF（黑線原貌）         count 7750  mean 0.2730  p50 0.2595   ← 對齊 spike OFF 0.273，helper 關閉正確
+  OFF + 重疊穿透          count 7750  mean 0.2730  p50 0.2595   ← 與 OFF 逐位元相同
+裁定：重疊穿透對 bed_top 黑線『零作用』，未往治好的 0.412 移動半分。確認情境 2。
 
-測試設計（給 CODEX / 醒後執行）：
-  1. baseline：沿用既有 LEGACY/OFF 量測（.omc/r7-3-10-b1-spike-atlas-line-analysis-10spp-base.json）。
-  2. A/B：把床盒 min.z 由 -1.874 改 -2.0（重疊穿透牆），其他不動;
-     用 spike 同一套 xatlas 烤 + r7-3-10-b1-spike-atlas-line-analyze.mjs 量 bed_top mean。
-  3. 判讀：bed_top mean 跳到 ~0.41 → 重疊穿透有效（翻轉本結論、回情境 1）;
-          維持 ~0.27 → 確認無效（蓋章情境 2）。
-  4. 強制 Chrome、不碰 Brave;測完 `git checkout js/Home_Studio.js` 還原幾何，確認 git diff 乾淨。
-預期：維持 ~0.27（依 §4）。此測試是『蓋章』，非『翻案賭注』。
+方法（三個原阻塞如何克服）：
+  1. helper-OFF：在拋棄分支把 r7310C1XatlasBakeCoplanarLiftedSurfacePoint 改為直接回傳原點（無 unreachable code）。
+  2. xatlas 管線：找到 phase2 一致三件組
+     .omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-231459/xatlas-bake-full-north-wall/
+     （texelmap.bin + c2c validity mask + worldpos），配 --atlas-width=2325 --atlas-height=3377
+     --r7310-bake-tile-width=512 --r7310-bake-tile-height=512 --r7310-bake-submission-boundary=fence。
+     analyzer 寫死 2325×3377，故必須用此尺寸（衍生小 atlas 不可用）。
+  3. 幾何還原：床盒 min.z -1.874→-2.0 為拋棄改動，測完 git checkout 還原，工作區已確認乾淨。
+  強制 Chrome、未碰 Brave；全程在 experiment/r7-3-10-interpenetration-stamp 拋棄分支，main 與 arch-cure 未動。
+
+烤製指令（可重現，給 CODEX）：
+  D=.omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-231459/xatlas-bake-full-north-wall
+  node docs/tools/r7-3-8-c1-bake-capture-runner.mjs --r7310-xatlas-bake \
+    --xatlas-texelmap-dir=$D --xatlas-validity-mask=$D/xatlas-bake-c2c-full-wall-validity-mask-rgba32f.bin \
+    --atlas-width=2325 --atlas-height=3377 --target-samples=10 \
+    --r7310-bake-tile-width=512 --r7310-bake-tile-height=512 --r7310-bake-submission-boundary=fence \
+    --angle=metal --browser=chrome --browser-path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --http-port=9012 --cdp-port=9233 --timeout-ms=600000
+  量測：node docs/tools/r7-3-10-b1-spike-atlas-line-analyze.mjs --pkg=LABEL:<package dir>
+  （status fail=validation 預期正式 SPP，artifact 已完整、量測有效，與 A-narrow 同情況）
 ```
 
 ---
@@ -187,5 +199,5 @@ C. coincident（剛好重合）vs overlapping（重疊穿透）有別。
 ```text
 本檔只新增此 MD。未動 shader / JS / 幾何、未重烤、未 commit、未 push、未碰 Brave。LIVE 原樣。
 A-wide 不動、B3 不啟動。
-§5 實證測試指定未執行。任何 shader/JS/幾何改動、重烤、commit、push 仍須使用者當次拍板。
+§5 實證測試已執行（拋棄分支、改動已回滾、工作區乾淨）。後續 B1 任何 shader/JS/幾何改動、重烤、commit、push 仍須使用者當次拍板。
 ```
