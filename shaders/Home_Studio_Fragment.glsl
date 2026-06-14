@@ -128,6 +128,8 @@ uniform float uR7310C1XatlasRuntimeReady;
 uniform vec2 uR7310C1XatlasRuntimeAtlasSize;
 uniform float uR7310C1XatlasRuntimeSeparatedAlbedo;
 uniform float uR7310C1XatlasRuntimeFullNorthWallMode;
+uniform float uR7310C1XatlasRuntimeFullEastWallMode;
+uniform float uR7310C1XatlasRuntimeStackedMode;
 uniform float uR7310C1NorthWallSeparatedDiffuseMode;
 uniform float uR7310C1UseNonSquareAtlas;
 uniform float uR7310C1NonSquareAtlasReady;
@@ -672,6 +674,7 @@ const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE = 0;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP = 1;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM = 2;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM = 3;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP = 4;
 // R7-3.10 source.md §39-§40: confirmed bed-top coplanar bake bug line.
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN = -0.027;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX = 1.910;
@@ -684,6 +687,12 @@ const float R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX = 2.905;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X = 1.850;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN = 2.516;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX = 2.905;
+
+// 東牆 bed-top 接觸邊（床東面 x=1.91 與東牆共面、床頂 y=0.28、z 為床深度範圍）
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X = 1.910;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y = 0.280;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MIN = -1.874;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MAX = -0.314;
 bool r7310C1NorthWallHiddenByBeamGap(float x, float y)
 {
 	// R7-3.10 global seam hardening (OPUS 2026-06-03): mirror JS
@@ -1254,6 +1263,7 @@ bool r7310C1XatlasRuntimeSampleValidLinear(vec2 atlasUv, out vec3 radiance)
 	return false;
 }
 bool r7310C1RuntimeSurfaceIsNorthWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
+bool r7310C1RuntimeSurfaceIsEastWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
 bool r7310C1XatlasA1NorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
 	if (uR7310C1NorthWallDiffuseMode < 0.5 ||
@@ -1308,8 +1318,8 @@ vec3 r7310C1XatlasA1TriangleProbeColor(float triangleId)
 }
 bool r7310C1XatlasFullNorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
-	if (uR7310C1NorthWallDiffuseMode < 0.5 ||
-		uR7310C1XatlasRuntimeMode < 0.5 ||
+	// guard 解耦：只依 xatlas 北牆 mode（不再要求 NorthWallDiffuseMode），讓開關獨立於該牆烘焙鈕
+	if (uR7310C1XatlasRuntimeMode < 0.5 ||
 		uR7310C1XatlasRuntimeReady < 0.5 ||
 		uR7310C1XatlasRuntimeFullNorthWallMode < 0.5)
 	{
@@ -1335,9 +1345,52 @@ bool r7310C1XatlasFullNorthWallUv(int visibleHitType, float visibleObjectID, vec
 	}
 	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
 	float x01 = clamp((visiblePosition.x + 2.11) / 4.22, 0.0, 1.0);
+	// 堆疊模式：北段佔合成貼圖上段；交界往內縮 ~4px（3377→~3373）避免 bilinear 跨段滲色到東牆
+	float vScaleN = (uR7310C1XatlasRuntimeStackedMode > 0.5) ? 0.4608 : 1.0;
 	atlasUv = vec2(
 			mix(0.9997849464, 0.0002150538, y01),
-			mix(0.0001480604, 0.9998519421, x01)
+			mix(0.0001480604, 0.9998519421, x01) * vScaleN
+		);
+	return true;
+}
+bool r7310C1XatlasFullEastWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	// 東牆真非方格 xatlas runtime（與北牆 FullNorthWallUv 對稱；固定 x=1.91、自由軸 z/y、法線 -X）
+	// guard 解耦：只依 xatlas 東牆 mode（不再要求 EastWallDiffuseMode）
+	if (uR7310C1XatlasRuntimeMode < 0.5 ||
+		uR7310C1XatlasRuntimeReady < 0.5 ||
+		uR7310C1XatlasRuntimeFullEastWallMode < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (!r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (visiblePosition.y < -0.002 || visiblePosition.y > 2.907 ||
+		visiblePosition.z < -1.876 || visiblePosition.z > 3.058 ||
+		abs(visiblePosition.x - 1.91) > 0.006)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (r7310C1EastWallHiddenByBeamOrSeColumn(visiblePosition.z, visiblePosition.y))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	// u 軸=worldY（÷2.905）、v 軸=worldZ（(z+1.874)/4.93）；V 用 east prepare rowFlippedRuntime 常數
+	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
+	float z01 = clamp((visiblePosition.z + 1.874) / 4.93, 0.0, 1.0);
+	// 堆疊模式：東段佔合成貼圖下段；起點從交界往內縮 ~4px（3377→~3381）避免 bilinear 取到北段（綠斑根因）
+	float stackedE = (uR7310C1XatlasRuntimeStackedMode > 0.5) ? 1.0 : 0.0;
+	float vScaleE = mix(1.0, 0.53817, stackedE);
+	float vOffE = mix(0.0, 0.46176, stackedE);
+	atlasUv = vec2(
+			mix(0.9997849464, 0.0002150538, y01),
+			vOffE + mix(0.0001267195, 0.9998732573, z01) * vScaleE
 		);
 	return true;
 }
@@ -1357,8 +1410,13 @@ vec3 r7310C1XatlasFullNorthWallTriangleProbeColor(float triangleId)
 }
 bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
-	if (uR7310C1XatlasRuntimeFullNorthWallMode > 0.5)
-		return r7310C1XatlasFullNorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+	// 非互斥：北東可同時開（堆疊貼圖）；依命中面回各自 UV（兩面法線幾何互斥，順序試即天然並存）
+	if (uR7310C1XatlasRuntimeFullEastWallMode > 0.5 &&
+		r7310C1XatlasFullEastWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	if (uR7310C1XatlasRuntimeFullNorthWallMode > 0.5 &&
+		r7310C1XatlasFullNorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
 	return r7310C1XatlasA1NorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
 }
 float r7310C1XatlasNorthWallTriangleId(vec3 visiblePosition)
@@ -1692,25 +1750,38 @@ int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	vec3 visibleNormal,
 	vec3 visiblePosition)
 {
-	if (!r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	if (r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (visiblePosition.x >= R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN &&
+			visiblePosition.x <= R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX &&
+			abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP;
+		}
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MIN &&
+			visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM;
+		}
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN &&
+			visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM;
+		}
 		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
-	if (visiblePosition.x >= R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN &&
-		visiblePosition.x <= R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX &&
-		abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_PLANE_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
-	{
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP;
 	}
-	if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_PLANE_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
-		visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MIN &&
-		visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX)
+	if (r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM;
-	}
-	if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
-		visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN &&
-		visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX)
-	{
-		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM;
+		// 東牆 bed-top 接觸邊（床頂 y=0.28，沿牆深度 z 為床範圍；x 已由 east 面保證 ≈1.91）
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MIN &&
+			visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MAX)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP;
+		}
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 	}
 	return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 }
@@ -1747,6 +1818,12 @@ bool r7310C1XatlasBakeCoplanarSeamAabb(int confirmedLineId, out vec3 seamMin, ou
 		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX, -1.874);
 		return true;
 	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MIN);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MAX);
+		return true;
+	}
 	seamMin = vec3(0.0);
 	seamMax = vec3(0.0);
 	return false;
@@ -1769,6 +1846,13 @@ bool r7310C1XatlasBakeCoplanarNeighborAabb(int confirmedLineId, out vec3 neighbo
 	{
 		neighborMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X, 2.515, -1.874);
 		neighborMax = vec3(2.110, 2.905, 3.056);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP)
+	{
+		// 鄰體＝床（東面 x=1.91 與東牆共面、頂 y=0.28、深度 z[-1.874,-0.314]）
+		neighborMin = vec3(-0.027, 0.0, -1.874);
+		neighborMax = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y, -0.314);
 		return true;
 	}
 	neighborMin = vec3(0.0);
@@ -7005,7 +7089,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310NorthWallHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x, hitColor);
-			if (r7310EastWallHybridFirstHit)
+			if (r7310EastWallHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1EastWallHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310SeColumnNorthHybridFirstHit)
 				accumCol += mask * r7310C1SeColumnNorthShadowHybridRadiance(hitType, hitObjectID, nl, x);

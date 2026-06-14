@@ -5328,7 +5328,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-xatlas-owner-unification-v2';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-stacked-vboundary-inset-v6';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5607,6 +5607,8 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -6185,6 +6187,18 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '北牆與東牆改讀非方格尺寸實驗貼圖'
 			: '北牆與東牆使用原 1024 等格貼圖';
 	}
+	var xatlasNorthBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
+	if (xatlasNorthBtn) {
+		var nv = (report && report.xatlasStackedNorthVariant) || 'off';
+		xatlasNorthBtn.textContent = '北牆真非方格：' + (nv === 'oidn' ? 'OIDN' : (nv === 'raw' ? 'RAW' : '關閉'));
+		xatlasNorthBtn.classList.toggle('glow-white', nv !== 'off');
+	}
+	var xatlasEastBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
+	if (xatlasEastBtn) {
+		var ev = (report && report.xatlasStackedEastVariant) || 'off';
+		xatlasEastBtn.textContent = '東牆真非方格：' + (ev === 'oidn' ? 'OIDN' : (ev === 'raw' ? 'RAW' : '關閉'));
+		xatlasEastBtn.classList.toggle('glow-white', ev !== 'off');
+	}
 }
 
 function bindR7310FullFloorDiffuseControls() {
@@ -6197,6 +6211,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
 	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
 	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
+	var xatlasNorthOidnBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
+	var xatlasEastOidnBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
 	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn && !nonSquareBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
@@ -6219,6 +6235,16 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
 	bindButton(ironDoorBtn, 'ironDoorRevealEnabled', 'setR7310C1IronDoorRevealRuntimeEnabled');
 	bindButton(nonSquareBtn, 'nonSquareAtlasEnabled', 'setR7310C1UseNonSquareAtlas');
+	if (xatlasNorthOidnBtn) xatlasNorthOidnBtn.addEventListener('click', function(e) {
+		e.stopPropagation();
+		if (typeof window.cycleR7310C1XatlasStackedNorth !== 'function') return;
+		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedNorth());
+	}, false);
+	if (xatlasEastOidnBtn) xatlasEastOidnBtn.addEventListener('click', function(e) {
+		e.stopPropagation();
+		if (typeof window.cycleR7310C1XatlasStackedEast !== 'function') return;
+		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedEast());
+	}, false);
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());
 }

@@ -1523,6 +1523,8 @@ const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7
 const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -1559,6 +1561,10 @@ function resolveR7310C1XatlasRuntimePackageUrl()
 		url = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL;
 	if (param === 'full-north-wall-oidn')
 		url = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL;
+	if (param === 'full-east-wall-raw')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL;
+	if (param === 'full-east-wall-oidn')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL;
 
 	if (typeof window !== 'undefined')
 		window.__r7310C1XatlasSelectedPackageUrl = url;
@@ -2618,6 +2624,18 @@ let r7310C1XatlasRuntimePixels = null;
 let r7310C1XatlasRuntimeError = null;
 let r7310C1XatlasRuntimeSeparatedAlbedo = true;
 let r7310C1XatlasRuntimeFullNorthWallActive = false;
+let r7310C1XatlasRuntimeFullEastWallActive = false;
+// per-wall 堆疊 OIDN（北+東同一張合成貼圖 2325x7322、各自獨立開關、重用 bake-atlas slot 不增 sampler）
+const R7310_C1_XATLAS_STACK_W = 2325;
+const R7310_C1_XATLAS_STACK_HN = 3377;
+const R7310_C1_XATLAS_STACK_HE = 3945;
+const R7310_C1_XATLAS_STACK_H = 7322;
+let r7310C1XatlasStackedMode = false;
+let r7310C1XatlasStackedNorthVariant = 'off'; // 'off' | 'raw' | 'oidn'
+let r7310C1XatlasStackedEastVariant = 'off';
+let r7310C1XatlasStackedReadyNorth = false;
+let r7310C1XatlasStackedReadyEast = false;
+let r7310C1XatlasStackedBuffer = null;
 
 function updateR7310C1XatlasRuntimeDomState(applied)
 {
@@ -3230,11 +3248,20 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 			pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo.value = r7310C1XatlasRuntimeSeparatedAlbedo ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode)
 			pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullNorthWallActive ? 1.0 : 0.0;
-		if (pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize && r7310C1XatlasRuntimePackage)
-			pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(
-				Math.max(1, Math.trunc(Number(r7310C1XatlasRuntimePackage.targetAtlasWidth) || 1)),
-				Math.max(1, Math.trunc(Number(r7310C1XatlasRuntimePackage.targetAtlasHeight) || 1))
-			);
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullEastWallActive ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode.value = r7310C1XatlasStackedMode ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize)
+		{
+			if (r7310C1XatlasStackedMode)
+				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(R7310_C1_XATLAS_STACK_W, R7310_C1_XATLAS_STACK_H);
+			else if (r7310C1XatlasRuntimePackage)
+				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(
+					Math.max(1, Math.trunc(Number(r7310C1XatlasRuntimePackage.targetAtlasWidth) || 1)),
+					Math.max(1, Math.trunc(Number(r7310C1XatlasRuntimePackage.targetAtlasHeight) || 1))
+				);
+		}
 	updateR7310C1XatlasRuntimeDomState(xatlasApplied);
 	if (pathTracingUniforms.uR7310C1EastWallDiffuseMode)
 		pathTracingUniforms.uR7310C1EastWallDiffuseMode.value = eastWallApplied ? 1.0 : 0.0;
@@ -4386,7 +4413,8 @@ async function loadR7310C1XatlasRuntimePackage()
 			var targetAtlasWidth = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
 			var targetAtlasHeight = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
 			var allowedRuntimeScope = pointer.runtimeScope === 'c1_xatlas_a1_c2c_runtime_smoke' ||
-				pointer.runtimeScope === 'c1_xatlas_full_north_wall_runtime';
+				pointer.runtimeScope === 'c1_xatlas_full_north_wall_runtime' ||
+				pointer.runtimeScope === 'c1_xatlas_full_east_wall_runtime';
 			if (pointer.packageStatus !== 'architecture_probe' || !allowedRuntimeScope)
 				throw new Error('R7-3.10 xatlas runtime pointer failed contract');
 			if (pointer.runtimeTexture !== 'tR7310C1XatlasRuntimeAtlasTexture')
@@ -4414,6 +4442,7 @@ async function loadR7310C1XatlasRuntimePackage()
 			r7310C1XatlasRuntimePackage = pointer;
 			r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
 			r7310C1XatlasRuntimeFullNorthWallActive = pointer.runtimeScope === 'c1_xatlas_full_north_wall_runtime';
+			r7310C1XatlasRuntimeFullEastWallActive = pointer.runtimeScope === 'c1_xatlas_full_east_wall_runtime';
 			r7310C1XatlasRuntimePixels = uploadPixels;
 			r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(uploadPixels, targetAtlasWidth, targetAtlasHeight);
 			if (!r7310C1XatlasRuntimeDataTexture)
@@ -4437,6 +4466,92 @@ async function loadR7310C1XatlasRuntimePackage()
 	return r7310C1XatlasRuntimeLoadPromise;
 }
 
+async function loadR7310C1XatlasStackedSegment(face, variant)
+{
+	var isNorth = (face === 'north');
+	var isOidn = (variant === 'oidn');
+	var url = isNorth
+		? (isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL)
+		: (isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL);
+	var expectH = isNorth ? R7310_C1_XATLAS_STACK_HN : R7310_C1_XATLAS_STACK_HE;
+	try
+	{
+		var pointerResp = await fetch(url, { cache: 'no-store' });
+		if (!pointerResp.ok) throw new Error('R7-3.10 xatlas stacked pointer not found');
+		var pointer = await pointerResp.json();
+		var w = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
+		var h = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
+		if (w !== R7310_C1_XATLAS_STACK_W || h !== expectH)
+			throw new Error('R7-3.10 xatlas stacked segment size mismatch ' + w + 'x' + h);
+		var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
+		if (!atlasArtifact) throw new Error('R7-3.10 xatlas stacked atlas artifact missing');
+		var atlasResp = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
+		if (!atlasResp.ok) throw new Error('R7-3.10 xatlas stacked atlas binary not found');
+		var atlasBuffer = await atlasResp.arrayBuffer();
+		var expectBytes = R7310_C1_XATLAS_STACK_W * expectH * 4 * 4;
+		if (atlasBuffer.byteLength !== expectBytes)
+			throw new Error('R7-3.10 xatlas stacked atlas binary length mismatch');
+		var facePixels = new Float32Array(atlasBuffer);
+		if (!r7310C1XatlasStackedBuffer)
+			r7310C1XatlasStackedBuffer = new Float32Array(R7310_C1_XATLAS_STACK_W * R7310_C1_XATLAS_STACK_H * 4);
+		// 北段寫合成貼圖列 [0,3377)、東段寫列 [3377,7322)；runtime 上傳一律不再 flip（與 4416-4423 紀律一致）
+		var off = isNorth ? 0 : (R7310_C1_XATLAS_STACK_W * R7310_C1_XATLAS_STACK_HN * 4);
+		r7310C1XatlasStackedBuffer.set(facePixels, off);
+		r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(r7310C1XatlasStackedBuffer, R7310_C1_XATLAS_STACK_W, R7310_C1_XATLAS_STACK_H);
+		r7310C1XatlasRuntimePixels = r7310C1XatlasStackedBuffer;
+		r7310C1XatlasStackedMode = true;
+		r7310C1XatlasRuntimeEnabled = true;
+		r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
+		if (isNorth) { r7310C1XatlasStackedReadyNorth = true; r7310C1XatlasRuntimeFullNorthWallActive = true; r7310C1XatlasStackedNorthVariant = variant; }
+		else { r7310C1XatlasStackedReadyEast = true; r7310C1XatlasRuntimeFullEastWallActive = true; r7310C1XatlasStackedEastVariant = variant; }
+		r7310C1XatlasRuntimeReady = (r7310C1XatlasStackedReadyNorth || r7310C1XatlasStackedReadyEast);
+		r7310C1XatlasRuntimeError = null;
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-stacked-' + face);
+		return true;
+	}
+	catch (error)
+	{
+		r7310C1XatlasRuntimeError = error && error.message ? error.message : String(error);
+		if (typeof console !== 'undefined' && console.warn) console.warn('xatlas stacked load failed', error);
+		return false;
+	}
+}
+function r7310C1CycleXatlasStacked(face)
+{
+	// 三段循環：關閉 → RAW → OIDN → 關閉。RAW/OIDN 皆「真非方格」、永不退回方格 D800。
+	var cur = (face === 'north') ? r7310C1XatlasStackedNorthVariant : r7310C1XatlasStackedEastVariant;
+	var next = (cur === 'off') ? 'raw' : (cur === 'raw' ? 'oidn' : 'off');
+	if (next === 'off')
+	{
+		if (face === 'north') { r7310C1XatlasStackedNorthVariant = 'off'; r7310C1XatlasStackedReadyNorth = false; r7310C1XatlasRuntimeFullNorthWallActive = false; }
+		else { r7310C1XatlasStackedEastVariant = 'off'; r7310C1XatlasStackedReadyEast = false; r7310C1XatlasRuntimeFullEastWallActive = false; }
+		if (!r7310C1XatlasStackedReadyNorth && !r7310C1XatlasStackedReadyEast)
+		{
+			r7310C1XatlasStackedMode = false;
+			r7310C1XatlasRuntimeReady = false;
+		}
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-stacked-off-' + face);
+	}
+	else
+	{
+		// 樂觀更新顯示用 variant（load 成功會再確認；失敗則 Ready=false 仍走 hybrid）
+		if (face === 'north') r7310C1XatlasStackedNorthVariant = next;
+		else r7310C1XatlasStackedEastVariant = next;
+		loadR7310C1XatlasStackedSegment(face, next).catch(function() {});
+	}
+	return (typeof window !== 'undefined' && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
+		? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+		: {};
+}
+if (typeof window !== 'undefined')
+{
+	window.cycleR7310C1XatlasStackedNorth = function() { return r7310C1CycleXatlasStacked('north'); };
+	window.cycleR7310C1XatlasStackedEast = function() { return r7310C1CycleXatlasStacked('east'); };
+}
 async function loadR7310C1FullRoomDiffuseRuntimePackage()
 {
 	if (r7310C1FullRoomDiffuseRuntimeLoadPromise) return r7310C1FullRoomDiffuseRuntimeLoadPromise;
@@ -11079,6 +11194,8 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		version: 'r7-3-10-c1-full-room-diffuse-runtime',
 		ironDoorRevealEnabled: r7310C1IronDoorRevealRuntimeEnabled,
 		nonSquareAtlasEnabled: r7310C1UseNonSquareAtlas,
+		xatlasStackedNorthVariant: r7310C1XatlasStackedNorthVariant,
+		xatlasStackedEastVariant: r7310C1XatlasStackedEastVariant,
 		nonSquareAtlasSizePx: {
 			width: r7310C1NonSquareAtlasSizePx.width,
 			height: r7310C1NonSquareAtlasSizePx.height
@@ -12457,6 +12574,8 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 				seColumnWestShadowEnabled: r7310C1SeColumnWestShadowRuntimeEnabled,
 				structuralPending: r7310C1StructuralDiffuseRuntimePending,
 			nonSquareAtlasEnabled: r7310C1UseNonSquareAtlas,
+			xatlasStackedNorthVariant: r7310C1XatlasStackedNorthVariant,
+			xatlasStackedEastVariant: r7310C1XatlasStackedEastVariant,
 			nonSquareAtlasReady: r7310C1NonSquareAtlasRuntimeReady,
 			nonSquareAtlasPackageDir: r7310C1NonSquareAtlasRuntimePackage ? r7310C1NonSquareAtlasRuntimePackage.packageDir : null,
 			ready: r7310C1FullRoomDiffuseRuntimeReady,
