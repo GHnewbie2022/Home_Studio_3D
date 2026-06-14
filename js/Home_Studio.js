@@ -6179,7 +6179,7 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
 	var nonSquareActive = !!(report && report.nonSquareAtlasEnabled);
 	if (nonSquareBtn) {
-		nonSquareBtn.textContent = nonSquareActive ? '北東非方格：開' : '北東非方格：關';
+		nonSquareBtn.textContent = nonSquareActive ? '北非方格(東暫代)：開' : '北非方格(東暫代)：關';
 		nonSquareBtn.classList.toggle('glow-white', nonSquareActive);
 		nonSquareBtn.title = nonSquareActive
 			? '北牆與東牆改讀非方格尺寸實驗貼圖'
