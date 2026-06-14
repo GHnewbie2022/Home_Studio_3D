@@ -6,7 +6,8 @@
 
 狀態（紅線遵守）：分析 + 實證蓋章已完成。§5 實證測試已於『拋棄分支 experiment/r7-3-10-interpenetration-stamp』執行（helper-disable 與床幾何穿透均為拋棄改動，測完已 git checkout 全部回滾，工作區確認乾淨）。main 與 arch-cure 未動、未重烤 production、未 push、未碰 Brave、LIVE 原樣。
 
-接手必讀順序：本檔 → `docs/r7-3-10-arch-cure-plain-consensus-for-opus.md`（V6 多階段計畫主準，§3 階段地圖、§6 PASS 條件）→ `docs/r7-3-10-b1-preflight-design.md`（B1 前評）。
+接手必讀順序：本檔 → `docs/r7-3-10-b1-preflight-design.md`（B1 前評）。
+（原 `docs/r7-3-10-arch-cure-plain-consensus-for-opus.md` 為 arch-cure 調查期的臨時共識稿；B1 經使用者肉眼驗收後捨棄、改採 A-narrow，該臨時稿已退役刪除。其階段地圖／PASS 條件結論已折入本檔與 b1-preflight-design.md。）
 
 ---
 
@@ -149,7 +150,7 @@ C. coincident（剛好重合）vs overlapping（重疊穿透）有別。
     --r7310-bake-tile-width=512 --r7310-bake-tile-height=512 --r7310-bake-submission-boundary=fence \
     --angle=metal --browser=chrome --browser-path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
     --http-port=9012 --cdp-port=9233 --timeout-ms=600000
-  量測：node docs/tools/r7-3-10-b1-spike-atlas-line-analyze.mjs --pkg=LABEL:<package dir>
+  量測：原由臨時 spike 工具 `r7-3-10-b1-spike-atlas-line-analyze.mjs` 執行（B1 捨棄後該工具已刪除）；量測結果已固化於本檔 §5 實證與 §0 結論。
   （status fail=validation 預期正式 SPP，artifact 已完整、量測有效，與 A-narrow 同情況）
 ```
 

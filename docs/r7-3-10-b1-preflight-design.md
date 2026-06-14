@@ -156,7 +156,7 @@ B1 FULL_GUARD PASS（helper 關、guard 獨撐）必過：
   #8 漏光 gate。
   #9 ray_offset / t_min 量級報告。
 
-B0 已完成、可直接引用（見 b0-final-evidence-package）：
+B0 已完成（盤點結論摘要保留於下；臨時 `b0-final-evidence-package` 未隨正式 repo 保存、已刪除）：
   權威對照表（§1）、凸性 audit（11 PASS / 0 ROUTE / 0 BLOCK）、
   id uniqueness、11 個 NEE 燈狀態、analytic 家族 identity。
   → §6 的 #10-#13 盤點面 B0 已達成，B1 不必重做，只需引用。
