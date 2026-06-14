@@ -244,7 +244,12 @@ const CLOUD_ROD_HALF_EXTENT = [
 ];
 
 // R2-8 吸音板
-const BASE_BOX_COUNT = 85; // base 83 + 2026-05-20 西牆開關面板/按鈕二件
+const BASE_BOX_COUNT = 86; // base 84 + 2026-05-20 西牆開關面板/按鈕二件（Cloud 鋁槽 8 片止於 idx 83，故 base 為 84，非舊註解誤寫的 83）
+// R7 防呆：當初 base 誤算成 83、使 BASE_BOX_COUNT=85，西牆開關按鈕（idx 85）被 sceneBoxes.length 截斷而從不 render。
+// 此處 sceneBoxes 已含全部靜態 box，數量對不上即當場停（沿用 L194 CLOUD_BOX_IDX_BASE 同型 throw-first 守門）。
+if (sceneBoxes.length !== BASE_BOX_COUNT) {
+    throw new Error('[base] BASE_BOX_COUNT 與靜態 box 數不符：預期 ' + BASE_BOX_COUNT + '，實得 ' + sceneBoxes.length);
+}
 const NE_FURNITURE_MAIN_BOX_IDX = 33; // 實際 sceneBoxes index：R2-4 東北家具主 box
 const C2_NE_FURNITURE_LAYOUTS = {
     wardrobe: {
@@ -526,7 +531,7 @@ function buildSceneBVH() {
     bvhDataTexture.needsUpdate = true;
 
     // 4) Box Data Texture (512x1, RGBA32F, 5 pixels per box)
-    // R2-18：pixel 4 新增 [roughness, metalness, 0, 0]；目前 base 85 box，config 追加後仍 ≤ BVH_TEX_W=512
+    // R2-18：pixel 4 新增 [roughness, metalness, 0, 0]；目前 base 86 box，config 追加後仍 ≤ BVH_TEX_W=512
     var boxArr = new Float32Array(BVH_TEX_W * 1 * 4);
     for (var i = 0; i < N; i++) {
         var b = sceneBoxes[i];
