@@ -1522,7 +1522,8 @@ const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-
 const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json';
+// R7-3.10 圖一：北牆 OIDN 預設＝RTLightmap（西側高變異寬帶重降噪；使用者肉眼驗收通過、CODEX 簽收）。
+const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json';

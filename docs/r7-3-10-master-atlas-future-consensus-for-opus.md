@@ -309,15 +309,15 @@ CODEX 只查 OIDN 輸入／輸出與 OIDN 管線，未改 RAW、未改 pointer�
 
 ```
 1. 目前北牆 OIDN package
-   docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json
-   packageDir = .omc/r7-3-10-xatlas-bake-spike/20260613-100834-oidn-rt-high-beta
-   filter = RT
+   docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json
+   packageDir = .omc/r7-3-10-xatlas-bake-spike/20260613-100834-oidn-rtlightmap-high-beta
+   filter = RTLightmap
    auxStrategy = color_only_beta
 
 2. 使用者紅圈對應的北牆西半範圍
    OIDN 後高頻殘留集中在 world X 約 -1.49 到 -0.70。
 
-3. 舊 RT OIDN 的降噪不足數字
+3. 原 RT OIDN 的降噪不足數字
    X[-1.49,-1.23]：
      raw highpass 0.00919
      RT OIDN highpass 0.00277
@@ -341,12 +341,12 @@ CODEX 只查 OIDN 輸入／輸出與 OIDN 管線，未改 RAW、未改 pointer�
    X[-1.49,-1.23]：
      RT highpass 0.00277
      RTLightmap highpass 0.00140
-     比舊 RT 少約 49.5%
+     比原 RT 少約 49.5%
 
    X[-1.05,-0.79]：
      RT highpass 0.00338
      RTLightmap highpass 0.00197
-     比舊 RT 少約 41.9%
+     比原 RT 少約 41.9%
 ```
 
 CODEX 初步裁示：
@@ -360,9 +360,9 @@ CODEX 初步裁示：
    H2 縫隙來自 owner / pending / H2 自烤。
    北牆寬帶來自 OIDN 對西半高變異區保留過多高頻。
 
-3. 建議 OPUS 走北牆 OIDN 專案內重降噪，不重烤 RAW。
-   先用 RTLightmap 對北牆既有 RAW 重跑 OIDN。
-   產新 OIDN package。
+3. 使用者已驗收 RTLightmap 版本，北牆 OIDN 預設改用 RTLightmap。
+   RAW 不重烤。
+   原 RT runtime 入口與 pointer 不保留。
    以使用者補圖視角做 RAW / 舊 OIDN / 新 OIDN 對照。
 
 4. 驗收重點

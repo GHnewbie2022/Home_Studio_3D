@@ -52,7 +52,7 @@ requireText('prepare tool red line', prepareTool, 'noFormalRadianceBake');
 requireText('InitCommon raw package key', initCommon, "full-north-wall-raw");
 requireText('InitCommon OIDN package key', initCommon, "full-north-wall-oidn");
 requireText('InitCommon raw package pointer', initCommon, 'r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json');
-requireText('InitCommon OIDN package pointer', initCommon, 'r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json');
+requireText('InitCommon OIDN package pointer', initCommon, 'r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json');
 requireText('InitCommon full scope', initCommon, 'c1_xatlas_full_north_wall_runtime');
 requireText('InitCommon runtime scope flag', initCommon, 'r7310C1XatlasRuntimeFullNorthWallActive');
 requireText('InitCommon full-wall CPU UV', initCommon, 'function r7310C1XatlasFullNorthWallUvFromWorldPosition');

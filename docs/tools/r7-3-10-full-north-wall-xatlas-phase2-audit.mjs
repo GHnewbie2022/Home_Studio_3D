@@ -14,7 +14,7 @@ function parseArgs(argv) {
 	const out = {
 		prepareDir: null,
 		rawPointer: 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json',
-		oidnPointer: 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json',
+		oidnPointer: 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json',
 		out: null,
 	};
 	for (const arg of argv) {
