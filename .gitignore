@@ -40,6 +40,9 @@ __pycache__/
 **/__pycache__/
 *.pyc
 
+# Local Python venv for xatlas prepare tooling (regenerate locally; never commit)
+.venv/
+
 # OS
 Thumbs.db
 

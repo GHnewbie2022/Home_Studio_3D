@@ -177,7 +177,11 @@ function parseArgs(argv) {
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
   if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
   if (!['none', 'flush', 'fence', 'finish'].includes(out.r7310BakeSubmissionBoundary)) throw new Error('Invalid r7310BakeSubmissionBoundary');
-  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  // R7-3.10 第6步防呆（CODEX 4，2026-06-16）：south-window-top-reveal-depth-h2（H2 -Y 窗楣）必須搭 --r7310-full-room-diffuse-bake，
+  // 否則 captureHelper 會掉回預設 reportR738C1BakeCaptureAfterSamples、靜默烤成地板（0519/0616 兩次地板錯包的真因）。直接擋下。
+  if (out.r7310Surface === 'south-window-top-reveal-depth-h2' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=south-window-top-reveal-depth-h2 requires --r7310-full-room-diffuse-bake (否則會靜默掉回預設地板烤)');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   if (typeof out.xatlasTexelmapDir !== 'string' || out.xatlasTexelmapDir.length === 0 || out.xatlasTexelmapDir.startsWith('/') || out.xatlasTexelmapDir.includes('..')) throw new Error('Invalid xatlasTexelmapDir');
   if (out.xatlasValidityMaskPath !== null && (typeof out.xatlasValidityMaskPath !== 'string' || out.xatlasValidityMaskPath.length === 0 || out.xatlasValidityMaskPath.startsWith('/') || out.xatlasValidityMaskPath.includes('..'))) throw new Error('Invalid xatlasValidityMaskPath');
@@ -8487,6 +8491,7 @@ async function main() {
 	      'south-window-right-reveal-shadow': 'reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples',
 	      'south-window-bottom-reveal-shadow': 'reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples',
 	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples',
+	      'south-window-top-reveal-depth-h2': 'reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples',
 	      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples'
 	    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';

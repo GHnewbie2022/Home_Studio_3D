@@ -129,7 +129,16 @@ uniform vec2 uR7310C1XatlasRuntimeAtlasSize;
 uniform float uR7310C1XatlasRuntimeSeparatedAlbedo;
 uniform float uR7310C1XatlasRuntimeFullNorthWallMode;
 uniform float uR7310C1XatlasRuntimeFullEastWallMode;
+uniform float uR7310C1XatlasRuntimeFullCeilingMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
+// master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
+// rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
+uniform float uR7310C1XatlasRuntimeMasterMode;
+uniform vec4 uR7310C1XatlasRectCeiling;
+uniform vec4 uR7310C1XatlasRectNorth;
+uniform vec4 uR7310C1XatlasRectEast;
+// R7-3.10 第6步：H2（south_window_top_reveal_depth）窗楣 -Y 深度面 master sub-rect（depth_h2）
+uniform vec4 uR7310C1XatlasRectDepthH2;
 uniform float uR7310C1NorthWallSeparatedDiffuseMode;
 uniform float uR7310C1UseNonSquareAtlas;
 uniform float uR7310C1NonSquareAtlasReady;
@@ -1264,6 +1273,7 @@ bool r7310C1XatlasRuntimeSampleValidLinear(vec2 atlasUv, out vec3 radiance)
 }
 bool r7310C1RuntimeSurfaceIsNorthWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
 bool r7310C1RuntimeSurfaceIsEastWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
+bool r7310C1RuntimeSurfaceIsCeiling(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);
 bool r7310C1XatlasA1NorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
 	if (uR7310C1NorthWallDiffuseMode < 0.5 ||
@@ -1345,12 +1355,26 @@ bool r7310C1XatlasFullNorthWallUv(int visibleHitType, float visibleObjectID, vec
 	}
 	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
 	float x01 = clamp((visiblePosition.x + 2.11) / 4.22, 0.0, 1.0);
-	// 堆疊模式：北段佔合成貼圖上段；交界往內縮 ~4px（3377→~3373）避免 bilinear 跨段滲色到東牆
-	float vScaleN = (uR7310C1XatlasRuntimeStackedMode > 0.5) ? 0.4608 : 1.0;
-	atlasUv = vec2(
+	// 單面滿版 local UV（atlasUv.x=滿版直軸→貼圖橫向、atlasUv.y=水平軸→貼圖縱向；stacked/master 之前的純 [0,1] 對應）
+	vec2 localUv01 = vec2(
 			mix(0.9997849464, 0.0002150538, y01),
-			mix(0.0001480604, 0.9998519421, x01) * vScaleN
+			mix(0.0001480604, 0.9998519421, x01)
 		);
+	if (uR7310C1XatlasRuntimeMasterMode > 0.5)
+	{
+		// master shelf-pack：投到北面 sub-rect。gutter(alpha=0) 依賴 SampleValidLinear 的 alpha 加權 bilinear 把跨界 tap 歸零，故不需 per-rect clamp。
+		vec2 px = uR7310C1XatlasRectNorth.xy + localUv01 * uR7310C1XatlasRectNorth.zw;
+		atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	}
+	else if (uR7310C1XatlasRuntimeStackedMode > 0.5)
+	{
+		// 堆疊模式（保留可回退）：北段佔合成貼圖上段；交界往內縮 ~4px（3377→~3373）避免 bilinear 跨段滲色到東牆
+		atlasUv = vec2(localUv01.x, localUv01.y * 0.4608);
+	}
+	else
+	{
+		atlasUv = localUv01; // 單面（保留可回退）
+	}
 	return true;
 }
 bool r7310C1XatlasFullEastWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
@@ -1384,14 +1408,129 @@ bool r7310C1XatlasFullEastWallUv(int visibleHitType, float visibleObjectID, vec3
 	// u 軸=worldY（÷2.905）、v 軸=worldZ（(z+1.874)/4.93）；V 用 east prepare rowFlippedRuntime 常數
 	float y01 = clamp(visiblePosition.y / 2.905, 0.0, 1.0);
 	float z01 = clamp((visiblePosition.z + 1.874) / 4.93, 0.0, 1.0);
-	// 堆疊模式：東段佔合成貼圖下段；起點從交界往內縮 ~4px（3377→~3381）避免 bilinear 取到北段（綠斑根因）
-	float stackedE = (uR7310C1XatlasRuntimeStackedMode > 0.5) ? 1.0 : 0.0;
-	float vScaleE = mix(1.0, 0.53817, stackedE);
-	float vOffE = mix(0.0, 0.46176, stackedE);
-	atlasUv = vec2(
+	// 單面滿版 local UV（atlasUv.x=worldY 直軸→貼圖橫向、atlasUv.y=worldZ 水平軸→貼圖縱向；stacked/master 之前的純 [0,1] 對應）
+	vec2 localUv01 = vec2(
 			mix(0.9997849464, 0.0002150538, y01),
-			vOffE + mix(0.0001267195, 0.9998732573, z01) * vScaleE
+			mix(0.0001267195, 0.9998732573, z01)
 		);
+	if (uR7310C1XatlasRuntimeMasterMode > 0.5)
+	{
+		// master shelf-pack：投到東面 sub-rect（下排右側）。gutter 由 alpha 加權 bilinear 自動歸零跨界 tap，不需 per-rect clamp。
+		vec2 px = uR7310C1XatlasRectEast.xy + localUv01 * uR7310C1XatlasRectEast.zw;
+		atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	}
+	else if (uR7310C1XatlasRuntimeStackedMode > 0.5)
+	{
+		// 堆疊模式（保留可回退）：東段佔合成貼圖下段；起點從交界往內縮 ~4px（3377→~3381）避免 bilinear 取到北段（綠斑根因）
+		atlasUv = vec2(localUv01.x, 0.46176 + localUv01.y * 0.53817);
+	}
+	else
+	{
+		atlasUv = localUv01; // 單面（保留可回退）
+	}
+	return true;
+}
+// === GENERATED: surface-owner BEGIN  (registry fc176523994dd58b) ===
+// Source of truth: docs/data/r7-3-10-surface-owner-registry.json
+// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
+const int R7310_OWNER_NONE = 0;
+const int R7310_OWNER_CEILING_OPEN = 1;
+const int R7310_OWNER_SOUTH_WALL = 2;
+const int R7310_OWNER_SOUTH_WALL_DEPTH_TOP = 3;
+const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH = 4;
+const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT = 5;
+bool r7310SurfaceOwnerIsPending(int ownerId) {
+	return false;
+}
+// highest-precedence matching owner; 0 if none. Mirrors registry ownerOfSurface().
+int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
+	int best = R7310_OWNER_NONE;
+	int bestPrec = -2147483647;
+	// ceiling_open (precedence 10)
+	if (n.y * -1.0 > 0.5 && objId < 1.5 && p.y >= 2.895 && p.y <= 2.915 && p.z >= -2.074 && p.z <= 3.256 && p.x >= -2.11 && p.x <= 2.11) { if (10 > bestPrec) { bestPrec = 10; best = R7310_OWNER_CEILING_OPEN; } }
+	// south_wall (precedence 10)
+	if (n.z * -1.0 > 0.5 && objId < 1.5 && p.y >= 0.0 && p.y <= 2.905 && p.z >= 3.05 && p.z <= 3.07 && p.x >= -2.11 && p.x <= 2.11) { if (10 > bestPrec) { bestPrec = 10; best = R7310_OWNER_SOUTH_WALL; } }
+	// south_wall_depth_top (precedence 20)
+	if (n.y * -1.0 > 0.5 && objId < 1.5 && p.y >= 2.895 && p.y <= 2.915 && p.z >= 3.056 && p.z <= 3.256 && ((p.x >= -2.11 && p.x <= -1.75) || (p.x >= 0.69 && p.x <= 2.11))) { if (20 > bestPrec) { bestPrec = 20; best = R7310_OWNER_SOUTH_WALL_DEPTH_TOP; } }
+	// south_window_top_reveal_depth (precedence 21)
+	if (n.y * -1.0 > 0.5 && objId < 1.5 && p.y >= 2.895 && p.y <= 2.915 && p.z >= 3.056 && p.z <= 3.256 && p.x >= -1.75 && p.x <= 0.69) { if (21 > bestPrec) { bestPrec = 21; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH; } }
+	// south_window_top_reveal_front (precedence 15)
+	if (n.z * -1.0 > 0.5 && objId < 1.5 && p.y >= 1.04 && p.y <= 2.905 && p.z >= 3.05 && p.z <= 3.07 && p.x >= -1.75 && p.x <= 0.69) { if (15 > bestPrec) { bestPrec = 15; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT; } }
+	return best;
+}
+// Convenience owner gate: true only where the open ceiling is the rightful owner.
+bool r7310SurfaceOwnerIsCeilingOpen(vec3 p, vec3 n, float objId) {
+	return r7310SurfaceOwnerId(p, n, objId) == R7310_OWNER_CEILING_OPEN;
+}
+// === GENERATED: surface-owner END ===
+bool r7310C1XatlasFullCeilingUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	// 天花板真非方格 xatlas runtime（固定 y=2.905、自由軸 x/z、法線 -Y；單獨用貼圖槽、非堆疊）
+	// u 軸=worldZ、v 軸=worldX（xatlas 將 chart 轉向、與牆相反）；V 用 prepare rowFlippedRuntime 常數。
+	if (uR7310C1XatlasRuntimeMode < 0.5 ||
+		uR7310C1XatlasRuntimeReady < 0.5 ||
+		uR7310C1XatlasRuntimeFullCeilingMode < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (!r7310C1RuntimeSurfaceIsCeiling(visibleHitType, visibleObjectID, visibleNormal, visiblePosition) ||
+		!r7310SurfaceOwnerIsCeilingOpen(visiblePosition, visibleNormal, visibleObjectID))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	if (visiblePosition.x < -2.111 || visiblePosition.x > 2.111 ||
+		visiblePosition.z < -2.075 || visiblePosition.z > 3.257 ||
+		abs(visiblePosition.y - 2.905) > 0.006)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	float z01 = clamp((visiblePosition.z + 2.074) / 5.33, 0.0, 1.0);
+	float x01 = clamp((visiblePosition.x + 2.11) / 4.22, 0.0, 1.0);
+	// 天花板已是純 [0,1] 滿版 local UV（atlasUv.x=worldZ 直軸→貼圖橫向、atlasUv.y=worldX 水平軸→貼圖縱向）
+	vec2 localUv01 = vec2(
+			mix(0.9998827576637268, 0.00011723329225787893, z01),
+			mix(0.0001480579376220703, 0.9998519395885523, x01)
+		);
+	if (uR7310C1XatlasRuntimeMasterMode > 0.5)
+	{
+		// master shelf-pack：投到天花板 sub-rect（上排）。gutter 由 alpha 加權 bilinear 自動歸零跨界 tap，不需 per-rect clamp。
+		vec2 px = uR7310C1XatlasRectCeiling.xy + localUv01 * uR7310C1XatlasRectCeiling.zw;
+		atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	}
+	else
+	{
+		atlasUv = localUv01; // 單張天花板（保留可回退）
+	}
+	return true;
+}
+bool r7310C1XatlasFullDepthH2Uv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	// R7-3.10 第6步：H2＝south_window_top_reveal_depth（窗楣 -Y 水平深度面，x[-1.75,0.69] z[3.056,3.256] y=2.905）。
+	// 自烤 1024² runner 原生方形圖（未走天花板/北/東那套 prepare 重排）：texelFetch + flipY=false + 逐列 blit 全直通，
+	// 故 localUv 與烤點 patchId 1022 的 uv 同向、無翻轉、無 half-texel inset（SampleValidLinear 的 -0.5 自然對中）。
+	// 只在 master 模式供應 depth_h2 sub-rect；非 master 無此面、回 false（不退 LIVE，由上層 owner 機制處理）。
+	if (uR7310C1XatlasRuntimeMode < 0.5 ||
+		uR7310C1XatlasRuntimeReady < 0.5 ||
+		uR7310C1XatlasRuntimeFullCeilingMode < 0.5 ||
+		uR7310C1XatlasRuntimeMasterMode < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	// owner 必須是 H2（precedence 21；法線 -Y、objId<1.5、x/y/z 在窗楣範圍）才取樣，避免吃到鄰接天花板/牆頂 blocker。
+	if (r7310SurfaceOwnerId(visiblePosition, visibleNormal, visibleObjectID) != R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	float u01 = clamp((visiblePosition.x + 1.75) / 2.44, 0.0, 1.0); // 貼圖橫軸＝worldX（烤點 mix(-1.75,0.69,uv.x)）
+	float v01 = clamp((visiblePosition.z - 3.056) / 0.2, 0.0, 1.0);  // 貼圖縱軸＝worldZ（烤點 mix(3.056,3.256,uv.y)）
+	vec2 localUv01 = vec2(u01, v01);
+	vec2 px = uR7310C1XatlasRectDepthH2.xy + localUv01 * uR7310C1XatlasRectDepthH2.zw;
+	atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
 	return true;
 }
 float r7310C1XatlasFullNorthWallTriangleId(vec3 visiblePosition)
@@ -1416,6 +1555,14 @@ bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 vi
 		return true;
 	if (uR7310C1XatlasRuntimeFullNorthWallMode > 0.5 &&
 		r7310C1XatlasFullNorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+		r7310C1XatlasFullCeilingUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	// H2 窗楣深度面（master sub-rect depth_h2）：與天花板同屬「全室真非方格」開關群，故沿用 FullCeilingMode gate。
+	// 天花板函式以 owner gate 已排除 H2，兩者互斥，順序不衝突。
+	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+		r7310C1XatlasFullDepthH2Uv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
 	return r7310C1XatlasA1NorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
 }
@@ -6296,6 +6443,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			bool r7310FloorIndirectBakeFirstHit = r7310C1FloorIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310CeilingIndirectBakeFirstHit = r7310C1CeilingIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310NorthWallIndirectBakeFirstHit = r7310C1NorthWallIndirectBakeFirstHit(bounces, diffuseCount);
+			// R7-3.10 全域 albedo-free 契約（CODEX 2026-06-16）：任一以 --r7310-separated-irradiance-bake 宣告的 dedicated 烤
+			// （captureMode==2、patchId 無關）的「該面自身 first-hit（bounce0/diffuse0）」。供下方跳過 mask*=hitColor，使烤圖只含乾淨 irradiance。
+			bool r7310SeparatedDedicatedBakeFirstHit = uR738C1BakeCaptureMode == 2 && bounces == 0 && diffuseCount == 0;
 			bool r7310EastWallIndirectBakeFirstHit = r7310C1EastWallIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SeColumnNorthIndirectBakeFirstHit = r7310C1SeColumnNorthShadowIndirectBakeFirstHit(bounces, diffuseCount);
 			bool r7310SeColumnWestIndirectBakeFirstHit = r7310C1SeColumnWestShadowIndirectBakeFirstHit(bounces, diffuseCount);
@@ -6377,6 +6527,18 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				} else {
 					accumCol = vec3(clamp((x.x + 1.95) / 3.9, 0.0, 1.0), clamp(x.y / 3.0, 0.0, 1.0), clamp((x.z + 2.1) / 5.2, 0.0, 1.0));
 				}
+				break;
+			}
+			// === R7-3.10 Surface Ownership Map: PENDING owner render path (CODEX step 5) ===
+			// The generated owner says this first hit belongs to a not-yet-baked (pending) surface.
+			// Show a debug PENDING colour; do NOT fall through to LIVE diffuse / dilation / dark bake.
+			// Gated to xatlas runtime + ceiling active so the all-off / hybrid state is unaffected.
+			if (bounces == 0 && hitIsRayExiting != TRUE &&
+				uR7310C1XatlasRuntimeMode > 0.5 && uR7310C1XatlasRuntimeReady > 0.5 &&
+				uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+				r7310SurfaceOwnerIsPending(r7310SurfaceOwnerId(x, nl, hitObjectID)))
+			{
+				accumCol = vec3(1.0, 0.0, 1.0); // PENDING debug magenta — owner 未烘焙，不退 LIVE / 不 dilation / 不取暗烤
 				break;
 			}
 			float r7310HybridOwnerCount = 0.0;
@@ -7085,7 +7247,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				if (r7310FloorHybridFirstHit)
 					accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
-			if (r7310CeilingHybridFirstHit)
+			if (r7310CeilingHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310NorthWallHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1NorthWallHybridRadiance(hitType, hitObjectID, nl, x, hitColor);
@@ -7267,8 +7429,10 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			}
 			diffuseCount++;
 
+			// R7-3.10 全域 albedo-free 契約（CODEX 2026-06-16）：以 --r7310-separated-irradiance-bake 宣告的 dedicated 烤
+			// 一律 albedo-free（北牆 patchId 1002、H2 patchId 1022 共用同一條，不再寫死單面，避免下一個 owner surface 重蹈雙乘）。
 			bool r7310AlbedoFreeBakeFirstHit =
-				(uR7310C1SeparatedBakeMode > 0.5 && r7310NorthWallIndirectBakeFirstHit) ||
+				(uR7310C1SeparatedBakeMode > 0.5 && r7310SeparatedDedicatedBakeFirstHit) ||
 				r7310XatlasIndirectBakeFirstHit;
 			if (!r7310AlbedoFreeBakeFirstHit)
 				mask *= hitColor;

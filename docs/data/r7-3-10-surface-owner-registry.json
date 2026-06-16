@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "r7-3-10-surface-owner-registry-v1",
+  "_doc": {
+    "purpose": "Single declarative source of truth for which surface owns each bakeable world sample. Per CODEX 裁示 A: codegen targets are GLSL owner predicates, Python prepare/mask helper, JS validation/probe helper, and the scanner input table. Machine-readable fields are authoritative; note/citation/sourceLine are documentation only and MUST NOT drive any decision.",
+    "ownerApi": "ownerOfSurface(sample) per CODEX 裁示 B. sample = { position{x,y,z}, normal{x,y,z}, objectId, hitType, candidateSurfaceId, sourceBoxIdx? }. A surface MATCHES a sample when normalGate AND objectIdGate AND (top-level x/y/z bounds OR any xRects entry combined with y/z bounds) all hold. The OWNER is the matching surface with the highest precedence. Equal precedence among >1 matches = conflict (scanner BLOCK). If the winning owner has pendingPolicy=='pending' the sample resolves to PENDING.",
+    "precedenceRule": "Higher precedence wins at shared edges. Structural depth / reveal-depth tops (20+) outrank open ceiling/walls/floor (10), so a horizontal depth slab coplanar with the ceiling is owned by the depth surface, not the ceiling. CODEX 裁示 D: H1/H2 precedence MUST be > ceiling; ceiling converges to 'open ceiling'.",
+    "pendingPolicy": "baked = surface has a real bake and is a valid owner. pending = a VISIBLE surface that is the correct owner but not yet baked; shown as PENDING debug colour, BLOCKs formal validation, must be self-baked. blocker = an INTERNAL_OCCLUDED boundary (e.g. solid-wall top behind the wall front) that is NOT visible from inside the room: it owns its region ONLY to stop a neighbour (ceiling) eating into the wall body and to give the scanner an ownership boundary; it is NEVER baked, NEVER shown as PENDING colour, and does NOT block formal validation. If a genuinely-visible small face is later found inside a blocker region it must get a NEW visible surfaceId, not reuse the blocker id (CODEX H1/H2 correction).",
+    "redlines": "CODEX: no LIVE-diffuse fill; no single-ceiling-if patch; no c2c-mask-only hole patch. A-narrow stays a contact-edge cure plugged into this registry, NOT an owner-missing-surface fix.",
+    "fields": {
+      "surfaceId": "unique semantic id",
+      "ownerClass": "open_ceiling | wall | floor | structural_depth_top | reveal_depth_top | reveal_front | ... (documentation grouping)",
+      "normalGate": "{ axis: x|y|z, sign: +1|-1, threshold } => owns only where normal[axis]*sign > threshold",
+      "objectIdGate": "{ lt } => owns only where objectId < lt",
+      "x|y|z": "[min,max] world bounds (inclusive); omit an axis to leave it unbounded",
+      "xRects": "optional [[min,max],...]; when present the surface owns the union of these x-ranges (combined with y/z) instead of a single x range",
+      "precedence": "integer; higher wins",
+      "pendingPolicy": "baked | pending",
+      "bakeTargetId": "int|null; the bake/runtime target id when baked",
+      "note|citation|sourceLine": "documentation only"
+    }
+  },
+  "surfaces": [
+    {
+      "surfaceId": "ceiling_open",
+      "ownerClass": "open_ceiling",
+      "normalGate": { "axis": "y", "sign": -1, "threshold": 0.5 },
+      "objectIdGate": { "lt": 1.5 },
+      "x": [-2.11, 2.11],
+      "y": [2.895, 2.915],
+      "z": [-2.074, 3.256],
+      "precedence": 10,
+      "pendingPolicy": "baked",
+      "bakeTargetId": 1006,
+      "note": "Open ceiling. Converged per 裁示 D: structural depth tops (south_wall_depth_top, south_window_top_reveal_depth) carry higher precedence and own the z[3.056,3.256] depth slab, so the ceiling no longer owns it. The pre-existing occluder-top footprint (z<=3.056 columns/beams) is a separate legacy concern not migrated in this first slice.",
+      "citation": "glsl shaders/Home_Studio_Fragment.glsl:2100-2111 (RuntimeSurfaceIsCeiling); InitCommon js/InitCommon.js:7186-7206 (ceiling metadata)"
+    },
+    {
+      "surfaceId": "south_wall",
+      "ownerClass": "wall",
+      "normalGate": { "axis": "z", "sign": -1, "threshold": 0.5 },
+      "objectIdGate": { "lt": 1.5 },
+      "x": [-2.11, 2.11],
+      "y": [0.0, 2.905],
+      "z": [3.05, 3.07],
+      "precedence": 10,
+      "pendingPolicy": "baked",
+      "bakeTargetId": 1005,
+      "note": "South wall FRONT plane (vertical, normal -Z) at z=3.056. It does NOT own the horizontal z[3.056,3.256] depth slab above it; that is south_wall_depth_top.",
+      "citation": "glsl shaders/Home_Studio_Fragment.glsl:2044-2054; InitCommon js/InitCommon.js:1895-1901"
+    },
+    {
+      "surfaceId": "south_wall_depth_top",
+      "ownerClass": "internal_occluded_blocker",
+      "normalGate": { "axis": "y", "sign": -1, "threshold": 0.5 },
+      "objectIdGate": { "lt": 1.5 },
+      "y": [2.895, 2.915],
+      "z": [3.056, 3.256],
+      "xRects": [[-2.11, -1.75], [0.69, 2.11]],
+      "precedence": 20,
+      "pendingPolicy": "blocker",
+      "bakeTargetId": null,
+      "note": "H1 = INTERNAL BLOCKER (CODEX H1/H2 correction). The horizontal top of the SOLID south wall, z[3.056,3.256], OUTSIDE the window x-band (x<=-1.75 and x>=0.69). The solid wall front (z=3.056) occludes this from every in-room viewpoint, so it is NOT a visible surface and carries NO bake responsibility. Its only jobs: (1) own this region so ceiling_open stops eating into the wall body; (2) give the scanner an ownership boundary. pendingPolicy=blocker => never baked, never PENDING colour, never blocks formal validation. If a genuinely-visible face is later found here, create a NEW visible surfaceId — do NOT reuse this blocker.",
+      "citation": "CODEX H1/H2 correction; geometry: solid south wall x outside window x[-1.75,0.69], front plane z=3.056 occludes the z[3.056,3.256] top from the room"
+    },
+    {
+      "surfaceId": "south_window_top_reveal_depth",
+      "ownerClass": "reveal_depth_top",
+      "normalGate": { "axis": "y", "sign": -1, "threshold": 0.5 },
+      "objectIdGate": { "lt": 1.5 },
+      "x": [-1.75, 0.69],
+      "y": [2.895, 2.915],
+      "z": [3.056, 3.256],
+      "precedence": 21,
+      "pendingPolicy": "baked",
+      "bakeTargetId": 1022,
+      "bakeContractResolved": "albedo-free single-multiply contract (CODEX 2026-06-16). History: the first real H2 bake 20260616-041925 was IDENTITY-correct but baked albedo-IN (dedicated pipeline multiplies hitColor) while the master runtime multiplies albedo AGAIN (multiplyAlbedoAfterBakeLookup=true) => double albedo => too dark/yellow vs the albedo-free ceiling. Fix written as a GLOBAL contract (not an H2 patch): (1) shader bake-time albedo-free skip generalised to any --r7310-separated-irradiance-bake dedicated bake (r7310SeparatedDedicatedBakeFirstHit, patchId-agnostic); (2) the separatedIrradianceBake flag, previously dropped between reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples -> captureAtlas -> captureR738C1DirectSurfaceTexelPatch, now propagates so uR7310C1SeparatedBakeMode is actually set; (3) loader contract check: any master sub-rect with multiplyAlbedoAfterBakeLookup!=false must declare bakeAlbedoFree=true or the load fails. Re-baked albedo-free => 20260616-054126, luma 0.207->0.2794, junction z=3.056 0.334 ~= xatlas ceiling 0.303. Supersedes 20260616-041925 (double-albedo, VOID).",
+      "bakeTargetRole": "master_subrect",
+      "masterRectKey": "depth_h2",
+      "runnerSurfaceKey": "south-window-top-reveal-depth-h2",
+      "note": "HIGH-2 (latent seam found by the ownership map). Window header depth face, x within the window band, z[3.056,3.256], normal -Y. STEP 6 self-baked & D-verified (2026-06-16): real H2 bake produced by runner key 'south-window-top-reveal-depth-h2' + bake-point patchId 1022 + --r7310-full-room-diffuse-bake (the companion flag is mandatory; without it the runner silently falls back to the default floor bake — that was the root cause of the earlier floor_center_c1_reference mis-bakes 20260519/20260616-022506/20260616-041437, all VOID). Source package .omc/r7-3-10-full-room-diffuse-bake/20260616-041925. D-verified: metadata pos.y=2.905, normal all [0,-1,0] (65536/65536), x[-1.7488,0.6817], z[3.0561,3.2553], surfaceName=south_window_top_reveal_depth, black-ratio 0% (nonzero 100%); D10 reprojection=NO_REFERENCE WARN (comparisons=0, median=null — verifier finds no camera-visible reference points for this occluded thin -Y face; CODEX ruled this is not a content failure). Runtime samples it via r7310C1XatlasFullDepthH2Uv into master sub-rect depth_h2 with no V-flip/inset (texelFetch+flipY=false+per-row blit direct; the metadata u->worldX, v->worldZ convention confirms this mapping). precedence 21 = one above south_wall_depth_top (20); both outrank ceiling (10). patchId 1022 is reserved for THIS -Y header; the -Z front band (south_window_top_reveal_front) must NOT reuse 1022.",
+      "citation": "glsl shaders/Home_Studio_Fragment.glsl patchId==1022 (H2 -Y bake-point) + r7310C1XatlasFullDepthH2Uv (runtime sample) + uR7310C1XatlasRectDepthH2; runner key south-window-top-reveal-depth-h2 (docs/tools/r7-3-8-c1-bake-capture-runner.mjs) -> reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples; runtime pointers docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json (+ -oidn-)"
+    },
+    {
+      "surfaceId": "south_window_top_reveal_front",
+      "ownerClass": "reveal_front",
+      "normalGate": { "axis": "z", "sign": -1, "threshold": 0.5 },
+      "objectIdGate": { "lt": 1.5 },
+      "x": [-1.75, 0.69],
+      "y": [1.04, 2.905],
+      "z": [3.05, 3.07],
+      "precedence": 15,
+      "pendingPolicy": "baked",
+      "bakeTargetId": null,
+      "note": "Window top-reveal FRONT-edge band (vertical-ish, normal -Z) on the z=3.056 front plane. This entry is front-edge / legacy runtime CONTEXT only — it is NOT an independent dedicated bake face. Its in-room coverage comes from the existing top-reveal-shadow hybrid path (hybrid owner targetId 22), not from a dedicated master bake. bakeTargetId is null on purpose: 1022 was previously (incorrectly) shared here but 1022 is the -Y header bake-point patchId and now belongs solely to south_window_top_reveal_depth (CODEX step-6 ruling — no same-ID dual semantics). If a genuine -Z front-band master bake is ever needed, assign a NEW target id (e.g. 1024+); never reuse 1022.",
+      "citation": "glsl shaders/Home_Studio_Fragment.glsl:2869-2874 (RuntimeSurfaceIsSouthWindowTopRevealShadow); hybrid owner targetId 22 mask 128 (glsl ~6519)"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "registryVersion": "3d001fb744065c8e",
+  "ownerIds": {
+    "ceiling_open": 1,
+    "south_wall": 2,
+    "south_wall_depth_top": 3,
+    "south_window_top_reveal_depth": 4,
+    "south_window_top_reveal_front": 5
+  },
+  "sampledCeilingSouthDepthSlab": 2332,
+  "ownerCounts": {
+    "south_wall_depth_top": 979,
+    "south_window_top_reveal_depth": 1353
+  },
+  "pendingSurfaces": [
+    "south_window_top_reveal_depth"
+  ]
+}

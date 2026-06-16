@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-stacked-vboundary-inset-v6';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-h2-nonsquare-v1';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5613,7 +5613,13 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRectCeiling = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectNorth = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectEast = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectDepthH2 = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -6183,26 +6189,12 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '鐵門開口 4 面使用 R7-3.10 1024 bake'
 			: '鐵門開口回到 live path tracing';
 	}
-	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
-	var nonSquareActive = !!(report && report.nonSquareAtlasEnabled);
-	if (nonSquareBtn) {
-		nonSquareBtn.textContent = nonSquareActive ? '北非方格(東暫代)：開' : '北非方格(東暫代)：關';
-		nonSquareBtn.classList.toggle('glow-white', nonSquareActive);
-		nonSquareBtn.title = nonSquareActive
-			? '北牆與東牆改讀非方格尺寸實驗貼圖'
-			: '北牆與東牆使用原 1024 等格貼圖';
-	}
-	var xatlasNorthBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
-	if (xatlasNorthBtn) {
-		var nv = (report && report.xatlasStackedNorthVariant) || 'off';
-		xatlasNorthBtn.textContent = '北牆真非方格：' + (nv === 'oidn' ? 'OIDN' : (nv === 'raw' ? 'RAW' : '關閉'));
-		xatlasNorthBtn.classList.toggle('glow-white', nv !== 'off');
-	}
-	var xatlasEastBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
-	if (xatlasEastBtn) {
-		var ev = (report && report.xatlasStackedEastVariant) || 'off';
-		xatlasEastBtn.textContent = '東牆真非方格：' + (ev === 'oidn' ? 'OIDN' : (ev === 'raw' ? 'RAW' : '關閉'));
-		xatlasEastBtn.classList.toggle('glow-white', ev !== 'off');
+	// R7-3.10：個別北/東/天花板真非方格鈕已移除，全室為唯一 UI 入口（個別 cycle 函式仍保留供 debug）。
+	var xatlasMasterBtn = document.getElementById('btn-r7310-xatlas-master-all');
+	if (xatlasMasterBtn) {
+		var mv = (report && report.xatlasMasterNorthVariant) || 'off';
+		xatlasMasterBtn.textContent = '全室真非方格：' + (mv === 'oidn' ? 'OIDN' : (mv === 'raw' ? 'RAW' : '關閉'));
+		xatlasMasterBtn.classList.toggle('glow-white', mv !== 'off');
 	}
 }
 
@@ -6215,10 +6207,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
 	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
 	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
-	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
-	var xatlasNorthOidnBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
-	var xatlasEastOidnBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
-	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn && !nonSquareBtn) return;
+	var xatlasMasterAllBtn = document.getElementById('btn-r7310-xatlas-master-all');
+	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -6239,16 +6229,10 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(ceilingBtn, 'ceilingEnabled', 'setR7310C1CeilingDiffuseRuntimeEnabled');
 	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
 	bindButton(ironDoorBtn, 'ironDoorRevealEnabled', 'setR7310C1IronDoorRevealRuntimeEnabled');
-	bindButton(nonSquareBtn, 'nonSquareAtlasEnabled', 'setR7310C1UseNonSquareAtlas');
-	if (xatlasNorthOidnBtn) xatlasNorthOidnBtn.addEventListener('click', function(e) {
+	if (xatlasMasterAllBtn) xatlasMasterAllBtn.addEventListener('click', function(e) {
 		e.stopPropagation();
-		if (typeof window.cycleR7310C1XatlasStackedNorth !== 'function') return;
-		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedNorth());
-	}, false);
-	if (xatlasEastOidnBtn) xatlasEastOidnBtn.addEventListener('click', function(e) {
-		e.stopPropagation();
-		if (typeof window.cycleR7310C1XatlasStackedEast !== 'function') return;
-		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedEast());
+		if (typeof window.cycleR7310C1XatlasMasterAll !== 'function') return;
+		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasMasterAll());
 	}, false);
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());

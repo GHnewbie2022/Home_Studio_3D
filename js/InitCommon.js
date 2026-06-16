@@ -1525,6 +1525,11 @@ const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-
 const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-oidn-runtime-package.json';
+// R7-3.10 第6步：H2 窗楣 -Y 深度面（south_window_top_reveal_depth）master sub-rect depth_h2 烤包指標。
+const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -1565,6 +1570,10 @@ function resolveR7310C1XatlasRuntimePackageUrl()
 		url = R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL;
 	if (param === 'full-east-wall-oidn')
 		url = R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL;
+	if (param === 'full-ceiling-raw')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL;
+	if (param === 'full-ceiling-oidn')
+		url = R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL;
 
 	if (typeof window !== 'undefined')
 		window.__r7310C1XatlasSelectedPackageUrl = url;
@@ -2625,6 +2634,7 @@ let r7310C1XatlasRuntimeError = null;
 let r7310C1XatlasRuntimeSeparatedAlbedo = true;
 let r7310C1XatlasRuntimeFullNorthWallActive = false;
 let r7310C1XatlasRuntimeFullEastWallActive = false;
+let r7310C1XatlasRuntimeFullCeilingActive = false;
 // per-wall 堆疊 OIDN（北+東同一張合成貼圖 2325x7322、各自獨立開關、重用 bake-atlas slot 不增 sampler）
 const R7310_C1_XATLAS_STACK_W = 2325;
 const R7310_C1_XATLAS_STACK_HN = 3377;
@@ -2636,6 +2646,16 @@ let r7310C1XatlasStackedEastVariant = 'off';
 let r7310C1XatlasStackedReadyNorth = false;
 let r7310C1XatlasStackedReadyEast = false;
 let r7310C1XatlasStackedBuffer = null;
+let r7310C1XatlasCeilingVariant = 'off'; // 'off' | 'raw' | 'oidn'（天花板單槽，與北東堆疊互斥）
+let r7310C1XatlasCeilingReady = false;
+// master shelf-pack atlas 狀態（北+東+天花板寬度不同，shelf 打包進同一張貼圖、重用 bake-atlas slot 守 16-TIU）
+// registry 尺寸/sub-rect 常數定義在天花板尺寸常數之後（見 R7310_C1_XATLAS_MASTER_RECT），此處僅放執行期狀態
+let r7310C1XatlasMasterMode = false;
+let r7310C1XatlasMasterBuffer = null;
+let r7310C1XatlasMasterNorthVariant = 'off'; // 'off' | 'raw' | 'oidn'
+let r7310C1XatlasMasterEastVariant = 'off';
+let r7310C1XatlasMasterCeilingVariant = 'off';
+let r7310C1XatlasMasterDepthH2Variant = 'off'; // R7-3.10 第6步：H2 窗楣深度面隨天花板群同步載入
 
 function updateR7310C1XatlasRuntimeDomState(applied)
 {
@@ -3250,11 +3270,39 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 			pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullNorthWallActive ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode)
 			pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullEastWallActive ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode.value = xatlasApplied && r7310C1XatlasRuntimeFullCeilingActive ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode)
 			pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode.value = r7310C1XatlasStackedMode ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode.value = r7310C1XatlasMasterMode ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRectCeiling)
+			pathTracingUniforms.uR7310C1XatlasRectCeiling.value.set(
+				R7310_C1_XATLAS_MASTER_RECT.ceiling.x, R7310_C1_XATLAS_MASTER_RECT.ceiling.y,
+				R7310_C1_XATLAS_MASTER_RECT.ceiling.w, R7310_C1_XATLAS_MASTER_RECT.ceiling.h
+			);
+		if (pathTracingUniforms.uR7310C1XatlasRectNorth)
+			pathTracingUniforms.uR7310C1XatlasRectNorth.value.set(
+				R7310_C1_XATLAS_MASTER_RECT.north.x, R7310_C1_XATLAS_MASTER_RECT.north.y,
+				R7310_C1_XATLAS_MASTER_RECT.north.w, R7310_C1_XATLAS_MASTER_RECT.north.h
+			);
+		if (pathTracingUniforms.uR7310C1XatlasRectEast)
+			pathTracingUniforms.uR7310C1XatlasRectEast.value.set(
+				R7310_C1_XATLAS_MASTER_RECT.east.x, R7310_C1_XATLAS_MASTER_RECT.east.y,
+				R7310_C1_XATLAS_MASTER_RECT.east.w, R7310_C1_XATLAS_MASTER_RECT.east.h
+			);
+		if (pathTracingUniforms.uR7310C1XatlasRectDepthH2)
+			pathTracingUniforms.uR7310C1XatlasRectDepthH2.value.set(
+				R7310_C1_XATLAS_MASTER_RECT.depth_h2.x, R7310_C1_XATLAS_MASTER_RECT.depth_h2.y,
+				R7310_C1_XATLAS_MASTER_RECT.depth_h2.w, R7310_C1_XATLAS_MASTER_RECT.depth_h2.h
+			);
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize)
 		{
-			if (r7310C1XatlasStackedMode)
+			if (r7310C1XatlasMasterMode)
+				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(R7310_C1_XATLAS_MASTER_W, R7310_C1_XATLAS_MASTER_H);
+			else if (r7310C1XatlasRuntimeFullCeilingActive)
+				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(4265.0, 3377.0);
+			else if (r7310C1XatlasStackedMode)
 				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(R7310_C1_XATLAS_STACK_W, R7310_C1_XATLAS_STACK_H);
 			else if (r7310C1XatlasRuntimePackage)
 				pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value.set(
@@ -4500,6 +4548,10 @@ async function loadR7310C1XatlasStackedSegment(face, variant)
 		r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(r7310C1XatlasStackedBuffer, R7310_C1_XATLAS_STACK_W, R7310_C1_XATLAS_STACK_H);
 		r7310C1XatlasRuntimePixels = r7310C1XatlasStackedBuffer;
 		r7310C1XatlasStackedMode = true;
+		// 北東堆疊與天花板單槽互斥：載堆疊時關掉天花板
+		r7310C1XatlasRuntimeFullCeilingActive = false;
+		r7310C1XatlasCeilingReady = false;
+		r7310C1XatlasCeilingVariant = 'off';
 		r7310C1XatlasRuntimeEnabled = true;
 		r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
 		if (isNorth) { r7310C1XatlasStackedReadyNorth = true; r7310C1XatlasRuntimeFullNorthWallActive = true; r7310C1XatlasStackedNorthVariant = variant; }
@@ -4551,6 +4603,276 @@ if (typeof window !== 'undefined')
 {
 	window.cycleR7310C1XatlasStackedNorth = function() { return r7310C1CycleXatlasStacked('north'); };
 	window.cycleR7310C1XatlasStackedEast = function() { return r7310C1CycleXatlasStacked('east'); };
+}
+const R7310_C1_XATLAS_CEILING_W = 4265;
+const R7310_C1_XATLAS_CEILING_H = 3377;
+// master shelf-pack registry：三面（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）。
+// 佈局（像素、左上原點、y 往下；gutter=4px 隔開各面、alpha=0 由零初始化提供，
+//  SampleValidLinear 的 alpha 加權 bilinear 會把落在 gutter(alpha=0) 的 tap 權重歸零 → 不需 per-rect clamp）：
+//   天花板獨佔上排：x=0,y=0,w=4265,h=3377
+//   北+東並排下排：北 x=0,y=3381,w=2325,h=3377；東 x=2325,y=3381,w=2325,h=3945
+//   MASTER_W = max(4265, 2325+2325) = 4650；MASTER_H = (3377+4) + 3945 = 7326
+const R7310_C1_XATLAS_MASTER_GUTTER = 4;
+const R7310_C1_XATLAS_MASTER_CEILING_W = R7310_C1_XATLAS_CEILING_W;
+const R7310_C1_XATLAS_MASTER_CEILING_H = R7310_C1_XATLAS_CEILING_H;
+const R7310_C1_XATLAS_MASTER_NORTH_W = R7310_C1_XATLAS_STACK_W;
+const R7310_C1_XATLAS_MASTER_NORTH_H = R7310_C1_XATLAS_STACK_HN;
+const R7310_C1_XATLAS_MASTER_EAST_W = R7310_C1_XATLAS_STACK_W;
+const R7310_C1_XATLAS_MASTER_EAST_H = R7310_C1_XATLAS_STACK_HE;
+const R7310_C1_XATLAS_MASTER_BOTTOM_Y = R7310_C1_XATLAS_MASTER_CEILING_H + R7310_C1_XATLAS_MASTER_GUTTER; // 3381
+// R7-3.10 第6步：H2（south_window_top_reveal_depth）窗楣 -Y 深度面進 master 新格子（東牆下方第三排，x=0,y=7330）。
+// 非方格（CODEX 2026-06-16）：H2 世界尺寸 2.44m(東西)×0.20m(南北)＝12.2:1。原 1024² 方形圖 → texel 2.38mm×0.195mm 異向，
+// RAW 雜訊與光影變化東西向拉伸。改 1952×160（800 texel/m）→ 等向 ~1.25mm、貼齊天花板密度，消東西向拉伸。
+// master 加高不動既有三面像素（UV 隨 masterSize 自動調整）；H 由 1024→160 反而變矮。
+const R7310_C1_XATLAS_MASTER_DEPTH_H2_W = 1952;
+const R7310_C1_XATLAS_MASTER_DEPTH_H2_H = 160;
+const R7310_C1_XATLAS_MASTER_BOTTOM2_Y = R7310_C1_XATLAS_MASTER_BOTTOM_Y + R7310_C1_XATLAS_MASTER_EAST_H + R7310_C1_XATLAS_MASTER_GUTTER; // 7330
+const R7310_C1_XATLAS_MASTER_W = Math.max(
+	R7310_C1_XATLAS_MASTER_CEILING_W,
+	R7310_C1_XATLAS_MASTER_NORTH_W + R7310_C1_XATLAS_MASTER_EAST_W
+); // 4650
+const R7310_C1_XATLAS_MASTER_H = R7310_C1_XATLAS_MASTER_BOTTOM2_Y + R7310_C1_XATLAS_MASTER_DEPTH_H2_H; // 8354
+// sub-rect 由 registry 算（不散落魔術數字）；每筆 {x,y,w,h} 為像素整數，提供載入逐列 blit 與 shader rect uniform 共用
+const R7310_C1_XATLAS_MASTER_RECT = {
+	ceiling: { x: 0, y: 0, w: R7310_C1_XATLAS_MASTER_CEILING_W, h: R7310_C1_XATLAS_MASTER_CEILING_H },
+	north: { x: 0, y: R7310_C1_XATLAS_MASTER_BOTTOM_Y, w: R7310_C1_XATLAS_MASTER_NORTH_W, h: R7310_C1_XATLAS_MASTER_NORTH_H },
+	east: { x: R7310_C1_XATLAS_MASTER_NORTH_W, y: R7310_C1_XATLAS_MASTER_BOTTOM_Y, w: R7310_C1_XATLAS_MASTER_EAST_W, h: R7310_C1_XATLAS_MASTER_EAST_H },
+	depth_h2: { x: 0, y: R7310_C1_XATLAS_MASTER_BOTTOM2_Y, w: R7310_C1_XATLAS_MASTER_DEPTH_H2_W, h: R7310_C1_XATLAS_MASTER_DEPTH_H2_H }
+};
+async function loadR7310C1XatlasCeiling(variant)
+{
+	var isOidn = (variant === 'oidn');
+	var url = isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL;
+	try
+	{
+		var pointerResp = await fetch(url, { cache: 'no-store' });
+		if (!pointerResp.ok) throw new Error('R7-3.10 xatlas ceiling pointer not found');
+		var pointer = await pointerResp.json();
+		var w = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
+		var h = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
+		if (w !== R7310_C1_XATLAS_CEILING_W || h !== R7310_C1_XATLAS_CEILING_H)
+			throw new Error('R7-3.10 xatlas ceiling size mismatch ' + w + 'x' + h);
+		var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
+		if (!atlasArtifact) throw new Error('R7-3.10 xatlas ceiling atlas artifact missing');
+		var atlasResp = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
+		if (!atlasResp.ok) throw new Error('R7-3.10 xatlas ceiling atlas binary not found');
+		var atlasBuffer = await atlasResp.arrayBuffer();
+		var expectBytes = R7310_C1_XATLAS_CEILING_W * R7310_C1_XATLAS_CEILING_H * 4 * 4;
+		if (atlasBuffer.byteLength !== expectBytes)
+			throw new Error('R7-3.10 xatlas ceiling atlas binary length mismatch');
+		var pixels = new Float32Array(atlasBuffer);
+		r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(pixels, R7310_C1_XATLAS_CEILING_W, R7310_C1_XATLAS_CEILING_H);
+		r7310C1XatlasRuntimePixels = pixels;
+		// 天花板單槽：與北東堆疊互斥，載入時關掉堆疊
+		r7310C1XatlasStackedMode = false;
+		r7310C1XatlasStackedReadyNorth = false;
+		r7310C1XatlasStackedReadyEast = false;
+		r7310C1XatlasStackedNorthVariant = 'off';
+		r7310C1XatlasStackedEastVariant = 'off';
+		r7310C1XatlasStackedBuffer = null;
+		r7310C1XatlasRuntimeFullNorthWallActive = false;
+		r7310C1XatlasRuntimeFullEastWallActive = false;
+		r7310C1XatlasRuntimeEnabled = true;
+		r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
+		r7310C1XatlasCeilingReady = true;
+		r7310C1XatlasRuntimeFullCeilingActive = true;
+		r7310C1XatlasCeilingVariant = variant;
+		r7310C1XatlasRuntimeReady = true;
+		r7310C1XatlasRuntimeError = null;
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-ceiling');
+		return true;
+	}
+	catch (error)
+	{
+		r7310C1XatlasRuntimeError = error && error.message ? error.message : String(error);
+		if (typeof console !== 'undefined' && console.warn) console.warn('xatlas ceiling load failed', error);
+		return false;
+	}
+}
+function r7310C1CycleXatlasCeiling()
+{
+	// 三段循環：關閉 → RAW → OIDN → 關閉。天花板單槽（4265×3377），與北東堆疊互斥。
+	var cur = r7310C1XatlasCeilingVariant;
+	var next = (cur === 'off') ? 'raw' : (cur === 'raw' ? 'oidn' : 'off');
+	if (next === 'off')
+	{
+		r7310C1XatlasCeilingVariant = 'off';
+		r7310C1XatlasCeilingReady = false;
+		r7310C1XatlasRuntimeFullCeilingActive = false;
+		if (!r7310C1XatlasStackedReadyNorth && !r7310C1XatlasStackedReadyEast && !r7310C1XatlasCeilingReady)
+			r7310C1XatlasRuntimeReady = false;
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-ceiling-off');
+	}
+	else
+	{
+		r7310C1XatlasCeilingVariant = next;
+		loadR7310C1XatlasCeiling(next).catch(function() {});
+	}
+	return (typeof window !== 'undefined' && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
+		? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+		: {};
+}
+if (typeof window !== 'undefined')
+{
+	window.cycleR7310C1XatlasCeiling = function() { return r7310C1CycleXatlasCeiling(); };
+}
+function r7310C1XatlasMasterPointerUrl(face, variant)
+{
+	var isOidn = (variant === 'oidn');
+	if (face === 'north')
+		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL;
+	if (face === 'east')
+		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL;
+	if (face === 'depth_h2')
+		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL;
+	return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL;
+}
+// 通用 master 載入：把單面 atlas 逐列 blit 進 master shelf buffer，重用 bake-atlas slot。
+// 與 stacked / 單張天花板互斥（載 master 時關掉這兩套），保留它們的回退路徑不動。
+async function loadR7310C1XatlasMasterSurface(face, variant)
+{
+	var rect = R7310_C1_XATLAS_MASTER_RECT[face];
+	if (!rect)
+	{
+		if (typeof console !== 'undefined' && console.warn) console.warn('xatlas master unknown face', face);
+		return false;
+	}
+	// MAX_TEXTURE_SIZE 守門：master 任一維超過 GPU 上限就不建（會導致貼圖建立失敗、3D 全黑）
+	var maxTexSize = (renderer && renderer.capabilities && renderer.capabilities.maxTextureSize)
+		? renderer.capabilities.maxTextureSize
+		: 0;
+	if (maxTexSize > 0 && maxTexSize < Math.max(R7310_C1_XATLAS_MASTER_W, R7310_C1_XATLAS_MASTER_H))
+	{
+		if (typeof console !== 'undefined' && console.warn)
+			console.warn('xatlas master exceeds MAX_TEXTURE_SIZE', maxTexSize, 'need', Math.max(R7310_C1_XATLAS_MASTER_W, R7310_C1_XATLAS_MASTER_H));
+		return false;
+	}
+	var url = r7310C1XatlasMasterPointerUrl(face, variant);
+	try
+	{
+		var pointerResp = await fetch(url, { cache: 'no-store' });
+		if (!pointerResp.ok) throw new Error('R7-3.10 xatlas master pointer not found');
+		var pointer = await pointerResp.json();
+		var w = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
+		var h = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
+		if (w !== rect.w || h !== rect.h)
+			throw new Error('R7-3.10 xatlas master segment size mismatch ' + face + ' ' + w + 'x' + h);
+		// R7-3.10 全域 albedo-free 契約檢查（CODEX 2026-06-16）：master sub-rect 若 runtime 要再乘 albedo
+		// （multiplyAlbedoAfterBakeLookup !== false），其烤包必須宣告 bakeAlbedoFree===true；未宣告＝雙乘色風險，直接 fail。
+		// H2 雙乘色事件（dedicated 烤把 hitColor 乘進去、runtime 又乘一次）的防呆：以後任何 owner surface 漏宣告即在載入時擋下。
+		var runtimeMultipliesAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
+		if (runtimeMultipliesAlbedo && pointer.bakeAlbedoFree !== true)
+			throw new Error('R7-3.10 albedo 契約違反 ' + face + '：multiplyAlbedoAfterBakeLookup=true 但烤包未宣告 bakeAlbedoFree=true（albedo 會被雙乘、偏暗偏黃）。烤製須用 albedo-free 管線（--r7310-separated-irradiance-bake 或 xatlas-bake）並在 pointer 標 bakeAlbedoFree:true。');
+		var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
+		if (!atlasArtifact) throw new Error('R7-3.10 xatlas master atlas artifact missing');
+		var atlasResp = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
+		if (!atlasResp.ok) throw new Error('R7-3.10 xatlas master atlas binary not found');
+		var atlasBuffer = await atlasResp.arrayBuffer();
+		var expectBytes = rect.w * rect.h * 4 * 4;
+		if (atlasBuffer.byteLength !== expectBytes)
+			throw new Error('R7-3.10 xatlas master atlas binary length mismatch ' + face);
+		var facePixels = new Float32Array(atlasBuffer);
+		if (!r7310C1XatlasMasterBuffer)
+			r7310C1XatlasMasterBuffer = new Float32Array(R7310_C1_XATLAS_MASTER_W * R7310_C1_XATLAS_MASTER_H * 4); // 零初始化＝gutter alpha=0
+		// 逐列 blit（寬度不同，不能單一 set）：第 r 列源像素 [r*w,(r+1)*w) 寫到 master 列 (rect.y+r) 的 [rect.x, rect.x+w)
+		var rowStride = R7310_C1_XATLAS_MASTER_W * 4;
+		for (var r = 0; r < rect.h; r++)
+		{
+			var srcStart = r * rect.w * 4;
+			var dstStart = ((rect.y + r) * R7310_C1_XATLAS_MASTER_W + rect.x) * 4;
+			r7310C1XatlasMasterBuffer.set(facePixels.subarray(srcStart, srcStart + rect.w * 4), dstStart);
+		}
+		r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(r7310C1XatlasMasterBuffer, R7310_C1_XATLAS_MASTER_W, R7310_C1_XATLAS_MASTER_H);
+		r7310C1XatlasRuntimePixels = r7310C1XatlasMasterBuffer;
+		r7310C1XatlasMasterMode = true;
+		// 與 stacked / 單張天花板互斥：載 master 時關掉這兩套（避免兩套同時推 uniform）
+		r7310C1XatlasStackedMode = false;
+		r7310C1XatlasStackedReadyNorth = false;
+		r7310C1XatlasStackedReadyEast = false;
+		r7310C1XatlasStackedNorthVariant = 'off';
+		r7310C1XatlasStackedEastVariant = 'off';
+		r7310C1XatlasStackedBuffer = null;
+		r7310C1XatlasRuntimeFullCeilingActive = (face === 'ceiling') ? true : r7310C1XatlasRuntimeFullCeilingActive;
+		r7310C1XatlasCeilingReady = (face === 'ceiling') ? true : r7310C1XatlasCeilingReady;
+		r7310C1XatlasRuntimeEnabled = true;
+		r7310C1XatlasRuntimeSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
+		if (face === 'north') { r7310C1XatlasRuntimeFullNorthWallActive = true; r7310C1XatlasMasterNorthVariant = variant; }
+		else if (face === 'east') { r7310C1XatlasRuntimeFullEastWallActive = true; r7310C1XatlasMasterEastVariant = variant; }
+		else if (face === 'depth_h2') { r7310C1XatlasMasterDepthH2Variant = variant; } // H2 隨天花板群顯示，無獨立 active flag（不可落入下方 ceiling else）
+		else { r7310C1XatlasRuntimeFullCeilingActive = true; r7310C1XatlasMasterCeilingVariant = variant; r7310C1XatlasCeilingVariant = variant; }
+		r7310C1XatlasRuntimeReady = (r7310C1XatlasRuntimeFullNorthWallActive || r7310C1XatlasRuntimeFullEastWallActive || r7310C1XatlasRuntimeFullCeilingActive);
+		r7310C1XatlasRuntimeError = null;
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-master-' + face);
+		return true;
+	}
+	catch (error)
+	{
+		r7310C1XatlasRuntimeError = error && error.message ? error.message : String(error);
+		if (typeof console !== 'undefined' && console.warn) console.warn('xatlas master load failed', face, error);
+		return false;
+	}
+}
+// 依序疊載三面到同一張 master buffer（天花板→北→東）；variant 'raw'|'oidn'
+async function loadR7310C1XatlasMasterAll(variant)
+{
+	var v = (variant === 'oidn') ? 'oidn' : 'raw';
+	var okCeiling = await loadR7310C1XatlasMasterSurface('ceiling', v);
+	var okNorth = await loadR7310C1XatlasMasterSurface('north', v);
+	var okEast = await loadR7310C1XatlasMasterSurface('east', v);
+	// R7-3.10 第6步接回（CODEX 全域 albedo-free 契約，2026-06-16）：H2 已用 --r7310-separated-irradiance-bake albedo-free 重烤
+	// （包 20260616-054126；luma 0.207 雙乘→0.2794 單乘，junction 0.334≈天花板 0.303）。pointer 標 bakeAlbedoFree:true 通過契約檢查。
+	// 取代雙乘色的 20260616-041925。天花板已建 master buffer＋設好 ceiling 群旗標；depth_h2 最後疊載、不動那些旗標。
+	var okDepthH2 = await loadR7310C1XatlasMasterSurface('depth_h2', v);
+	return okCeiling || okNorth || okEast || okDepthH2;
+}
+function r7310C1CycleXatlasMasterAll()
+{
+	// 三段循環：關閉 → RAW → OIDN → 關閉（三面同步、共用 master buffer）
+	var cur = r7310C1XatlasMasterNorthVariant; // 三面同步、取任一面當代表
+	var next = (cur === 'off') ? 'raw' : (cur === 'raw' ? 'oidn' : 'off');
+	if (next === 'off')
+	{
+		r7310C1XatlasMasterMode = false;
+		r7310C1XatlasMasterBuffer = null;
+		r7310C1XatlasMasterNorthVariant = 'off';
+		r7310C1XatlasMasterEastVariant = 'off';
+		r7310C1XatlasMasterCeilingVariant = 'off';
+		r7310C1XatlasMasterDepthH2Variant = 'off';
+		r7310C1XatlasRuntimeFullNorthWallActive = false;
+		r7310C1XatlasRuntimeFullEastWallActive = false;
+		r7310C1XatlasRuntimeFullCeilingActive = false;
+		r7310C1XatlasCeilingReady = false;
+		r7310C1XatlasCeilingVariant = 'off';
+		r7310C1XatlasRuntimeReady = false;
+		updateR7310C1FullRoomDiffuseRuntimeUniforms();
+		resetR738MainAccumulation();
+		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-master-off');
+	}
+	else
+	{
+		// 樂觀更新顯示用 variant（load 成功會再確認；失敗則 active=false 仍走 hybrid）
+		r7310C1XatlasMasterNorthVariant = next;
+		r7310C1XatlasMasterEastVariant = next;
+		r7310C1XatlasMasterCeilingVariant = next;
+		r7310C1XatlasMasterDepthH2Variant = next;
+		loadR7310C1XatlasMasterAll(next).catch(function() {});
+	}
+	return (typeof window !== 'undefined' && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
+		? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+		: {};
+}
+if (typeof window !== 'undefined')
+{
+	// 直接賦值（非 wrapper）：非 module scope 下函式宣告本身即同名 window 屬性，同名 wrapper 會自我遞迴爆堆疊。
+	window.loadR7310C1XatlasMasterSurface = loadR7310C1XatlasMasterSurface;
+	window.loadR7310C1XatlasMasterAll = loadR7310C1XatlasMasterAll;
+	window.cycleR7310C1XatlasMasterAll = function() { return r7310C1CycleXatlasMasterAll(); };
 }
 async function loadR7310C1FullRoomDiffuseRuntimePackage()
 {
@@ -6852,6 +7174,33 @@ function buildR7310C1SouthWallAcShadowTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
+// === GENERATED: surface-owner BEGIN  (registry fc176523994dd58b) ===
+	// Source of truth: docs/data/r7-3-10-surface-owner-registry.json
+	// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
+	var R7310_SURFACE_OWNER_REGISTRY_VERSION = "fc176523994dd58b";
+	var R7310_SURFACE_OWNER_SURFACES = [{"surfaceId":"ceiling_open","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[2.895,2.915],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[0,2.905],"z":[3.05,3.07],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall_depth_top","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"y":[2.895,2.915],"z":[3.056,3.256],"xRects":[[-2.11,-1.75],[0.69,2.11]],"precedence":20,"pendingPolicy":"blocker"},{"surfaceId":"south_window_top_reveal_depth","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[2.895,2.915],"z":[3.056,3.256],"precedence":21,"pendingPolicy":"baked"},{"surfaceId":"south_window_top_reveal_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.04,2.905],"z":[3.05,3.07],"precedence":15,"pendingPolicy":"baked"}];
+	function r7310SurfaceOwnerInRange(v, r) { return r == null || (v >= r[0] && v <= r[1]); }
+	function r7310SurfaceOwnerMatches(s, sample) {
+		var g = s.normalGate;
+		if (g && !(sample.normal[g.axis] * g.sign > g.threshold)) return false;
+		if (s.objectIdGate && !(sample.objectId < s.objectIdGate.lt)) return false;
+		var p = sample.position;
+		if (!r7310SurfaceOwnerInRange(p.y, s.y) || !r7310SurfaceOwnerInRange(p.z, s.z)) return false;
+		if (Array.isArray(s.xRects)) { var ok = false; for (var i = 0; i < s.xRects.length; i++) if (r7310SurfaceOwnerInRange(p.x, s.xRects[i])) ok = true; if (!ok) return false; }
+		else if (!r7310SurfaceOwnerInRange(p.x, s.x)) return false;
+		return true;
+	}
+	function r7310SurfaceOwnerResolve(sample) {
+		var best = null;
+		for (var i = 0; i < R7310_SURFACE_OWNER_SURFACES.length; i++) {
+			var s = R7310_SURFACE_OWNER_SURFACES[i];
+			if (!r7310SurfaceOwnerMatches(s, sample)) continue;
+			if (best === null || s.precedence > best.precedence) best = s;
+		}
+		if (best === null) return { surfaceId: null, pending: false };
+		return { surfaceId: best.surfaceId, pending: best.pendingPolicy === 'pending' };
+	}
+	// === GENERATED: surface-owner END ===
 function buildR7310C1CeilingTexelMetadata(size)
 {
 	var metadata = new Float32Array(size * size * 12);
@@ -6893,9 +7242,16 @@ function buildR7310C1CeilingTexelMetadata(size)
 			var v = (y + 0.5) / size;
 			var worldX = b.xMin + (b.xMax - b.xMin) * u;
 			var worldZ = b.zMin + (b.zMax - b.zMin) * v;
-			var isBehindSolidSouthWall =
-				worldZ > southWallZ &&
-				(worldX < southWindowXMin || worldX >= southWindowXMax);
+			// R7-3.10 Surface Ownership Map (CODEX step 5): the south depth slab (z[3.056,3.256])
+			// is owned by south_wall_depth_top (H1) / south_window_top_reveal_depth (H2), NOT the
+			// open ceiling. Resolve via the GENERATED owner (single source of truth) instead of the
+			// old hand-written isBehindSolidSouthWall rule; this covers H1 AND H2 consistently and
+			// records pending so package validation can block (裁示 C/E). East/West occluder footprints
+			// (z<=3.056, not yet in registry) stay hand-written for this slice.
+			var r7310OwnerSample = { position: { x: worldX, y: b.y, z: worldZ }, normal: { x: 0.0, y: -1.0, z: 0.0 }, objectId: 0.0 };
+			var r7310Owner = r7310SurfaceOwnerResolve(r7310OwnerSample);
+			var ceilingOwns = r7310Owner.surfaceId === 'ceiling_open';
+			var ownerPending = r7310Owner.pending;
 			var isBehindEastOccluder =
 				worldZ <= southWallZ &&
 				((worldZ >= seColumnZMin && worldX >= seColumnX) ||
@@ -6904,7 +7260,7 @@ function buildR7310C1CeilingTexelMetadata(size)
 				worldZ <= southWallZ &&
 				worldZ >= eastBeamZMin &&
 				worldX <= westOccluderX;
-			var isValid = !isBehindSolidSouthWall && !isBehindEastOccluder && !isBehindWestOccluder;
+			var isValid = ceilingOwns && !isBehindEastOccluder && !isBehindWestOccluder;
 			var offset = (y * size + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = b.y;
@@ -6914,7 +7270,7 @@ function buildR7310C1CeilingTexelMetadata(size)
 			metadata[offset + 5] = 0.0;
 			metadata[offset + 6] = 5.0;
 			metadata[offset + 7] = isValid ? 1.0 : 0.0;
-			metadata[offset + 8] = 0.0;
+			metadata[offset + 8] = ownerPending ? 1.0 : 0.0; // R7-3.10 owner-map: PENDING marker (H1/H2 not yet self-baked)
 			metadata[offset + 9] = 0.0;
 			metadata[offset + 10] = u;
 			metadata[offset + 11] = v;
@@ -7305,19 +7661,24 @@ function buildR7310C1SouthWindowXRevealShadowTexelMetadata(size, bounds, normalX
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
-function buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, bounds, normalY)
+function buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, bounds, normalY, heightOpt)
 {
-	var metadata = new Float32Array(size * size * 12);
+	// R7-3.10 非方格支援（CODEX 2026-06-16）：heightOpt 給定時走非方格（width=size、height=heightOpt），
+	// 未給時維持方形（height=width）。H2 窗楣 12:1 長條改非方格 1952×160 達等向 texel 密度、消東西向光影拉伸；
+	// 其他 reveal（bottom 等）仍以 3 參數方形呼叫、行為不變。
+	var width = size;
+	var height = (heightOpt === undefined || heightOpt === null) ? size : heightOpt;
+	var metadata = new Float32Array(width * height * 12);
 	var valid = 0;
-	for (var y = 0; y < size; y += 1)
+	for (var y = 0; y < height; y += 1)
 	{
-		for (var x = 0; x < size; x += 1)
+		for (var x = 0; x < width; x += 1)
 		{
-			var u = (x + 0.5) / size;
-			var v = (y + 0.5) / size;
+			var u = (x + 0.5) / width;
+			var v = (y + 0.5) / height;
 			var worldX = bounds.xMin + (bounds.xMax - bounds.xMin) * u;
 			var worldZ = bounds.zMin + (bounds.zMax - bounds.zMin) * v;
-			var offset = (y * size + x) * 12;
+			var offset = (y * width + x) * 12;
 			metadata[offset] = worldX;
 			metadata[offset + 1] = bounds.y;
 			metadata[offset + 2] = worldZ;
@@ -7333,7 +7694,12 @@ function buildR7310C1SouthWindowYRevealShadowTexelMetadata(size, bounds, normalY
 			valid += 1;
 		}
 	}
-	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, width * height) };
+}
+// R7-3.10 非方格（CODEX 2026-06-16）：H2 窗楣 -Y 深度面 rect 版 metadata（width×height，非方形），達等向 texel 密度。
+function buildR7310C1SouthWindowTopRevealDepthH2TexelMetadataRect(width, height)
+{
+	return buildR7310C1SouthWindowYRevealShadowTexelMetadata(width, R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS, -1.0, height);
 }
 
 function buildR7310C1IronDoorRevealTexelMetadata(size)
@@ -7954,7 +8320,9 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 				else if (patchId === R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowLeftRevealShadowTexelMetadata(size);
 				else if (patchId === R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowRightRevealShadowTexelMetadata(size);
 				else if (patchId === R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowBottomRevealShadowTexelMetadata(size);
-				else if (patchId === R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID) metadataResult = buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size);
+				else if (patchId === R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID) metadataResult = isRectCapture
+					? buildR7310C1SouthWindowTopRevealDepthH2TexelMetadataRect(width, height)
+					: buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size);
 				else if (patchId === R7310_C1_IRON_DOOR_REVEAL_TARGET_ID) metadataResult = buildR7310C1IronDoorRevealTexelMetadata(size);
 			}
 			if (shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult))
@@ -8356,9 +8724,15 @@ async function captureR7310C1SouthWindowTopRevealShadowAtlas(targetSamples, time
 	options = options || {};
 	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
 		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		// R7-3.10 非方格（CODEX 2026-06-16）：H2 12:1 長條改非方格烤（width≠height）達等向 texel 密度、消東西向光影拉伸。
+		targetAtlasWidth: options.targetAtlasWidth,
+		targetAtlasHeight: options.targetAtlasHeight,
 		patchId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
 		surfaceName: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME,
-		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS,
+		// R7-3.10 全域 albedo-free 契約：把 separated 宣告續傳到 DirectSurfaceTexelPatch（設 uR7310C1SeparatedBakeMode），
+		// 使 H2 patchId 1022 烤時跳過 mask*=hitColor → albedo-free。此處不傳即斷鏈、回到雙乘色。
+		separatedIrradianceBake: options.separatedIrradianceBake === true
 	});
 }
 window.captureR7310C1SouthWindowTopRevealShadowAtlas = captureR7310C1SouthWindowTopRevealShadowAtlas;
@@ -8497,7 +8871,13 @@ async function reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamp
 		var rawHdrSummary = summarizeR738RawHdrPixels(rawHdr, actualSamples);
 		var surfaceClassSummary = await captureR738C1SurfaceClassSummary();
 		var atlasSummary = await spec.captureAtlas(target, timeout, {
-			targetAtlasResolution: prep.targetAtlasResolution
+			targetAtlasResolution: prep.targetAtlasResolution,
+			// R7-3.10 非方格（CODEX 2026-06-16）：把矩形寬高往下傳，H2 12:1 長條走非方格烤達等向 texel 密度（未給則維持方形）。
+			targetAtlasWidth: options.targetAtlasWidth,
+			targetAtlasHeight: options.targetAtlasHeight,
+			// R7-3.10 全域 albedo-free 契約（CODEX 2026-06-16）：把 separated 宣告往下傳到 captureR738C1DirectSurfaceTexelPatch，
+			// 否則 uR7310C1SeparatedBakeMode 不會被設、烤時仍乘 hitColor（H2 雙乘色真因之一：旗標在此層斷掉）。
+			separatedIrradianceBake: options.separatedIrradianceBake === true
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
@@ -8665,6 +9045,24 @@ window.reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples = function(target
 		batch: 'south_window_top_reveal_shadow',
 		targetId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
 		surfaceName: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_SURFACE_NAME,
+		worldBounds: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS,
+		mapping: 'single_planar_xz_on_y_face',
+		captureAtlas: captureR7310C1SouthWindowTopRevealShadowAtlas
+	});
+};
+
+// R7-3.10 第6步（CODEX B/C，2026-06-16）：H2 窗楣 -Y 水平深度面「真自烤」入口。
+// 與舊 hybrid south-window-top-reveal-shadow 區隔（獨立 surfaceName，不混到 c1_ 那套 runtime package），
+// 但刻意重用 targetId/patchId 1022（＝同一個 -Y 窗楣 bake-point 幾何＋同一個 -Y metadata builder），
+// 故烤出的 metadata 身分必為 normal -Y、y=2.905、x[-1.75,0.69]、z[3.056,3.256]（CODEX D 必過條件）。
+// 這是 master sub-rect depth_h2 要用的真 H2 資料來源；surfaceName 改成 south_window_top_reveal_depth，
+// 讓 manifest 不再標成 floor_center_c1_reference / c1_south_window_top_reveal_shadow。
+window.reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'south_window_top_reveal_depth_h2',
+		targetId: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_TARGET_ID,
+		surfaceName: 'south_window_top_reveal_depth',
 		worldBounds: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS,
 		mapping: 'single_planar_xz_on_y_face',
 		captureAtlas: captureR7310C1SouthWindowTopRevealShadowAtlas
@@ -11196,6 +11594,11 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		nonSquareAtlasEnabled: r7310C1UseNonSquareAtlas,
 		xatlasStackedNorthVariant: r7310C1XatlasStackedNorthVariant,
 		xatlasStackedEastVariant: r7310C1XatlasStackedEastVariant,
+		xatlasCeilingVariant: r7310C1XatlasCeilingVariant,
+		xatlasMasterMode: r7310C1XatlasMasterMode,
+		xatlasMasterNorthVariant: r7310C1XatlasMasterNorthVariant,
+		xatlasMasterEastVariant: r7310C1XatlasMasterEastVariant,
+		xatlasMasterCeilingVariant: r7310C1XatlasMasterCeilingVariant,
 		nonSquareAtlasSizePx: {
 			width: r7310C1NonSquareAtlasSizePx.width,
 			height: r7310C1NonSquareAtlasSizePx.height
@@ -12576,6 +12979,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeProbe = async function(options)
 			nonSquareAtlasEnabled: r7310C1UseNonSquareAtlas,
 			xatlasStackedNorthVariant: r7310C1XatlasStackedNorthVariant,
 			xatlasStackedEastVariant: r7310C1XatlasStackedEastVariant,
+			xatlasCeilingVariant: r7310C1XatlasCeilingVariant,
 			nonSquareAtlasReady: r7310C1NonSquareAtlasRuntimeReady,
 			nonSquareAtlasPackageDir: r7310C1NonSquareAtlasRuntimePackage ? r7310C1NonSquareAtlasRuntimePackage.packageDir : null,
 			ready: r7310C1FullRoomDiffuseRuntimeReady,
