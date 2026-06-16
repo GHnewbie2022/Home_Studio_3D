@@ -370,3 +370,119 @@ CODEX 初步裁示：
    北牆原本已驗收的接觸邊不可退化。
    OIDN 不可改動 RAW package。
 ```
+
+## 12. Texel density audit（OPUS read-only 實證；撤回先前「北/東約 590、天花板混合」誤判）
+
+CODEX 質疑 OPUS 先前的密度判讀，從 atlas 尺寸反推現有面應已是 800 texel/m。OPUS 做 5 面 read-only 逐面 audit（世界邊界＋master sub-rect 尺寸＋UV 函式軸向＋package pointer 四方交叉驗證），結論：CODEX 正確。現有 master surfaces 均為 800 texel/m。
+
+OPUS 先前「590」的誤判來源已查明：讀到「舊 non-square 預覽 atlas」（R7310_C1_NON_SQUARE_ATLAS_SIZE_PX 2912×3432、north face 2492×1716＝590 texel/m），那是另一套舊系統，與 master xatlas 無關。本 audit 已明確排除該預覽系統。「北/東約 590、天花板混合」判讀撤回。
+
+```
+逐面結果（atlas 兩軸密度，皆 ~800 texel/m、各向同性）
+  北牆   2325×3377   atlas寬2325↔worldY高2.905m=800.3 ；atlas高3377↔worldX寬4.22m=800.2   ✅800
+  東牆   2325×3945   atlas寬2325↔worldY高2.905m=800.3 ；atlas高3945↔worldZ深4.93m=800.2   ✅800
+  天花板 4265×3377   atlas寬4265↔worldZ深5.33m=800.2 ；atlas高3377↔worldX寬4.22m=800.2     ✅800
+  H2     1952×160    atlas寬1952↔worldX 2.44m=800.0 ；atlas高160↔worldZ 0.20m=800.0         ✅800（texelMm[1.25,1.25]）
+  各面 package pointer 的 targetAtlasWidth/Height 與 master rect 逐位元一致。
+  各面 UV 軸向不同（牆寬軸=worldY、天花板寬軸=worldZ、H2寬軸=worldX），但兩軸密度一致 800 → 「等價軸向、均 800」。
+```
+
+裁示落實：
+
+```
+1. 北／東／天花板不重烤（讀碼確認已 800）。
+2. 共識稿先前「北/東約590、天花板混合」撤回，改記「現有 master surfaces 均已按 800 texel/m（等價軸向）建立」。
+3. 地板跟同一標準做 800 texel/m：world 4.22m(X)×5.33m(Z) → 非方格 3376×4264 px（atlas寬↔worldX、atlas高↔worldZ）。
+   現有地板是 1024² 方形烤＝242.6(X)／192.1(Z) texel/m，遠低於 800 且各向異性 1.263——正是要改的拉伸。
+4. §10（H2 紋理東西向拉伸）已解：H2 已重烤為非方格 1952×160＝800 texel/m（commit 80314cd）。
+5. §11（北牆 OIDN 西側寬帶）已解：改 RTLightmap（commit 1ab211e、已 push）。
+```
+
+## 13. 地板 preflight 定稿（C1A shell 第一版；read-only，待裁示後實作）
+
+架構定位（CODEX 2026-06-16 裁示，取代「全室單一 master」說法）：每 config 兩張 active atlas — C1A=shell（建築外殼）、C1B=objects（物件）。同一時間只綁 active config 的 A/B。地板＝C1A shell 的一片。
+
+sampler 實機審查（OPUS read-only）：MAX_TEXTURE_IMAGE_UNITS=16、path-tracer active sampler=16/16（零空位；tBorrowTexture 已因 TIU≤16 停用，代表已擠到上限）。故 C1B object atlas 不可在退舊 FullRoomDiffuse 兩 slot 前上線。
+
+```
+3-phase 上線順序（硬紅線：跨階段不可搶跑）
+  Phase 1：只做 C1A shell。地板＋ceiling/north/east/H2 收進 C1A（沿用 tR738C1BakeAtlasTexture，零新 sampler）。
+  Phase 2：C1A shell 面（含 floor）驗收後，退舊 FullRoomDiffuse 兩 slot
+           （tR7310C1FullRoomDiffuseAtlasTexture ＋ …NonSquare），釋放 2 sampler。
+  Phase 3：才開 C1B object atlas（用 1 個釋放出的 slot、另 1 留 headroom）。落點 4＋9＋2＝15/16。
+  地板任務只在 Phase 1；C1B（家具/喇叭/桌子）等 Phase 3。
+```
+
+```
+1. floor owner registry 草案
+   {
+     "surfaceId": "floor_open",
+     "ownerClass": "floor",
+     "atlasGroup": "shell",          // 新欄位（決策A）
+     "configId": 1,                  // 新欄位（決策A）
+     "normalGate": { "axis":"y", "sign":1, "threshold":0.5 },
+     "objectIdGate": { "lt":1.5 },
+     "x": [-2.11, 2.11], "y": [-0.0005, 0.025], "z": [-2.074, 3.256],
+     "precedence": 10,
+     "pendingPolicy": "pending",     // 先 pending（桃紅），D-verify 後改 baked
+     "bakeTargetId": null,           // pending 可為 null；baked 階段必須填 1001（沿用既有地板、不新增 targetId）
+     "bakeTargetRole": "master_subrect", "masterRectKey": "floor",
+     "runnerSurfaceKey": "full-floor-xatlas"
+   }
+   身分釘死（避免「targetId 到底是誰」歧義）：floor_open ＝ 同一塊地板（既有 targetId 1001）的 master 化版本。
+     targetId / bakeTargetId 沿用 1001、不新增；改變的只有 atlasGroup(shell)、configId(1)、surfaceName(floor_open)、masterRect(floor)、烤法(非方格 albedo-free)。
+   schema 同步：_doc.fields 增 configId、atlasGroup；codegen/scanner 讀這兩欄。
+```
+
+```
+2. floor pending 階段（讓桃紅安全網真的會亮）
+   登 pending → 重跑 codegen → r7310SurfaceOwnerIsPending(floor) 回 true（目前全 false 是死碼）。
+   master 模式 floor 命中 → 桃紅 vec3(1,0,1) break；未烤前不退 LIVE 漫射、不取舊 1024 烤。
+   衝突修：舊 FloorHybrid（glsl 6358-6360，apply 7248 未被 !XatlasRuntimeFirstHit 擋）會在 master 模式照貼舊 1024 烤、蓋掉桃紅
+     → pending 階段在 master 模式關掉 FloorHybrid（或桃紅 gate 排它前）。
+   scanner 取樣區從南側深度條擴到 floor 腳印（x[-2.11,2.11] z[-2.074,3.256]）。
+```
+
+```
+3. metadata identity gate（新 load-time gate；目前缺、地板最高優先）
+   loader 現只驗 width/height/byteLength。新增逐欄比對烤包 metadata vs registry：
+     surfaceName==floor_open、targetId==1001（沿用既有地板、不新增）、baked 時 bakeTargetId==1001、configId==runtime config（不符拒載）、atlasGroup==shell、
+     worldPos⊂bounds、normal≈[0,+1,0]、width×height==3376×4264、texel≈800、bakeAlbedoFree==true。
+   理由：registry 已記 3 次 VOID 地板誤烤（缺 --r7310-full-room-diffuse-bake 旗標→靜默退回 floor fallback），此 gate 是唯一常設防線。
+```
+
+```
+4. C1A shell packing 第一版（非盲 append；重排把 max 維壓進 8192）
+   左欄  ceiling {0,    0,    4265, 3377}
+         floor   {0,    3381, 3376, 4264}
+   右欄  north   {4269, 0,    2325, 3377}
+         east    {4269, 3381, 2325, 3945}
+         depth_h2{4269, 7330, 1952, 160 }
+   C1A_W = 4265+4+2325 = 6594；C1A_H = max(3377+4+4264, 3377+4+3945+4+160) = 7645。
+   兩維 < 8192 → 含低階 GPU 部署安全；面積效率 ~91%。
+   只動 rect offset/uniform＋重 blit，既有面不重烤。附帶修 InitCommon 4615/4635 行過時 MASTER_H 註解（7326/8354→實算 7490→C1A 新值）。
+   gate：sub-rect 不重疊（上表已驗）、每面 4px gutter（上表已留）、C1A_W/H ≤ MAX_TEXTURE_SIZE 斷言。
+   split 延後：之後 south/west/beams/columns 加入若超 MAX_TEXTURE_SIZE，才進 masterAtlas_0/_1 split（尺寸問題、非 sampler；本版先不做）。
+```
+
+```
+5. sampler discipline
+   floor 沿用 tR738C1BakeAtlasTexture（shell），零新 sampler。
+   硬紅線：退舊 FullRoomDiffuse 兩 slot（Phase 2）前，不准新增任何 object/C1B atlas sampler（先加=17/16=可能全黑）。
+   新增斷言：master path-tracer active sampler ≤ 16。
+```
+
+```
+6. albedo 契約
+   floor master 烤包：bakeAlbedoFree=true、multiplyAlbedoAfterBakeLookup=true（只存乾淨間接光、runtime 乘一次材質色）。
+   ⚠ 現有 1024 floor 包是 indirect-only＋runtime 加直接光、非 albedo-free 分離 → 必須重烤成非方格 albedo-free，
+     否則 loader 契約 throw／雙重 albedo 重演（VOID 過的第一版 H2 同陷阱）。
+   烤指令釘 runner key + --r7310-full-room-diffuse-bake companion 旗標（避免靜默退回 floor fallback）。
+```
+
+```
+7. 舊 floor path 退場（分兩段；先不刪）
+   7a（Phase 1 內、過渡）：master 模式關 FloorHybrid，讓桃紅／C1A floor 生效；實體檔保留到驗收後才刪。
+   7b（Phase 2）：floor＋C1A shell 面全驗收後，退場 uR7310C1FloorDiffuseMode、tR7310C1FullRoomDiffuseAtlasTexture(+NonSquare)、targetId 1001、r7310C1FloorHybridActive，釋放 2 sampler 給 Phase 3 的 C1B。
+   退場條件（全滿足才退）：D-verify 過 ＋ 使用者同視角 RAW/OIDN/LIVE 肉眼過 ＋ 16-TIU 不黑 ＋ 接觸邊不退化。
+```
