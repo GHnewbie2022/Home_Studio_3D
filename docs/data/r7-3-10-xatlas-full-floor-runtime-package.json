@@ -1,0 +1,31 @@
+{
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_xatlas_full_floor_runtime",
+  "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
+  "runtimeArchitecture": "single_xatlas_full_floor_phase2",
+  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260617-164025",
+  "targetAtlasWidth": 3376,
+  "targetAtlasHeight": 4264,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
+  "uploadRowFlip": false,
+  "configId": 1,
+  "atlasGroup": "shell",
+  "surfaceName": "floor_open",
+  "targetId": 1001,
+  "nonSquareAtlas": true,
+  "separatedIrradianceBake": true,
+  "masterRectKey": "floor",
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  },
+  "note": "Phase C3 正式上架（2026-06-17，使用者拍板）：全室座地 occlusion exclusion 官方 PASS 包 20260617-164025（1000 SPP、13 footprint＝11 AABB＋2 KH150 StandBase rotatedBox、validTexelRatio 0.6214∈[0.618,0.625]、alphaExclusion PASS、status PASS）。KH150 喇叭架外圈薄環＝indirect-only atlas audit warning（render-space proof 同視角 LIVE vs RAW diff 0.86/255、畫面不可見、D800 同型），記於 validation-report.json alphaExclusionWarnings、不阻斷。取代基準 200401 與 fail 包 102938/124208/143939。"
+}

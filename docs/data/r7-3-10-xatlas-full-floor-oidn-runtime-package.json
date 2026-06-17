@@ -1,0 +1,42 @@
+{
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_xatlas_full_floor_runtime",
+  "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
+  "runtimeArchitecture": "single_xatlas_full_floor_phase2",
+  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260617-164025",
+  "targetAtlasWidth": 3376,
+  "targetAtlasHeight": 4264,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
+  "uploadRowFlip": false,
+  "configId": 1,
+  "atlasGroup": "shell",
+  "surfaceName": "floor_open",
+  "targetId": 1001,
+  "nonSquareAtlas": true,
+  "separatedIrradianceBake": true,
+  "masterRectKey": "floor",
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-oidn-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  },
+  "denoise": {
+    "tool": "r7-3-10-oidn-bridge",
+    "filter": "RTLightmap",
+    "quality": "high",
+    "auxStrategy": "color_only_beta",
+    "inputSamples": 1000,
+    "deviceUsed": "metal",
+    "version": "2.4.1",
+    "alphaPreserved": true,
+    "passDecision": "pass"
+  },
+  "note": "Phase C3 官方 PASS 包 20260617-164025 的 OIDN 版（2026-06-17）。對 164025 RAW（1000 SPP、13 footprint 含 bed_main）跑 r7-3-10-oidn-bridge：RTLightmap、quality high、color-only beta、dilation 128、metal、OIDN 2.4.1，passDecision pass、NaN/Inf=0、nonzeroRatio 0.6214（bit 對齊 RAW validTexelRatio、繼承全部 13 footprint 含床底排除）。bridge 以 push-pull dilation 預填排除區再 post-mask 歸零，OIDN 全程不見硬黑、排除邊界不滲色。同目錄 atlas-patch-000-oidn-rgba-f32.bin，texel-metadata/validation 與 RAW 共用。取代舊 OIDN 來源 20260616-200401（400 SPP、status fail 舊探針、C2/C3 footprint 之前、缺床底排除）。"
+}
