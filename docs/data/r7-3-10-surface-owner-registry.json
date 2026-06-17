@@ -205,12 +205,12 @@
       "atlasGroup": "shell",
       "configIds": [1, 2, 3, 4],
       "furnitureMode": null,
-      "sourceObject": "工作桌 js/Home_Studio.js:126, box x[-0.60,0.60] z[0.157,0.697]",
-      "bounds": { "x": [-0.60, 0.60], "z": [0.157, 0.697] },
+      "sourceObject": "工作桌 js/Home_Studio.js:126, box x[-0.60,0.60] z[0.405,0.945]（2026-06-17 南移）",
+      "bounds": { "x": [-0.60, 0.60], "z": [0.405, 0.945] },
       "margin": { "mode": "none", "meters": 0.0 },
       "policy": "invalidate_floor_texel",
       "enabled": true,
-      "note": "工作桌座地 footprint(房間中央偏北)。bounds 貼齊 box AABB 未外擴。"
+      "note": "工作桌座地 footprint。2026-06-17 南移接近喇叭架：z[0.405,0.945]（深度 0.54m 維持），南緣距 KH150 喇叭架底座約 2cm。bounds 貼齊 box AABB 未外擴。"
     },
     {
       "id": "southeast_bookshelf_footprint",
@@ -284,14 +284,14 @@
       "configIds": [1, 2, 3, 4],
       "furnitureMode": null,
       "shape": "rotatedBox",
-      "centerXZ": [-0.56825, 0.9842],
+      "centerXZ": [-0.66825, 1.1574],
       "halfXZ": [0.125, 0.15],
       "rotY": -0.5235987755982988,
-      "sourceObject": "js/Home_Studio.js rotatedObjects uLeftStandBaseInvMatrix (L760), center[-0.56825,0.015,0.9842] half[0.125,0.015,0.15] rotY -PI/6；座地底座 y[0,0.03]",
+      "sourceObject": "js/Home_Studio.js rotatedObjects uLeftStandBaseInvMatrix (L760), center[-0.66825,0.015,1.1574] half[0.125,0.015,0.15] rotY -PI/6；座地底座 y[0,0.03]",
       "margin": { "mode": "none", "meters": 0.0 },
       "policy": "invalidate_floor_texel",
       "enabled": true,
-      "note": "KH150 左聲道喇叭架貼地底座(StandBase)旋轉盒 footprint。Phase C3：rotatedBox 精確排除(rotY -30° 斜矩形，AABB 會過切約47%)。bake 烤點 y=0.01 埋底座內→向上 gather 100% 自交支架→純黑；排除後 validity=0 讓位 LIVE。"
+      "note": "2026-06-17：監聽三角形 100→120cm，center 移至 [-0.66825,1.1574]。KH150 左聲道喇叭架貼地底座(StandBase)旋轉盒 footprint。Phase C3：rotatedBox 精確排除(rotY -30° 斜矩形，AABB 會過切約47%)。bake 烤點 y=0.01 埋底座內→向上 gather 100% 自交支架→純黑；排除後 validity=0 讓位 LIVE。"
     },
     {
       "id": "right_kh150_stand_base_footprint",
@@ -300,14 +300,14 @@
       "configIds": [1, 2, 3, 4],
       "furnitureMode": null,
       "shape": "rotatedBox",
-      "centerXZ": [0.56825, 0.9842],
+      "centerXZ": [0.66825, 1.1574],
       "halfXZ": [0.125, 0.15],
       "rotY": 0.5235987755982988,
-      "sourceObject": "js/Home_Studio.js rotatedObjects uRightStandBaseInvMatrix (L765), center[0.56825,0.015,0.9842] half[0.125,0.015,0.15] rotY +PI/6；座地底座 y[0,0.03]",
+      "sourceObject": "js/Home_Studio.js rotatedObjects uRightStandBaseInvMatrix (L765), center[0.66825,0.015,1.1574] half[0.125,0.015,0.15] rotY +PI/6；座地底座 y[0,0.03]",
       "margin": { "mode": "none", "meters": 0.0 },
       "policy": "invalidate_floor_texel",
       "enabled": true,
-      "note": "KH150 右聲道喇叭架貼地底座(StandBase)旋轉盒 footprint。Phase C3：rotatedBox 精確排除(rotY +30° 斜矩形)。同左聲道根因。"
+      "note": "2026-06-17：監聽三角形 100→120cm，center 移至 [0.66825,1.1574]。KH150 右聲道喇叭架貼地底座(StandBase)旋轉盒 footprint。Phase C3：rotatedBox 精確排除(rotY +30° 斜矩形)。同左聲道根因。"
     }
   ]
 }

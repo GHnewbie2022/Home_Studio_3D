@@ -1,7 +1,7 @@
-// === GENERATED: floor-occlusion table  (exclusions 0855219c081d5962) ===
+// === GENERATED: floor-occlusion table  (exclusions 5cb185ce4f2f57e9) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json (floorOcclusionExclusions)
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
-export const EXCLUSION_VERSION = "0855219c081d5962";
+export const EXCLUSION_VERSION = "5cb185ce4f2f57e9";
 export const FLOOR_OCCLUSION_EXCLUSIONS = [
   {
     "id": "north_wall_solid_footprint",
@@ -160,8 +160,8 @@ export const FLOOR_OCCLUSION_EXCLUSIONS = [
         0.6
       ],
       "z": [
-        0.157,
-        0.697
+        0.405,
+        0.945
       ]
     },
     "margin": {
@@ -318,8 +318,8 @@ export const FLOOR_OCCLUSION_EXCLUSIONS = [
     "furnitureMode": null,
     "shape": "rotatedBox",
     "centerXZ": [
-      -0.56825,
-      0.9842
+      -0.66825,
+      1.1574
     ],
     "halfXZ": [
       0.125,
@@ -346,8 +346,8 @@ export const FLOOR_OCCLUSION_EXCLUSIONS = [
     "furnitureMode": null,
     "shape": "rotatedBox",
     "centerXZ": [
-      0.56825,
-      0.9842
+      0.66825,
+      1.1574
     ],
     "halfXZ": [
       0.125,

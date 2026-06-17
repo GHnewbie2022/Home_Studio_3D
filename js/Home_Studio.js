@@ -123,7 +123,7 @@ addBox([1.35, 0.0, -1.874], [1.91, 1.955, -0.703], z3, C_WOOD, 1);            //
 addBox([-1.91, 0.63, 2.385], [1.02, 0.77, 3.056], z3, C_WOOD, 1);             // 17 南方系統木桌
 addBox([-1.90, 0.01, 2.395], [-1.045, 0.62, 3.047], z3, C_WOOD, 1);           // 18 西南角抽屜
 addBox([1.02, 0.0, 2.73], [1.78, 2.04, 3.056], z3, C_WOOD, 1);                // 19 東南角書櫃
-addBox([-0.60, 0.0, 0.157], [0.60, 0.757, 0.697], z3, C_DARK_WOOD, 1);        // 20 工作桌
+addBox([-0.60, 0.0, 0.405], [0.60, 0.757, 0.945], z3, C_DARK_WOOD, 1);        // 20 工作桌（南移接近喇叭架，z 範圍 0.405~0.945）
 
 // R2-4 西南角抽屜層板 (index 21-24)
 addBox([-1.91, 0.0025, 2.385], [-1.035, 0.155, 3.056], z3, C_WOOD, 1);        // 21 下層
@@ -756,15 +756,15 @@ function syncSectionInactiveState() {
 // R2-6 旋轉物件定義（center, halfSize, rotY, color）
 const rotatedObjects = [
     // 左聲道
-    { name: 'uLeftSpeakerInvMatrix', center: [-0.56825, 1.0965, 0.9842], half: [0.1125, 0.1725, 0.1365], rotY: -Math.PI / 6, color: C_SPEAKER },
-    { name: 'uLeftStandBaseInvMatrix', center: [-0.56825, 0.015, 0.9842], half: [0.125, 0.015, 0.15], rotY: -Math.PI / 6, color: C_STAND },
-    { name: 'uLeftStandPillarInvMatrix', center: [-0.56825, 0.46, 0.9842], half: [0.02, 0.43, 0.05], rotY: -Math.PI / 6, color: C_STAND_PILLAR },
-    { name: 'uLeftStandTopInvMatrix', center: [-0.56825, 0.89, 0.9842], half: [0.10, 0.01, 0.125], rotY: -Math.PI / 6, color: C_STAND },
+    { name: 'uLeftSpeakerInvMatrix', center: [-0.66825, 1.0965, 1.1574], half: [0.1125, 0.1725, 0.1365], rotY: -Math.PI / 6, color: C_SPEAKER },
+    { name: 'uLeftStandBaseInvMatrix', center: [-0.66825, 0.015, 1.1574], half: [0.125, 0.015, 0.15], rotY: -Math.PI / 6, color: C_STAND },
+    { name: 'uLeftStandPillarInvMatrix', center: [-0.66825, 0.46, 1.1574], half: [0.02, 0.43, 0.05], rotY: -Math.PI / 6, color: C_STAND_PILLAR },
+    { name: 'uLeftStandTopInvMatrix', center: [-0.66825, 0.89, 1.1574], half: [0.10, 0.01, 0.125], rotY: -Math.PI / 6, color: C_STAND },
     // 右聲道
-    { name: 'uRightSpeakerInvMatrix', center: [0.56825, 1.0965, 0.9842], half: [0.1125, 0.1725, 0.1365], rotY: Math.PI / 6, color: C_SPEAKER },
-    { name: 'uRightStandBaseInvMatrix', center: [0.56825, 0.015, 0.9842], half: [0.125, 0.015, 0.15], rotY: Math.PI / 6, color: C_STAND },
-    { name: 'uRightStandPillarInvMatrix', center: [0.56825, 0.46, 0.9842], half: [0.02, 0.43, 0.05], rotY: Math.PI / 6, color: C_STAND_PILLAR },
-    { name: 'uRightStandTopInvMatrix', center: [0.56825, 0.89, 0.9842], half: [0.10, 0.01, 0.125], rotY: Math.PI / 6, color: C_STAND },
+    { name: 'uRightSpeakerInvMatrix', center: [0.66825, 1.0965, 1.1574], half: [0.1125, 0.1725, 0.1365], rotY: Math.PI / 6, color: C_SPEAKER },
+    { name: 'uRightStandBaseInvMatrix', center: [0.66825, 0.015, 1.1574], half: [0.125, 0.015, 0.15], rotY: Math.PI / 6, color: C_STAND },
+    { name: 'uRightStandPillarInvMatrix', center: [0.66825, 0.46, 1.1574], half: [0.02, 0.43, 0.05], rotY: Math.PI / 6, color: C_STAND_PILLAR },
+    { name: 'uRightStandTopInvMatrix', center: [0.66825, 0.89, 1.1574], half: [0.10, 0.01, 0.125], rotY: Math.PI / 6, color: C_STAND },
 ];
 const rotatedMeshes = [];
 
@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-floor-2b-revert';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-kh150-120cm-deskmove';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
