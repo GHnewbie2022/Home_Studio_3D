@@ -1531,6 +1531,9 @@ const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL = 'docs/data/r7-3-10
 // R7-3.10 第6步：H2 窗楣 -Y 深度面（south_window_top_reveal_depth）master sub-rect depth_h2 烤包指標。
 const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-oidn-runtime-package.json';
+// R7-3.10 §13 地板 C1A shell 第一版 pointer（floor_open；非方格 3376×4264 albedo-free；OIDN=RTLightmap）。
+const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-floor-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-floor-oidn-runtime-package.json';
 
 function resolveR7310C1XatlasRuntimePackageUrl()
 {
@@ -2636,6 +2639,7 @@ let r7310C1XatlasRuntimeSeparatedAlbedo = true;
 let r7310C1XatlasRuntimeFullNorthWallActive = false;
 let r7310C1XatlasRuntimeFullEastWallActive = false;
 let r7310C1XatlasRuntimeFullCeilingActive = false;
+let r7310C1XatlasRuntimeFullFloorActive = false; // R7-3.10 bug#1：地板自己的 master active 旗標（floor sub-rect 載入＝true、master off＝false）
 // per-wall 堆疊 OIDN（北+東同一張合成貼圖 2325x7322、各自獨立開關、重用 bake-atlas slot 不增 sampler）
 const R7310_C1_XATLAS_STACK_W = 2325;
 const R7310_C1_XATLAS_STACK_HN = 3377;
@@ -2657,6 +2661,7 @@ let r7310C1XatlasMasterNorthVariant = 'off'; // 'off' | 'raw' | 'oidn'
 let r7310C1XatlasMasterEastVariant = 'off';
 let r7310C1XatlasMasterCeilingVariant = 'off';
 let r7310C1XatlasMasterDepthH2Variant = 'off'; // R7-3.10 第6步：H2 窗楣深度面隨天花板群同步載入
+let r7310C1XatlasMasterFloorVariant = 'off'; // R7-3.10 §13：地板 C1A shell 隨天花板群同步載入
 
 function updateR7310C1XatlasRuntimeDomState(applied)
 {
@@ -3273,6 +3278,10 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 			pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode.value = xatlasApplied && r7310C1XatlasRuntimeFullEastWallActive ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode)
 			pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode.value = xatlasApplied && r7310C1XatlasRuntimeFullCeilingActive ? 1.0 : 0.0;
+		// R7-3.10 bug#1：地板 master 顯示＝xatlas 開 ＋ floor sub-rect 已載（FullFloorActive）＋ 地板烘焙開（floorApplied）。
+		// 地板烘焙關→floorApplied=false→此 uniform=0→shader floor dispatch 讓位→地板回 LIVE 權威。
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode)
+			pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode.value = xatlasApplied && r7310C1XatlasRuntimeFullFloorActive && floorApplied ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode)
 			pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode.value = r7310C1XatlasStackedMode ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode)
@@ -3296,6 +3305,11 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 			pathTracingUniforms.uR7310C1XatlasRectDepthH2.value.set(
 				R7310_C1_XATLAS_MASTER_RECT.depth_h2.x, R7310_C1_XATLAS_MASTER_RECT.depth_h2.y,
 				R7310_C1_XATLAS_MASTER_RECT.depth_h2.w, R7310_C1_XATLAS_MASTER_RECT.depth_h2.h
+			);
+		if (pathTracingUniforms.uR7310C1XatlasRectFloor && R7310_C1_XATLAS_MASTER_RECT.floor)
+			pathTracingUniforms.uR7310C1XatlasRectFloor.value.set(
+				R7310_C1_XATLAS_MASTER_RECT.floor.x, R7310_C1_XATLAS_MASTER_RECT.floor.y,
+				R7310_C1_XATLAS_MASTER_RECT.floor.w, R7310_C1_XATLAS_MASTER_RECT.floor.h
 			);
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize)
 		{
@@ -4628,17 +4642,23 @@ const R7310_C1_XATLAS_MASTER_BOTTOM_Y = R7310_C1_XATLAS_MASTER_CEILING_H + R7310
 const R7310_C1_XATLAS_MASTER_DEPTH_H2_W = 1952;
 const R7310_C1_XATLAS_MASTER_DEPTH_H2_H = 160;
 const R7310_C1_XATLAS_MASTER_BOTTOM2_Y = R7310_C1_XATLAS_MASTER_BOTTOM_Y + R7310_C1_XATLAS_MASTER_EAST_H + R7310_C1_XATLAS_MASTER_GUTTER; // 7330
+// R7-3.10 §13 地板 C1A shell 第一版：floor 800 texel/m 非方格 3376×4264，append 在 depth_h2 下方第四排（x=0,y=7494）。
+// 不動既有 ceiling/north/east/depth_h2 四面 rect → 零 regression。deploy-safe 兩欄重排 6594×7645 延後（M4 Pro 16384 內可跑）。
+const R7310_C1_XATLAS_MASTER_FLOOR_W = 3376;
+const R7310_C1_XATLAS_MASTER_FLOOR_H = 4264;
+const R7310_C1_XATLAS_MASTER_FLOOR_Y = R7310_C1_XATLAS_MASTER_BOTTOM2_Y + R7310_C1_XATLAS_MASTER_DEPTH_H2_H + R7310_C1_XATLAS_MASTER_GUTTER; // 7494
 const R7310_C1_XATLAS_MASTER_W = Math.max(
 	R7310_C1_XATLAS_MASTER_CEILING_W,
 	R7310_C1_XATLAS_MASTER_NORTH_W + R7310_C1_XATLAS_MASTER_EAST_W
 ); // 4650
-const R7310_C1_XATLAS_MASTER_H = R7310_C1_XATLAS_MASTER_BOTTOM2_Y + R7310_C1_XATLAS_MASTER_DEPTH_H2_H; // 8354
+const R7310_C1_XATLAS_MASTER_H = R7310_C1_XATLAS_MASTER_FLOOR_Y + R7310_C1_XATLAS_MASTER_FLOOR_H; // 11758（floor append；既有四面不動）
 // sub-rect 由 registry 算（不散落魔術數字）；每筆 {x,y,w,h} 為像素整數，提供載入逐列 blit 與 shader rect uniform 共用
 const R7310_C1_XATLAS_MASTER_RECT = {
 	ceiling: { x: 0, y: 0, w: R7310_C1_XATLAS_MASTER_CEILING_W, h: R7310_C1_XATLAS_MASTER_CEILING_H },
 	north: { x: 0, y: R7310_C1_XATLAS_MASTER_BOTTOM_Y, w: R7310_C1_XATLAS_MASTER_NORTH_W, h: R7310_C1_XATLAS_MASTER_NORTH_H },
 	east: { x: R7310_C1_XATLAS_MASTER_NORTH_W, y: R7310_C1_XATLAS_MASTER_BOTTOM_Y, w: R7310_C1_XATLAS_MASTER_EAST_W, h: R7310_C1_XATLAS_MASTER_EAST_H },
-	depth_h2: { x: 0, y: R7310_C1_XATLAS_MASTER_BOTTOM2_Y, w: R7310_C1_XATLAS_MASTER_DEPTH_H2_W, h: R7310_C1_XATLAS_MASTER_DEPTH_H2_H }
+	depth_h2: { x: 0, y: R7310_C1_XATLAS_MASTER_BOTTOM2_Y, w: R7310_C1_XATLAS_MASTER_DEPTH_H2_W, h: R7310_C1_XATLAS_MASTER_DEPTH_H2_H },
+	floor: { x: 0, y: R7310_C1_XATLAS_MASTER_FLOOR_Y, w: R7310_C1_XATLAS_MASTER_FLOOR_W, h: R7310_C1_XATLAS_MASTER_FLOOR_H }
 };
 async function loadR7310C1XatlasCeiling(variant)
 {
@@ -4730,6 +4750,8 @@ function r7310C1XatlasMasterPointerUrl(face, variant)
 		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL;
 	if (face === 'depth_h2')
 		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL;
+	if (face === 'floor')
+		return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_RAW_PACKAGE_URL;
 	return isOidn ? R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL : R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL;
 }
 // 通用 master 載入：把單面 atlas 逐列 blit 進 master shelf buffer，重用 bake-atlas slot。
@@ -4804,6 +4826,7 @@ async function loadR7310C1XatlasMasterSurface(face, variant)
 		if (face === 'north') { r7310C1XatlasRuntimeFullNorthWallActive = true; r7310C1XatlasMasterNorthVariant = variant; }
 		else if (face === 'east') { r7310C1XatlasRuntimeFullEastWallActive = true; r7310C1XatlasMasterEastVariant = variant; }
 		else if (face === 'depth_h2') { r7310C1XatlasMasterDepthH2Variant = variant; } // H2 隨天花板群顯示，無獨立 active flag（不可落入下方 ceiling else）
+		else if (face === 'floor') { r7310C1XatlasMasterFloorVariant = variant; r7310C1XatlasRuntimeFullFloorActive = true; } // R7-3.10 bug#1：地板有獨立 active flag（不可落入 ceiling else）
 		else { r7310C1XatlasRuntimeFullCeilingActive = true; r7310C1XatlasMasterCeilingVariant = variant; r7310C1XatlasCeilingVariant = variant; }
 		r7310C1XatlasRuntimeReady = (r7310C1XatlasRuntimeFullNorthWallActive || r7310C1XatlasRuntimeFullEastWallActive || r7310C1XatlasRuntimeFullCeilingActive);
 		r7310C1XatlasRuntimeError = null;
@@ -4819,6 +4842,30 @@ async function loadR7310C1XatlasMasterSurface(face, variant)
 		return false;
 	}
 }
+// R7-3.10 bug#1（A-1 純 JS 讓位）：把 master atlas 指定面的 sub-rect 逐列清成 RGBA=0（alpha=0）。
+// 既有 shader r7310C1XatlasRuntimeSampleValidLinear 對 alpha=0 回 false → 該面自動讓位回 LIVE/Hybrid（零改 shader）。
+// 第一版只用於 face='floor'：地板烘焙關時清地板格、其餘面（north/east/ceiling/depth_h2）Y 範圍不重疊故不動。
+function clearR7310C1XatlasMasterRect(face)
+{
+	if (!r7310C1XatlasMasterBuffer) return false;
+	var rect = R7310_C1_XATLAS_MASTER_RECT[face];
+	if (!rect) return false;
+	for (var r = 0; r < rect.h; r++)
+	{
+		var dstStart = ((rect.y + r) * R7310_C1_XATLAS_MASTER_W + rect.x) * 4;
+		r7310C1XatlasMasterBuffer.fill(0.0, dstStart, dstStart + rect.w * 4);
+	}
+	r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(r7310C1XatlasMasterBuffer, R7310_C1_XATLAS_MASTER_W, R7310_C1_XATLAS_MASTER_H);
+	r7310C1XatlasRuntimePixels = r7310C1XatlasMasterBuffer;
+	if (face === 'floor')
+		r7310C1XatlasRuntimeFullFloorActive = false; // 記帳：地板 sub-rect 已清、目前讓位 LIVE
+	updateR7310C1FullRoomDiffuseRuntimeUniforms();
+	resetR738MainAccumulation();
+	if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-master-clear-' + face);
+	return true;
+}
+if (typeof window !== 'undefined')
+	window.clearR7310C1XatlasMasterRect = clearR7310C1XatlasMasterRect;
 // 依序疊載三面到同一張 master buffer（天花板→北→東）；variant 'raw'|'oidn'
 async function loadR7310C1XatlasMasterAll(variant)
 {
@@ -4830,7 +4877,13 @@ async function loadR7310C1XatlasMasterAll(variant)
 	// （包 20260616-054126；luma 0.207 雙乘→0.2794 單乘，junction 0.334≈天花板 0.303）。pointer 標 bakeAlbedoFree:true 通過契約檢查。
 	// 取代雙乘色的 20260616-041925。天花板已建 master buffer＋設好 ceiling 群旗標；depth_h2 最後疊載、不動那些旗標。
 	var okDepthH2 = await loadR7310C1XatlasMasterSurface('depth_h2', v);
-	return okCeiling || okNorth || okEast || okDepthH2;
+	// R7-3.10 §13 地板 C1A shell：floor 接 master 第四排（append）；最後疊載、不動既有四面。
+	// A-1 純 JS 讓位：地板烘焙關時 skip floor blit，floor rect 維持零初始化（alpha=0）→ shader 既有 alpha gate 自動讓位地板回 LIVE。
+	// 處理「地板烘焙已關、之後才開全室真非方格」情境（北/東/天花板/H2 照常吃 RAW/OIDN）。
+	var okFloor = false;
+	if (r7310C1FloorDiffuseRuntimeEnabled)
+		okFloor = await loadR7310C1XatlasMasterSurface('floor', v);
+	return okCeiling || okNorth || okEast || okDepthH2 || okFloor;
 }
 function r7310C1CycleXatlasMasterAll()
 {
@@ -4848,6 +4901,8 @@ function r7310C1CycleXatlasMasterAll()
 		r7310C1XatlasRuntimeFullNorthWallActive = false;
 		r7310C1XatlasRuntimeFullEastWallActive = false;
 		r7310C1XatlasRuntimeFullCeilingActive = false;
+		r7310C1XatlasRuntimeFullFloorActive = false; // R7-3.10 bug#1：master 關→清地板 active
+		r7310C1XatlasMasterFloorVariant = 'off';      // R7-3.10 bug#1：master 關→清地板 variant
 		r7310C1XatlasCeilingReady = false;
 		r7310C1XatlasCeilingVariant = 'off';
 		r7310C1XatlasRuntimeReady = false;
@@ -6897,6 +6952,82 @@ function buildR7310C1FloorTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
+// === GENERATED: floor-occlusion BEGIN  (exclusions 0855219c081d5962) ===
+	// Source of truth: docs/data/r7-3-10-surface-owner-registry.json (floorOcclusionExclusions)
+	// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
+	var R7310_FLOOR_OCCLUSION_EXCLUSION_VERSION = "0855219c081d5962";
+	var R7310_FLOOR_OCCLUSION_EXCLUSIONS = [{"id":"north_wall_solid_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[-2.11,2.11],"z":[-2.074,-1.874]},"margin":{"mode":"expand-into-room","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"east_wall_solid_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[1.91,2.11],"z":[-1.874,3.056]},"margin":{"mode":"expand-into-room","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"west_wall_solid_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[-2.11,-1.91],"z":[-1.874,3.056]},"margin":{"mode":"expand-into-room","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"south_wall_solid_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[-2.11,2.11],"z":[3.056,3.256]},"margin":{"mode":"expand-into-room","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"southeast_column_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[1.78,1.91],"z":[2.49,3.056]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"desk_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[-0.6,0.6],"z":[0.157,0.697]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"southeast_bookshelf_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[1.02,1.78],"z":[2.73,3.056]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"kh750_subwoofer_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[0.79,1.12],"z":[2.273,2.656]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"southwest_drawer_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"bounds":{"x":[-1.91,-1.035],"z":[2.385,3.056]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"bed_main_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1],"furnitureMode":"bed","bounds":{"x":[-0.027,1.91],"z":[-1.874,-0.314]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"northeast_wardrobe_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1],"furnitureMode":"wardrobe","bounds":{"x":[1.35,1.91],"z":[-1.874,-0.703]},"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":false},{"id":"left_kh150_stand_base_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"shape":"rotatedBox","centerXZ":[-0.56825,0.9842],"halfXZ":[0.125,0.15],"rotY":-0.5235987755982988,"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true},{"id":"right_kh150_stand_base_footprint","surfaceId":"floor_open","atlasGroup":"shell","configIds":[1,2,3,4],"furnitureMode":null,"shape":"rotatedBox","centerXZ":[0.56825,0.9842],"halfXZ":[0.125,0.15],"rotY":0.5235987755982988,"margin":{"mode":"none","meters":0},"policy":"invalidate_floor_texel","enabled":true}];
+	function r7310FloorOcclusionInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
+	function r7310FloorOcclusionMarginExpand(b, margin) { return b; } // Step-B margin; first re-bake meters=0 (no-op)
+	function r7310C1FloorOccluderExcluded(worldX, worldZ, configId, furnitureMode) {
+		for (var i = 0; i < R7310_FLOOR_OCCLUSION_EXCLUSIONS.length; i++) {
+			var e = R7310_FLOOR_OCCLUSION_EXCLUSIONS[i];
+			if (!e.enabled) continue;
+			if (e.configIds && e.configIds.indexOf(configId) < 0) continue;
+			if (e.furnitureMode != null && e.furnitureMode !== furnitureMode) continue;
+			if (e.shape === 'rotatedBox') {
+				var rdx = worldX - e.centerXZ[0], rdz = worldZ - e.centerXZ[1];
+				var rc = Math.cos(-e.rotY), rs = Math.sin(-e.rotY);
+				var rlx = rdx * rc - rdz * rs, rlz = rdx * rs + rdz * rc;
+				if (Math.abs(rlx) <= e.halfXZ[0] && Math.abs(rlz) <= e.halfXZ[1]) return true;
+				continue;
+			}
+			var b = r7310FloorOcclusionMarginExpand(e.bounds, e.margin);
+			if (Array.isArray(e.xRects)) { var okX = false; for (var k = 0; k < e.xRects.length; k++) if (r7310FloorOcclusionInRange(worldX, e.xRects[k])) okX = true; if (!okX || !r7310FloorOcclusionInRange(worldZ, b.z)) continue; }
+			else if (!r7310FloorOcclusionInRange(worldX, b.x) || !r7310FloorOcclusionInRange(worldZ, b.z)) continue;
+			return true;
+		}
+		return false;
+	}
+	// === GENERATED: floor-occlusion END ===
+
+// R7-3.10 §13 地板 C1A shell：非方格 albedo-free 烤的 texel metadata（800 texel/m，3376×4264）。
+// 與方形版同身分（worldX/y/z + normal +Y + 接觸帶夾），只把單一 size 泛化為 width/height（仿北牆 rect 版）。
+// R7-3.10 bug#2：occluder exclusion（北牆/床 footprint 壓住處 valid=0 → atlas alpha=0 → 讓位 LIVE）。
+function buildR7310C1FloorTexelMetadataRect(width, height, configId, furnitureMode)
+{
+	var bounds = R7310_C1_FLOOR_WORLD_BOUNDS;
+	var safeWidth = Math.max(1, Math.trunc(Number(width) || 1));
+	var safeHeight = Math.max(1, Math.trunc(Number(height) || 1));
+	var metadata = new Float32Array(safeWidth * safeHeight * 12);
+	var worldXStep = (bounds.xMax - bounds.xMin) / safeWidth;
+	var valid = 0;
+	for (var y = 0; y < safeHeight; y += 1)
+	{
+		for (var x = 0; x < safeWidth; x += 1)
+		{
+			var u = (x + 0.5) / safeWidth;
+			var v = (y + 0.5) / safeHeight;
+			var worldX = bounds.xMin + (bounds.xMax - bounds.xMin) * u;
+			var worldZ = bounds.zMin + (bounds.zMax - bounds.zMin) * v;
+			// R7-3.10 bug#2：occluder exclusion 用幾何原座標（contact band 夾值前）判定被牆/床壓住的地板。
+			var occluded = (typeof r7310C1FloorOccluderExcluded === 'function')
+				&& r7310C1FloorOccluderExcluded(worldX, worldZ, configId, furnitureMode);
+			var westContactBand = worldX >= -1.91 - worldXStep && worldX < -1.91 + worldXStep;
+			var eastContactBand = worldX > 1.91 - worldXStep && worldX <= 1.91 + worldXStep;
+			if (westContactBand)
+				worldX = -1.91 + worldXStep;
+			else if (eastContactBand)
+				worldX = 1.91 - worldXStep;
+			var offset = (y * safeWidth + x) * 12;
+			metadata[offset] = worldX;
+			metadata[offset + 1] = bounds.y;
+			metadata[offset + 2] = worldZ;
+			metadata[offset + 3] = 0.0;
+			metadata[offset + 4] = 1.0;
+			metadata[offset + 5] = 0.0;
+			metadata[offset + 6] = 1.0;
+			metadata[offset + 7] = occluded ? 0.0 : 1.0;
+			metadata[offset + 8] = 0.0;
+			metadata[offset + 9] = 0.0;
+			metadata[offset + 10] = u;
+			metadata[offset + 11] = v;
+			if (!occluded) valid += 1;
+		}
+	}
+	return { metadata: metadata, validTexelRatio: valid / Math.max(1, safeWidth * safeHeight), exclusionApplied: true };
+}
+
 function buildR7310C1NorthWallTexelMetadataRect(width, height, options)
 {
 	var safeWidth = Math.max(1, Math.trunc(Number(width) || 1));
@@ -7175,11 +7306,11 @@ function buildR7310C1SouthWallAcShadowTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
-// === GENERATED: surface-owner BEGIN  (registry fc176523994dd58b) ===
+// === GENERATED: surface-owner BEGIN  (registry da6f10449292b49d) ===
 	// Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 	// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
-	var R7310_SURFACE_OWNER_REGISTRY_VERSION = "fc176523994dd58b";
-	var R7310_SURFACE_OWNER_SURFACES = [{"surfaceId":"ceiling_open","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[2.895,2.915],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[0,2.905],"z":[3.05,3.07],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall_depth_top","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"y":[2.895,2.915],"z":[3.056,3.256],"xRects":[[-2.11,-1.75],[0.69,2.11]],"precedence":20,"pendingPolicy":"blocker"},{"surfaceId":"south_window_top_reveal_depth","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[2.895,2.915],"z":[3.056,3.256],"precedence":21,"pendingPolicy":"baked"},{"surfaceId":"south_window_top_reveal_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.04,2.905],"z":[3.05,3.07],"precedence":15,"pendingPolicy":"baked"}];
+	var R7310_SURFACE_OWNER_REGISTRY_VERSION = "da6f10449292b49d";
+	var R7310_SURFACE_OWNER_SURFACES = [{"surfaceId":"ceiling_open","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[2.895,2.915],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[0,2.905],"z":[3.05,3.07],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall_depth_top","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"y":[2.895,2.915],"z":[3.056,3.256],"xRects":[[-2.11,-1.75],[0.69,2.11]],"precedence":20,"pendingPolicy":"blocker"},{"surfaceId":"south_window_top_reveal_depth","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[2.895,2.915],"z":[3.056,3.256],"precedence":21,"pendingPolicy":"baked"},{"surfaceId":"south_window_top_reveal_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.04,2.905],"z":[3.05,3.07],"precedence":15,"pendingPolicy":"baked"},{"surfaceId":"floor_open","normalGate":{"axis":"y","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[-0.0005,0.025],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"}];
 	function r7310SurfaceOwnerInRange(v, r) { return r == null || (v >= r[0] && v <= r[1]); }
 	function r7310SurfaceOwnerMatches(s, sample) {
 		var g = s.normalGate;
@@ -7830,11 +7961,16 @@ function syncR7310C1AtlasAlphaToTexelMetadataRect(pixels, metadata, width, heigh
 	}
 }
 
-function shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult)
+function shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult, ctx)
 {
 	if (!metadataResult || !(metadataResult.validTexelRatio < 0.999999))
 		return false;
-	if (patchId === R7310_C1_FLOOR_TARGET_ID || patchId === R7310_C1_STRUCTURAL_TARGET_ID)
+	// R7-3.10 bug#2：地板 alpha sync 窄化解鎖——只放行 occlusion-aware 的 floor_open rect package；
+	// legacy 方形 floor / 其他舊路徑因身分不符仍擋。STRUCTURAL 維持永遠不 sync。
+	if (patchId === R7310_C1_FLOOR_TARGET_ID)
+		return !!(ctx && ctx.isRectCapture === true && ctx.surfaceName === 'floor_open'
+			&& ctx.configId === 1 && ctx.atlasGroup === 'shell' && ctx.exclusionApplied === true);
+	if (patchId === R7310_C1_STRUCTURAL_TARGET_ID)
 		return false;
 	return true;
 }
@@ -7998,7 +8134,18 @@ function r7310C1ValidTexelRatioMinimumForSurface(surfaceName)
 		return 0.50;
 	if (surfaceName === R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME)
 		return 0.60;
+	if (surfaceName === 'floor_open')
+		return 0.618; // R7-3.10 bug#2 Phase C3：全室 occlusion exclusion + KH150 StandBase rotatedBox，CPU 精算 expected ratio=0.6214027058，CODEX 定 min=0.618（與 runner 同步）
 	return 0.99;
+}
+
+function r7310C1ValidTexelRatioMaximumForSurface(surfaceName)
+{
+	// R7-3.10 bug#2 Phase C2：floor_open occlusion exclusion 後 ratio 應緊貼 expected；
+	// 上限擋「排除未生效→ratio 偏高」壞包（CODEX 定 max=0.625，與 runner 同步）。
+	if (surfaceName === 'floor_open')
+		return 0.625;
+	return 1.0000001; // 其他表面不設上限（ratio<=1 必然通過）
 }
 
 function averageR738AtlasPixels(pixels, samples)
@@ -8296,7 +8443,7 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 			var metadataResult = useXatlasBakeMode ? xatlasPrepared.metadataResult : buildR738TexelMetadata(size, floorWorldBounds);
 			if (!useXatlasBakeMode)
 			{
-				if (patchId === R7310_C1_FLOOR_TARGET_ID) metadataResult = buildR7310C1FloorTexelMetadata(size);
+				if (patchId === R7310_C1_FLOOR_TARGET_ID) metadataResult = isRectCapture ? buildR7310C1FloorTexelMetadataRect(width, height, options.configId, options.furnitureMode) : buildR7310C1FloorTexelMetadata(size);
 				else if (patchId === R7310_C1_NORTH_WALL_TARGET_ID) metadataResult = isRectCapture
 					? buildR7310C1NorthWallTexelMetadataRect(width, height)
 					: buildR7310C1NorthWallTexelMetadata(size);
@@ -8326,14 +8473,20 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 					: buildR7310C1SouthWindowTopRevealShadowTexelMetadata(size);
 				else if (patchId === R7310_C1_IRON_DOOR_REVEAL_TARGET_ID) metadataResult = buildR7310C1IronDoorRevealTexelMetadata(size);
 			}
-			if (shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult))
+			if (shouldSyncR7310C1AtlasAlphaToTexelMetadata(patchId, metadataResult, {
+				isRectCapture: isRectCapture,
+				surfaceName: options.surfaceName,
+				configId: options.configId,
+				atlasGroup: options.atlasGroup,
+				exclusionApplied: !!(metadataResult && metadataResult.exclusionApplied === true)
+			}))
 			{
 				if (isRectCapture)
 					syncR7310C1AtlasAlphaToTexelMetadataRect(averaged.pixels, metadataResult.metadata, width, height);
 				else
 					syncR7310C1AtlasAlphaToTexelMetadata(averaged.pixels, metadataResult.metadata, size);
 			}
-			if (patchId === R7310_C1_FLOOR_TARGET_ID || patchId === R7310_C1_CEILING_TARGET_ID)
+			if ((patchId === R7310_C1_FLOOR_TARGET_ID || patchId === R7310_C1_CEILING_TARGET_ID) && !isRectCapture)
 				fillR7310C1AtlasEdgeFromNearestInterior(averaged.pixels, size);
 				if (patchId === R7310_C1_STRUCTURAL_TARGET_ID)
 				{
@@ -8474,6 +8627,26 @@ async function captureR7310C1FloorDiffuseAtlas(targetSamples, timeoutMs, options
 	});
 }
 window.captureR7310C1FloorDiffuseAtlas = captureR7310C1FloorDiffuseAtlas;
+
+// R7-3.10 §13 地板 C1A shell：非方格 albedo-free 烤 capture（patchId 1001 沿用＝身分不變；surfaceName floor_open；
+// 轉傳 rect 寬高 → 走 buildR7310C1FloorTexelMetadataRect；轉傳 separated → uR7310C1SeparatedBakeMode 設→ albedo-free）。
+async function captureR7310C1FloorXatlasAtlas(targetSamples, timeoutMs, options)
+{
+	options = options || {};
+	return captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, {
+		targetAtlasResolution: options.targetAtlasResolution || 1024,
+		targetAtlasWidth: options.targetAtlasWidth,
+		targetAtlasHeight: options.targetAtlasHeight,
+		patchId: R7310_C1_FLOOR_TARGET_ID,
+		surfaceName: 'floor_open',
+		configId: options.configId || 1,
+		atlasGroup: options.atlasGroup || 'shell',
+		furnitureMode: options.furnitureMode || 'bed',
+		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS,
+		separatedIrradianceBake: options.separatedIrradianceBake === true
+	});
+}
+window.captureR7310C1FloorXatlasAtlas = captureR7310C1FloorXatlasAtlas;
 
 async function captureR7310C1NorthWallDiffuseAtlas(targetSamples, timeoutMs, options)
 {
@@ -8757,6 +8930,7 @@ function buildR738ValidationReport(report, rawHdrReadback, atlasPixels, texelMet
 	var atlasFloatCount = atlasPixels ? atlasPixels.length : 0;
 	var metadataFloatCount = texelMetadata ? texelMetadata.length : 0;
 	var validTexelRatioMinimum = r7310C1ValidTexelRatioMinimumForSurface(report.surfaceName);
+	var validTexelRatioMaximum = r7310C1ValidTexelRatioMaximumForSurface(report.surfaceName);
 	var atlasVisibleLuma = summarizeR7310AtlasVisibleLuma(atlasPixels);
 		var checks = {
 			version: report.version === 'r7-3-8-c1-1000spp-bake-capture' || report.version === 'r7-3-10-full-room-diffuse-bake-architecture-probe',
@@ -8770,7 +8944,7 @@ function buildR738ValidationReport(report, rawHdrReadback, atlasPixels, texelMet
 		diffuseOnly: report.diffuseOnly === true && report.atlasSummary && report.atlasSummary.diffuseOnly === true,
 		atlasFloatCount: atlasFloatCount === targetAtlasWidth * targetAtlasHeight * 4,
 		metadataFloatCount: metadataFloatCount === targetAtlasWidth * targetAtlasHeight * 12,
-		validTexelRatio: report.atlasSummary && report.atlasSummary.validTexelRatio >= validTexelRatioMinimum,
+		validTexelRatio: report.atlasSummary && report.atlasSummary.validTexelRatio >= validTexelRatioMinimum && report.atlasSummary.validTexelRatio <= validTexelRatioMaximum,
 		atlasSamples: report.atlasSummary && report.atlasSummary.actualSamples >= report.requestedSamples,
 		patchSamples: report.atlasSummary && Array.isArray(report.atlasSummary.actualSamplesByPatch) && report.atlasSummary.actualSamplesByPatch.every(function(entry) { return entry.actualSamples >= report.requestedSamples; }),
 		atlasVisibleLuma: atlasVisibleLuma.nonzeroTexels > 0 && atlasVisibleLuma.meanLuma > 0.001 && atlasVisibleLuma.maxLuma > 0.01,
@@ -8878,7 +9052,11 @@ async function reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamp
 			targetAtlasHeight: options.targetAtlasHeight,
 			// R7-3.10 全域 albedo-free 契約（CODEX 2026-06-16）：把 separated 宣告往下傳到 captureR738C1DirectSurfaceTexelPatch，
 			// 否則 uR7310C1SeparatedBakeMode 不會被設、烤時仍乘 hitColor（H2 雙乘色真因之一：旗標在此層斷掉）。
-			separatedIrradianceBake: options.separatedIrradianceBake === true
+			separatedIrradianceBake: options.separatedIrradianceBake === true,
+			// R7-3.10 bug#2：把 occlusion exclusion 身分往下傳到 floor capture（否則 furnitureMode 在此層斷鏈、恆退化 'bed'，wardrobe 佈局會錯排）。
+			configId: options.config || 1,
+			atlasGroup: options.atlasGroup || 'shell',
+			furnitureMode: options.northeastFurnitureMode
 		});
 		var atlasPixels = window.__r738C1BakeCaptureLastAtlasPixels;
 		var texelMetadata = window.__r738C1BakeCaptureLastTexelMetadata;
@@ -8892,6 +9070,7 @@ async function reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamp
 		var report = {
 			version: 'r7-3-10-full-room-diffuse-bake-architecture-probe',
 			config: 1,
+			northeastFurnitureMode: options.northeastFurnitureMode || null,
 			batch: spec.batch,
 			targetId: spec.targetId,
 			surfaceName: spec.surfaceName,
@@ -9067,6 +9246,20 @@ window.reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples = function(targe
 		worldBounds: R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_WORLD_BOUNDS,
 		mapping: 'single_planar_xz_on_y_face',
 		captureAtlas: captureR7310C1SouthWindowTopRevealShadowAtlas
+	});
+};
+
+// R7-3.10 §13 地板 C1A shell：floor_open 非方格 albedo-free 烤（走 H2 同一 dedicated 管線）。
+// targetId 沿用 1001（身分不變、不新增）；surfaceName floor_open；非方格寬高與 separated 由 runner 旗標往下傳。
+window.reportR7310C1FloorXatlasBakeAfterSamples = function(targetSamples, timeoutMs, options)
+{
+	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
+		batch: 'floor_open',
+		targetId: R7310_C1_FLOOR_TARGET_ID,
+		surfaceName: 'floor_open',
+		worldBounds: R7310_C1_FLOOR_WORLD_BOUNDS,
+		mapping: 'single_planar_xz_on_y_face',
+		captureAtlas: captureR7310C1FloorXatlasAtlas
 	});
 };
 
@@ -11324,6 +11517,28 @@ window.setR7310C1FullRoomDiffuseRuntimeEnabled = function(enabled)
 window.setR7310C1FloorDiffuseRuntimeEnabled = function(enabled)
 {
 	r7310C1FloorDiffuseRuntimeEnabled = !!enabled;
+	// R7-3.10 bug#1（A-1 純 JS 讓位）：全室真非方格 master 開著時動態切地板烘焙——
+	//   關 → 清 master 地板 sub-rect 成 alpha=0，shader 既有 alpha gate 自動讓位地板回 LIVE（north/east/ceiling/depth_h2 不動）。
+	//   開 → 依 master 群當前 variant（三面同步、取北面為代表）重新 blit 地板 sub-rect 回去。
+	if (r7310C1XatlasMasterMode && r7310C1XatlasMasterBuffer)
+	{
+		if (!r7310C1FloorDiffuseRuntimeEnabled)
+			clearR7310C1XatlasMasterRect('floor');
+		else
+		{
+			var floorReblitVariant = (r7310C1XatlasMasterNorthVariant && r7310C1XatlasMasterNorthVariant !== 'off')
+				? r7310C1XatlasMasterNorthVariant
+				: 'raw';
+			// R7-3.10 bug#1 補強（選項甲，純 JS）：async re-blit 競態防呆。
+			// 快速 ON→OFF 時晚到的 floor re-blit 會把已清透明的地板貼回；故 re-blit 完成後重檢開關，
+			// 若此刻已關 → 立刻補清 floor rect（clearR7310C1XatlasMasterRect 內含 update uniforms + reset accumulation）。
+			loadR7310C1XatlasMasterSurface('floor', floorReblitVariant).then(function()
+			{
+				if (!r7310C1FloorDiffuseRuntimeEnabled)
+					clearR7310C1XatlasMasterRect('floor');
+			}).catch(function() {});
+		}
+	}
 	r7310C1FullRoomDiffuseRuntimeEnabled = r7310C1AnyFullRoomDiffuseSurfaceEnabled();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	updateR738C1BakePastePreviewUniforms();
@@ -11600,6 +11815,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 		xatlasMasterNorthVariant: r7310C1XatlasMasterNorthVariant,
 		xatlasMasterEastVariant: r7310C1XatlasMasterEastVariant,
 		xatlasMasterCeilingVariant: r7310C1XatlasMasterCeilingVariant,
+		xatlasMasterFloorVariant: r7310C1XatlasMasterFloorVariant,
 		nonSquareAtlasSizePx: {
 			width: r7310C1NonSquareAtlasSizePx.width,
 			height: r7310C1NonSquareAtlasSizePx.height
@@ -11635,6 +11851,18 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 				uniformMode: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeMode ? pathTracingUniforms.uR7310C1XatlasRuntimeMode.value : null,
 				uniformReady: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeReady ? pathTracingUniforms.uR7310C1XatlasRuntimeReady.value : null,
 				uniformFullNorthWall: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode ? pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode.value : null,
+				fullFloorActive: r7310C1XatlasRuntimeFullFloorActive,
+				uniformFullFloor: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode ? pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode.value : null,
+				uniformFullCeiling: pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode ? pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode.value : null,
+				uniformFloorDiffuse: pathTracingUniforms && pathTracingUniforms.uR7310C1FloorDiffuseMode ? pathTracingUniforms.uR7310C1FloorDiffuseMode.value : null,
+				masterAtlasSize: { width: R7310_C1_XATLAS_MASTER_W, height: R7310_C1_XATLAS_MASTER_H },
+				masterFloorRectLoaded: (function()
+				{
+					if (!r7310C1XatlasMasterBuffer) return null; // 無 master buffer（全室真非方格關）
+					var fr = R7310_C1_XATLAS_MASTER_RECT.floor;
+					var aIdx = ((fr.y + Math.floor(fr.h / 2)) * R7310_C1_XATLAS_MASTER_W + (fr.x + Math.floor(fr.w / 2))) * 4 + 3;
+					return r7310C1XatlasMasterBuffer[aIdx] > 0.5; // true=地板已載(alpha>0)、false=已清讓位(alpha=0)
+				})(),
 				error: r7310C1XatlasRuntimeError
 			},
 			enabled: r7310C1AnyFullRoomDiffuseSurfaceEnabled(),

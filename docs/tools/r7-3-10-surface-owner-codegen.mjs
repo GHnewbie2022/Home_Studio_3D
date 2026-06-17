@@ -35,8 +35,23 @@ const surfaces = registry.surfaces;
 const machineFields = surfaces.map((s) => ({
   surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
   x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+  configId: s.configId, atlasGroup: s.atlasGroup,
 }));
 const REGISTRY_VERSION = createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
+
+// R7-3.10 bug#2 Occlusion Exclusion Map — parallel to surfaces[], OWN freshness key (EXCLUSION_VERSION),
+// independent of REGISTRY_VERSION so it NEVER changes the GLSL owner block / its version comment.
+const exclusions = Array.isArray(registry.floorOcclusionExclusions) ? registry.floorOcclusionExclusions : [];
+const exclusionFields = exclusions.map((e) => ({
+  id: e.id, surfaceId: e.surfaceId, atlasGroup: e.atlasGroup, configIds: e.configIds,
+  furnitureMode: e.furnitureMode === undefined ? null : e.furnitureMode,
+  // R7-3.10 Phase C3：shape='rotatedBox' 走 centerXZ/halfXZ/rotY 精確旋轉盒；AABB footprint 維持 bounds/xRects。
+  // undefined 欄位由 JSON.stringify 自動省略，故 AABB 條目序列化不變（hash 只因新增 rotatedBox 條目而變）。
+  shape: e.shape, bounds: e.bounds, xRects: e.xRects,
+  centerXZ: e.centerXZ, halfXZ: e.halfXZ, rotY: e.rotY,
+  margin: e.margin, policy: e.policy, enabled: e.enabled,
+}));
+const EXCLUSION_VERSION = createHash('sha256').update(JSON.stringify(exclusionFields)).digest('hex').slice(0, 16);
 
 // owner id assignment (1-based, registry order; 0 = NONE)
 const ownerIdOf = new Map();
@@ -249,19 +264,91 @@ function emitInitJs() {
 }
 
 // ---------------------------------------------------------------------------
-// Idempotent injection between // === GENERATED: surface-owner BEGIN ... END === markers.
+// Floor occlusion exclusion emit (bug#2). Parallel to surfaces[]; NEVER injected into GLSL.
+// Generated JS table = scanner/validation input; the InitCommon block = browser bake-time helper.
+// ---------------------------------------------------------------------------
+function emitFloorOcclusionTable() {
+  return `// === GENERATED: floor-occlusion table  (exclusions ${EXCLUSION_VERSION}) ===
+// Source of truth: docs/data/r7-3-10-surface-owner-registry.json (floorOcclusionExclusions)
+// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
+export const EXCLUSION_VERSION = ${JSON.stringify(EXCLUSION_VERSION)};
+export const FLOOR_OCCLUSION_EXCLUSIONS = ${JSON.stringify(exclusionFields, null, 2)};
+
+function exclMarginExpand(b, margin) {
+  if (!margin || !(margin.meters > 0)) return b; // Step-B contact margin; first re-bake meters=0 (no-op)
+  return b;
+}
+function exclInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
+// isFloorOccluded(worldX, worldZ, configId, furnitureMode) — true where a solid-geometry footprint covers the floor.
+export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
+  for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
+    if (!e.enabled) continue;
+    if (Array.isArray(e.configIds) && e.configIds.indexOf(configId) < 0) continue;
+    if (e.furnitureMode != null && e.furnitureMode !== furnitureMode) continue;
+    if (e.shape === 'rotatedBox') {
+      const dx = worldX - e.centerXZ[0], dz = worldZ - e.centerXZ[1];
+      const rc = Math.cos(-e.rotY), rs = Math.sin(-e.rotY);
+      const lx = dx * rc - dz * rs, lz = dx * rs + dz * rc;
+      if (Math.abs(lx) <= e.halfXZ[0] && Math.abs(lz) <= e.halfXZ[1]) return true;
+      continue;
+    }
+    const b = exclMarginExpand(e.bounds, e.margin);
+    if (Array.isArray(e.xRects)) { if (!e.xRects.some((r) => exclInRange(worldX, r)) || !exclInRange(worldZ, b.z)) continue; }
+    else if (!exclInRange(worldX, b.x) || !exclInRange(worldZ, b.z)) continue;
+    return true;
+  }
+  return false;
+}
+`;
+}
+
+function emitFloorOcclusionInit() {
+  return `// === GENERATED: floor-occlusion BEGIN  (exclusions ${EXCLUSION_VERSION}) ===
+\t// Source of truth: docs/data/r7-3-10-surface-owner-registry.json (floorOcclusionExclusions)
+\t// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
+\tvar R7310_FLOOR_OCCLUSION_EXCLUSION_VERSION = ${JSON.stringify(EXCLUSION_VERSION)};
+\tvar R7310_FLOOR_OCCLUSION_EXCLUSIONS = ${JSON.stringify(exclusionFields)};
+\tfunction r7310FloorOcclusionInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
+\tfunction r7310FloorOcclusionMarginExpand(b, margin) { return b; } // Step-B margin; first re-bake meters=0 (no-op)
+\tfunction r7310C1FloorOccluderExcluded(worldX, worldZ, configId, furnitureMode) {
+\t\tfor (var i = 0; i < R7310_FLOOR_OCCLUSION_EXCLUSIONS.length; i++) {
+\t\t\tvar e = R7310_FLOOR_OCCLUSION_EXCLUSIONS[i];
+\t\t\tif (!e.enabled) continue;
+\t\t\tif (e.configIds && e.configIds.indexOf(configId) < 0) continue;
+\t\t\tif (e.furnitureMode != null && e.furnitureMode !== furnitureMode) continue;
+\t\t\tif (e.shape === 'rotatedBox') {
+\t\t\t\tvar rdx = worldX - e.centerXZ[0], rdz = worldZ - e.centerXZ[1];
+\t\t\t\tvar rc = Math.cos(-e.rotY), rs = Math.sin(-e.rotY);
+\t\t\t\tvar rlx = rdx * rc - rdz * rs, rlz = rdx * rs + rdz * rc;
+\t\t\t\tif (Math.abs(rlx) <= e.halfXZ[0] && Math.abs(rlz) <= e.halfXZ[1]) return true;
+\t\t\t\tcontinue;
+\t\t\t}
+\t\t\tvar b = r7310FloorOcclusionMarginExpand(e.bounds, e.margin);
+\t\t\tif (Array.isArray(e.xRects)) { var okX = false; for (var k = 0; k < e.xRects.length; k++) if (r7310FloorOcclusionInRange(worldX, e.xRects[k])) okX = true; if (!okX || !r7310FloorOcclusionInRange(worldZ, b.z)) continue; }
+\t\t\telse if (!r7310FloorOcclusionInRange(worldX, b.x) || !r7310FloorOcclusionInRange(worldZ, b.z)) continue;
+\t\t\treturn true;
+\t\t}
+\t\treturn false;
+\t}
+\t// === GENERATED: floor-occlusion END ===`;
+}
+
+// ---------------------------------------------------------------------------
+// Idempotent injection between // === GENERATED: <name> BEGIN ... END === markers.
 // ---------------------------------------------------------------------------
 const GLSL_PATH = resolve(REPO, 'shaders/Home_Studio_Fragment.glsl');
 const INIT_PATH = resolve(REPO, 'js/InitCommon.js');
 const MARKER_RE = /\/\/ === GENERATED: surface-owner BEGIN[\s\S]*?\/\/ === GENERATED: surface-owner END ===/;
+const MARKER_RE_OCCL = /\/\/ === GENERATED: floor-occlusion BEGIN[\s\S]*?\/\/ === GENERATED: floor-occlusion END ===/;
 
-function inject(path, block, label) {
+function inject(path, block, label, markerRe) {
+  const re = markerRe || MARKER_RE;
   const src = readFileSync(path, 'utf8');
-  if (!MARKER_RE.test(src)) {
-    console.error(`  !! ${label}: no // === GENERATED: surface-owner BEGIN/END === markers found; add them first.`);
+  if (!re.test(src)) {
+    console.error(`  !! ${label}: markers not found; add them first.`);
     return false;
   }
-  writeFileSync(path, src.replace(MARKER_RE, block));
+  writeFileSync(path, src.replace(re, block));
   return true;
 }
 
@@ -270,13 +357,17 @@ const glslBlock = emitGlsl().replace(/\n$/, '');
 writeFileSync(resolve(OUT_DIR, 'r7-3-10-surface-owner.glsl.frag'), glslBlock + '\n');
 writeFileSync(resolve(OUT_DIR, 'r7-3-10-surface-owner-table.mjs'), emitJs());
 writeFileSync(resolve(OUT_DIR, 'r7-3-10-surface-owner.py'), emitPy());
+writeFileSync(resolve(OUT_DIR, 'r7-3-10-floor-occlusion-table.mjs'), emitFloorOcclusionTable());
 
 const glslInjected = inject(GLSL_PATH, glslBlock, 'shaders/Home_Studio_Fragment.glsl');
 const initInjected = inject(INIT_PATH, emitInitJs(), 'js/InitCommon.js');
+const occlInjected = inject(INIT_PATH, emitFloorOcclusionInit(), 'js/InitCommon.js floor-occlusion', MARKER_RE_OCCL);
 
-console.log(`codegen OK  registry ${REGISTRY_VERSION}  surfaces ${surfaces.length}  pending ${pendingIds.length}`);
+console.log(`codegen OK  registry ${REGISTRY_VERSION}  surfaces ${surfaces.length}  pending ${pendingIds.length}  exclusions ${exclusions.length} (${EXCLUSION_VERSION})`);
 console.log(`  -> docs/generated/r7-3-10-surface-owner.glsl.frag`);
 console.log(`  -> docs/generated/r7-3-10-surface-owner-table.mjs`);
 console.log(`  -> docs/generated/r7-3-10-surface-owner.py  (run it to emit dryrun.json)`);
-console.log(`  inject GLSL block:       ${glslInjected ? 'OK' : 'SKIPPED (markers missing)'}`);
-console.log(`  inject InitCommon block: ${initInjected ? 'OK' : 'SKIPPED (markers missing)'}`);
+console.log(`  -> docs/generated/r7-3-10-floor-occlusion-table.mjs`);
+console.log(`  inject GLSL block:            ${glslInjected ? 'OK' : 'SKIPPED (markers missing)'}`);
+console.log(`  inject InitCommon block:      ${initInjected ? 'OK' : 'SKIPPED (markers missing)'}`);
+console.log(`  inject floor-occlusion block: ${occlInjected ? 'OK' : 'SKIPPED (markers missing — add // === GENERATED: floor-occlusion BEGIN/END === in InitCommon)'}`);

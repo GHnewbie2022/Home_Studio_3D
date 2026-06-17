@@ -1,13 +1,14 @@
-// === GENERATED: surface-owner table  (registry fc176523994dd58b) ===
+// === GENERATED: surface-owner table  (registry da6f10449292b49d) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
-export const REGISTRY_VERSION = "fc176523994dd58b";
+export const REGISTRY_VERSION = "da6f10449292b49d";
 export const OWNER_IDS = {
   "ceiling_open": 1,
   "south_wall": 2,
   "south_wall_depth_top": 3,
   "south_window_top_reveal_depth": 4,
-  "south_window_top_reveal_front": 5
+  "south_window_top_reveal_front": 5,
+  "floor_open": 6
 };
 export const SURFACES = [
   {
@@ -140,6 +141,33 @@ export const SURFACES = [
     ],
     "precedence": 15,
     "pendingPolicy": "baked"
+  },
+  {
+    "surfaceId": "floor_open",
+    "normalGate": {
+      "axis": "y",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "objectIdGate": {
+      "lt": 1.5
+    },
+    "x": [
+      -2.11,
+      2.11
+    ],
+    "y": [
+      -0.0005,
+      0.025
+    ],
+    "z": [
+      -2.074,
+      3.256
+    ],
+    "precedence": 10,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "shell"
   }
 ];
 

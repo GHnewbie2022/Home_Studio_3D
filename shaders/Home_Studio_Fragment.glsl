@@ -139,6 +139,8 @@ uniform vec4 uR7310C1XatlasRectNorth;
 uniform vec4 uR7310C1XatlasRectEast;
 // R7-3.10 第6步：H2（south_window_top_reveal_depth）窗楣 -Y 深度面 master sub-rect（depth_h2）
 uniform vec4 uR7310C1XatlasRectDepthH2;
+// R7-3.10 §13：地板 C1A shell sub-rect（floor，master append 第四排）
+uniform vec4 uR7310C1XatlasRectFloor;
 uniform float uR7310C1NorthWallSeparatedDiffuseMode;
 uniform float uR7310C1UseNonSquareAtlas;
 uniform float uR7310C1NonSquareAtlasReady;
@@ -1430,7 +1432,7 @@ bool r7310C1XatlasFullEastWallUv(int visibleHitType, float visibleObjectID, vec3
 	}
 	return true;
 }
-// === GENERATED: surface-owner BEGIN  (registry fc176523994dd58b) ===
+// === GENERATED: surface-owner BEGIN  (registry da6f10449292b49d) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -1439,6 +1441,7 @@ const int R7310_OWNER_SOUTH_WALL = 2;
 const int R7310_OWNER_SOUTH_WALL_DEPTH_TOP = 3;
 const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH = 4;
 const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT = 5;
+const int R7310_OWNER_FLOOR_OPEN = 6;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -1456,6 +1459,8 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.y * -1.0 > 0.5 && objId < 1.5 && p.y >= 2.895 && p.y <= 2.915 && p.z >= 3.056 && p.z <= 3.256 && p.x >= -1.75 && p.x <= 0.69) { if (21 > bestPrec) { bestPrec = 21; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH; } }
 	// south_window_top_reveal_front (precedence 15)
 	if (n.z * -1.0 > 0.5 && objId < 1.5 && p.y >= 1.04 && p.y <= 2.905 && p.z >= 3.05 && p.z <= 3.07 && p.x >= -1.75 && p.x <= 0.69) { if (15 > bestPrec) { bestPrec = 15; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT; } }
+	// floor_open (precedence 10)
+	if (n.y * 1.0 > 0.5 && objId < 1.5 && p.y >= -0.0005 && p.y <= 0.025 && p.z >= -2.074 && p.z <= 3.256 && p.x >= -2.11 && p.x <= 2.11) { if (10 > bestPrec) { bestPrec = 10; best = R7310_OWNER_FLOOR_OPEN; } }
 	return best;
 }
 // Convenience owner gate: true only where the open ceiling is the rightful owner.
@@ -1547,6 +1552,31 @@ vec3 r7310C1XatlasFullNorthWallTriangleProbeColor(float triangleId)
 		return vec3(0.05, 0.95, 0.25);
 	return vec3(0.35);
 }
+bool r7310C1XatlasFullFloorUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	// R7-3.10 §13 地板 C1A shell：floor_open 非方格 3376×4264（800 texel/m）、planar XZ on +Y face；u=worldX、v=worldZ。
+	// 只在 master 模式供應 floor sub-rect；非 master 回 false（由舊 FloorHybrid 處理、不退 LIVE）。
+	if (uR7310C1XatlasRuntimeMode < 0.5 ||
+		uR7310C1XatlasRuntimeReady < 0.5 ||
+		uR7310C1XatlasRuntimeFullCeilingMode < 0.5 ||
+		uR7310C1XatlasRuntimeMasterMode < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	// owner 必須是 floor_open（generated 述詞已含 法線+Y、objId<1.5、x[-2.11,2.11] y[-0.0005,0.025] z[-2.074,3.256] 完整地板判定）。
+	if (r7310SurfaceOwnerId(visiblePosition, visibleNormal, visibleObjectID) != R7310_OWNER_FLOOR_OPEN)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	float u01 = clamp((visiblePosition.x + 2.11) / 4.22, 0.0, 1.0); // 貼圖橫軸＝worldX
+	float v01 = clamp((visiblePosition.z + 2.074) / 5.33, 0.0, 1.0); // 貼圖縱軸＝worldZ
+	vec2 localUv01 = vec2(u01, v01);
+	vec2 px = uR7310C1XatlasRectFloor.xy + localUv01 * uR7310C1XatlasRectFloor.zw;
+	atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	return true;
+}
 bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
 	// 非互斥：北東可同時開（堆疊貼圖）；依命中面回各自 UV（兩面法線幾何互斥，順序試即天然並存）
@@ -1563,6 +1593,10 @@ bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 vi
 	// 天花板函式以 owner gate 已排除 H2，兩者互斥，順序不衝突。
 	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
 		r7310C1XatlasFullDepthH2Uv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	// R7-3.10 §13 地板 C1A shell：floor sub-rect（owner gate=floor_open，與牆/天花板/H2 互斥、順序不衝突）。
+	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+		r7310C1XatlasFullFloorUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
 	return r7310C1XatlasA1NorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
 }
@@ -7245,7 +7279,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					// A1 的 r7310NorthWallHybridFirstHit 同時為真，會把 A1 擋在 shortCircuit(6694)
 					// 與 diffuse-bounce(6798) 之外 → 移除 break 後必走到 7070 NEE 採直接光。
 				}
-				if (r7310FloorHybridFirstHit)
+				if (r7310FloorHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 					accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310CeilingHybridFirstHit && !r7310XatlasRuntimeFirstHit)
 				accumCol += mask * r7310C1CeilingHybridRadiance(hitType, hitObjectID, nl, x);

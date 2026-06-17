@@ -25,6 +25,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { resolveOwner, REGISTRY_VERSION, SURFACES } from '../generated/r7-3-10-surface-owner-table.mjs';
+import { EXCLUSION_VERSION, FLOOR_OCCLUSION_EXCLUSIONS } from '../generated/r7-3-10-floor-occlusion-table.mjs';
 
 const FORMAL = process.argv.includes('--formal');
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -41,10 +42,25 @@ const registry = JSON.parse(readFileSync(REGISTRY_PATH, 'utf8'));
 const machineFields = registry.surfaces.map((s) => ({
   surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
   x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+  configId: s.configId, atlasGroup: s.atlasGroup,
 }));
 const liveHash = createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
 if (liveHash !== REGISTRY_VERSION) {
   add('BLOCK', 'STALE_CODEGEN', `registry hash ${liveHash} != generated REGISTRY_VERSION ${REGISTRY_VERSION}. Re-run docs/tools/r7-3-10-surface-owner-codegen.mjs.`);
+}
+
+// --- [FRESHNESS] floor occlusion exclusions carry their OWN version (independent of surfaces[] / GLSL) -------
+const exclusionFields = (Array.isArray(registry.floorOcclusionExclusions) ? registry.floorOcclusionExclusions : []).map((e) => ({
+  id: e.id, surfaceId: e.surfaceId, atlasGroup: e.atlasGroup, configIds: e.configIds,
+  furnitureMode: e.furnitureMode === undefined ? null : e.furnitureMode,
+  // 欄位順序必須與 docs/tools/r7-3-10-surface-owner-codegen.mjs 完全一致（JSON.stringify 順序敏感，否則 hash 不符）。
+  shape: e.shape, bounds: e.bounds, xRects: e.xRects,
+  centerXZ: e.centerXZ, halfXZ: e.halfXZ, rotY: e.rotY,
+  margin: e.margin, policy: e.policy, enabled: e.enabled,
+}));
+const liveExclHash = createHash('sha256').update(JSON.stringify(exclusionFields)).digest('hex').slice(0, 16);
+if (liveExclHash !== EXCLUSION_VERSION) {
+  add('BLOCK', 'STALE_EXCLUSION_CODEGEN', `floorOcclusionExclusions hash ${liveExclHash} != generated EXCLUSION_VERSION ${EXCLUSION_VERSION}. Re-run docs/tools/r7-3-10-surface-owner-codegen.mjs.`);
 }
 
 // --- [WIRING] runtime sources must consume the generated owner (no hand rule left) ----------
@@ -82,8 +98,38 @@ for (let z = Z0; z <= Z1 + 1e-9; z += STEP) {
     }
   }
 }
+// --- [OWNER] sample the FLOOR footprint x[-2.11,2.11] z[-2.074,3.256] y~0.01 normal +Y (Phase 1A: floor_open PENDING) ---
+const FLOOR_NORMAL = { x: 0, y: 1, z: 0 };
+const FX0 = -2.11, FX1 = 2.11, FZ0 = -2.074, FZ1 = 3.256, FY = 0.01;
+for (let z = FZ0; z <= FZ1 + 1e-9; z += STEP) {
+  for (let x = FX0; x <= FX1 + 1e-9; x += STEP) {
+    const sample = { position: { x: +x.toFixed(4), y: FY, z: +z.toFixed(4) }, normal: FLOOR_NORMAL, objectId: 0 };
+    sampled++;
+    const r = resolveOwner(sample);
+    if (r.conflict) conflicts++;
+    const policy = POLICY[r.surfaceId];
+    if (policy === 'pending') bump(pendingBuckets, r.surfaceId, sample.position);
+    else if (policy === 'blocker') bump(blockerBuckets, r.surfaceId, sample.position);
+  }
+}
 if (conflicts > 0) add('BLOCK', 'OWNER_CONFLICT', `${conflicts} samples have >1 equal-precedence owner (registry ambiguity).`);
 if (ceilingAteBlocker > 0) add('BLOCK', 'CEILING_ATE_BLOCKER', `${ceilingAteBlocker} samples in an internal-blocker region resolve to ceiling_open — ceiling is eating into the wall body.`);
+
+// --- [EXCLUSION] floor occlusion exclusions: recognise + rule-level sanity (no pixel read; pixel alpha audit runs in the bake runner) ---
+const enabledExcl = FLOOR_OCCLUSION_EXCLUSIONS.filter((e) => e.enabled);
+for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
+  if (e.surfaceId !== 'floor_open') add('BLOCK', 'EXCLUSION_BAD_SURFACE', `${e.id}: surfaceId=${e.surfaceId} (only floor_open supported in this slice).`);
+  if (e.enabled && e.atlasGroup !== 'shell') add('WARN', 'EXCLUSION_ATLAS_GROUP', `${e.id}: atlasGroup=${e.atlasGroup} (expected shell, aligned to floor owner).`);
+  if (e.enabled && e.policy !== 'invalidate_floor_texel') add('WARN', 'EXCLUSION_POLICY', `${e.id}: policy=${e.policy}.`);
+  if (e.enabled && e.margin && e.margin.meters > 0) add('WARN', 'EXCLUSION_MARGIN_NONZERO', `${e.id}: margin.meters=${e.margin.meters} — first re-bake must be 0 (Step-B only after audit + overcut check).`);
+  if (e.shape === 'rotatedBox') {
+    if (!Array.isArray(e.centerXZ) || !Array.isArray(e.halfXZ) || typeof e.rotY !== 'number') add('BLOCK', 'EXCLUSION_BAD_ROTATEDBOX', `${e.id}: rotatedBox 需 centerXZ/halfXZ/rotY。`);
+  } else {
+    const b = e.bounds || {};
+    if (!Array.isArray(b.x) || !Array.isArray(b.z)) add('BLOCK', 'EXCLUSION_BAD_BOUNDS', `${e.id}: missing bounds.x/z.`);
+  }
+}
+add('DEV_ONLY', 'EXCLUSION_RECOGNISED', `floor occlusion exclusions ${EXCLUSION_VERSION}: ${FLOOR_OCCLUSION_EXCLUSIONS.length} total, ${enabledExcl.length} enabled [${enabledExcl.map((e) => e.id + '(' + (e.furnitureMode || 'any-mode') + ',cfg' + JSON.stringify(e.configIds) + ')').join(', ')}]. Pixel-level alpha audit (footprint inside alpha=0 / open floor outside alpha=1) runs in the bake runner.`);
 for (const [surfaceId, b] of pendingBuckets) {
   const sev = FORMAL ? 'BLOCK' : 'WARN';
   add(sev, 'PENDING_OWNER', `${surfaceId}: ${b.n} samples PENDING (visible, not self-baked) at x[${b.xMin.toFixed(2)},${b.xMax.toFixed(2)}] z[${b.zMin.toFixed(3)},${b.zMax.toFixed(3)}]. ${FORMAL ? 'Formal acceptance BLOCKED until step 6 self-bake.' : 'Dev: shown as PENDING debug colour, not fixed.'}`);
@@ -101,6 +147,7 @@ const blocks = findings.filter((f) => f.severity === 'BLOCK');
 const warns = findings.filter((f) => f.severity === 'WARN');
 console.log(`=== R7-3.10 Surface Owner Scanner  [${FORMAL ? 'FORMAL' : 'DEV'} mode] ===`);
 console.log(`registry ${liveHash}  table ${REGISTRY_VERSION}  surfaces ${SURFACES.length}  sampled ${sampled} (ceiling-south depth slab)`);
+console.log(`exclusions ${liveExclHash}  table ${EXCLUSION_VERSION}  total ${FLOOR_OCCLUSION_EXCLUSIONS.length}  enabled ${FLOOR_OCCLUSION_EXCLUSIONS.filter((e) => e.enabled).length}`);
 console.log('');
 for (const f of findings) {
   console.log(`[${f.severity}] ${f.code}`);

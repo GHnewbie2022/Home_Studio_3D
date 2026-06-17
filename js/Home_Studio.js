@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-h2-nonsquare-v1';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-floor-2b-revert';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5614,12 +5614,14 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRectCeiling = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRectNorth = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRectEast = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRectDepthH2 = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectFloor = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
