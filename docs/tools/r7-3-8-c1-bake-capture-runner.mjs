@@ -1162,7 +1162,7 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
   const stepX = (B.xMax - B.xMin) / width, stepZ = (B.zMax - B.zMin) / height;
   const inB = (wx, wz) => wx >= B.xMin && wx <= B.xMax && wz >= B.zMin && wz <= B.zMax;
   const issues = [];
-  const warnings = []; // R7-3.10 Phase C3：具名 WARN（非 BLOCK），目前只放 render-space proof 已證畫面不可見的 KH150 ring
+  const warnings = []; // R7-3.10 Phase C3：保留具名 WARN 通道；KH150 ring 放行已撤銷，框外 hard-black 維持 BLOCK。
   let insideChecked = 0, openChecked = 0;
   // R7-3.10 bug#2 BLOCKER3：邊界級 audit——每個 enabled footprint 驗 中心+四角+四邊中點(往內 inset 避開 contact band 夾值列)，
   // 全部 alpha 應 0；再對四邊外側相鄰 open-floor(用 isFloorOccluded 過濾仍被別的 footprint 蓋住者) 驗 alpha=1 且 luma>0(沒過切/誤歸零)。
@@ -1173,8 +1173,10 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
     if (e.shape === 'rotatedBox') {
       // R7-3.10 Phase C3：旋轉盒 footprint(StandBase)，inside/outside 取樣走局部→world 旋轉，outside 過濾用同一 isFloorOccluded。
       const rcx = e.centerXZ[0], rcz = e.centerXZ[1], rhx = e.halfXZ[0], rhz = e.halfXZ[1];
+      // R7-3.10 2026-06-18：toW 用 Three.js Y-rotation local→world（cos/+sin 交叉項），與修正後 isFloorOccluded inside-test 同手性。
+      // 舊版交叉項號誌與「錯誤 -rotY inside-test」綁定（toe-out）；codegen 改 +rotY 後此處必須同步，否則稽核取樣方向相反→誤判。
       const rcos = Math.cos(e.rotY), rsin = Math.sin(e.rotY);
-      const toW = (lx, lz) => [rcx + lx * rcos - lz * rsin, rcz + lx * rsin + lz * rcos];
+      const toW = (lx, lz) => [rcx + lx * rcos + lz * rsin, rcz - lx * rsin + lz * rcos];
       const inx = rhx - 1.5 * stepX, inz = rhz - 1.5 * stepZ;
       const rInside = [toW(0, 0), toW(inx, inz), toW(-inx, inz), toW(inx, -inz), toW(-inx, -inz), toW(0, inz), toW(0, -inz), toW(inx, 0), toW(-inx, 0)];
       for (const [wx, wz] of rInside) {
@@ -1191,12 +1193,10 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
         // overcut（可見地板被誤清 alpha=0）仍 BLOCK，不論哪個 footprint（CODEX 第3點）。
         if (t.a < 0.5) issues.push(`${e.id} open-floor neighbour (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1 — overcut?)`);
         else if (t.l < 0.001) {
-          // R7-3.10 Phase C3（CODEX render-space proof ACCEPT 2026-06-17）：KH150 StandBase 外圈 ring 是 indirect-only
-          // atlas hard-black；同視角 LIVE vs RAW 逐像素 diff 0.86/255、畫面不可見（docs/r7-3-10-floor-live-raw-sidebyside.png）
-          // → 具名 WARN，非 BLOCK。其餘 footprint hard-black 仍走 issues(BLOCK)，不廣泛放行（CODEX 第5點）。
-          const msg = `${e.id} ring alpha=1 luma=0 (${wx.toFixed(2)},${wz.toFixed(2)})`;
-          if (e.id.indexOf('kh150_stand_base') >= 0) warnings.push(msg + ' [render-space proof 畫面不可見→WARN]');
-          else issues.push(msg + ' (誤歸零)');
+          // R7-3.10 2026-06-18：撤銷 KH150 StandBase ring 的「render-space proof 畫面不可見→WARN」放行。
+          // CODEX 判定該舊視角 proof 失效（紅框低角度視角下該 hard-black 進畫面顯黑）。根因＝旋轉號誌反向，
+          // 修正 inside-test 後真實 toe-in 底座地板已被排成 alpha=0；框外鄰域不應再有 hard-black，故一律 BLOCK。
+          issues.push(`${e.id} ring alpha=1 luma=0 (${wx.toFixed(2)},${wz.toFixed(2)}) (誤歸零→BLOCK)`);
         }
       }
       continue;

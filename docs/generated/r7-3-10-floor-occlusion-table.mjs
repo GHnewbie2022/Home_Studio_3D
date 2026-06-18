@@ -376,7 +376,9 @@ export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
     if (e.furnitureMode != null && e.furnitureMode !== furnitureMode) continue;
     if (e.shape === 'rotatedBox') {
       const dx = worldX - e.centerXZ[0], dz = worldZ - e.centerXZ[1];
-      const rc = Math.cos(-e.rotY), rs = Math.sin(-e.rotY);
+      // R7-3.10 2026-06-18：Three.js Y-rotation 對 XZ 的 world→local inverse 用 +rotY（非 -rotY）。
+      // 舊版 cos(-rotY)/sin(-rotY) 把 rs 反號 → StandBase footprint toe-out（轉錯邊），漏掉真實 toe-in 底座地板。
+      const rc = Math.cos(e.rotY), rs = Math.sin(e.rotY);
       const lx = dx * rc - dz * rs, lz = dx * rs + dz * rc;
       if (Math.abs(lx) <= e.halfXZ[0] && Math.abs(lz) <= e.halfXZ[1]) return true;
       continue;

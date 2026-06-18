@@ -3,7 +3,7 @@
   "runtimeScope": "c1_xatlas_full_floor_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "single_xatlas_full_floor_phase2",
-  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260617-164025",
+  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260618-083832",
   "targetAtlasWidth": 3376,
   "targetAtlasHeight": 4264,
   "requestedSamples": 1000,
@@ -27,5 +27,5 @@
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json"
   },
-  "note": "Phase C3 正式上架（2026-06-17，使用者拍板）：全室座地 occlusion exclusion 官方 PASS 包 20260617-164025（1000 SPP、13 footprint＝11 AABB＋2 KH150 StandBase rotatedBox、validTexelRatio 0.6214∈[0.618,0.625]、alphaExclusion PASS、status PASS）。KH150 喇叭架外圈薄環＝indirect-only atlas audit warning（render-space proof 同視角 LIVE vs RAW diff 0.86/255、畫面不可見、D800 同型），記於 validation-report.json alphaExclusionWarnings、不阻斷。取代基準 200401 與 fail 包 102938/124208/143939。"
+  "note": "C1 floor rotatedBox 旋轉號誌修正重烤（2026-06-18）：20260618-083832。根因＝floor occlusion 的 rotatedBox inside-test 用 cos(-rotY)/sin(-rotY)，把 Three.js Y 旋轉號誌弄反 → KH150 StandBase 排除盒 toe-out（轉錯邊），真實 toe-in 底座地板沒被排除、烤成 alpha=1 luma=0 hard-black（＝使用者紅框視角的黑）。修法：codegen 兩處 inside-test 改 +rotY、runner 稽核 toW 同步、移除失效的 render-space WARN 放行。實證：左右各 8349 hard-black 100% 落入修正框、重烤後全變 alpha=0（被真實底座遮蔽）、零亮地板過切。status PASS、validTexelRatio 0.621403∈[0.618,0.625]、alphaExclusion PASS warnings 空、63/63 tiles、1000 SPP。取代 211141（旋轉號誌反向版）。RAW/OIDN 兩 pointer 同步指 083832。"
 }

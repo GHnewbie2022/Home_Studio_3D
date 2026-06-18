@@ -6967,7 +6967,8 @@ function buildR7310C1FloorTexelMetadata(size)
 			if (e.furnitureMode != null && e.furnitureMode !== furnitureMode) continue;
 			if (e.shape === 'rotatedBox') {
 				var rdx = worldX - e.centerXZ[0], rdz = worldZ - e.centerXZ[1];
-				var rc = Math.cos(-e.rotY), rs = Math.sin(-e.rotY);
+				// R7-3.10 2026-06-18：Three.js Y-rotation world→local inverse 用 +rotY（舊 -rotY 把 StandBase 轉成 toe-out、漏真實底座地板）。
+				var rc = Math.cos(e.rotY), rs = Math.sin(e.rotY);
 				var rlx = rdx * rc - rdz * rs, rlz = rdx * rs + rdz * rc;
 				if (Math.abs(rlx) <= e.halfXZ[0] && Math.abs(rlz) <= e.halfXZ[1]) return true;
 				continue;
