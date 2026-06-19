@@ -122,6 +122,7 @@ uniform float uR7310C1SeparatedBakeMode;
 // 與 r7-3-8-c1-bake-capture-runner.mjs --output-mode=normal 與 ?outputMode=normal URL query 對接
 uniform float uR7310C1NormalAuxOutputMode;
 uniform float uR7310C1XatlasBakeMode;
+uniform float uR7310R42aBakeWitness; // R4-2A BAKE_CAPTURE compile-only 見證 uniform（值 0、runtime 無作用）
 uniform vec2 uR7310C1XatlasBakeAtlasSize;
 uniform float uR7310C1XatlasRuntimeMode;
 uniform float uR7310C1XatlasRuntimeReady;
@@ -468,6 +469,7 @@ vec4 r738C1SurfaceClassColor(int visibleHitType, float visibleObjectID, vec3 vis
 	if (cloudVisibleSurfaceIsObject(visibleHitType, visibleObjectID, visibleNormal, visiblePosition)) return vec4(1.0, 0.0, 1.0, 1.0);
 	return vec4(0.0, 0.0, 0.0, 1.0);
 }
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 bool r738C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out vec3 normal, out int hitType, out float objectID)
 {
 	vec2 uv = clamp(texelUv, vec2(0.0), vec2(1.0));
@@ -487,6 +489,7 @@ bool r738C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out ve
 	objectID = 0.0;
 	return false;
 }
+#endif
 bool r7310C1EastWallHiddenByStaticContact(float z, float y)
 {
 	return false;
@@ -770,6 +773,7 @@ bool r7310C1SouthWallAcShadowHiddenBySideColumn(float x, float y)
 const float IRON_DOOR_REVEAL_BAND_H = 0.25;                                                   // 4 faces -> 4 v-bands
 const float IRON_DOOR_REVEAL_GUARD_V = 0.04;                                                  // guard each side of every band (atlas-v)
 const float IRON_DOOR_REVEAL_CORE_H = IRON_DOOR_REVEAL_BAND_H - 2.0 * IRON_DOOR_REVEAL_GUARD_V; // 0.17 usable core per band
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out vec3 normal, out int hitType, out float objectID)
 {
 	vec2 uv = clamp(texelUv, vec2(0.0), vec2(1.0));
@@ -1150,6 +1154,7 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 	objectID = 0.0;
 	return false;
 }
+#endif
 bool r738C1BakePastePreviewUv(vec3 visiblePosition, out vec2 atlasUv)
 {
 	float xMin = uR738C1BakePatchWorldBounds.x;
@@ -2106,6 +2111,7 @@ vec3 r7310C1XatlasBakeSecondaryRayOrigin(
 		outgoingDir
 	) + visibleNormal * uEPS_intersect;
 }
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 vec3 r7310C1XatlasBakeNeeShadowRayOrigin(
 	int visibleHitType,
 	float visibleObjectID,
@@ -2121,6 +2127,7 @@ vec3 r7310C1XatlasBakeNeeShadowRayOrigin(
 		outgoingDir
 	);
 }
+#endif
 bool r7310C1RuntimeSurfaceIsEastWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
 {
 	return visibleObjectID < 1.5 &&
@@ -5180,6 +5187,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		return cloudMisWeightProbeContributionUniformSentinel();
 	if (uMovementPreviewMode > 0.5 && uCloudVisibilityProbeMode == 0 && uCloudMisWeightProbeMode == 0 && uCloudContributionProbeMode == 0)
 		return CalculateMovementPreview(objectNormal, objectColor, objectID, pixelSharpness);
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 	if (uR7310C1XatlasBakeMode > 0.5 && uR7310C1RuntimeProbeMode > 76.5 && uR7310C1RuntimeProbeMode < 80.5)
 	{
 		// OPUS/CODEX 2026-06-10 probe 77-80：4636 invalid 短路之前，自己重做 bake gate texelFetch。
@@ -5202,6 +5210,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		vec4 r7310P80N512 = texelFetch(tR7310C1FullRoomDiffuseAtlasTexture, ivec2(512, r7310P80Y), 0);
 		return vec3(clamp(length(r7310P80N511.xyz), 0.0, 1.0), clamp(length(r7310P80N512.xyz), 0.0, 1.0), clamp(r7310P77NL, 0.0, 1.0));
 	}
+#endif
 	if (uR7310C1XatlasBakeMode > 0.5 && !r7310C1XatlasBakeTexelValid)
 	{
 		objectNormal = vec3(0.0);
@@ -5268,6 +5277,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 		if (t == INFINITY)
 		{
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 			if (bounces == 0 &&
 				uR7310C1XatlasBakeMode > 0.5 &&
 				uR7310C1RuntimeProbeMode > 71.5 &&
@@ -5287,6 +5297,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
+#endif
 			// ADR 2 Normal-Aux primary miss：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
 			// primary ray 沒打到任何 geometry 時、normal aux 回 vec3(0.0) 表「無 first-visible surface」
 			// 與 OIDN normal-aux 的「無 geometry」慣例對齊；bounces > 0 不受此 branch 影響
@@ -5340,6 +5351,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			// R7-3.10 Phase 2 H7' probe：把 BVH 命中的 isRayExiting 升級到 firstVisible* 體系。
 			// 此值僅作 probe 證據，不作 guard 條件。
 			firstVisibleIsRayExiting = hitIsRayExiting;
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 			if (uR7310C1XatlasBakeMode > 0.5 &&
 				uR7310C1RuntimeProbeMode > 66.5 &&
 				uR7310C1RuntimeProbeMode < 71.5)
@@ -5360,6 +5372,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
+#endif
 			// ADR 2 Normal-Aux Early-Out：plan §13 ADR-Normal-Aux-Shader 修訂（CODEX 二審）
 			// primary hit 設好 firstVisibleNormal 後立即 return、bypass 整個 PT loop、
 			// 達到 1 SPP geometry-only 的時間與穩定性優勢
@@ -6509,6 +6522,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					hitIsRayExiting != TRUE &&
 					r7310C1XatlasNorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeAtlasUv) &&
 					r7310C1XatlasRuntimeSampleValidLinear(r7310XatlasRuntimeAtlasUv, r7310XatlasRuntimeRadiance);
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 				float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
 			if (bounces == 1 &&
 				uR7310C1XatlasBakeMode > 0.5 &&
@@ -6563,6 +6577,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
+#endif
 			// === R7-3.10 Surface Ownership Map: PENDING owner render path (CODEX step 5) ===
 			// The generated owner says this first hit belongs to a not-yet-baked (pending) surface.
 			// Show a debug PENDING colour; do NOT fall through to LIVE diffuse / dilation / dark bake.
@@ -6597,6 +6612,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			r7310HybridOwnerAdd(r7310WestWallBeamHybridFirstHit, 13.0, 0.0, 32.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SwColumnInnerShadowHybridFirstHit, 14.0, 0.0, 64.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
 			r7310HybridOwnerAdd(r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit, 19.0, 0.0, 128.0, r7310HybridOwnerCount, r7310HybridOwnerMaskLow, r7310HybridOwnerMaskHigh, r7310HybridOwnerFirstTargetOffset, r7310HybridOwnerSecondTargetOffset);
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 			if (bounces == 0 &&
 				r7310C1RuntimeProbeMode > 36.5 &&
 				r7310C1RuntimeProbeMode < 41.5)
@@ -7269,6 +7285,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					}
 					break;
 				}
+#endif
 				if (r7310XatlasRuntimeFirstHit)
 				{
 					accumCol += mask * (uR7310C1XatlasRuntimeSeparatedAlbedo > 0.5
@@ -7321,6 +7338,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				accumCol += mask * r7310C1SouthWindowTopRevealShadowHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310IronDoorRevealHybridFirstHit)
 				accumCol += mask * r7310C1IronDoorRevealHybridRadiance(hitType, hitObjectID, nl, x);
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 			if (bounces == 0 &&
 				r7310C1RuntimeProbeMode > 14.5 &&
 				r7310C1RuntimeProbeMode < 16.5)
@@ -7370,10 +7388,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					accumCol = vec3(0.0);
 				break;
 			}
+#endif
 			if (!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
 				bounces == 0 &&
 				r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance))
 			{
+#if defined(R7310_INCLUDE_DEBUG_PROBES)
 				vec2 r7310RuntimeProbeAtlasUv = vec2(0.0);
 				if (r7310C1RuntimeProbeMode > 0.5 && r7310C1RuntimeProbeMode < 1.5)
 				{
@@ -7458,6 +7478,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						accumCol = vec3(0.0);
 				}
 				else
+#endif
 					accumCol += mask * r7310BakedRadiance;
 				break;
 			}
@@ -7757,8 +7778,10 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				float neePdfOmega; int neePickedIdx; int neeZeroContributionClass; int neeProbeThetaBin; vec3 neeFacingDiagnostic;
 				vec3 r7310XatlasNeeSourcePosition = x;
 				rayDirection = sampleStochasticLightDynamic(x, nl, light, weight, neePdfOmega, neePickedIdx, neeZeroContributionClass, neeProbeThetaBin, neeFacingDiagnostic);
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 				if (uR7310C1XatlasBakeMode > 0.5)
 				{
+					if (uR7310R42aBakeWitness < -0.5) { rayOrigin += vec3(1.0); } // R4-2A keep-alive：保見證 uniform 在 bake/debug 變體 active
 					r7310XatlasNeeSourcePosition = r7310C1XatlasBakeNeeShadowRayOrigin(
 						hitType,
 						hitObjectID,
@@ -7772,6 +7795,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					}
 					rayOrigin = r7310XatlasNeeSourcePosition + nl * uEPS_intersect;
 				}
+#endif
 				lastNeeZeroContributionClass = cloudVisibilityProbeHasContribution(mask) ? neeZeroContributionClass : CLOUD_PROBE_CLASS_ZERO_SOURCE_MASK;
 				lastNeeProbeThetaBin = neeProbeThetaBin;
 				lastNeeFacingDiagnostic = neeFacingDiagnostic;

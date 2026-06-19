@@ -17,6 +17,7 @@ let triangleGeometry = new THREE.BufferGeometry();
 let trianglePositions = [];
 let pathTracingMaterial, pathTracingMesh;
 let r7310BakeOnlyNoBorrowMaterial = null;
+let r7310DebugProbeMaterial = null;
 let r7310RuntimeBorrowTextureDisabled = false;
 let screenCopyMaterial, screenCopyMesh;
 let screenOutputMaterial, screenOutputMesh;
@@ -277,12 +278,39 @@ function createR7310BakeOnlyNoBorrowMaterial()
 	r7310BakeOnlyNoBorrowMaterial = createCommonVertexShaderMaterial({
 		uniforms: pathTracingUniforms,
 		uniformsGroups: pathTracingUniformsGroups,
-		defines: Object.assign({}, pathTracingDefines || {}, { R7310_BAKE_ONLY_NO_BORROW: 1 }),
+		defines: Object.assign({}, pathTracingDefines || {}, { R7310_BAKE_ONLY_NO_BORROW: 1, R7310_INCLUDE_BAKE_CAPTURE: 1 }),
 		fragmentShader: pathTracingFragmentShader,
 		depthTest: false,
 		depthWrite: false
 	});
 	return r7310BakeOnlyNoBorrowMaterial;
+}
+
+// R4-2A bake-debug variant：no-borrow（R7310_BAKE_ONLY_NO_BORROW）+ DEBUG_PROBES + BAKE_CAPTURE；與 bake variant 同 no-borrow 契約，供「bake 模式 + probe 診斷」用（唯一呼叫點 createR7310BakeCaptureMaterial）。lazy 建立。
+function createR7310DebugProbeMaterial()
+{
+	if (r7310DebugProbeMaterial)
+		return r7310DebugProbeMaterial;
+	if (!THREE || !pathTracingUniforms || !pathTracingFragmentShader || !pathTracingMesh)
+		throw new Error('[InitCommon] debug-probe material requires initialized path tracing state');
+	r7310DebugProbeMaterial = createCommonVertexShaderMaterial({
+		uniforms: pathTracingUniforms,
+		uniformsGroups: pathTracingUniformsGroups,
+		defines: Object.assign({}, pathTracingDefines || {}, { R7310_BAKE_ONLY_NO_BORROW: 1, R7310_INCLUDE_DEBUG_PROBES: 1, R7310_INCLUDE_BAKE_CAPTURE: 1 }),
+		fragmentShader: pathTracingFragmentShader,
+		depthTest: false,
+		depthWrite: false
+	});
+	return r7310DebugProbeMaterial;
+}
+
+// R4-2A MAJOR 1 守門：bake 擷取選材——bake 模式下若 RuntimeProbeMode 啟用（需 probe 診斷），改用 debug variant（含 probe），否則 bake variant（僅 BAKE_CAPTURE、無 probe）。
+function createR7310BakeCaptureMaterial(useBakeOnlyNoBorrowShader)
+{
+	if (!useBakeOnlyNoBorrowShader)
+		return null;
+	var probeActive = !!(pathTracingUniforms && pathTracingUniforms.uR7310C1RuntimeProbeMode && pathTracingUniforms.uR7310C1RuntimeProbeMode.value > 0);
+	return probeActive ? createR7310DebugProbeMaterial() : createR7310BakeOnlyNoBorrowMaterial();
 }
 
 function shouldUseR7310BakeOnlyNoBorrowShader(options)
@@ -6754,7 +6782,7 @@ async function renderR738MainRawHdrSamples(targetSamples, timeoutMs, options)
 	if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(true);
 	var samples = 0;
 	var useBakeOnlyNoBorrowShader = shouldUseR7310BakeOnlyNoBorrowShader(options);
-	var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
+	var bakeOnlyNoBorrowMaterial = createR7310BakeCaptureMaterial(useBakeOnlyNoBorrowShader);
 	var savedPathTracingMeshMaterial = pathTracingMesh ? pathTracingMesh.material : null;
 	try
 	{
@@ -6842,7 +6870,7 @@ async function captureR738C1SurfaceClassSummary()
 	var state = captureR738BakeState();
 	var savedRenderTarget = renderer.getRenderTarget ? renderer.getRenderTarget() : null;
 	var useBakeOnlyNoBorrowShader = shouldUseR7310BakeOnlyNoBorrowShader({});
-	var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
+	var bakeOnlyNoBorrowMaterial = createR7310BakeCaptureMaterial(useBakeOnlyNoBorrowShader);
 	var savedPathTracingMeshMaterial = pathTracingMesh ? pathTracingMesh.material : null;
 	try
 	{
@@ -8266,7 +8294,7 @@ async function captureR738C1DirectSurfaceTexelPatch(targetSamples, timeoutMs, op
 		if (xatlasPrepared.width !== width || xatlasPrepared.height !== height)
 			throw new Error('R7-3.10 xatlas bake atlas size mismatch: prepared=' + xatlasPrepared.width + 'x' + xatlasPrepared.height + ' capture=' + width + 'x' + height);
 	}
-	var bakeOnlyNoBorrowMaterial = useBakeOnlyNoBorrowShader ? createR7310BakeOnlyNoBorrowMaterial() : null;
+	var bakeOnlyNoBorrowMaterial = createR7310BakeCaptureMaterial(useBakeOnlyNoBorrowShader);
 	var bakeDiagnostics = createR738BakeDiagnostics(options.bakeDiagnosticsOptions, width, height, targetCount);
 	validateR738BakeTilingSafety(bakeDiagnostics, width, height, options);
 	var removeBakeContextDiagnostics = function() {};

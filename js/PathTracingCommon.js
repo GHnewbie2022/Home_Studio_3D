@@ -3307,6 +3307,7 @@ void main( void )
 					     
 	rayDirection = finalRayDir;
 
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 	if (uR738C1BakeCaptureMode == 2)
 	{
 		if (uR7310C1XatlasBakeMode > 0.5)
@@ -3350,6 +3351,7 @@ void main( void )
 			}
 		}
 	}
+#endif
 
 	SetupScene();
 
