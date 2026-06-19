@@ -71,6 +71,12 @@ const FRAME_INTERVAL_MS = 1000 / 60;
 const HOME_STUDIO_KEYBOARD_MOVE_FRAME_TIME_LIMIT = 1 / 30;
 let homeStudioAnimationFrameId = 0;
 let homeStudioAnimationSleeping = false;
+// R7-3.10 Phase B P0 fail-safe（純 JS、不碰 shader）：app 級 WebGL context-loss 偵測/停機/顯示/回報狀態。
+// 第一版不自動 rebuild（rebuild 會重觸發 356KB shader 重編譯、恐 lost→restore→lost 迴圈）。
+let r7310HomeStudioContextLost = false;
+let r7310HomeStudioContextLostCount = 0;
+let r7310HomeStudioContextRestoredCount = 0;
+let r7310HomeStudioContextLostOverlayEl = null;
 let TWO_PI = Math.PI * 2;
 let sampleCounter = 0.0; // will get increased by 1 in animation loop before rendering
 let userSppCap = 1000; // 使用者可調整的 SPP 上限。sampleCounter >= userSppCap 時休眠；上限調高即自動續跑
@@ -14413,6 +14419,67 @@ function initTHREEjs()
 
 	container = document.getElementById('container');
 	container.appendChild(renderer.domElement);
+	// R7-3.10 Phase B P0 fail-safe（純 JS、不碰 shader、不重編譯）：app 級 WebGL context-loss 偵測/停機/顯示/回報。
+	// 把「context lost → UI 活/畫面黑/SPP 假動」變成「停止 render loop ＋ 清楚提示 ＋ 可回報狀態」。
+	// 與既有 bake 診斷監聽（attachR738BakeContextDiagnostics）並存；第一版不自動 rebuild（避免重觸發巨型 shader 重編譯與 lost→restore→lost 迴圈）。
+	(function r7310InstallHomeStudioContextLossFailSafe()
+	{
+		var glCanvas = renderer && renderer.domElement;
+		if (!glCanvas || typeof glCanvas.addEventListener !== 'function') return;
+		function showOverlay(text)
+		{
+			try
+			{
+				if (!r7310HomeStudioContextLostOverlayEl)
+				{
+					var el = document.createElement('div');
+					el.id = 'r7310-context-lost-overlay';
+					el.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;text-align:center;background:rgba(8,8,10,0.92);color:#fff;font:600 18px/1.6 system-ui,"Noto Sans TC",sans-serif;padding:24px;white-space:pre-line;';
+					r7310HomeStudioContextLostOverlayEl = el;
+					if (document.body) document.body.appendChild(el);
+				}
+				r7310HomeStudioContextLostOverlayEl.textContent = text;
+				r7310HomeStudioContextLostOverlayEl.style.display = 'flex';
+			}
+			catch (e) {}
+		}
+		glCanvas.addEventListener('webglcontextlost', function(event)
+		{
+			if (event && typeof event.preventDefault === 'function') event.preventDefault(); // 保留可恢復性（Khronos HandlingContextLost）
+			r7310HomeStudioContextLost = true;
+			r7310HomeStudioContextLostCount += 1;
+			if (homeStudioAnimationFrameId) { cancelAnimationFrame(homeStudioAnimationFrameId); homeStudioAnimationFrameId = 0; }
+			homeStudioAnimationSleeping = true;
+			showOverlay('繪圖連線中斷，請重新整理頁面。\n（WebGL context lost #' + r7310HomeStudioContextLostCount + '；已停止算圖以免持續打已失效的繪圖連線）');
+			if (typeof console !== 'undefined' && console.error)
+				console.error('[R7-3.10 WebGL FAILSAFE] CONTEXT_LOST #' + r7310HomeStudioContextLostCount + ' — render loop 已停、提示已顯示、未自動 rebuild。狀態請呼叫 window.reportHomeStudioWebGLContextState()。');
+		}, false);
+		glCanvas.addEventListener('webglcontextrestored', function()
+		{
+			r7310HomeStudioContextRestoredCount += 1;
+			// 第一版 fuse：即使 restored 也不自動重啟 render loop（避免 lost→restore→lost 迴圈與重編譯卡死）。請使用者重新整理頁面。
+			showOverlay('繪圖連線曾中斷後恢復，但為避免重複當機未自動重啟，請重新整理頁面。\n（lost ' + r7310HomeStudioContextLostCount + ' 次 / restored ' + r7310HomeStudioContextRestoredCount + ' 次）');
+			if (typeof console !== 'undefined' && console.warn)
+				console.warn('[R7-3.10 WebGL FAILSAFE] CONTEXT_RESTORED #' + r7310HomeStudioContextRestoredCount + ' — 第一版不自動 rebuild，請重新整理頁面。');
+		}, false);
+		if (typeof window !== 'undefined')
+		{
+			window.reportHomeStudioWebGLContextState = function()
+			{
+				var gl = null;
+				try { gl = glCanvas.getContext('webgl2'); } catch (e) {}
+				return {
+					contextLost: r7310HomeStudioContextLost,
+					lostCount: r7310HomeStudioContextLostCount,
+					restoredCount: r7310HomeStudioContextRestoredCount,
+					glIsContextLost: gl ? gl.isContextLost() : 'no-webgl2-ctx',
+					animationFrameId: homeStudioAnimationFrameId,
+					sleeping: homeStudioAnimationSleeping,
+					overlayShown: !!(r7310HomeStudioContextLostOverlayEl && r7310HomeStudioContextLostOverlayEl.style.display !== 'none')
+				};
+			};
+		}
+	})();
 
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
@@ -14824,6 +14891,7 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 
 function scheduleHomeStudioAnimationFrame()
 {
+	if (r7310HomeStudioContextLost) return; // R7-3.10 fail-safe 總閘：context lost 後停止一切 rAF 排程（十幾個喚醒點集中在此攔）
 	homeStudioAnimationSleeping = false;
 	if (homeStudioAnimationFrameId)
 		return;
@@ -14836,6 +14904,7 @@ function scheduleHomeStudioAnimationFrame()
 
 function animate()
 {
+	if (r7310HomeStudioContextLost) return; // R7-3.10 fail-safe：context lost 後不再對已失效 GL 送 frame
 	// R2-UI：60 FPS cap —— 間隔不足 ~16.7ms 直接 reschedule，避免 120Hz 螢幕上全速 path tracing
 	const nowMs = performance.now();
 	if (nowMs - lastRenderTime < FRAME_INTERVAL_MS)
