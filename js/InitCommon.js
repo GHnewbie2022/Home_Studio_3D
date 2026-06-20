@@ -14689,6 +14689,21 @@ function initTHREEjs()
 	pathTracingUniforms.uUseOrthographicCamera = { type: "b1", value: false };
 	pathTracingUniforms.uSceneIsDynamic = { type: "b1", value: false };
 	pathTracingUniforms.uMovementPreviewMode = { type: "f", value: 0.0 };
+	// R4-2A-2 P2: 參數化 success-path uniform array + count（在其他 pathTracingUniforms 旁註冊，material 建立前）。
+	// loop 上界 uR7310C1XatlasParamSurfaceCount（uniform，非編譯期常數）；param 表由 codegen 產（docs/generated）非手寫。
+	pathTracingUniforms.uR7310C1XatlasParamSurfaceCount = { type: "f", value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasParamSurfaceTable = { value: Array.from({ length: 224 }, function () { return new THREE.Vector4(0, 0, 0, 0); }) };
+	(async function () {
+		try {
+			var pr = await fetch('docs/generated/r7-3-10-xatlas-param-table.generated.json?v=r42a2-p2', { cache: 'no-store' });
+			var pj = await pr.json();
+			var ff = pj.flatFloats || [];
+			var vecs = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value;
+			for (var vi = 0; vi < vecs.length; vi++) { var o = vi * 4; vecs[vi].set(ff[o] || 0, ff[o + 1] || 0, ff[o + 2] || 0, ff[o + 3] || 0); }
+			pathTracingUniforms.uR7310C1XatlasParamSurfaceCount.value = Number(pj.count) || 0;
+			if (typeof pathTracingMaterial !== 'undefined' && pathTracingMaterial) pathTracingMaterial.uniformsNeedUpdate = true;
+		} catch (e) { /* param 表為選用；非 param 建置時忽略 */ }
+	})();
 
 	// R2-UI: 牆面反射率（牆/天花板/柱樑），預設 1.0（R2-18 fix18：使用者肉眼校準）
 	pathTracingUniforms.uWallAlbedo = { type: "f", value: 1.0 };

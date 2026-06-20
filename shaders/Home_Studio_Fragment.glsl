@@ -132,6 +132,8 @@ uniform float uR7310C1XatlasRuntimeFullNorthWallMode;
 uniform float uR7310C1XatlasRuntimeFullEastWallMode;
 uniform float uR7310C1XatlasRuntimeFullCeilingMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
+uniform float uR7310C1XatlasParamSurfaceCount; // R4-2A-2 param runtime：dynamic while loop 上界（uniform、非編譯期常數）
+uniform vec4 uR7310C1XatlasParamSurfaceTable[224]; // R4-2A-2：generated param table（docs/generated；最多 32 面 × 7 vec4；codegen 產、非手寫）
 // master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
 // rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
 uniform float uR7310C1XatlasRuntimeMasterMode;
@@ -1437,6 +1439,37 @@ bool r7310C1XatlasFullEastWallUv(int visibleHitType, float visibleObjectID, vec3
 	}
 	return true;
 }
+bool r7310C1XatlasParamSurfaceUv(int sid, vec3 n, vec3 p, out vec2 atlasUv)
+{
+	int b = sid * 7;
+	vec4 nf   = uR7310C1XatlasParamSurfaceTable[b + 0];
+	vec4 bmin = uR7310C1XatlasParamSurfaceTable[b + 1];
+	vec4 bmax = uR7310C1XatlasParamSurfaceTable[b + 2];
+	vec4 umap = uR7310C1XatlasParamSurfaceTable[b + 3];
+	vec4 vmap = uR7310C1XatlasParamSurfaceTable[b + 4];
+	vec4 mixuv= uR7310C1XatlasParamSurfaceTable[b + 5];
+	vec4 rect = uR7310C1XatlasParamSurfaceTable[b + 6];
+	if (bmin.w < 0.5) { atlasUv = vec2(0.0); return false; }
+	if (dot(n, nf.xyz) < vmap.w) { atlasUv = vec2(0.0); return false; }
+	if (p.x < bmin.x || p.x > bmax.x || p.y < bmin.y || p.y > bmax.y || p.z < bmin.z || p.z > bmax.z) { atlasUv = vec2(0.0); return false; }
+	int ua = int(umap.x); int va = int(vmap.x);
+	float tu = clamp((p[ua] - umap.y) * umap.z, 0.0, 1.0);
+	float tv = clamp((p[va] - vmap.y) * vmap.z, 0.0, 1.0);
+	vec2 localUv01 = vec2(mix(mixuv.x, mixuv.y, tu), mix(mixuv.z, mixuv.w, tv));
+	vec2 px = rect.xy + localUv01 * rect.zw;
+	atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+	return true;
+}
+bool r7310C1XatlasParamSampleAny(vec3 n, vec3 p, out vec2 atlasUv)
+{
+	int i = 0;
+	while (i < int(uR7310C1XatlasParamSurfaceCount))
+	{
+		if (r7310C1XatlasParamSurfaceUv(i, n, p, atlasUv)) return true;
+		i++;
+	}
+	return false;
+}
 // === GENERATED: surface-owner BEGIN  (registry da6f10449292b49d) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
@@ -1588,6 +1621,7 @@ bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 vi
 	if (uR7310C1XatlasRuntimeFullEastWallMode > 0.5 &&
 		r7310C1XatlasFullEastWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
+	{ vec2 r7310C1XatlasParamUv; if (r7310C1XatlasParamSampleAny(visibleNormal, visiblePosition, r7310C1XatlasParamUv)) { atlasUv = r7310C1XatlasParamUv; return true; } }
 	if (uR7310C1XatlasRuntimeFullNorthWallMode > 0.5 &&
 		r7310C1XatlasFullNorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
