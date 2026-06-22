@@ -33,6 +33,17 @@ assert.match(shader, /bool r7310C1WestWallBeamShadowIndirectBakeFirstHit/);
 assert.match(shader, /R7310_C1_WEST_WALL_BEAM_SHADOW_Z_MAX\s*=\s*3\.056/);
 assert.match(shader, /R7310_C1_WEST_WALL_BEAM_SHADOW_Y_MAX\s*=\s*2\.905/);
 
+const westWallBeamHybridStart = shader.indexOf('bool r7310C1WestWallBeamShadowHybridActive');
+assert.notEqual(westWallBeamHybridStart, -1, 'west wall beam hybrid active helper missing');
+const westWallBeamHybridEnd = shader.indexOf('vec3 r7310C1WestWallBeamShadowHybridRadiance', westWallBeamHybridStart);
+assert.ok(westWallBeamHybridEnd > westWallBeamHybridStart, 'west wall beam hybrid active helper end marker missing');
+const westWallBeamHybridBody = shader.slice(westWallBeamHybridStart, westWallBeamHybridEnd);
+assert.match(
+  westWallBeamHybridBody,
+  /!\s*r7310C1XatlasParamWestSurfaceActive\(\)/,
+  'west wall beam shadow hybrid must yield to full-west XATLAS param ownership to avoid double-adding the west wall'
+);
+
 const bakeSurfacePointStart = shader.indexOf('bool r7310C1BakeSurfacePoint');
 assert.notEqual(bakeSurfacePointStart, -1, 'bake surface point helper missing');
 const bakeSurfacePointEnd = shader.indexOf('bool r738C1BakePastePreviewUv', bakeSurfacePointStart);

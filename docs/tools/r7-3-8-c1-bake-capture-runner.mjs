@@ -39,6 +39,7 @@ function parseArgs(argv) {
     accurateReflectionPreviewTest: false,
     fullRoomDiffuseBake: false,
     xatlasBake: false,
+    xatlasFullRadianceBake: false,
     xatlasTexelmapDir: 'docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike',
     xatlasValidityMaskPath: null,
     xatlasBakeProbeLevel: null,
@@ -91,7 +92,9 @@ function parseArgs(argv) {
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
     seed: null,
     dumpAtSamples: [],
-    outputMode: 'indirect_radiance'
+    outputMode: 'indirect_radiance',
+    xatlasAlphaDilationLimit: null,
+    xatlasValidityMaskRowMapping: 'flipped'
   };
   for (const arg of argv) {
     if (arg.startsWith('--samples=')) out.samples = Number(arg.slice('--samples='.length));
@@ -120,8 +123,11 @@ function parseArgs(argv) {
     else if (arg === '--accurate-reflection-preview-test') out.accurateReflectionPreviewTest = true;
     else if (arg === '--r7310-full-room-diffuse-bake') out.fullRoomDiffuseBake = true;
     else if (arg === '--r7310-xatlas-bake') out.xatlasBake = true;
+    else if (arg === '--r7310-xatlas-full-radiance-bake') out.xatlasFullRadianceBake = true;
     else if (arg.startsWith('--xatlas-texelmap-dir=')) out.xatlasTexelmapDir = arg.slice('--xatlas-texelmap-dir='.length);
     else if (arg.startsWith('--xatlas-validity-mask=')) out.xatlasValidityMaskPath = arg.slice('--xatlas-validity-mask='.length);
+    else if (arg.startsWith('--xatlas-alpha-dilation-limit=')) out.xatlasAlphaDilationLimit = Number(arg.slice('--xatlas-alpha-dilation-limit='.length));
+    else if (arg.startsWith('--xatlas-validity-mask-row-mapping=')) out.xatlasValidityMaskRowMapping = arg.slice('--xatlas-validity-mask-row-mapping='.length);
     else if (arg.startsWith('--xatlas-bake-probe-level=')) out.xatlasBakeProbeLevel = Number(arg.slice('--xatlas-bake-probe-level='.length));
     else if (arg.startsWith('--r7310-surface=')) out.r7310Surface = arg.slice('--r7310-surface='.length);
     else if (arg.startsWith('--r7310-ne-furniture=')) out.r7310NeFurniture = arg.slice('--r7310-ne-furniture='.length);
@@ -205,6 +211,7 @@ function parseArgs(argv) {
     if (!Number.isFinite(out.targetSamples) || out.targetSamples <= 0) throw new Error('Invalid targetSamples');
     out.targetSamples = Math.trunc(out.targetSamples);
   }
+  if (out.xatlasFullRadianceBake && !out.xatlasBake) throw new Error('--r7310-xatlas-full-radiance-bake requires --r7310-xatlas-bake');
   for (const key of ['atlasWidth', 'atlasHeight']) {
     if (out[key] !== null) {
       if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
@@ -1106,10 +1113,13 @@ function buildManifest({ report, packageDir, smokeTest }) {
     smokeTest,
     targetAtlasResolution: report.targetAtlasResolution,
     targetAtlasWidth: report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || report.targetAtlasResolution,
-    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
-    requestedSamples: report.requestedSamples,
-    diffuseOnly: report.diffuseOnly === true,
-    upscaled: false,
+	    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
+	    requestedSamples: report.requestedSamples,
+	    diffuseOnly: report.diffuseOnly === true,
+	    bakedRadianceKind: report.bakedRadianceKind || null,
+	    directLightAlreadyIncluded: report.directLightAlreadyIncluded === true,
+	    addDirectLightAfterBakeLookup: report.addDirectLightAfterBakeLookup === true,
+	    upscaled: false,
     packageDir: path.relative(repoRoot, packageDir),
     artifacts: {
       rawHdrSummary: 'raw-hdr-summary.json',
@@ -1743,12 +1753,13 @@ function alphaAwareR7310C1XatlasDilation(atlasBuffer, metadataBuffer, alpha, fil
   };
 }
 
-function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height }) {
+function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height, maxDistanceLimitTexels, maskRowMapping }) {
   if (!validityMask) return { atlasBuffer, report: null };
   const expectedAtlasBytes = width * height * 4 * 4;
   const expectedMetadataBytes = width * height * 12 * 4;
   if (atlasBuffer.length !== expectedAtlasBytes) throw new Error('xatlas alpha policy atlas byte length mismatch');
   if (metadataBuffer.length !== expectedMetadataBytes) throw new Error('xatlas alpha policy metadata byte length mismatch');
+  const normalizedMaskRowMapping = maskRowMapping === 'direct' ? 'direct' : 'flipped';
 
   const output = Buffer.from(atlasBuffer);
   const total = width * height;
@@ -1761,8 +1772,8 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const outIndex = y * width + x;
-      const sourceY = height - 1 - y;
-      const maskIndex = sourceY * width + x;
+      const maskY = normalizedMaskRowMapping === 'direct' ? y : height - 1 - y;
+      const maskIndex = maskY * width + x;
       const meta12 = outIndex * 12;
       const out4 = outIndex * 4;
       const mask4 = maskIndex * 4;
@@ -1796,7 +1807,7 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
     }
   }
 
-  const dilation = alphaAwareR7310C1XatlasDilation(output, metadataBuffer, alpha, fillable, width, height);
+  const dilation = alphaAwareR7310C1XatlasDilation(output, metadataBuffer, alpha, fillable, width, height, maxDistanceLimitTexels);
   const perTriangle = {};
   let alphaOneTexels = 0;
   let alphaZeroTexels = 0;
@@ -1843,7 +1854,9 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
       policy: {
         validVisibleAlpha: 1,
         invalidOrHiddenAlpha: 0,
-        maskRowMapping: 'mask source row y maps to output row height - 1 - y',
+        maskRowMapping: normalizedMaskRowMapping === 'direct'
+          ? 'mask row y maps directly to output row y'
+          : 'mask source row y maps to output row height - 1 - y',
         decisionSource: 'per-texel backface-ratio validity mask'
       },
       counts: {
@@ -8643,6 +8656,7 @@ async function main() {
 	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
 	          northeastFurnitureMode: '${args.r7310NeFurniture}',
 	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
+	          xatlasFullRadianceBake: ${args.xatlasFullRadianceBake ? 'true' : 'false'},
 	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
 	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
 	          eastWallCamera: ${r7310FullRoomCaptureCameraOptions.eastWallCamera ? 'true' : 'false'},
@@ -8694,7 +8708,9 @@ async function main() {
           metadataBuffer,
           validityMask: xatlasValidityMask,
           width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
-          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
+          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+          maxDistanceLimitTexels: args.xatlasAlphaDilationLimit,
+          maskRowMapping: args.xatlasValidityMaskRowMapping
         })
       : null;
     if (xatlasAlphaPolicy) atlasBuffer = xatlasAlphaPolicy.atlasBuffer;

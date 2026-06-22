@@ -72,9 +72,11 @@ assert.ok(eastFirstHitEnd > eastFirstHitStart, 'east wall hybrid first-hit end m
 const eastFirstHitBody = shader.slice(eastFirstHitStart, eastFirstHitEnd);
 assert.doesNotMatch(eastFirstHitBody, /!r7310EastWallBeamHybridFirstHit/);
 
-const fullDiffuseGuardStart = shader.indexOf('if (!(r7310FloorHybridFirstHit');
+const shortCircuitStart = shader.indexOf('r7310C1FullRoomDiffuseShortCircuit(hitType');
+assert.notEqual(shortCircuitStart, -1, 'full diffuse guard must include the full-room short-circuit route');
+const fullDiffuseGuardStart = shader.lastIndexOf('if (', shortCircuitStart);
 assert.notEqual(fullDiffuseGuardStart, -1, 'full diffuse guard must include floor/ceiling and north/east wall hybrid routes');
-const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, fullDiffuseGuardStart + 900);
+const fullDiffuseGuard = shader.slice(fullDiffuseGuardStart, shortCircuitStart + 160);
 assert.match(fullDiffuseGuard, /r7310FloorHybridFirstHit/);
 assert.match(fullDiffuseGuard, /r7310CeilingHybridFirstHit/);
 assert.match(fullDiffuseGuard, /r7310NorthWallHybridFirstHit/);

@@ -145,6 +145,7 @@ function buildEntry(spec) {
     representative: !!spec.representative,
     hasTruth: !!spec.hasTruth,
     truthSource: spec.truthSource || null,
+    rectHole: spec.rectHole || null, // 門洞排除（世界座標 {y:[lo,hi],z:[lo,hi]}）；非 flat（shader 不讀，runtime 靠 c2c-mask atlas alpha=0 讓位），供 checker/c2c-mask 三邊對帳
   };
 }
 
@@ -179,7 +180,9 @@ function entryFromAxisSpec(axisName, opts = {}) {
     vMin: a.v.min, vMax: a.v.max, vFlip: a.v.flip, vInset: a.hasInset,
     atlasW: a.atlasW, atlasH: a.atlasH,
     modeId: MODE_MASTER,
-    specialExclusionId: opts.specialExclusionId ?? EXCL_NONE,
+    // ironDoorHole（axis-spec 機器欄位）→ specialExclusionId=1(rectHole) + rectHole payload；無則沿用 opts/none
+    specialExclusionId: a.ironDoorHole ? EXCL_RECT_HOLE : (opts.specialExclusionId ?? EXCL_NONE),
+    rectHole: a.ironDoorHole || null,
     representative: false,
     hasTruth: true,
     truthSource: 'axis-spec',
@@ -239,7 +242,9 @@ const baseEntries = [];
 baseEntries.push(entryFromRegistryBounds('south_wall', { inset: true }));
 
 // (2) axis-spec 真值面（已驗收的牆/天花板/地板/H2）作為對照基準
-baseEntries.push(entryFromAxisSpec('west_wall_open'));   // west（待 RAW 驗收、flip=pending → 當 false）
+baseEntries.push(entryFromAxisSpec('west_threshold_front')); // box 10 x+ subset; must precede west_wall_open
+baseEntries.push(entryFromAxisSpec('west_wall_open'));   // west（flip 已由 RAW/OIDN package metadata 定案）
+baseEntries.push(entryFromAxisSpec('west_threshold_top')); // west threshold top（box 10 y+，獨立 baked owner）
 baseEntries.push(entryFromAxisSpec('east_wall'));
 baseEntries.push(entryFromAxisSpec('south_window_top_reveal_depth')); // depth_h2（無 inset 原生 planar）
 
@@ -435,6 +440,7 @@ function paramVersionFields(es) {
     uAxis: e.uAxis, uOrigin: e.uOrigin, uScale: e.uScale, uMixLo: e.uMixLo, uMixHi: e.uMixHi,
     vAxis: e.vAxis, vOrigin: e.vOrigin, vScale: e.vScale, vMixLo: e.vMixLo, vMixHi: e.vMixHi,
     rect: e.rect, modeId: e.modeId, specialExclusionId: e.specialExclusionId,
+    rectHole: e.rectHole || null,
   }));
 }
 const PARAM_TABLE_VERSION = createHash('sha256')

@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-# === GENERATED: surface-owner helper  (registry da6f10449292b49d) ===
+# === GENERATED: surface-owner helper  (registry 2c3cea8a5a1892a2) ===
 # Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 # Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
 # Three-way same-source proof: running this writes docs/generated/r7-3-10-surface-owner.dryrun.json,
 # whose REGISTRY_VERSION + sampled owners must match the GLSL/JS generated from the same registry.
 import json, os
 
-REGISTRY_VERSION = "da6f10449292b49d"
+REGISTRY_VERSION = "2c3cea8a5a1892a2"
 OWNER_IDS = {
   "ceiling_open": 1,
   "south_wall": 2,
   "south_wall_depth_top": 3,
   "south_window_top_reveal_depth": 4,
   "south_window_top_reveal_front": 5,
-  "floor_open": 6
+  "floor_open": 6,
+  "west_wall_open": 7,
+  "west_threshold_front": 8,
+  "west_threshold_top": 9
 }
 SURFACES = [
   {
@@ -170,6 +173,81 @@ SURFACES = [
       3.256
     ],
     "precedence": 10,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "shell"
+  },
+  {
+    "surfaceId": "west_wall_open",
+    "normalGate": {
+      "axis": "x",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "objectIdGate": {
+      "lt": 1.5
+    },
+    "x": [
+      -1.92,
+      -1.9
+    ],
+    "y": [
+      0,
+      2.905
+    ],
+    "z": [
+      -1.874,
+      3.056
+    ],
+    "precedence": 10,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "shell"
+  },
+  {
+    "surfaceId": "west_threshold_front",
+    "normalGate": {
+      "axis": "x",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "x": [
+      -1.92,
+      -1.9
+    ],
+    "y": [
+      0,
+      0.095
+    ],
+    "z": [
+      -1.874,
+      -0.984
+    ],
+    "precedence": 31,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "shell"
+  },
+  {
+    "surfaceId": "west_threshold_top",
+    "normalGate": {
+      "axis": "y",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "x": [
+      -2.11,
+      -1.91
+    ],
+    "y": [
+      0.085,
+      0.095
+    ],
+    "z": [
+      -1.874,
+      -0.984
+    ],
+    "precedence": 30,
     "pendingPolicy": "baked",
     "configId": 1,
     "atlasGroup": "shell"

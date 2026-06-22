@@ -1,0 +1,87 @@
+{
+  "_doc": {
+    "purpose": "R7-3.10 Phase 2B I4 獨立 surface axis spec（標準答案）。來源＝房間幾何與世界座標定義 + bake/prepare 設計意圖，嚴禁從 GLSL runtime UV 常數反抄（GLSL 是被檢查對象之一；CODEX 2B-0c 裁示：稽核不可與被稽核碼共用同一錯誤假設）。",
+    "howChecked": "r7-3-10-uv-bake-roundtrip-check.mjs 以本 spec 產生 expected（每軸密度、aspect、half-texel inset=0.5/dim），再去比對 GLSL runtime UV 常數、JS InitCommon 常數、package targetAtlasWidth/Height、bake metadata worldPos。spec 本身的正確性靠世界幾何核實 + 使用者肉眼驗收，不靠 GLSL。",
+    "roomGeometry": "js/Home_Studio.js：MIN_X=-2.11 MAX_X=2.11（寬4.22）、MIN_Z=-2.074 MAX_Z=3.256（深5.33）、牆高 0..2.905。牆內面：north z=-1.874、south z=3.056、east x=1.91、west x=-1.91；天花板 y=2.905、地板 y≈0。",
+    "texelPerM": 800,
+    "axisFields": "u=atlas 橫軸(width)、v=atlas 縱軸(height)；uAxis/vAxis=該 atlas 軸對應哪個 world 軸（由 atlasDim÷worldLen≈texelPerM 唯一決定，獨立於 GLSL）。uFlip/vFlip=該軸是否反向（chart 轉向/rowFlip；幾何無法唯一決定，既有面記為已肉眼驗收之事實、west 標 pending 待 RAW 驗收）。hasInset=runtime UV 是否帶 half-texel inset（牆/天花板 xatlas chart=是；floor/H2 原生 planar=否）。"
+  },
+  "surfaces": [
+    {
+      "surfaceName": "ceiling_open", "targetId": 1006, "masterRectKey": "ceiling",
+      "normal": [0, -1, 0], "fixed": { "axis": "y", "value": 2.905 },
+      "u": { "axis": "z", "min": -2.074, "max": 3.256, "flip": true },
+      "v": { "axis": "x", "min": -2.11, "max": 2.11, "flip": false },
+      "atlasW": 4265, "atlasH": 3377, "hasInset": true,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullCeilingUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json"
+    },
+    {
+      "surfaceName": "north_wall", "targetId": 1002, "masterRectKey": "north",
+      "normal": [0, 0, 1], "fixed": { "axis": "z", "value": -1.874 },
+      "u": { "axis": "y", "min": 0.0, "max": 2.905, "flip": true },
+      "v": { "axis": "x", "min": -2.11, "max": 2.11, "flip": false },
+      "atlasW": 2325, "atlasH": 3377, "hasInset": true,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullNorthWallUv",
+      "jsUvFn": "r7310C1XatlasFullNorthWallUvFromWorldPosition",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json"
+    },
+    {
+      "surfaceName": "east_wall", "targetId": 1003, "masterRectKey": "east",
+      "normal": [-1, 0, 0], "fixed": { "axis": "x", "value": 1.91 },
+      "u": { "axis": "y", "min": 0.0, "max": 2.905, "flip": true },
+      "v": { "axis": "z", "min": -1.874, "max": 3.056, "flip": false },
+      "atlasW": 2325, "atlasH": 3945, "hasInset": true,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullEastWallUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json"
+    },
+    {
+      "surfaceName": "west_wall_open", "targetId": 1004, "masterRectKey": "west",
+      "normal": [1, 0, 0], "fixed": { "axis": "x", "value": -1.91 },
+      "u": { "axis": "y", "min": 0.0, "max": 2.905, "flip": true },
+      "v": { "axis": "z", "min": -1.874, "max": 3.056, "flip": false },
+      "atlasW": 2325, "atlasH": 3945, "hasInset": true,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullWestWallUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-west-wall-1000spp-runtime-package.json",
+      "_note": "west 鏡像 east 尺寸 2325×3945。runtime UV 方向已依 west RAW/OIDN package metadata 定案：u(y) 反向、v(z) 正向。R4-2C 拆排除（CODEX 2026-06-21）：west＝full chart coverage，整面 alpha=1，無 ironDoorHole / beam / SW-column 排除。"
+    },
+    {
+      "surfaceName": "west_threshold_front", "targetId": 1024, "masterRectKey": "west_threshold_front",
+      "normal": [1, 0, 0], "fixed": { "axis": "x", "value": -1.91 },
+      "u": { "axis": "y", "min": 0.0, "max": 0.09, "flip": false },
+      "v": { "axis": "z", "min": -1.874, "max": -0.984, "flip": true },
+      "atlasW": 72, "atlasH": 712, "hasInset": false,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasParamSurfaceUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-west-threshold-front-1000spp-runtime-package.json",
+      "_note": "西牆鐵門門檻房內垂直面，對應 js/Home_Studio.js box 10 的 x+ 面：x=-1.91、y[0,0.09]、z[-1.874,-0.984]。此面法線 +X，會與 west_wall_open 大面重疊，param table 必須排在 west_wall_open 之前。vFlip=true 來自 2026-06-22 RAW package readback：final atlas row0 對應 Z_MAX。"
+    },
+    {
+      "surfaceName": "west_threshold_top", "targetId": 1007, "masterRectKey": "west_threshold_top",
+      "normal": [0, 1, 0], "fixed": { "axis": "y", "value": 0.09 },
+      "u": { "axis": "x", "min": -2.11, "max": -1.91, "flip": false },
+      "v": { "axis": "z", "min": -1.874, "max": -0.984, "flip": true },
+      "atlasW": 160, "atlasH": 712, "hasInset": false,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasParamSurfaceUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-west-threshold-top-1000spp-runtime-package.json",
+      "_note": "西牆鐵門門檻頂面，對應 js/Home_Studio.js box 10 的 y+ 面：x[-2.11,-1.91]、y=0.09、z[-1.874,-0.984]。此面法線 +Y，原 west_wall_open 只涵蓋 +X 垂直面，故需要獨立 baked owner。vFlip=true 來自 2026-06-22 RAW package readback：final atlas row0 對應 Z_MAX。"
+    },
+    {
+      "surfaceName": "floor_open", "targetId": 1001, "masterRectKey": "floor",
+      "normal": [0, 1, 0], "fixed": { "axis": "y", "value": 0.01 },
+      "u": { "axis": "x", "min": -2.11, "max": 2.11, "flip": false },
+      "v": { "axis": "z", "min": -2.074, "max": 3.256, "flip": false },
+      "atlasW": 3376, "atlasH": 4264, "hasInset": false,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullFloorUv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-floor-runtime-package.json"
+    },
+    {
+      "surfaceName": "south_window_top_reveal_depth", "targetId": 1022, "masterRectKey": "depth_h2",
+      "normal": [0, -1, 0], "fixed": { "axis": "y", "value": 2.905 },
+      "u": { "axis": "x", "min": -1.75, "max": 0.69, "flip": false },
+      "v": { "axis": "z", "min": 3.056, "max": 3.256, "flip": false },
+      "atlasW": 1952, "atlasH": 160, "hasInset": false,
+      "runtimeUvPresent": true, "glslUvFn": "r7310C1XatlasFullDepthH2Uv",
+      "packageRaw": "docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json"
+    }
+  ]
+}

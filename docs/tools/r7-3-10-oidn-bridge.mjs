@@ -382,6 +382,9 @@ function main() {
     auxStrategy: args.aux === 'beta' ? 'color_only_beta'
       : args.aux === 'gamma' ? 'prefiltered_normal_gamma'
       : 'constant_white_albedo_alpha',
+    filter: args.filter,
+    quality: args.quality,
+    dilation: args.dilation,
     wallTimeMs: { preFill: 0, oidn: 0, postMask: 0, total: 0 },
     atlasIntegrity: { nonzeroTexels: 0, nonzeroRatio: 0, nanCount: 0, infCount: 0 },
     oidnRuntime: { maxRssMb: 0, deviceUsed: 'unknown', version: 'unknown' },

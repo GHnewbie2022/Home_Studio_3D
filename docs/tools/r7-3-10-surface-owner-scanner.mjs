@@ -112,6 +112,38 @@ for (let z = FZ0; z <= FZ1 + 1e-9; z += STEP) {
     else if (policy === 'blocker') bump(blockerBuckets, r.surfaceId, sample.position);
   }
 }
+// --- [OWNER] sample vertical-wall owners derived from registry (normalGate.axis x|z) ---
+// BLOCKER 1（R4-2C）：水平面網格（ceiling/floor，normal ±Y）掃不到垂直牆；pending 垂直牆 owner（如 west_wall_open）
+// 永遠落不進 pendingBuckets → FORMAL 假 PASS。改由 registry 派生：對 normalGate.axis ∈ {x,z} 的面，
+// 在固定軸 bounds 中點 + 兩自由軸（另一水平軸 + y）網格，用其 normal 取樣其 owner。
+let vertSampled = 0;
+for (const s of registry.surfaces) {
+  const g = s.normalGate;
+  if (!g || (g.axis !== 'x' && g.axis !== 'z')) continue; // 只派生垂直牆面（水平面已於上方取樣）
+  const fixedAxis = g.axis;
+  const fb = s[fixedAxis];
+  if (!Array.isArray(fb)) continue;
+  const fixedVal = (fb[0] + fb[1]) / 2;
+  const normal = { x: 0, y: 0, z: 0 };
+  normal[fixedAxis] = g.sign;
+  const yB = Array.isArray(s.y) ? s.y : [0, 2.905];
+  const otherAxis = fixedAxis === 'x' ? 'z' : 'x';
+  const oB = Array.isArray(s[otherAxis]) ? s[otherAxis] : (otherAxis === 'z' ? [-2.074, 3.256] : [-2.11, 2.11]);
+  for (let yy = yB[0]; yy <= yB[1] + 1e-9; yy += STEP) {
+    for (let oo = oB[0]; oo <= oB[1] + 1e-9; oo += STEP) {
+      const pos = { x: 0, y: +yy.toFixed(4), z: 0 };
+      pos[fixedAxis] = +fixedVal.toFixed(4);
+      pos[otherAxis] = +oo.toFixed(4);
+      const sample = { position: pos, normal, objectId: 0 };
+      sampled++; vertSampled++;
+      const r = resolveOwner(sample);
+      if (r.conflict) conflicts++;
+      const policy = POLICY[r.surfaceId];
+      if (policy === 'pending') bump(pendingBuckets, r.surfaceId, pos);
+      else if (policy === 'blocker') bump(blockerBuckets, r.surfaceId, pos);
+    }
+  }
+}
 if (conflicts > 0) add('BLOCK', 'OWNER_CONFLICT', `${conflicts} samples have >1 equal-precedence owner (registry ambiguity).`);
 if (ceilingAteBlocker > 0) add('BLOCK', 'CEILING_ATE_BLOCKER', `${ceilingAteBlocker} samples in an internal-blocker region resolve to ceiling_open — ceiling is eating into the wall body.`);
 
@@ -146,7 +178,7 @@ for (const [surfaceId, b] of blockerBuckets) {
 const blocks = findings.filter((f) => f.severity === 'BLOCK');
 const warns = findings.filter((f) => f.severity === 'WARN');
 console.log(`=== R7-3.10 Surface Owner Scanner  [${FORMAL ? 'FORMAL' : 'DEV'} mode] ===`);
-console.log(`registry ${liveHash}  table ${REGISTRY_VERSION}  surfaces ${SURFACES.length}  sampled ${sampled} (ceiling-south depth slab)`);
+console.log(`registry ${liveHash}  table ${REGISTRY_VERSION}  surfaces ${SURFACES.length}  sampled ${sampled} (ceiling-south depth slab + floor + ${vertSampled} vertical-wall)`);
 console.log(`exclusions ${liveExclHash}  table ${EXCLUSION_VERSION}  total ${FLOOR_OCCLUSION_EXCLUSIONS.length}  enabled ${FLOOR_OCCLUSION_EXCLUSIONS.filter((e) => e.enabled).length}`);
 console.log('');
 for (const f of findings) {

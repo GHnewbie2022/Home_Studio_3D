@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-kh150-120cm-deskmove';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-multipage-webgl-v9';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5603,15 +5603,20 @@ function initSceneData() {
 	r738DefaultBakeAtlasTexture.needsUpdate = true;
 	pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
 	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
-	pathTracingUniforms.uR7310C1XatlasRuntimeMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
-	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
+		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasBakeFullRadianceMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeLightmapPageIds = { value: new THREE.Vector4(0.0, 0.0, 0.0, 0.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullWestWallDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode = { value: 0.0 };
@@ -5730,6 +5735,19 @@ function initSceneData() {
 	} catch (e) {
 		pathTracingUniforms.uR7310C1RuntimeProbeMode.value = 0.0;
 	}
+	var r7310WestScopeProbeMode = 0.0;
+	try {
+		if (typeof location !== 'undefined') {
+			var r7310WestScopeProbeParam = String(new URLSearchParams(location.search).get('westScopeProbe') || '').toLowerCase();
+			if (r7310WestScopeProbeParam === '1' || r7310WestScopeProbeParam === 'owner') r7310WestScopeProbeMode = 1.0;
+			else if (r7310WestScopeProbeParam === '2' || r7310WestScopeProbeParam === 'param') r7310WestScopeProbeMode = 2.0;
+			else if (r7310WestScopeProbeParam === '3' || r7310WestScopeProbeParam === 'both') r7310WestScopeProbeMode = 3.0;
+		}
+	} catch (e) {
+		r7310WestScopeProbeMode = 0.0;
+	}
+	pathTracingUniforms.uR7310C1WestScopeProbeMode = { value: r7310WestScopeProbeMode };
+	pathTracingUniforms.uR7310C1XatlasParamWestSurfaceIndex = { value: -1.0 };
 	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
 	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };

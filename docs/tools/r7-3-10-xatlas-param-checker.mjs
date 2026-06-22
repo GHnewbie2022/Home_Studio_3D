@@ -78,6 +78,7 @@ function paramVersionFields(es) {
     uAxis: e.uAxis, uOrigin: e.uOrigin, uScale: e.uScale, uMixLo: e.uMixLo, uMixHi: e.uMixHi,
     vAxis: e.vAxis, vOrigin: e.vOrigin, vScale: e.vScale, vMixLo: e.vMixLo, vMixHi: e.vMixHi,
     rect: e.rect, modeId: e.modeId, specialExclusionId: e.specialExclusionId,
+    rectHole: e.rectHole || null,
   }));
 }
 const liveParamVersion = createHash('sha256')
@@ -221,6 +222,34 @@ function checkAgainstAxisSpec(e) {
   }
   if (a.atlasH != null && !approx(e.rect[3], a.atlasH, 0.5)) {
     fail(`(e) ${e.surfaceId}: rect.h=${e.rect[3]} != axis-spec atlasH(${a.atlasH})`);
+  }
+  // rectHole（門洞）：axis-spec 有 ironDoorHole → entry 須 specialExclusionId=1(rectHole) + rectHole 數值相符（codegen/checker/c2c-mask 三邊對帳同一組）
+  if (a.ironDoorHole) {
+    if (e.specialExclusionId !== 1) {
+      fail(`(e) ${e.surfaceId}: axis-spec 有 ironDoorHole 但 specialExclusionId=${e.specialExclusionId} != 1(rectHole)`);
+    }
+    if (!e.rectHole) {
+      fail(`(e) ${e.surfaceId}: axis-spec 有 ironDoorHole 但 entry.rectHole 缺`);
+    } else {
+      for (const ax of ['y', 'z']) {
+        const rh = e.rectHole[ax], ih = a.ironDoorHole[ax];
+        if (!Array.isArray(rh) || !Array.isArray(ih) || !approx(rh[0], ih[0]) || !approx(rh[1], ih[1])) {
+          fail(`(e) ${e.surfaceId}: rectHole.${ax}=${JSON.stringify(rh)} != axis-spec ironDoorHole.${ax}=${JSON.stringify(ih)}`);
+        }
+      }
+    }
+  }
+  // R4-2C 拆排除（CODEX 2026-06-21）：west_wall_open 必須全無排除（full chart coverage）。
+  if (e.surfaceId === 'west_wall_open') {
+    if (e.specialExclusionId !== 0) {
+      fail(`(e) west_wall_open: specialExclusionId=${e.specialExclusionId} != 0（拆排除後 west 必須無排除）`);
+    }
+    if (e.rectHole != null) {
+      fail(`(e) west_wall_open: rectHole=${JSON.stringify(e.rectHole)} != null（拆排除後 west 必須無 rectHole）`);
+    }
+    if (a.ironDoorHole) {
+      fail(`(e) west_wall_open: axis-spec 仍帶 ironDoorHole（拆排除後 west 不得有 ironDoorHole）`);
+    }
   }
 }
 

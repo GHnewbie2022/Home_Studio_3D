@@ -84,4 +84,26 @@ assert.ok(init.includes('uploadRowFlip'), 'InitCommon must keep prepare-stage up
 assert.ok(init.includes('var uploadPixels = atlasPixels;'),
   'runtime load must NOT re-flip atlas-patch (prepare already flipped it into the bake; double flip = north wall stripes)');
 
+for (const fnName of [
+  'r7310C1XatlasFullEastWallUvFromWorldPosition',
+  'r7310C1XatlasFullCeilingUvFromWorldPosition',
+  'r7310C1XatlasFullFloorUvFromWorldPosition',
+]) {
+  assert.ok(init.includes(`function ${fnName}`), `InitCommon runtime diagnostics must expose ${fnName}`);
+}
+
+const runtimeDispatcher = init.slice(
+  init.indexOf('function r7310C1XatlasRuntimeUvFromWorldPosition'),
+  init.indexOf('function r7310C1XatlasRuntimeCpuTexel')
+);
+for (const fnName of [
+  'r7310C1XatlasFullWestWallUvFromWorldPosition',
+  'r7310C1XatlasFullEastWallUvFromWorldPosition',
+  'r7310C1XatlasNorthWallUvFromWorldPosition',
+  'r7310C1XatlasFullCeilingUvFromWorldPosition',
+  'r7310C1XatlasFullFloorUvFromWorldPosition',
+]) {
+  assert.ok(runtimeDispatcher.includes(`${fnName}(worldPosition)`), `runtime dispatcher must try ${fnName}`);
+}
+
 console.log('r7-3-10-xatlas-runtime-uv-contract OK');

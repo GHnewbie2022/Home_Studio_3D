@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const source = fs.readFileSync('js/Home_Studio.js', 'utf8');
+const shader = fs.readFileSync('shaders/Home_Studio_Fragment.glsl', 'utf8');
 const lines = source.split('\n');
 
 function findSwitchLine(label) {
@@ -29,7 +30,7 @@ const button = parseWhiteBox(findSwitchLine('西牆開關按鈕'));
 
 assert.equal(plate.type, 1, 'switch plate must not use OUTLET type');
 assert.equal(button.type, 1, 'switch button must not use OUTLET type');
-assert.ok(source.includes('const BASE_BOX_COUNT = 85;'), 'switch boxes must stay in base scene geometry');
+assert.ok(source.includes('const BASE_BOX_COUNT = 86;'), 'switch boxes must stay in base scene geometry');
 
 assert.deepEqual(plate.min, [-1.91, 1.148, -0.089]);
 assert.deepEqual(plate.max, [-1.90, 1.218, 0.031]);
@@ -45,5 +46,36 @@ near(button.min[1] - plate.min[1], 0.013, 'button lower margin');
 near(plate.max[1] - button.max[1], 0.013, 'button upper margin');
 near(button.min[2] - plate.min[2], 0.013, 'button north margin');
 near(plate.max[2] - button.max[2], 0.013, 'button south margin');
+
+assert.match(
+    shader,
+    /bool\s+r7310C1XatlasParamSurfaceUv\s*\(\s*int\s+sid\s*,\s*float\s+visibleObjectID\s*,\s*vec3\s+n\s*,\s*vec3\s+p\s*,\s*out\s+vec2\s+atlasUv\s*\)/,
+    'xatlas param surface UV must receive object id'
+);
+assert.match(
+    shader,
+    /bool\s+r7310C1XatlasParamSurfaceAllowsObjectHit\s*\(\s*vec4\s+nf\s*,\s*vec4\s+bmin\s*,\s*vec4\s+bmax\s*\)/,
+    'xatlas param surface UV must have an explicit object-hit exception gate'
+);
+assert.match(
+    shader,
+    /visibleObjectID\s*>=\s*1\.5\s*&&\s*!\s*r7310C1XatlasParamSurfaceAllowsObjectHit\s*\(\s*nf\s*,\s*bmin\s*,\s*bmax\s*\)/,
+    'xatlas param surface UV must reject object ids unless a small param surface opts in'
+);
+assert.match(
+    shader,
+    /westThresholdFront[\s\S]*?westThresholdTop[\s\S]*?return\s+westThresholdFront\s*\|\|\s*westThresholdTop\s*;/,
+    'west threshold front/top must opt in to box-object param sampling'
+);
+assert.match(
+    shader,
+    /r7310C1XatlasParamSampleAny\s*\(\s*visibleObjectID\s*,\s*visibleNormal\s*,\s*visiblePosition\s*,\s*r7310C1XatlasParamUv\s*\)/,
+    'generic xatlas runtime route must pass object id into param surface sampling'
+);
+assert.match(
+    shader,
+    /r7310C1XatlasParamSurfaceUv\s*\(\s*int\s*\(\s*uR7310C1XatlasParamWestSurfaceIndex\s*\)\s*,\s*hitObjectID\s*,\s*nl\s*,\s*x\s*,\s*r7310XatlasRuntimeWestAtlasUv\s*\)/,
+    'west direct-included classification must pass object id into param surface sampling'
+);
 
 console.log('R7-3.10 west wall switch geometry passed');

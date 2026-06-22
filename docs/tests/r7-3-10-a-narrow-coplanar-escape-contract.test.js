@@ -64,6 +64,12 @@ function shortLineId(lineId) {
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_BED_TOP') return 'bed_top';
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_BEAM_VERTICAL_SEAM') return 'west_beam';
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_VERTICAL_SEAM') return 'east_beam';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP') return 'east_bed_top';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SW_COLUMN_VERTICAL_SEAM') return 'west_wall_sw_column';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_TOP') return 'west_wall_south_desk_top';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_SW_COLUMN_CORNER') return 'west_wall_south_desk_sw_column_corner';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_IRON_THRESHOLD_TOP') return 'west_wall_iron_threshold_top';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_IRON_THRESHOLD_TOP_WEST_EDGE') return 'west_iron_threshold_top_west_edge';
 	assert.fail(`unexpected confirmed line id ${lineId}`);
 }
 
@@ -128,37 +134,95 @@ function assertVecClose(actual, expected, label) {
 	}
 }
 
-function escapeFromSeamAndNeighbor(seamMin, seamMax, neighborMin, neighborMax) {
+function dominantAxis(values) {
+	let axis = 'x';
+	for (const candidate of ['y', 'z']) {
+		if (Math.abs(values[candidate]) > Math.abs(values[axis])) axis = candidate;
+	}
+	return axis;
+}
+
+function escapeFromSeamAndNeighbor(seamMin, seamMax, neighborMin, neighborMax, normal) {
 	const seamCenter = {
 		x: (seamMin.x + seamMax.x) * 0.5,
-		y: (seamMin.y + seamMax.y) * 0.5
+		y: (seamMin.y + seamMax.y) * 0.5,
+		z: (seamMin.z + seamMax.z) * 0.5
 	};
 	const seamExtent = {
 		x: Math.abs(seamMax.x - seamMin.x),
-		y: Math.abs(seamMax.y - seamMin.y)
+		y: Math.abs(seamMax.y - seamMin.y),
+		z: Math.abs(seamMax.z - seamMin.z)
 	};
 	const neighborCenter = {
 		x: (neighborMin.x + neighborMax.x) * 0.5,
-		y: (neighborMin.y + neighborMax.y) * 0.5
+		y: (neighborMin.y + neighborMax.y) * 0.5,
+		z: (neighborMin.z + neighborMax.z) * 0.5
 	};
-	if (seamExtent.x >= seamExtent.y) {
-		return [0, seamCenter.y >= neighborCenter.y ? 1 : -1, 0];
+	const lineAxis = dominantAxis(seamExtent);
+	const normalAxis = dominantAxis(normal);
+	const delta = {
+		x: seamCenter.x - neighborCenter.x,
+		y: seamCenter.y - neighborCenter.y,
+		z: seamCenter.z - neighborCenter.z
+	};
+	let escapeAxis = null;
+	for (const axis of ['x', 'y', 'z']) {
+		if (axis === lineAxis || axis === normalAxis) continue;
+		if (escapeAxis === null || Math.abs(delta[axis]) > Math.abs(delta[escapeAxis])) escapeAxis = axis;
 	}
-	return [seamCenter.x >= neighborCenter.x ? 1 : -1, 0, 0];
+	assert.ok(escapeAxis, 'escape axis must be inferable');
+	const out = [0, 0, 0];
+	const index = { x: 0, y: 1, z: 2 }[escapeAxis];
+	out[index] = delta[escapeAxis] >= 0 ? 1 : -1;
+	return out;
 }
 
 const cases = [
 	{
 		id: 'bed_top',
+		normal: { x: 0, y: 0, z: 1 },
 		expected: [0, 1, 0]
 	},
 	{
 		id: 'west_beam',
+		normal: { x: 0, y: 0, z: 1 },
 		expected: [1, 0, 0]
 	},
 	{
 		id: 'east_beam',
+		normal: { x: 0, y: 0, z: 1 },
 		expected: [-1, 0, 0]
+	},
+	{
+		id: 'east_bed_top',
+		normal: { x: -1, y: 0, z: 0 },
+		expected: [0, 1, 0]
+	},
+	{
+		id: 'west_wall_sw_column',
+		normal: { x: 1, y: 0, z: 0 },
+		expected: [0, 0, -1]
+	},
+	{
+		id: 'west_wall_south_desk_top',
+		normal: { x: 1, y: 0, z: 0 },
+		expected: [0, 1, 0]
+	},
+	{
+		id: 'west_wall_south_desk_sw_column_corner',
+		normal: { x: 1, y: 0, z: 0 },
+		expected: [0, 1, -1],
+		cornerEscape: true
+	},
+	{
+		id: 'west_wall_iron_threshold_top',
+		normal: { x: 1, y: 0, z: 0 },
+		expected: [0, 1, 0]
+	},
+	{
+		id: 'west_iron_threshold_top_west_edge',
+		normal: { x: 0, y: 1, z: 0 },
+		expected: [1, 0, 0]
 	}
 ];
 
@@ -172,8 +236,14 @@ assert.equal(
 for (const entry of cases) {
 	const shaderCase = shaderCases.get(entry.id);
 	assert.ok(shaderCase, `${entry.id} must be parsed from shader`);
+	if (entry.cornerEscape) {
+		const body = functionBody(shader, 'r7310C1XatlasBakeCoplanarCornerEscapeDirection');
+		assert.match(body, /R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_SW_COLUMN_CORNER/);
+		assert.match(body, /escapeDir\s*=\s*vec3\(\s*0\.0\s*,\s*1\.0\s*,\s*-1\.0\s*\)/);
+		continue;
+	}
 	assert.deepEqual(
-		escapeFromSeamAndNeighbor(shaderCase.seamMin, shaderCase.seamMax, shaderCase.neighborMin, shaderCase.neighborMax),
+		escapeFromSeamAndNeighbor(shaderCase.seamMin, shaderCase.seamMax, shaderCase.neighborMin, shaderCase.neighborMax, entry.normal),
 		entry.expected,
 		`${entry.id} escape direction must be reproducible from actual shader seam geometry and neighbor AABB`
 	);
@@ -182,7 +252,12 @@ for (const entry of cases) {
 const expectedNeighbors = {
 	bed_top: parseBedBounds(),
 	west_beam: parseAddBoxBounds(12),
-	east_beam: parseAddBoxBounds(13)
+	east_beam: parseAddBoxBounds(13),
+	east_bed_top: parseBedBounds(),
+	west_wall_sw_column: parseAddBoxBounds(14),
+	west_wall_south_desk_top: parseAddBoxBounds(17),
+	west_wall_iron_threshold_top: parseAddBoxBounds(10),
+	west_iron_threshold_top_west_edge: parseAddBoxBounds(10)
 };
 for (const [id, bounds] of Object.entries(expectedNeighbors)) {
 	const shaderCase = shaderCases.get(id);
@@ -199,6 +274,19 @@ assert.match(
 );
 assert.equal(
 	/R7310_C1_XATLAS_BAKE_CONFIRMED_[A-Z_]+_ESCAPE_DIR/.test(shader),
- false,
+	false,
 	'A-narrow keeps manual seam registry but removes hardcoded escape vector constants from shader'
+);
+
+const westForwardDeclaration = shader.indexOf(
+	'bool r7310C1RuntimeSurfaceIsWestWall(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition);'
+);
+const westConfirmedLineUse = shader.indexOf(
+	'if (r7310C1RuntimeSurfaceIsWestWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))'
+);
+assert.ok(westForwardDeclaration >= 0, 'west wall classifier must have a forward declaration for bake shader compilation');
+assert.ok(westConfirmedLineUse >= 0, 'west wall SW-column seam must use the west wall classifier');
+assert.ok(
+	westForwardDeclaration < westConfirmedLineUse,
+	'west wall classifier declaration must appear before A-narrow confirmed-line use'
 );

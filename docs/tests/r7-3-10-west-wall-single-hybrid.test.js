@@ -27,7 +27,7 @@ assert.match(shader, /vec3 r7310C1WestWallHybridRadiance/);
 assert.match(shader, /bool r7310C1WestWallIndirectBakeFirstHit/);
 assert.match(shader, /r7310C1WestWallIndirectBakeFirstHit\(bounces, diffuseCount\)/);
 assert.match(shader, /bool r7310WestWallHybridFirstHit\s*=\s*bounces == 0[\s\S]{0,180}r7310C1WestWallHybridActive/);
-assert.match(shader, /if \(r7310WestWallHybridFirstHit\)[\s\S]{0,160}r7310C1WestWallHybridRadiance/);
+assert.match(shader, /if \(r7310WestWallHybridFirstHit && !r7310XatlasRuntimeFirstHit\)[\s\S]{0,160}r7310C1WestWallHybridRadiance/);
 assert.match(shader, /bool r7310WestWallBeamHybridFirstHit\s*=\s*bounces == 0 &&\s*r7310C1WestWallBeamShadowHybridActive/);
 assert.match(shader, /bool r7310WestWallHybridFirstHit\s*=\s*bounces == 0 &&\s*!r7310WestWallBeamHybridFirstHit[\s\S]{0,120}r7310C1WestWallHybridActive/);
 
