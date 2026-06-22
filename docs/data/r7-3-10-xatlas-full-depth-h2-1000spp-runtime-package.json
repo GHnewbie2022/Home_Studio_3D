@@ -1,0 +1,43 @@
+{
+  "packageStatus": "h2_self_bake_master_subrect_albedo_free_nonsquare",
+  "runtimeScope": "c1_xatlas_full_depth_h2_runtime",
+  "runtimeTexture": "tR738C1BakeAtlasTexture",
+  "runtimeArchitecture": "master_subrect_depth_h2_raw",
+  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260616-061612",
+  "targetAtlasWidth": 1952,
+  "targetAtlasHeight": 160,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_irradiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
+  "separatedIrradianceBake": true,
+  "nonSquareAtlas": true,
+  "uploadRowFlip": false,
+  "variant": "raw",
+  "provenance": {
+    "surfaceId": "south_window_top_reveal_depth",
+    "surfaceName": "south_window_top_reveal_depth",
+    "ownerId": 4,
+    "targetId": 1022,
+    "bakePointPatchId": 1022,
+    "runnerSurfaceKey": "south-window-top-reveal-depth-h2",
+    "runnerFlags": ["--r7310-full-room-diffuse-bake", "--r7310-separated-irradiance-bake", "--atlas-width=1952", "--atlas-height=160", "--r7310-bake-tile-width=512", "--r7310-bake-tile-height=160", "--r7310-bake-submission-boundary=fence"],
+    "rectKey": "depth_h2",
+    "masterRectKey": "depth_h2",
+    "worldBounds": { "x": [-1.75, 0.69], "y": 2.905, "z": [3.056, 3.256] },
+    "normal": [0, -1, 0],
+    "sourcePackageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260616-061612",
+    "sourceArtifact": "atlas-patch-000-rgba-f32.bin",
+    "nonSquareFix": "H2 world is 2.44m(E-W) x 0.20m(N-S) = 12.2:1. The earlier 1024^2 SQUARE bake gave anisotropic texels (2.38mm E-W x 0.195mm N-S, 12.2:1) so RAW noise AND light/shadow variation stretched east-west (user-spotted; OIDN only hid the noise, not the anisotropy). Re-baked NON-SQUARE 1952x160 (800 texel/m) => isotropic 1.25mm texels, matching the xatlas ceiling (~1.38mm). 4-tile + fence (rect bakes require tiling). Albedo-free contract preserved (luma 0.2794, identical to the square albedo-free bake). Supersedes 20260616-054126 (square albedo-free) and 20260616-041925 (double-albedo).",
+    "verified": { "lumaMean": 0.2794, "blackRatio": 0.0, "nonFinite": 0, "alphaOneRatio": 1.0, "texelMm": [1.25, 1.25], "texelAspect": 1.0, "metadataFloatCount": 3747840 }
+  },
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  }
+}

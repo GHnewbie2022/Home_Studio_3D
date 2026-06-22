@@ -6,6 +6,7 @@ import net from 'node:net';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { FLOOR_OCCLUSION_EXCLUSIONS, isFloorOccluded } from '../generated/r7-3-10-floor-occlusion-table.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -38,6 +39,7 @@ function parseArgs(argv) {
     accurateReflectionPreviewTest: false,
     fullRoomDiffuseBake: false,
     xatlasBake: false,
+    xatlasFullRadianceBake: false,
     xatlasTexelmapDir: 'docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike',
     xatlasValidityMaskPath: null,
     xatlasBakeProbeLevel: null,
@@ -90,7 +92,9 @@ function parseArgs(argv) {
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
     seed: null,
     dumpAtSamples: [],
-    outputMode: 'indirect_radiance'
+    outputMode: 'indirect_radiance',
+    xatlasAlphaDilationLimit: null,
+    xatlasValidityMaskRowMapping: 'flipped'
   };
   for (const arg of argv) {
     if (arg.startsWith('--samples=')) out.samples = Number(arg.slice('--samples='.length));
@@ -119,8 +123,11 @@ function parseArgs(argv) {
     else if (arg === '--accurate-reflection-preview-test') out.accurateReflectionPreviewTest = true;
     else if (arg === '--r7310-full-room-diffuse-bake') out.fullRoomDiffuseBake = true;
     else if (arg === '--r7310-xatlas-bake') out.xatlasBake = true;
+    else if (arg === '--r7310-xatlas-full-radiance-bake') out.xatlasFullRadianceBake = true;
     else if (arg.startsWith('--xatlas-texelmap-dir=')) out.xatlasTexelmapDir = arg.slice('--xatlas-texelmap-dir='.length);
     else if (arg.startsWith('--xatlas-validity-mask=')) out.xatlasValidityMaskPath = arg.slice('--xatlas-validity-mask='.length);
+    else if (arg.startsWith('--xatlas-alpha-dilation-limit=')) out.xatlasAlphaDilationLimit = Number(arg.slice('--xatlas-alpha-dilation-limit='.length));
+    else if (arg.startsWith('--xatlas-validity-mask-row-mapping=')) out.xatlasValidityMaskRowMapping = arg.slice('--xatlas-validity-mask-row-mapping='.length);
     else if (arg.startsWith('--xatlas-bake-probe-level=')) out.xatlasBakeProbeLevel = Number(arg.slice('--xatlas-bake-probe-level='.length));
     else if (arg.startsWith('--r7310-surface=')) out.r7310Surface = arg.slice('--r7310-surface='.length);
     else if (arg.startsWith('--r7310-ne-furniture=')) out.r7310NeFurniture = arg.slice('--r7310-ne-furniture='.length);
@@ -177,7 +184,14 @@ function parseArgs(argv) {
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
   if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
   if (!['none', 'flush', 'fence', 'finish'].includes(out.r7310BakeSubmissionBoundary)) throw new Error('Invalid r7310BakeSubmissionBoundary');
-  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'full-floor-xatlas', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+  // R7-3.10 第6步防呆（CODEX 4，2026-06-16）：south-window-top-reveal-depth-h2（H2 -Y 窗楣）必須搭 --r7310-full-room-diffuse-bake，
+  // 否則 captureHelper 會掉回預設 reportR738C1BakeCaptureAfterSamples、靜默烤成地板（0519/0616 兩次地板錯包的真因）。直接擋下。
+  if (out.r7310Surface === 'south-window-top-reveal-depth-h2' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=south-window-top-reveal-depth-h2 requires --r7310-full-room-diffuse-bake (否則會靜默掉回預設地板烤)');
+  // R7-3.10 §13 地板 C1A shell：full-floor-xatlas 必須搭 --r7310-full-room-diffuse-bake，否則 captureHelper 掉回預設、靜默烤成舊方形地板。
+  if (out.r7310Surface === 'full-floor-xatlas' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=full-floor-xatlas requires --r7310-full-room-diffuse-bake');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   if (typeof out.xatlasTexelmapDir !== 'string' || out.xatlasTexelmapDir.length === 0 || out.xatlasTexelmapDir.startsWith('/') || out.xatlasTexelmapDir.includes('..')) throw new Error('Invalid xatlasTexelmapDir');
   if (out.xatlasValidityMaskPath !== null && (typeof out.xatlasValidityMaskPath !== 'string' || out.xatlasValidityMaskPath.length === 0 || out.xatlasValidityMaskPath.startsWith('/') || out.xatlasValidityMaskPath.includes('..'))) throw new Error('Invalid xatlasValidityMaskPath');
@@ -197,6 +211,7 @@ function parseArgs(argv) {
     if (!Number.isFinite(out.targetSamples) || out.targetSamples <= 0) throw new Error('Invalid targetSamples');
     out.targetSamples = Math.trunc(out.targetSamples);
   }
+  if (out.xatlasFullRadianceBake && !out.xatlasBake) throw new Error('--r7310-xatlas-full-radiance-bake requires --r7310-xatlas-bake');
   for (const key of ['atlasWidth', 'atlasHeight']) {
     if (out[key] !== null) {
       if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
@@ -1098,10 +1113,13 @@ function buildManifest({ report, packageDir, smokeTest }) {
     smokeTest,
     targetAtlasResolution: report.targetAtlasResolution,
     targetAtlasWidth: report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || report.targetAtlasResolution,
-    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
-    requestedSamples: report.requestedSamples,
-    diffuseOnly: report.diffuseOnly === true,
-    upscaled: false,
+	    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
+	    requestedSamples: report.requestedSamples,
+	    diffuseOnly: report.diffuseOnly === true,
+	    bakedRadianceKind: report.bakedRadianceKind || null,
+	    directLightAlreadyIncluded: report.directLightAlreadyIncluded === true,
+	    addDirectLightAfterBakeLookup: report.addDirectLightAfterBakeLookup === true,
+	    upscaled: false,
     packageDir: path.relative(repoRoot, packageDir),
     artifacts: {
       rawHdrSummary: 'raw-hdr-summary.json',
@@ -1137,6 +1155,91 @@ function summarizeAtlasVisibleLuma(buffer) {
   };
 }
 
+// R7-3.10 bug#2：floor occlusion exclusion 像素級驗證（footprint 內 alpha=0、open floor 外 alpha=1 且非誤歸零）。
+// 只對 surfaceName=floor_open；重烤前的舊包 footprint alpha=1 會 FAIL（正確標記未排除），重烤後新包應 PASS。
+function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
+  if (report.surfaceName !== 'floor_open') return { ok: true, detail: 'n/a (not floor_open)', issues: [] };
+  const B = { xMin: -2.11, xMax: 2.11, zMin: -2.074, zMax: 3.256 };
+  const cfg = report.config, mode = report.northeastFurnitureMode || null;
+  const texelAt = (wx, wz) => {
+    const px = Math.min(width - 1, Math.max(0, Math.round((wx - B.xMin) / (B.xMax - B.xMin) * width - 0.5)));
+    const py = Math.min(height - 1, Math.max(0, Math.round((wz - B.zMin) / (B.zMax - B.zMin) * height - 0.5)));
+    const i = (py * width + px) * 4; // float index; atlasBuffer 是 Node Buffer → 必須走 readF32LE
+    // R7-3.10 bug#2 fix：前版誤用 atlasBuffer[i+3]（Buffer byte 直索引）讀到 byte 而非 float alpha，
+    // footprint 內 byte≠0（如 desk center=62）→ 誤判 alpha>0.5 → alphaExclusion 假性 FAIL（atlas 實為正確）。
+    return { a: readF32LE(atlasBuffer, i + 3), l: 0.2126 * readF32LE(atlasBuffer, i) + 0.7152 * readF32LE(atlasBuffer, i + 1) + 0.0722 * readF32LE(atlasBuffer, i + 2) };
+  };
+  const stepX = (B.xMax - B.xMin) / width, stepZ = (B.zMax - B.zMin) / height;
+  const inB = (wx, wz) => wx >= B.xMin && wx <= B.xMax && wz >= B.zMin && wz <= B.zMax;
+  const issues = [];
+  const warnings = []; // R7-3.10 Phase C3：保留具名 WARN 通道；KH150 ring 放行已撤銷，框外 hard-black 維持 BLOCK。
+  let insideChecked = 0, openChecked = 0;
+  // R7-3.10 bug#2 BLOCKER3：邊界級 audit——每個 enabled footprint 驗 中心+四角+四邊中點(往內 inset 避開 contact band 夾值列)，
+  // 全部 alpha 應 0；再對四邊外側相鄰 open-floor(用 isFloorOccluded 過濾仍被別的 footprint 蓋住者) 驗 alpha=1 且 luma>0(沒過切/誤歸零)。
+  for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
+    if (!e.enabled) continue;
+    if (Array.isArray(e.configIds) && e.configIds.indexOf(cfg) < 0) continue;
+    if (e.furnitureMode != null && e.furnitureMode !== mode) continue;
+    if (e.shape === 'rotatedBox') {
+      // R7-3.10 Phase C3：旋轉盒 footprint(StandBase)，inside/outside 取樣走局部→world 旋轉，outside 過濾用同一 isFloorOccluded。
+      const rcx = e.centerXZ[0], rcz = e.centerXZ[1], rhx = e.halfXZ[0], rhz = e.halfXZ[1];
+      // R7-3.10 2026-06-18：toW 用 Three.js Y-rotation local→world（cos/+sin 交叉項），與修正後 isFloorOccluded inside-test 同手性。
+      // 舊版交叉項號誌與「錯誤 -rotY inside-test」綁定（toe-out）；codegen 改 +rotY 後此處必須同步，否則稽核取樣方向相反→誤判。
+      const rcos = Math.cos(e.rotY), rsin = Math.sin(e.rotY);
+      const toW = (lx, lz) => [rcx + lx * rcos + lz * rsin, rcz - lx * rsin + lz * rcos];
+      const inx = rhx - 1.5 * stepX, inz = rhz - 1.5 * stepZ;
+      const rInside = [toW(0, 0), toW(inx, inz), toW(-inx, inz), toW(inx, -inz), toW(-inx, -inz), toW(0, inz), toW(0, -inz), toW(inx, 0), toW(-inx, 0)];
+      for (const [wx, wz] of rInside) {
+        if (!inB(wx, wz)) continue;
+        insideChecked++;
+        const t = texelAt(wx, wz);
+        if (t.a > 0.5) issues.push(`${e.id} inside (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 0)`);
+      }
+      const rOut = [toW(0, rhz + 2 * stepZ), toW(0, -(rhz + 2 * stepZ)), toW(rhx + 2 * stepX, 0), toW(-(rhx + 2 * stepX), 0)];
+      for (const [wx, wz] of rOut) {
+        if (!inB(wx, wz) || isFloorOccluded(wx, wz, cfg, mode)) continue;
+        openChecked++;
+        const t = texelAt(wx, wz);
+        // overcut（可見地板被誤清 alpha=0）仍 BLOCK，不論哪個 footprint（CODEX 第3點）。
+        if (t.a < 0.5) issues.push(`${e.id} open-floor neighbour (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1 — overcut?)`);
+        else if (t.l < 0.001) {
+          // R7-3.10 2026-06-18：撤銷 KH150 StandBase ring 的「render-space proof 畫面不可見→WARN」放行。
+          // CODEX 判定該舊視角 proof 失效（紅框低角度視角下該 hard-black 進畫面顯黑）。根因＝旋轉號誌反向，
+          // 修正 inside-test 後真實 toe-in 底座地板已被排成 alpha=0；框外鄰域不應再有 hard-black，故一律 BLOCK。
+          issues.push(`${e.id} ring alpha=1 luma=0 (${wx.toFixed(2)},${wz.toFixed(2)}) (誤歸零→BLOCK)`);
+        }
+      }
+      continue;
+    }
+    const x0 = e.bounds.x[0], x1 = e.bounds.x[1], z0 = e.bounds.z[0], z1 = e.bounds.z[1];
+    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    const ins = 1.5;
+    const ix0 = x0 + ins * stepX, ix1 = x1 - ins * stepX, iz0 = z0 + ins * stepZ, iz1 = z1 - ins * stepZ;
+    const insidePts = [[cx, cz], [ix0, iz0], [ix1, iz0], [ix0, iz1], [ix1, iz1], [cx, iz0], [cx, iz1], [ix0, cz], [ix1, cz]];
+    for (const [wx, wz] of insidePts) {
+      if (!inB(wx, wz)) continue;
+      insideChecked++;
+      const t = texelAt(wx, wz);
+      if (t.a > 0.5) issues.push(`${e.id} inside (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 0)`);
+    }
+    const outPts = [[cx, z0 - 2 * stepZ], [cx, z1 + 2 * stepZ], [x0 - 2 * stepX, cz], [x1 + 2 * stepX, cz]];
+    for (const [wx, wz] of outPts) {
+      if (!inB(wx, wz) || isFloorOccluded(wx, wz, cfg, mode)) continue;
+      openChecked++;
+      const t = texelAt(wx, wz);
+      if (t.a < 0.5) issues.push(`${e.id} open-floor neighbour (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1 — overcut?)`);
+      else if (t.l < 0.001) issues.push(`${e.id} open-floor neighbour alpha=1 but luma=0 (誤歸零)`);
+    }
+  }
+  if (!isFloorOccluded(0, 1.0, cfg, mode)) {
+    openChecked++;
+    const open = texelAt(0, 1.0); // room-centre open floor 保底
+    if (open.a < 0.5) issues.push(`room-centre open floor (0,1.0) alpha=${open.a.toFixed(2)} (expected 1)`);
+    else if (open.l < 0.001) issues.push(`room-centre open floor (0,1.0) alpha=1 but luma=0 (誤歸零)`);
+  }
+  return { ok: issues.length === 0, detail: issues.length ? issues.slice(0, 8).join('; ') : `footprint inside(${insideChecked}) alpha=0 + open-floor(${openChecked}) alpha=1/luma>0 OK${warnings.length ? ` | WARN×${warnings.length}` : ''}`, issues, warnings };
+}
+
 function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer, smokeTest }) {
 	const resolution = report.targetAtlasResolution;
 	const width = report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || resolution;
@@ -1158,12 +1261,20 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     c1_se_column_west_shadow: 0.50,
     c1_ceiling: 0.83,
     c1_iron_door_reveal: 0.60,
-    c1_xatlas_a1_bake_spike: 0.70
+    c1_xatlas_a1_bake_spike: 0.70,
+    floor_open: 0.618
   };
   const validTexelRatioMinimum = Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
     ? validTexelRatioMinimumBySurface[report.surfaceName]
     : 0.99;
+  // R7-3.10 bug#2 BLOCKER2：floor_open 需上下限——舊錯誤包正是 validTexelRatio≈1（牆下/床下誤標 valid）。
+  // 第一版 0.70-0.90，重烤 audit 後再收斂窄區間。
+  const validTexelRatioMaximumBySurface = { floor_open: 0.625 };
+  const validTexelRatioMaximum = Object.prototype.hasOwnProperty.call(validTexelRatioMaximumBySurface, report.surfaceName)
+    ? validTexelRatioMaximumBySurface[report.surfaceName]
+    : 1.0001;
   const atlasVisibleLuma = summarizeAtlasVisibleLuma(atlasBuffer);
+  const alphaExclusionResult = floorAlphaExclusionCheck(report, atlasBuffer, width, height);
   const checks = {
     version: report.version === 'r7-3-8-c1-1000spp-bake-capture' || report.version === 'r7-3-10-full-room-diffuse-bake-architecture-probe' || isXatlasBake,
     config: report.config === 1,
@@ -1179,11 +1290,12 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     finiteRaw: isXatlasBake ? true : report.rawHdrSummary.nonFinitePixels === 0,
     finiteAtlas: report.atlasSummary.nonFiniteTexels === 0,
     atlasVisibleLuma: atlasVisibleLuma.nonzeroTexels > 0 && atlasVisibleLuma.meanLuma > 0.001 && atlasVisibleLuma.maxLuma > 0.01,
-    validTexelRatio: report.atlasSummary.validTexelRatio >= validTexelRatioMinimum,
-    browserValidation: isXatlasBake ? true : (smokeTest ? validationReport.status === 'pass' || validationReport.status === 'fail' : validationReport.status === 'pass')
+    validTexelRatio: report.atlasSummary.validTexelRatio >= validTexelRatioMinimum && report.atlasSummary.validTexelRatio <= validTexelRatioMaximum,
+    browserValidation: isXatlasBake ? true : (smokeTest ? validationReport.status === 'pass' || validationReport.status === 'fail' : validationReport.status === 'pass'),
+    alphaExclusion: alphaExclusionResult.ok
   };
   const failed = Object.entries(checks).filter(([, value]) => !value).map(([key]) => key);
-  return { status: failed.length === 0 ? 'pass' : 'fail', checks, failed };
+  return { status: failed.length === 0 ? 'pass' : 'fail', checks, failed, alphaExclusionWarnings: alphaExclusionResult.warnings };
 }
 
 function loadStructuralGeometryGateReport() {
@@ -1641,12 +1753,13 @@ function alphaAwareR7310C1XatlasDilation(atlasBuffer, metadataBuffer, alpha, fil
   };
 }
 
-function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height }) {
+function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height, maxDistanceLimitTexels, maskRowMapping }) {
   if (!validityMask) return { atlasBuffer, report: null };
   const expectedAtlasBytes = width * height * 4 * 4;
   const expectedMetadataBytes = width * height * 12 * 4;
   if (atlasBuffer.length !== expectedAtlasBytes) throw new Error('xatlas alpha policy atlas byte length mismatch');
   if (metadataBuffer.length !== expectedMetadataBytes) throw new Error('xatlas alpha policy metadata byte length mismatch');
+  const normalizedMaskRowMapping = maskRowMapping === 'direct' ? 'direct' : 'flipped';
 
   const output = Buffer.from(atlasBuffer);
   const total = width * height;
@@ -1659,8 +1772,8 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const outIndex = y * width + x;
-      const sourceY = height - 1 - y;
-      const maskIndex = sourceY * width + x;
+      const maskY = normalizedMaskRowMapping === 'direct' ? y : height - 1 - y;
+      const maskIndex = maskY * width + x;
       const meta12 = outIndex * 12;
       const out4 = outIndex * 4;
       const mask4 = maskIndex * 4;
@@ -1694,7 +1807,7 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
     }
   }
 
-  const dilation = alphaAwareR7310C1XatlasDilation(output, metadataBuffer, alpha, fillable, width, height);
+  const dilation = alphaAwareR7310C1XatlasDilation(output, metadataBuffer, alpha, fillable, width, height, maxDistanceLimitTexels);
   const perTriangle = {};
   let alphaOneTexels = 0;
   let alphaZeroTexels = 0;
@@ -1741,7 +1854,9 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
       policy: {
         validVisibleAlpha: 1,
         invalidOrHiddenAlpha: 0,
-        maskRowMapping: 'mask source row y maps to output row height - 1 - y',
+        maskRowMapping: normalizedMaskRowMapping === 'direct'
+          ? 'mask row y maps directly to output row y'
+          : 'mask source row y maps to output row height - 1 - y',
         decisionSource: 'per-texel backface-ratio validity mask'
       },
       counts: {
@@ -8487,6 +8602,8 @@ async function main() {
 	      'south-window-right-reveal-shadow': 'reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples',
 	      'south-window-bottom-reveal-shadow': 'reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples',
 	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples',
+	      'south-window-top-reveal-depth-h2': 'reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples',
+	      'full-floor-xatlas': 'reportR7310C1FloorXatlasBakeAfterSamples',
 	      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples'
 	    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
@@ -8539,6 +8656,7 @@ async function main() {
 	          smokeTest: ${args.smokeTest ? 'true' : 'false'},
 	          northeastFurnitureMode: '${args.r7310NeFurniture}',
 	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
+	          xatlasFullRadianceBake: ${args.xatlasFullRadianceBake ? 'true' : 'false'},
 	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
 	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
 	          eastWallCamera: ${r7310FullRoomCaptureCameraOptions.eastWallCamera ? 'true' : 'false'},
@@ -8572,7 +8690,9 @@ async function main() {
       ? await readBrowserFloatArtifactBuffer(cdp, 'window.getR738C1BakeCaptureArtifacts().atlasPixels')
       : base64ToBuffer(payload.atlasBase64);
     const preSyncAtlasBuffer = base64ToBuffer(payload.preSyncAtlasBase64);
-    const metadataBuffer = args.xatlasBake
+    // R7-3.10 bug#2 BLOCKER1：rectangular non-xatlas bake（full-floor-xatlas）也比照 atlas 走 CDP readback，
+    // 否則 transferMetadata=false 讓 metadataBase64=null → metadataBuffer 空 → texel-metadata-patch 缺檔（H2 同型坑）。
+    const metadataBuffer = (args.xatlasBake || rectangularR7310Bake)
       ? await readBrowserFloatArtifactBuffer(cdp, 'window.getR738C1BakeCaptureArtifacts().texelMetadata')
       : base64ToBuffer(payload.metadataBase64);
     const xatlasValidityMask = args.xatlasBake
@@ -8588,7 +8708,9 @@ async function main() {
           metadataBuffer,
           validityMask: xatlasValidityMask,
           width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
-          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
+          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+          maxDistanceLimitTexels: args.xatlasAlphaDilationLimit,
+          maskRowMapping: args.xatlasValidityMaskRowMapping
         })
       : null;
     if (xatlasAlphaPolicy) atlasBuffer = xatlasAlphaPolicy.atlasBuffer;
@@ -8650,6 +8772,7 @@ async function main() {
       runnerStatus: validation.status,
       runnerChecks: validation.checks,
       runnerFailedChecks: validation.failed,
+      alphaExclusionWarnings: validation.alphaExclusionWarnings || [],
       bakeDiagnosticsSummary,
       bakeContaminationGuardSnapshot: (payload.report && payload.report.atlasSummary && payload.report.atlasSummary.bakeContaminationGuardSnapshot) || null
     };
@@ -8662,12 +8785,20 @@ async function main() {
       if (!currentChecks.includes(checkName))
         validationReport.runnerFailedChecks = [...currentChecks, checkName];
     };
+    // R7-3.10 bug#2 Phase C2（CODEX 第 6 點）：GPU 提交/讀回耗時純屬效能診斷，不擋正確性判定。
+    // 僅記錄到 runnerDiagnostics（保留監控），不設 status/runnerStatus fail。
+    // 真故障（context lost / incomplete samples / timeout）仍走 markRunnerFailedCheck 阻斷。
+    const markRunnerDiagnostic = (checkName) => {
+      const cur = validationReport.runnerDiagnostics || [];
+      if (!cur.includes(checkName))
+        validationReport.runnerDiagnostics = [...cur, checkName];
+    };
     if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.contextLostCount > 0)
       markRunnerFailedCheck('webgl-context-lost');
     if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.maxSubmissionElapsedMs > 250)
-      markRunnerFailedCheck('gpu-submission-ms-over-250');
+      markRunnerDiagnostic('gpu-submission-ms-over-250');
     if (bakeDiagnosticsSummary && bakeDiagnosticsSummary.maxTileReadbackMs > 250)
-      markRunnerFailedCheck('gpu-tile-readback-ms-over-250');
+      markRunnerDiagnostic('gpu-tile-readback-ms-over-250');
     const expectedCompletedSamples = Number(payload.report?.requestedSamples || 0);
     if (
       bakeDiagnosticsSummary &&

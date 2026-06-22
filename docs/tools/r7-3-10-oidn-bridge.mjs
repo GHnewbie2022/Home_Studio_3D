@@ -165,6 +165,44 @@ function readAtlasRGBA32F(path, widthArg, heightArg) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// R7-3.10 點2：noise-continuous 近帶（最近 valid 複製延展）
+// 機制：push-pull 把 padding 填成「低頻平滑」，與 valid 邊緣的 1000-SPP 粗顆粒之間
+//   形成「噪→平滑」人工落差，OIDN 視為真實邊緣而保留 → 邊界 valid texel 降噪不足。
+//   改用「最近 valid texel 原值（含顆粒）」向外複製 maxDist px，使 OIDN 跨界看到同統計顆粒、
+//   比照內部清；maxDist 之外仍由 push-pull 接手（被 Step6 hard-mask 歸零、不影響成品）。
+// 4-鄰 BFS（Manhattan 距離），多源自所有 valid texel 同時擴散。
+// ─────────────────────────────────────────────────────────────
+function nearestValidDilate(rgb, mask, width, height, maxDist) {
+  const n = width * height;
+  const dist = new Int32Array(n).fill(-1);
+  const src = new Int32Array(n).fill(-1);
+  const queue = new Int32Array(n);
+  let head = 0, tail = 0;
+  for (let i = 0; i < n; i++) {
+    if (mask[i] === 1) { dist[i] = 0; src[i] = i; queue[tail++] = i; }
+  }
+  while (head < tail) {
+    const i = queue[head++];
+    const d = dist[i];
+    if (d >= maxDist) continue;
+    const x = i % width;
+    const y = (i / width) | 0;
+    if (x > 0)          { const j = i - 1;     if (dist[j] === -1) { dist[j] = d + 1; src[j] = src[i]; queue[tail++] = j; } }
+    if (x < width - 1)  { const j = i + 1;     if (dist[j] === -1) { dist[j] = d + 1; src[j] = src[i]; queue[tail++] = j; } }
+    if (y > 0)          { const j = i - width; if (dist[j] === -1) { dist[j] = d + 1; src[j] = src[i]; queue[tail++] = j; } }
+    if (y < height - 1) { const j = i + width; if (dist[j] === -1) { dist[j] = d + 1; src[j] = src[i]; queue[tail++] = j; } }
+  }
+  const out = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const s = src[i] >= 0 ? src[i] : i;
+    out[i * 3] = rgb[s * 3];
+    out[i * 3 + 1] = rgb[s * 3 + 1];
+    out[i * 3 + 2] = rgb[s * 3 + 2];
+  }
+  return { rgb: out, dist };
+}
+
+// ─────────────────────────────────────────────────────────────
 // §6.2 push-pull pyramid mask-aware dilation
 // levels = 7 對應 R≈128 texel（2^7 = 128）
 // ─────────────────────────────────────────────────────────────
@@ -296,6 +334,7 @@ function parseArgs(argv) {
     width: null, height: null,
     dilation: 128, oidn: null, quality: 'high', filter: 'RT', aux: 'beta',
     flipRows: false, emitRowProbe: false,
+    nearBand: 0, // R7-3.10 點2：noise-continuous 近帶寬度（px）；0=push-pull 平滑。實測 N>0（最近 valid 複製）反而讓 OIDN 邊界降噪更差（常數條紋＝更強邊保留），故預設 0；旗標保留供實驗。
   };
   for (const arg of argv) {
     if (arg.startsWith('--in=')) out.in = arg.slice('--in='.length);
@@ -305,6 +344,7 @@ function parseArgs(argv) {
     else if (arg.startsWith('--width=')) out.width = Number(arg.slice('--width='.length));
     else if (arg.startsWith('--height=')) out.height = Number(arg.slice('--height='.length));
     else if (arg.startsWith('--dilation=')) out.dilation = Number(arg.slice('--dilation='.length));
+    else if (arg.startsWith('--near-band=')) out.nearBand = Number(arg.slice('--near-band='.length));
     else if (arg.startsWith('--oidn=')) out.oidn = arg.slice('--oidn='.length);
     else if (arg.startsWith('--quality=')) out.quality = arg.slice('--quality='.length);
     else if (arg.startsWith('--filter=')) out.filter = arg.slice('--filter='.length);
@@ -322,6 +362,7 @@ function validateArgs(args) {
   if (!['high', 'balanced', 'fast'].includes(args.quality)) throw new Error('--quality 必須 high | balanced | fast');
   if (!['beta', 'gamma', 'alpha'].includes(args.aux)) throw new Error('--aux 必須 beta（color-only）| gamma（normal）| alpha（白 albedo）');
   if (!(args.dilation >= 1 && Number.isFinite(args.dilation))) throw new Error('--dilation 必須正整數');
+  if (!(args.nearBand >= 0 && Number.isFinite(args.nearBand))) throw new Error('--near-band 必須 >=0 整數');
 }
 
 // dilation 半徑 → pyramid levels（log2，向上取整、下界 1）
@@ -341,6 +382,9 @@ function main() {
     auxStrategy: args.aux === 'beta' ? 'color_only_beta'
       : args.aux === 'gamma' ? 'prefiltered_normal_gamma'
       : 'constant_white_albedo_alpha',
+    filter: args.filter,
+    quality: args.quality,
+    dilation: args.dilation,
     wallTimeMs: { preFill: 0, oidn: 0, postMask: 0, total: 0 },
     atlasIntegrity: { nonzeroTexels: 0, nonzeroRatio: 0, nanCount: 0, infCount: 0 },
     oidnRuntime: { maxRssMb: 0, deviceUsed: 'unknown', version: 'unknown' },
@@ -391,6 +435,21 @@ function main() {
     const tPreFill0 = process.hrtime.bigint();
     const levels = dilationLevels(args.dilation);
     const dilatedRgb = pushPullDilate(atlas.rgb, atlas.mask, width, height, levels);
+    // R7-3.10 點2：noise-continuous 近帶覆蓋——valid 邊界外 nearBand px 改用最近 valid 原值（含顆粒）
+    metrics.nearBand = args.nearBand;
+    let nearBandFilled = 0;
+    if (args.nearBand > 0) {
+      const near = nearestValidDilate(atlas.rgb, atlas.mask, width, height, args.nearBand);
+      for (let i = 0; i < width * height; i++) {
+        if (atlas.mask[i] === 0 && near.dist[i] >= 1 && near.dist[i] <= args.nearBand) {
+          dilatedRgb[i * 3] = near.rgb[i * 3];
+          dilatedRgb[i * 3 + 1] = near.rgb[i * 3 + 1];
+          dilatedRgb[i * 3 + 2] = near.rgb[i * 3 + 2];
+          nearBandFilled++;
+        }
+      }
+    }
+    metrics.nearBandFilledTexels = nearBandFilled;
     metrics.wallTimeMs.preFill = Number(process.hrtime.bigint() - tPreFill0) / 1e6;
 
     // Step 3：寫 PFM（hdr 主通道）

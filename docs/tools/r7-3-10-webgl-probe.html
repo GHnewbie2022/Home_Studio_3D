@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>R7-3.10 WebGL Probe</title>
+	<style>
+		html, body {
+			margin: 0;
+			min-height: 100%;
+			background: #08080a;
+			color: #f3f4f6;
+			font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+		}
+		main {
+			box-sizing: border-box;
+			width: min(760px, calc(100vw - 32px));
+			margin: 0 auto;
+			padding: 28px 0;
+		}
+		h1 {
+			margin: 0 0 16px;
+			font-size: 22px;
+			font-weight: 700;
+		}
+		pre {
+			white-space: pre-wrap;
+			word-break: break-word;
+			background: #15161a;
+			border: 1px solid #30323a;
+			border-radius: 6px;
+			padding: 16px;
+			margin: 0;
+			color: #d8dee9;
+		}
+		.ok { color: #8bd5a1; }
+		.fail { color: #ff9b9b; }
+	</style>
+</head>
+<body>
+	<main>
+		<h1>R7-3.10 WebGL Probe</h1>
+		<pre id="out">Running...</pre>
+	</main>
+	<script>
+	(function () {
+		function getContext(kind) {
+			var canvas = document.createElement('canvas');
+			var gl = null;
+			var error = '';
+			try {
+				gl = canvas.getContext(kind, {
+					alpha: false,
+					antialias: false,
+					depth: false,
+					failIfMajorPerformanceCaveat: false,
+					powerPreference: 'high-performance',
+					preserveDrawingBuffer: false,
+					stencil: false
+				});
+			} catch (e) {
+				error = e && e.message ? e.message : String(e);
+			}
+			var info = {
+				ok: !!gl,
+				error: error,
+				version: '',
+				vendor: '',
+				renderer: '',
+				unmaskedVendor: '',
+				unmaskedRenderer: '',
+				maxTextureSize: 0,
+				maxTextureImageUnits: 0
+			};
+			if (gl) {
+				try { info.version = String(gl.getParameter(gl.VERSION) || ''); } catch (e1) {}
+				try { info.vendor = String(gl.getParameter(gl.VENDOR) || ''); } catch (e2) {}
+				try { info.renderer = String(gl.getParameter(gl.RENDERER) || ''); } catch (e3) {}
+				try { info.maxTextureSize = Number(gl.getParameter(gl.MAX_TEXTURE_SIZE) || 0); } catch (e4) {}
+				try { info.maxTextureImageUnits = Number(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS) || 0); } catch (e5) {}
+				try {
+					var dbg = gl.getExtension('WEBGL_debug_renderer_info');
+					if (dbg) {
+						info.unmaskedVendor = String(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) || '');
+						info.unmaskedRenderer = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '');
+					}
+				} catch (e6) {}
+				try {
+					var lose = gl.getExtension('WEBGL_lose_context');
+					if (lose) lose.loseContext();
+				} catch (e7) {}
+			}
+			return info;
+		}
+		var webgl = getContext('webgl');
+		if (!webgl.ok)
+			webgl = getContext('experimental-webgl');
+		var result = {
+			url: location.href,
+			userAgent: navigator.userAgent,
+			webgl2: getContext('webgl2'),
+			webgl: webgl
+		};
+		var out = document.getElementById('out');
+		out.className = result.webgl2.ok || result.webgl.ok ? 'ok' : 'fail';
+		out.textContent = JSON.stringify(result, null, 2);
+		window.r7310WebGLProbeResult = result;
+	})();
+	</script>
+</body>
+</html>

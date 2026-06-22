@@ -1,0 +1,42 @@
+{
+  "packageStatus": "architecture_probe",
+  "runtimeScope": "c1_xatlas_full_floor_runtime",
+  "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
+  "runtimeArchitecture": "single_xatlas_full_floor_phase2",
+  "packageDir": ".omc/r7-3-10-full-room-diffuse-bake/20260618-083832",
+  "targetAtlasWidth": 3376,
+  "targetAtlasHeight": 4264,
+  "requestedSamples": 1000,
+  "diffuseOnly": true,
+  "upscaled": false,
+  "bakedRadianceKind": "indirect_diffuse_radiance",
+  "directLightAlreadyIncluded": false,
+  "addDirectLightAfterBakeLookup": true,
+  "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
+  "uploadRowFlip": false,
+  "configId": 1,
+  "atlasGroup": "shell",
+  "surfaceName": "floor_open",
+  "targetId": 1001,
+  "nonSquareAtlas": true,
+  "separatedIrradianceBake": true,
+  "masterRectKey": "floor",
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-oidn-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  },
+  "denoise": {
+    "tool": "r7-3-10-oidn-bridge",
+    "filter": "RTLightmap",
+    "quality": "high",
+    "auxStrategy": "color_only_beta",
+    "inputSamples": 1000,
+    "deviceUsed": "metal",
+    "version": "2.4.1",
+    "alphaPreserved": true,
+    "passDecision": "pass"
+  },
+  "note": "C1 floor rotatedBox 旋轉號誌修正重烤包 20260618-083832 的 OIDN 版（2026-06-18）。對 083832 RAW（修正後 floor occlusion inside-test +rotY、KH150 StandBase toe-in 真實底座地板已排除、1000 SPP）跑 r7-3-10-oidn-bridge：RTLightmap、quality high、color-only beta、dilation 128、metal、OIDN 2.4.1，passDecision pass、NaN/Inf=0、nonzeroRatio 0.6214029836（bit 對齊 RAW validTexelRatio）。bridge 以 push-pull dilation 預填排除區再 post-mask 歸零，OIDN 全程不見硬黑、排除邊界不滲色。同目錄 atlas-patch-000-oidn-rgba-f32.bin，texel-metadata/validation 與 RAW 共用。取代旋轉號誌反向舊包 211141 的 OIDN（使用者切換時實為 RAW 快取）。RAW/OIDN 兩 pointer 同步指 083832。使用者紅框視角 RAW 已驗收 PASS、東西對稱。"
+}

@@ -1,49 +1,73 @@
 {
   "packageStatus": "architecture_probe",
-  "runtimeScope": "c1_xatlas_full_north_wall_runtime",
+  "runtimeScope": "c1_xatlas_full_west_wall_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
-  "runtimeArchitecture": "single_xatlas_full_north_wall_phase2",
-  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260613-100834-oidn-rt-high-beta",
+  "runtimeArchitecture": "single_xatlas_full_west_wall_phase2",
+  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260622-133608",
+  "identity": {
+    "surfaceName": "west_wall_open",
+    "targetId": 1004,
+    "bakeTargetId": 1004,
+    "configId": 1,
+    "atlasGroup": "shell",
+    "masterRectKey": "west",
+    "normal": [
+      1,
+      0,
+      0
+    ],
+    "worldBounds": {
+      "x": -1.91,
+      "y": [
+        0,
+        2.905
+      ],
+      "z": [
+        -1.874,
+        3.056
+      ]
+    }
+  },
   "targetAtlasWidth": 2325,
-  "targetAtlasHeight": 3377,
+  "targetAtlasHeight": 3945,
   "requestedSamples": 1000,
   "diffuseOnly": true,
   "upscaled": false,
-  "bakedRadianceKind": "indirect_diffuse_radiance",
-  "directLightAlreadyIncluded": false,
-  "addDirectLightAfterBakeLookup": true,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
   "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
   "uploadRowFlip": false,
   "phase2": {
-    "kind": "oidn",
-    "prepareDir": ".omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-054400/xatlas-bake-full-north-wall",
+    "kind": "raw",
+    "prepareDir": ".omc/r7-3-10-full-west-wall-xatlas-phase2/20260621-101747-fullcov/xatlas-bake-full-west-wall",
+    "westFullRadianceBake": true,
     "normalLenAudit": "xatlas-normal-len-audit.json",
     "fullWallValidityMaskReport": "xatlas-bake-c2c-full-wall-validity-mask-report.json",
     "defaultRuntimePointerChanged": false,
     "runtimePackageSelection": "explicit xatlasPackage query param only"
   },
   "validation": {
-    "status": "fail",
+    "status": "pass",
     "browserValidationStatus": "pass",
-    "runnerStatus": "fail",
-    "runnerFailedChecks": [
-      "gpu-submission-ms-over-250"
-    ],
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
     "contentChecksPass": true,
-    "completedTiles": 35,
+    "completedTiles": 40,
     "minCompletedSamples": 1000,
     "contextLostCount": 0
   },
   "xatlasC2CAlphaPolicy": {
     "enabled": true,
-    "maskPath": ".omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-054400/xatlas-bake-full-north-wall/xatlas-bake-c2c-full-wall-validity-mask-rgba32f.bin",
+    "maskPath": ".omc/r7-3-10-full-west-wall-xatlas-phase2/20260621-101747-fullcov/xatlas-bake-full-west-wall/xatlas-bake-c2c-full-wall-validity-mask-rgba32f.bin",
     "decisionSource": "per-texel backface-ratio validity mask",
     "invalidOrHiddenAlpha": 0,
     "validVisibleAlpha": 1
   },
   "alphaAudit": {
-    "alphaOneTexels": 6487857,
-    "alphaZeroTexels": 1363668,
+    "alphaOneTexels": 7242263,
+    "alphaZeroTexels": 1929862,
     "alphaOneExactBlackTexels": 0,
     "sourceBlackAlphaOneUsed": 0,
     "maxDistanceTexels": 4,
@@ -59,19 +83,6 @@
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json",
-    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
-    "oidnMetrics": "atlas-patch-000-rgba-f32.bin.metrics.json"
-  },
-  "sourcePackageDir": ".omc/r7-3-10-xatlas-bake-spike/20260613-100834",
-  "denoise": {
-    "tool": "r7-3-10-oidn-bridge",
-    "filter": "RT",
-    "quality": "high",
-    "auxStrategy": "color_only_beta",
-    "inputSamples": 1000,
-    "deviceUsed": "metal",
-    "version": "2.4.1",
-    "alphaPreserved": true,
-    "passDecision": "pass"
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
   }
 }

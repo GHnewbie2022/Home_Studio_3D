@@ -3256,12 +3256,20 @@ void main( void )
 
 	// initialize rand() variables
 	randNumber = 0.0; // the final randomly-generated number (range: 0.0 to 1.0)
-	blueNoise = texelFetch(tBlueNoiseTexture, ivec2(mod(floor(gl_FragCoord.xy), 128.0)), 0).r;
+	// R7-3.10 點1-B 修：bake 分塊（tile）模式下，blue noise 與 RNG 種子必須用「全域 texel 座標」
+	// （gl_FragCoord 局部 + uR738C1BakeTileOriginPx），與 worldpos 查表（見下方 bake 分支）同一把尺。
+	// 否則 tile 第一欄片段中心局部 x=0.5 → uvec2 截斷成 0 → seed 被 *0 歸零退化、整欄亂數失去逐 sample
+	// 去相關 → 靠近漏光幾何處累積成過亮火花。即時相機路徑（非 bake）維持原運算、輸出 byte-identical。
+	vec2 r7310BakeAwareFragCoord = (uR738C1BakeCaptureMode == 2) ? (gl_FragCoord.xy + uR738C1BakeTileOriginPx) : gl_FragCoord.xy;
+	blueNoise = texelFetch(tBlueNoiseTexture, ivec2(mod(floor(r7310BakeAwareFragCoord), 128.0)), 0).r;
 	uint r7310C1RngSeed32 = (uint(uR7310C1RngSeed.x) << 16U) | uint(uR7310C1RngSeed.y);
 	uint r7310C1RngSeedRandMix = (r7310C1RngSeed32 ^ (r7310C1RngSeed32 >> 16U)) & 65535U;
 	randNumber = float(r7310C1RngSeedRandMix) * 0.0000152587890625; // seed=0 -> 0.0, preserves existing rand() sequence
 	// calculate unique seed for rng() function
-	seed = (uvec2(uFrameCounter, uFrameCounter + 1.0) * uvec2(gl_FragCoord)) ^ uvec2(r7310C1RngSeed32, r7310C1RngSeed32 * 2654435761U);
+	// R7-3.10 點1-B 修：bake 分塊模式用「全域 texel 座標 +1u」（永不為 0、跨 tile 去相關連續）；
+	// 即時相機路徑沿用原 uvec2(gl_FragCoord)、byte-identical。
+	uvec2 r7310SeedTexel = (uR738C1BakeCaptureMode == 2) ? (uvec2(gl_FragCoord.xy + uR738C1BakeTileOriginPx) + 1u) : uvec2(gl_FragCoord);
+	seed = (uvec2(uFrameCounter, uFrameCounter + 1.0) * r7310SeedTexel) ^ uvec2(r7310C1RngSeed32, r7310C1RngSeed32 * 2654435761U);
 	if (uR71BlueNoiseSamplingMode > 0.5)
 		seed += r71BlueNoiseSeedJitter();
 
@@ -3299,6 +3307,7 @@ void main( void )
 					     
 	rayDirection = finalRayDir;
 
+#if defined(R7310_INCLUDE_BAKE_CAPTURE)
 	if (uR738C1BakeCaptureMode == 2)
 	{
 		if (uR7310C1XatlasBakeMode > 0.5)
@@ -3342,6 +3351,7 @@ void main( void )
 			}
 		}
 	}
+#endif
 
 	SetupScene();
 
@@ -3388,7 +3398,7 @@ void main( void )
 		? vec4(0.0)
 		: texelFetch(tPreviousTexture, ivec2(gl_FragCoord.xy), 0);
 
-	
+
 	if (uMovementPreviewMode > 0.5)
 	{
 		previousPixel = vec4(0.0);

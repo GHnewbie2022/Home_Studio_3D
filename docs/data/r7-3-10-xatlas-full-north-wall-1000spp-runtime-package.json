@@ -13,6 +13,7 @@
   "directLightAlreadyIncluded": false,
   "addDirectLightAfterBakeLookup": true,
   "multiplyAlbedoAfterBakeLookup": true,
+  "bakeAlbedoFree": true,
   "uploadRowFlip": false,
   "phase2": {
     "kind": "raw",

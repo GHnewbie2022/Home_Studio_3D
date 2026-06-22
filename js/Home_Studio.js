@@ -123,7 +123,7 @@ addBox([1.35, 0.0, -1.874], [1.91, 1.955, -0.703], z3, C_WOOD, 1);            //
 addBox([-1.91, 0.63, 2.385], [1.02, 0.77, 3.056], z3, C_WOOD, 1);             // 17 南方系統木桌
 addBox([-1.90, 0.01, 2.395], [-1.045, 0.62, 3.047], z3, C_WOOD, 1);           // 18 西南角抽屜
 addBox([1.02, 0.0, 2.73], [1.78, 2.04, 3.056], z3, C_WOOD, 1);                // 19 東南角書櫃
-addBox([-0.60, 0.0, 0.157], [0.60, 0.757, 0.697], z3, C_DARK_WOOD, 1);        // 20 工作桌
+addBox([-0.60, 0.0, 0.405], [0.60, 0.757, 0.945], z3, C_DARK_WOOD, 1);        // 20 工作桌（南移接近喇叭架，z 範圍 0.405~0.945）
 
 // R2-4 西南角抽屜層板 (index 21-24)
 addBox([-1.91, 0.0025, 2.385], [-1.035, 0.155, 3.056], z3, C_WOOD, 1);        // 21 下層
@@ -756,15 +756,15 @@ function syncSectionInactiveState() {
 // R2-6 旋轉物件定義（center, halfSize, rotY, color）
 const rotatedObjects = [
     // 左聲道
-    { name: 'uLeftSpeakerInvMatrix', center: [-0.56825, 1.0965, 0.9842], half: [0.1125, 0.1725, 0.1365], rotY: -Math.PI / 6, color: C_SPEAKER },
-    { name: 'uLeftStandBaseInvMatrix', center: [-0.56825, 0.015, 0.9842], half: [0.125, 0.015, 0.15], rotY: -Math.PI / 6, color: C_STAND },
-    { name: 'uLeftStandPillarInvMatrix', center: [-0.56825, 0.46, 0.9842], half: [0.02, 0.43, 0.05], rotY: -Math.PI / 6, color: C_STAND_PILLAR },
-    { name: 'uLeftStandTopInvMatrix', center: [-0.56825, 0.89, 0.9842], half: [0.10, 0.01, 0.125], rotY: -Math.PI / 6, color: C_STAND },
+    { name: 'uLeftSpeakerInvMatrix', center: [-0.66825, 1.0965, 1.1574], half: [0.1125, 0.1725, 0.1365], rotY: -Math.PI / 6, color: C_SPEAKER },
+    { name: 'uLeftStandBaseInvMatrix', center: [-0.66825, 0.015, 1.1574], half: [0.125, 0.015, 0.15], rotY: -Math.PI / 6, color: C_STAND },
+    { name: 'uLeftStandPillarInvMatrix', center: [-0.66825, 0.46, 1.1574], half: [0.02, 0.43, 0.05], rotY: -Math.PI / 6, color: C_STAND_PILLAR },
+    { name: 'uLeftStandTopInvMatrix', center: [-0.66825, 0.89, 1.1574], half: [0.10, 0.01, 0.125], rotY: -Math.PI / 6, color: C_STAND },
     // 右聲道
-    { name: 'uRightSpeakerInvMatrix', center: [0.56825, 1.0965, 0.9842], half: [0.1125, 0.1725, 0.1365], rotY: Math.PI / 6, color: C_SPEAKER },
-    { name: 'uRightStandBaseInvMatrix', center: [0.56825, 0.015, 0.9842], half: [0.125, 0.015, 0.15], rotY: Math.PI / 6, color: C_STAND },
-    { name: 'uRightStandPillarInvMatrix', center: [0.56825, 0.46, 0.9842], half: [0.02, 0.43, 0.05], rotY: Math.PI / 6, color: C_STAND_PILLAR },
-    { name: 'uRightStandTopInvMatrix', center: [0.56825, 0.89, 0.9842], half: [0.10, 0.01, 0.125], rotY: Math.PI / 6, color: C_STAND },
+    { name: 'uRightSpeakerInvMatrix', center: [0.66825, 1.0965, 1.1574], half: [0.1125, 0.1725, 0.1365], rotY: Math.PI / 6, color: C_SPEAKER },
+    { name: 'uRightStandBaseInvMatrix', center: [0.66825, 0.015, 1.1574], half: [0.125, 0.015, 0.15], rotY: Math.PI / 6, color: C_STAND },
+    { name: 'uRightStandPillarInvMatrix', center: [0.66825, 0.46, 1.1574], half: [0.02, 0.43, 0.05], rotY: Math.PI / 6, color: C_STAND_PILLAR },
+    { name: 'uRightStandTopInvMatrix', center: [0.66825, 0.89, 1.1574], half: [0.10, 0.01, 0.125], rotY: Math.PI / 6, color: C_STAND },
 ];
 const rotatedMeshes = [];
 
@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-stacked-vboundary-inset-v6';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-multipage-webgl-v9';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5603,17 +5603,30 @@ function initSceneData() {
 	r738DefaultBakeAtlasTexture.needsUpdate = true;
 	pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
 	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
-	pathTracingUniforms.uR7310C1XatlasRuntimeMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
-	pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
+		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasBakeFullRadianceMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeLightmapPageIds = { value: new THREE.Vector4(0.0, 0.0, 0.0, 0.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullWestWallDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1XatlasRectCeiling = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectNorth = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectEast = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectDepthH2 = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
+	pathTracingUniforms.uR7310C1XatlasRectFloor = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
     pathTracingUniforms.uR7310C1FullRoomDiffuseMode = { value: 0.0 };
     pathTracingUniforms.uR7310C1FullRoomDiffuseReady = { value: 0.0 };
     pathTracingUniforms.uR7310C1FloorDiffuseMode = { value: 0.0 };
@@ -5722,6 +5735,19 @@ function initSceneData() {
 	} catch (e) {
 		pathTracingUniforms.uR7310C1RuntimeProbeMode.value = 0.0;
 	}
+	var r7310WestScopeProbeMode = 0.0;
+	try {
+		if (typeof location !== 'undefined') {
+			var r7310WestScopeProbeParam = String(new URLSearchParams(location.search).get('westScopeProbe') || '').toLowerCase();
+			if (r7310WestScopeProbeParam === '1' || r7310WestScopeProbeParam === 'owner') r7310WestScopeProbeMode = 1.0;
+			else if (r7310WestScopeProbeParam === '2' || r7310WestScopeProbeParam === 'param') r7310WestScopeProbeMode = 2.0;
+			else if (r7310WestScopeProbeParam === '3' || r7310WestScopeProbeParam === 'both') r7310WestScopeProbeMode = 3.0;
+		}
+	} catch (e) {
+		r7310WestScopeProbeMode = 0.0;
+	}
+	pathTracingUniforms.uR7310C1WestScopeProbeMode = { value: r7310WestScopeProbeMode };
+	pathTracingUniforms.uR7310C1XatlasParamWestSurfaceIndex = { value: -1.0 };
 	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
 	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };
@@ -6183,26 +6209,12 @@ function refreshR7310SurfaceDiffuseButtons(report) {
 			? '鐵門開口 4 面使用 R7-3.10 1024 bake'
 			: '鐵門開口回到 live path tracing';
 	}
-	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
-	var nonSquareActive = !!(report && report.nonSquareAtlasEnabled);
-	if (nonSquareBtn) {
-		nonSquareBtn.textContent = nonSquareActive ? '北非方格(東暫代)：開' : '北非方格(東暫代)：關';
-		nonSquareBtn.classList.toggle('glow-white', nonSquareActive);
-		nonSquareBtn.title = nonSquareActive
-			? '北牆與東牆改讀非方格尺寸實驗貼圖'
-			: '北牆與東牆使用原 1024 等格貼圖';
-	}
-	var xatlasNorthBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
-	if (xatlasNorthBtn) {
-		var nv = (report && report.xatlasStackedNorthVariant) || 'off';
-		xatlasNorthBtn.textContent = '北牆真非方格：' + (nv === 'oidn' ? 'OIDN' : (nv === 'raw' ? 'RAW' : '關閉'));
-		xatlasNorthBtn.classList.toggle('glow-white', nv !== 'off');
-	}
-	var xatlasEastBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
-	if (xatlasEastBtn) {
-		var ev = (report && report.xatlasStackedEastVariant) || 'off';
-		xatlasEastBtn.textContent = '東牆真非方格：' + (ev === 'oidn' ? 'OIDN' : (ev === 'raw' ? 'RAW' : '關閉'));
-		xatlasEastBtn.classList.toggle('glow-white', ev !== 'off');
+	// R7-3.10：個別北/東/天花板真非方格鈕已移除，全室為唯一 UI 入口（個別 cycle 函式仍保留供 debug）。
+	var xatlasMasterBtn = document.getElementById('btn-r7310-xatlas-master-all');
+	if (xatlasMasterBtn) {
+		var mv = (report && report.xatlasMasterNorthVariant) || 'off';
+		xatlasMasterBtn.textContent = '全室真非方格：' + (mv === 'oidn' ? 'OIDN' : (mv === 'raw' ? 'RAW' : '關閉'));
+		xatlasMasterBtn.classList.toggle('glow-white', mv !== 'off');
 	}
 }
 
@@ -6215,10 +6227,8 @@ function bindR7310FullFloorDiffuseControls() {
 	var ceilingBtn = document.getElementById('btn-r7310-ceiling-diffuse');
 	var structuralBtn = document.getElementById('btn-r7310-structural-diffuse');
 	var ironDoorBtn = document.getElementById('btn-r7310-iron-door-reveal');
-	var nonSquareBtn = document.getElementById('btn-r7310-non-square-atlas');
-	var xatlasNorthOidnBtn = document.getElementById('btn-r7310-xatlas-north-oidn');
-	var xatlasEastOidnBtn = document.getElementById('btn-r7310-xatlas-east-oidn');
-	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn && !nonSquareBtn) return;
+	var xatlasMasterAllBtn = document.getElementById('btn-r7310-xatlas-master-all');
+	if (!floorBtn && !northBtn && !eastBtn && !westBtn && !southBtn && !ceilingBtn && !structuralBtn && !ironDoorBtn) return;
     var bindButton = function(btn, surfaceKey, setterName) {
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -6239,16 +6249,10 @@ function bindR7310FullFloorDiffuseControls() {
 	bindButton(ceilingBtn, 'ceilingEnabled', 'setR7310C1CeilingDiffuseRuntimeEnabled');
 	bindButton(structuralBtn, 'structuralEnabled', 'setR7310C1StructuralDiffuseRuntimeEnabled');
 	bindButton(ironDoorBtn, 'ironDoorRevealEnabled', 'setR7310C1IronDoorRevealRuntimeEnabled');
-	bindButton(nonSquareBtn, 'nonSquareAtlasEnabled', 'setR7310C1UseNonSquareAtlas');
-	if (xatlasNorthOidnBtn) xatlasNorthOidnBtn.addEventListener('click', function(e) {
+	if (xatlasMasterAllBtn) xatlasMasterAllBtn.addEventListener('click', function(e) {
 		e.stopPropagation();
-		if (typeof window.cycleR7310C1XatlasStackedNorth !== 'function') return;
-		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedNorth());
-	}, false);
-	if (xatlasEastOidnBtn) xatlasEastOidnBtn.addEventListener('click', function(e) {
-		e.stopPropagation();
-		if (typeof window.cycleR7310C1XatlasStackedEast !== 'function') return;
-		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasStackedEast());
+		if (typeof window.cycleR7310C1XatlasMasterAll !== 'function') return;
+		refreshR7310SurfaceDiffuseButtons(window.cycleR7310C1XatlasMasterAll());
 	}, false);
     if (typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function')
         refreshR7310SurfaceDiffuseButtons(window.reportR7310C1FullRoomDiffuseRuntimeConfig());
