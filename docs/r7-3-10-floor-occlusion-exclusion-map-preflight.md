@@ -1,7 +1,7 @@
 # R7-3.10 地板 Occlusion Exclusion Map Preflight
 
-狀態：給 OPUS 的 bug#2 架構級施工前規格  
-範圍：C1 地板黑縫，geometry-driven exclusion，實作前必讀  
+狀態：給 OPUS 的 bug#2 架構級施工前規格
+範圍：C1 地板黑縫，geometry-driven exclusion，實作前必讀
 建立日期：2026-06-17
 
 ## 0. 核心裁示
