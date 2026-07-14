@@ -1,0 +1,23 @@
+{
+  "schema": "r7-3-10-xatlas-chart-gutter-dilation-report-v1",
+  "sourcePath": null,
+  "sourceArtifactRetiredAfterValidation": true,
+  "atlas": {
+    "width": 1526,
+    "height": 3779
+  },
+  "policy": {
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4,
+    "rowMapping": "flipped"
+  },
+  "counts": {
+    "targetTexels": 185942,
+    "repairedTexels": 185942,
+    "sourceExactBlackTexels": 0,
+    "sourceAlphaZeroTexels": 0,
+    "unrepairedTexels": 0,
+    "maxDistanceTexels": 4
+  }
+}

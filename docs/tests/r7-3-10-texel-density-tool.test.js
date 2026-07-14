@@ -10,7 +10,7 @@ const json = execFileSync(
 const report = JSON.parse(json);
 
 assert.equal(report.densityTexelsPerMeter, 590);
-assert.equal(report.currentRuntimeAtlas.patchCount, 23);
+assert.equal(report.currentRuntimeAtlas.patchCount, 30);
 assert.equal(report.currentRuntimeAtlas.patchResolution, 1024);
 assert.ok(report.proposedSlots0To6Texture.totalMiB > 500);
 assert.ok(report.estimatedCombinedResidentMiB > report.currentRuntimeAtlas.mib);

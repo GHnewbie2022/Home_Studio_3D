@@ -70,7 +70,7 @@ function main() {
 	const directUniform = 'uR7310C1XatlasRuntimeFullWestWallDirectIncluded';
 	const directUniformOccurrences = countOccurrences(shader, directUniform);
 	const directUniformBranchUses = Math.max(0, directUniformOccurrences - 1);
-	const westHybridXatlasGuarded = /if\s*\(\s*r7310WestWallHybridFirstHit\s*&&\s*!\s*r7310XatlasRuntimeFirstHit\s*\)[\s\S]{0,180}r7310C1WestWallHybridRadiance/.test(shader);
+	const westHybridXatlasGuarded = /if\s*\(\s*r7310WestWallHybridFirstHit\s*&&\s*!\s*r7310XatlasRuntimeMapped\s*\)[\s\S]{0,180}r7310C1WestWallHybridRadiance/.test(shader);
 	const westBeamShadowStart = shader.indexOf('bool r7310C1WestWallBeamShadowHybridActive');
 	const westBeamShadowEnd = shader.indexOf('vec3 r7310C1WestWallBeamShadowHybridRadiance', westBeamShadowStart);
 	const westBeamShadowBody = westBeamShadowStart >= 0 && westBeamShadowEnd > westBeamShadowStart
@@ -83,7 +83,7 @@ function main() {
 		pointers.west.addDirectLightAfterBakeLookup !== pointers.east.addDirectLightAfterBakeLookup;
 	const westDirectIncludedHandled = directUniformBranchUses > 0 &&
 		/uR7310C1XatlasRuntimeFullWestWallDirectIncluded\s*>\s*0\.5\s*&&\s*r7310XatlasRuntimeWestFirstHit[\s\S]{0,220}\bbreak\s*;/.test(shader);
-	const westDirectIncludedScopedToWest = /bool\s+r7310XatlasRuntimeWestFirstHit\b[\s\S]{0,260}r7310C1XatlasParamSurfaceUv\s*\(\s*int\s*\(\s*uR7310C1XatlasParamWestSurfaceIndex\s*\)/.test(shader);
+	const westDirectIncludedScopedToWest = /bool\s+r7310XatlasRuntimeWestMapped\b[\s\S]{0,260}r7310C1XatlasParamSurfaceUv\s*\(\s*int\s*\(\s*uR7310C1XatlasParamWestSurfaceIndex\s*\)[\s\S]{0,260}bool\s+r7310XatlasRuntimeWestFirstHit\b\s*=\s*r7310XatlasRuntimeFirstHit\s*&&\s*r7310XatlasRuntimeWestMapped\s*;/.test(shader);
 	const hasFullRadianceBounceGate = shader.includes('r7310XatlasIndirectBakeFirstHit') &&
 		shader.includes('uR7310C1XatlasBakeFullRadianceMode < 0.5') &&
 		shader.includes('willNeedDiffuseBounceRay == TRUE');

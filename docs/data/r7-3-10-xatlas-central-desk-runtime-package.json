@@ -1,0 +1,64 @@
+{
+  "schema": "r7-3-10-xatlas-runtime-package-pointer-v1",
+  "packageStatus": "accepted",
+  "runtimeScope": "c1_xatlas_central_desk_runtime",
+  "runtimeArchitecture": "multi_page_furniture_lightmap",
+  "surfaceName": "central_desk",
+  "atlasGroup": "furniture",
+  "configId": 1,
+  "targetId": 1100,
+  "targetAtlasWidth": 1663,
+  "targetAtlasHeight": 1576,
+  "targetAtlasResolution": 1663,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "nonSquareAtlas": true,
+  "packageDir": "assets/runtime/r7-3-10/current-room/central-desk/package",
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "centralDeskGeometricEdgeReport": "central-desk-geometric-edge-report.json"
+  },
+  "chartEdgeDilation": {
+    "enabled": true,
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 2,
+    "repairedVisibleExactBlackTexels": 2939,
+    "unrepairedVisibleExactBlackTexels": 0
+  },
+  "geometricEdgeExtrapolation": {
+    "enabled": true,
+    "sourceScope": "same-face-interior-valid-radiance",
+    "targetScope": "central-desk-geometric-chart-edge",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 1,
+    "targetTexels": 13202,
+    "repairedTexels": 13202,
+    "unrepairedTexels": 0,
+    "sourceExactBlackTexels": 0
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "273cf644486be0affc844843099ffd662377273c895d4bd3b02ce26427fbe91a",
+    "texelMetadataPatch0Sha256": "d3ac254be6a16219509f8745e1c5d75325986b498e70bae79756b28525fe5337"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
+    "contextLostCount": 0,
+    "completedTiles": 16,
+    "tileCount": 16,
+    "minCompletedSamples": 1000
+  },
+  "note": "Central desk full-radiance furniture lightmap. Runtime uses the same atlas page for five unique XATLAS charts; direct light is already included. Exact geometric chart-edge texels are extrapolated from same-face interior radiance within one texel."
+}

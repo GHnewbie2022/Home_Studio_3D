@@ -1,0 +1,39 @@
+{
+  "version": "r7-3-10-xatlas-bake-c2",
+  "config": 1,
+  "northeastFurnitureMode": null,
+  "batch": "west_wall_switch_full_radiance",
+  "targetId": 1400,
+  "surfaceName": "west_wall_switch",
+  "worldBounds": null,
+  "createdAt": "2026-07-13T08:00:23.788Z",
+  "branch": "codex/r7-3-10-full-bake-remaining-surfaces",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 153,
+  "targetAtlasWidth": 131,
+  "targetAtlasHeight": 153,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "fullRadianceProbe": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "upscaled": false,
+  "packageDir": "assets/runtime/r7-3-10/current-room/west-wall-switch/package",
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
+  },
+  "xatlasC2CAlphaPolicy": {
+    "enabled": true,
+    "maskPath": null,
+    "sourceMaskRetiredAfterValidation": true,
+    "decisionSource": "per-texel backface-ratio validity mask"
+  }
+}

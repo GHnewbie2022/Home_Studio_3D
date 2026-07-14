@@ -1,0 +1,51 @@
+{
+  "schema": "r7-3-10-coplanar-lightmap-continuity-v1",
+  "status": "PASS",
+  "method": "world-space-coplanar-lightmap-stitch",
+  "policy": {
+    "minSamples": 1024,
+    "maxMedianRatioError": 0.005,
+    "maxP95RelativeDifference": 0.01,
+    "sourceAlphaThreshold": 0.5,
+    "lumaEpsilon": 1e-8
+  },
+  "before": {
+    "status": "FAIL",
+    "failures": [
+      "median-radiance-ratio-drift",
+      "p95-radiance-difference"
+    ],
+    "counts": {
+      "validTargetSamples": 312320,
+      "comparedSamples": 312320,
+      "outOfBoundsSamples": 0,
+      "invalidSourceSamples": 0
+    },
+    "radiance": {
+      "medianRatio": 0.9841412,
+      "p95RelativeDifference": 0.10460982
+    }
+  },
+  "after": {
+    "status": "PASS",
+    "failures": [],
+    "counts": {
+      "validTargetSamples": 312320,
+      "comparedSamples": 312320,
+      "outOfBoundsSamples": 0,
+      "invalidSourceSamples": 0
+    },
+    "radiance": {
+      "medianRatio": 1,
+      "p95RelativeDifference": 0
+    }
+  },
+  "provenance": {
+    "sourceSurfaceId": "ceiling_open",
+    "targetSurfaceId": "south_window_top_reveal_depth",
+    "sourcePointer": "docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json",
+    "sourcePackageDir": "assets/runtime/r7-3-10/current-room/ceiling/package",
+    "sourceAtlasSha256": "5472b1adef74ecc2043df3766bb4ae2720c34a52c8e2163dcbff836bc534a47a",
+    "targetAtlasSha256": "a9478356fc44041be5e51c3567c7471b84b600edb8692cc9dc7a4f85b275b297"
+  }
+}

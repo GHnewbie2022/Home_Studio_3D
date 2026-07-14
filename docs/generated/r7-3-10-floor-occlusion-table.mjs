@@ -1,7 +1,7 @@
-// === GENERATED: floor-occlusion table  (exclusions 5cb185ce4f2f57e9) ===
+// === GENERATED: floor-occlusion table  (exclusions 1bbb625319767a42) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json (floorOcclusionExclusions)
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
-export const EXCLUSION_VERSION = "5cb185ce4f2f57e9";
+export const EXCLUSION_VERSION = "1bbb625319767a42";
 export const FLOOR_OCCLUSION_EXCLUSIONS = [
   {
     "id": "north_wall_solid_footprint",
@@ -168,6 +168,13 @@ export const FLOOR_OCCLUSION_EXCLUSIONS = [
       "mode": "none",
       "meters": 0
     },
+    "contactContinuity": {
+      "mode": "preserve_visible_full_bake_band",
+      "pairedSurfaceGroup": "central_desk",
+      "runtimeFallbackAtVisibleEdge": false,
+      "bandMeters": 0.02,
+      "maxLumaDelta": 0.08
+    },
     "policy": "invalidate_floor_texel",
     "enabled": true
   },
@@ -212,8 +219,8 @@ export const FLOOR_OCCLUSION_EXCLUSIONS = [
     "furnitureMode": null,
     "bounds": {
       "x": [
-        0.79,
-        1.12
+        -0.165,
+        0.165
       ],
       "z": [
         2.273,
@@ -368,6 +375,13 @@ function exclMarginExpand(b, margin) {
   return b;
 }
 function exclInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
+function exclPreservesContactBand(e, worldX, worldZ, b) {
+  const cc = e.contactContinuity;
+  if (!cc || cc.mode !== 'preserve_visible_full_bake_band') return false;
+  const band = Number(cc.bandMeters) || 0;
+  if (!(band > 0) || !b || !b.x || !b.z) return false;
+  return worldX <= b.x[0] + band || worldX >= b.x[1] - band || worldZ <= b.z[0] + band || worldZ >= b.z[1] - band;
+}
 // isFloorOccluded(worldX, worldZ, configId, furnitureMode) — true where a solid-geometry footprint covers the floor.
 export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
   for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
@@ -386,6 +400,7 @@ export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
     const b = exclMarginExpand(e.bounds, e.margin);
     if (Array.isArray(e.xRects)) { if (!e.xRects.some((r) => exclInRange(worldX, r)) || !exclInRange(worldZ, b.z)) continue; }
     else if (!exclInRange(worldX, b.x) || !exclInRange(worldZ, b.z)) continue;
+    if (exclPreservesContactBand(e, worldX, worldZ, b)) continue;
     return true;
   }
   return false;

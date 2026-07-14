@@ -30,38 +30,49 @@ const inventory = [
   { key: 'c1SouthWindowRightRevealShadowBatch', constName: 'SOUTH_WINDOW_RIGHT_REVEAL_SHADOW', loaderName: 'SouthWindowRightRevealShadow', captureName: 'SouthWindowRightRevealShadow', reportName: 'SouthWindowRightRevealShadow', surfaceName: 'c1_south_window_right_reveal_shadow', cliName: 'south-window-right-reveal-shadow', targetId: 1020, slot: 19, pointer: 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json' },
   { key: 'c1SouthWindowBottomRevealShadowBatch', constName: 'SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW', loaderName: 'SouthWindowBottomRevealShadow', captureName: 'SouthWindowBottomRevealShadow', reportName: 'SouthWindowBottomRevealShadow', surfaceName: 'c1_south_window_bottom_reveal_shadow', cliName: 'south-window-bottom-reveal-shadow', targetId: 1021, slot: 20, pointer: 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json' },
   { key: 'c1SouthWindowTopRevealShadowBatch', constName: 'SOUTH_WINDOW_TOP_REVEAL_SHADOW', loaderName: 'SouthWindowTopRevealShadow', captureName: 'SouthWindowTopRevealShadow', reportName: 'SouthWindowTopRevealShadow', surfaceName: 'c1_south_window_top_reveal_shadow', cliName: 'south-window-top-reveal-shadow', targetId: 1022, slot: 21, pointer: 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json' },
-  { key: 'c1IronDoorRevealBatch', constName: 'IRON_DOOR_REVEAL', loaderName: 'IronDoorReveal', captureName: 'IronDoorReveal', reportName: 'IronDoorReveal', surfaceName: 'c1_iron_door_reveal', cliName: 'iron-door-reveal', targetId: 1023, slot: 22, pointer: 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json' }
+  { key: 'c1IronDoorRevealBatch', constName: 'IRON_DOOR_REVEAL', loaderName: 'IronDoorReveal', captureName: 'IronDoorReveal', reportName: 'IronDoorReveal', surfaceName: 'c1_iron_door_reveal', cliName: 'iron-door-reveal', targetId: 1023, slot: 22, pointer: 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json' },
+  { key: null, pointerInRunner: false, constName: 'IRON_DOOR_BODY', loaderName: 'IronDoorBody', captureName: 'IronDoorBody', reportName: 'IronDoorBody', surfaceName: 'c1_iron_door_body_diffuse_light_live_specular_probe', cliName: 'iron-door-body', targetId: 230001, slot: 23, pointer: 'docs/data/r7-3-10-c1-iron-door-body-runtime-package.json' },
+  { key: null, pointerInRunner: false, constName: 'IRON_DOOR_REFLECTION_PROBE', loaderName: 'IronDoorReflectionProbe', captureName: null, reportName: null, surfaceName: 'c1_iron_door_body_captured_local_reflection_probe', cliName: null, targetId: 230002, slots: [24, 25, 26, 27, 28, 29], pointer: 'docs/data/r7-3-10-c1-iron-door-reflection-probe-runtime-package.json', optionalPointer: true }
 ];
 
-assert.equal(inventory.length, 23);
+assert.equal(inventory.length, 25);
 assert.equal(new Set(inventory.map((surface) => surface.targetId)).size, inventory.length);
 assert.equal(new Set(inventory.map((surface) => surface.surfaceName)).size, inventory.length);
-assert.deepEqual([...new Set(inventory.map((surface) => surface.slot))].sort((a, b) => a - b), Array.from({ length: 23 }, (_, index) => index));
+const runtimeSlots = inventory.flatMap((surface) => Array.isArray(surface.slots) ? surface.slots : [surface.slot]);
+assert.deepEqual([...new Set(runtimeSlots)].sort((a, b) => a - b), Array.from({ length: 30 }, (_, index) => index));
 
 const combinedSlotBlock = initCommon.match(/function buildR7310C1CombinedDiffuseRuntimeTexture[\s\S]*?var patchCount = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT;/)?.[0] || '';
-assert.match(combinedSlotBlock, /var slots = \[[\s\S]*floorPixels[\s\S]*northWallPixels[\s\S]*eastWallPixels[\s\S]*westWallPixels[\s\S]*southWallPixels[\s\S]*ceilingPixels[\s\S]*structuralPixels[\s\S]*seColumnNorthShadowPixels[\s\S]*seColumnWestShadowPixels[\s\S]*southWallAcShadowPixels[\s\S]*eastWallBeamShadowPixels[\s\S]*swColumnNorthShadowPixels[\s\S]*westWallBeamShadowPixels[\s\S]*swColumnInnerShadowPixels[\s\S]*westBeamInnerShadowPixels[\s\S]*westBeamUnderShadowPixels[\s\S]*eastBeamInnerShadowPixels[\s\S]*eastBeamUnderShadowPixels[\s\S]*southWindowLeftRevealShadowPixels[\s\S]*southWindowRightRevealShadowPixels[\s\S]*southWindowBottomRevealShadowPixels[\s\S]*southWindowTopRevealShadowPixels[\s\S]*ironDoorRevealPixels[\s\S]*\]/);
+assert.match(combinedSlotBlock, /var slots = \[[\s\S]*floorPixels[\s\S]*northWallPixels[\s\S]*eastWallPixels[\s\S]*westWallPixels[\s\S]*southWallPixels[\s\S]*ceilingPixels[\s\S]*structuralPixels[\s\S]*seColumnNorthShadowPixels[\s\S]*seColumnWestShadowPixels[\s\S]*southWallAcShadowPixels[\s\S]*eastWallBeamShadowPixels[\s\S]*swColumnNorthShadowPixels[\s\S]*westWallBeamShadowPixels[\s\S]*swColumnInnerShadowPixels[\s\S]*westBeamInnerShadowPixels[\s\S]*westBeamUnderShadowPixels[\s\S]*eastBeamInnerShadowPixels[\s\S]*eastBeamUnderShadowPixels[\s\S]*southWindowLeftRevealShadowPixels[\s\S]*southWindowRightRevealShadowPixels[\s\S]*southWindowBottomRevealShadowPixels[\s\S]*southWindowTopRevealShadowPixels[\s\S]*ironDoorRevealPixels[\s\S]*ironDoorBodyPixels[\s\S]*ironDoorReflectionProbePosX[\s\S]*ironDoorReflectionProbeNegX[\s\S]*ironDoorReflectionProbePosY[\s\S]*ironDoorReflectionProbeNegY[\s\S]*ironDoorReflectionProbePosZ[\s\S]*ironDoorReflectionProbeNegZ[\s\S]*\]/);
 
 for (const surface of inventory) {
-  const batch = contract[surface.key];
-  assert.ok(batch, `${surface.key} missing from R7-3.10 contract`);
-  assert.equal(batch.targetId, surface.targetId, `${surface.key} targetId drifted`);
-  assert.equal(batch.surfaceName, surface.surfaceName, `${surface.key} surfaceName drifted`);
-  if ('runtimeAtlasSlot' in batch)
-    assert.equal(batch.runtimeAtlasSlot, surface.slot, `${surface.key} runtimeAtlasSlot drifted`);
+  if (surface.key) {
+    const batch = contract[surface.key];
+    assert.ok(batch, `${surface.key} missing from R7-3.10 contract`);
+    assert.equal(batch.targetId, surface.targetId, `${surface.key} targetId drifted`);
+    assert.equal(batch.surfaceName, surface.surfaceName, `${surface.key} surfaceName drifted`);
+    if ('runtimeAtlasSlot' in batch)
+      assert.equal(batch.runtimeAtlasSlot, surface.slot, `${surface.key} runtimeAtlasSlot drifted`);
+  }
 
   assert.match(initCommon, new RegExp(`R7310_C1_${surface.constName}_TARGET_ID\\s*=\\s*${surface.targetId}`));
   assert.match(initCommon, new RegExp(`R7310_C1_${surface.constName}_SURFACE_NAME\\s*=\\s*'${surface.surfaceName}'`));
   assert.match(initCommon, new RegExp(`loadR7310C1${surface.loaderName}RuntimePackage`));
-  assert.match(initCommon, new RegExp(`captureR7310C1${surface.captureName}Atlas`));
-  assert.match(runner, new RegExp(`'${surface.cliName}'`), `${surface.cliName} missing from runner allow-list`);
-  assert.match(runner, new RegExp(`${surface.cliName}: 'reportR7310C1${surface.reportName}BakeAfterSamples'|'${surface.cliName}': 'reportR7310C1${surface.reportName}BakeAfterSamples'`));
-  assert.match(runner, new RegExp(surface.surfaceName));
-  assert.match(runner, new RegExp(surface.pointer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.equal(fs.existsSync(surface.pointer), true, `${surface.pointer} missing`);
+  if (surface.captureName)
+    assert.match(initCommon, new RegExp(`captureR7310C1${surface.captureName}Atlas`));
+  if (surface.cliName)
+  {
+    assert.match(runner, new RegExp(`'${surface.cliName}'`), `${surface.cliName} missing from runner allow-list`);
+    assert.match(runner, new RegExp(`${surface.cliName}: 'reportR7310C1${surface.reportName}BakeAfterSamples'|'${surface.cliName}': 'reportR7310C1${surface.reportName}BakeAfterSamples'`));
+    assert.match(runner, new RegExp(surface.surfaceName));
+  }
+  if (surface.pointerInRunner !== false)
+    assert.match(runner, new RegExp(surface.pointer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  if (surface.pointer)
+    assert.equal(fs.existsSync(surface.pointer), true, `${surface.pointer} missing`);
 }
 
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
-assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 30\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*30/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(initCommon, /runtimeAtlasPatchCount: R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasGridColumns = \{ value: 6\.0 \}/);

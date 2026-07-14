@@ -19,6 +19,9 @@ assert.equal(fs.existsSync(r7310CeilingPointerPath), true);
 const r7310Ceiling = fs.existsSync(r7310CeilingPointerPath)
   ? JSON.parse(fs.readFileSync(r7310CeilingPointerPath, 'utf8'))
   : {};
+const r7310XatlasFloorPointerPath = 'docs/data/r7-3-10-xatlas-full-floor-runtime-package.json';
+assert.equal(fs.existsSync(r7310XatlasFloorPointerPath), true);
+const r7310XatlasFloor = JSON.parse(fs.readFileSync(r7310XatlasFloorPointerPath, 'utf8'));
 const r7310StructuralPointerPath = 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
 const r7310StructuralPointerExists = fs.existsSync(r7310StructuralPointerPath);
 const r7310Structural = r7310StructuralPointerExists
@@ -221,6 +224,49 @@ assert.equal(contract.renderingModes.approachingTruthMode.parametersFrozen, true
 assert.equal(contract.renderingModes.approachingTruthMode.fallbackAllowed, false);
 assert.equal(contract.renderingModes.approachingTruthMode.purpose, 'approaching_truth_reference');
 assert.equal(contract.renderingModes.approachingTruthMode.purposeDisplayName, '採購決策以趨近真實模式為準');
+assert.equal(r7310XatlasFloor.runtimeScope, 'c1_xatlas_full_floor_runtime');
+assert.equal(r7310XatlasFloor.runtimeArchitecture, 'single_xatlas_full_floor_phase2');
+assert.equal(r7310XatlasFloor.runtimeTexture, 'tR7310C1XatlasRuntimeAtlasTexture');
+assert.equal(r7310XatlasFloor.surfaceName, 'floor_open');
+assert.equal(r7310XatlasFloor.targetId, 1001);
+assert.equal(r7310XatlasFloor.targetAtlasWidth, 3376);
+assert.equal(r7310XatlasFloor.targetAtlasHeight, 4264);
+assert.equal(r7310XatlasFloor.requestedSamples >= 1000, true);
+assert.equal(r7310XatlasFloor.diffuseOnly, false);
+assert.equal(r7310XatlasFloor.bakedRadianceKind, 'full_diffuse_radiance');
+assert.equal(r7310XatlasFloor.directLightAlreadyIncluded, true);
+assert.equal(r7310XatlasFloor.addDirectLightAfterBakeLookup, false);
+assert.equal(r7310XatlasFloor.multiplyAlbedoAfterBakeLookup, false);
+assert.equal(r7310XatlasFloor.bakeAlbedoFree, false);
+assert.equal(r7310XatlasFloor.liveSpecularReflection, true);
+assert.equal(r7310XatlasFloor.nonSquareAtlas, true);
+assert.match(initCommon, /pageName: 'floor_raw_page'/);
+assert.match(initCommon, /pageName: 'floor_raw_page'[\s\S]*?autoLoad: false/);
+assert.match(initCommon, /surfaceId: 'floor_open'[\s\S]*?rectKey: 'floor'[\s\S]*?packageFace: 'floor'/);
+assert.match(initCommon, /if \(\!page \|\| page\.pageId <= 0 \|\| !page\.surfaces \|\| !page\.surfaces\.length\) continue;\s*if \(page\.autoLoad === false\) continue;/);
+assert.doesNotMatch(initCommon, /else if \(surface\.packageFace === 'floor'\)[\s\S]*?nextFullFloorActive = true/);
+assert.match(initCommon, /r7310C1XatlasRuntimeFullFloorSeparatedAlbedo = pointer\.multiplyAlbedoAfterBakeLookup !== false/);
+assert.match(homeStudio, /uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo/);
+assert.match(shader, /uniform float uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo;/);
+assert.match(shader, /r7310XatlasRuntimeFloorFirstHit[\s\S]*?uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo[\s\S]*?r7310XatlasRuntimeSurfaceSeparatedAlbedo > 0\.5[\s\S]*?r7310XatlasRuntimeRadiance \* hitColor[\s\S]*?r7310XatlasRuntimeRadiance/);
+assert.ok(
+  shader.indexOf('if (isFloor && !r7310FloorFullRadianceBakeFirstHit && r7310FloorLiveSpecularActive && r7310FloorLiveSpecularAllowed && !r738DiffuseOnlyActive && !r739ReferenceDisabled && r739EffectiveFloorRoughness < 0.999)') >= 0 &&
+  shader.indexOf('if (isFloor && !r7310FloorFullRadianceBakeFirstHit && r7310FloorLiveSpecularActive && r7310FloorLiveSpecularAllowed && !r738DiffuseOnlyActive && !r739ReferenceDisabled && r739EffectiveFloorRoughness < 0.999)') <
+  shader.indexOf('r7310XatlasRuntimeFloorFirstHit'),
+  'floor LIVE reflection branch must run before xatlas floor diffuse lookup, after page alpha gating'
+);
+assert.doesNotMatch(initCommon, /r7310C1XatlasRuntimeFullFloorActive = false;\s*\n\s*r7310C1XatlasCeilingReady = false;/);
+assert.match(initCommon, /fullFloorDirectIncluded: r7310C1XatlasRuntimeFullFloorDirectIncluded/);
+assert.match(initCommon, /fullFloorSeparatedAlbedo: r7310C1XatlasRuntimeFullFloorSeparatedAlbedo/);
+assert.match(initCommon, /uniformFullFloorDirectIncluded: pathTracingUniforms && pathTracingUniforms\.uR7310C1XatlasRuntimeFullFloorDirectIncluded/);
+assert.match(initCommon, /uniformFullFloorSeparatedAlbedo: pathTracingUniforms && pathTracingUniforms\.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo/);
+const h2UvBlock = shader.match(/bool r7310C1XatlasFullDepthH2Uv[\s\S]*?float r7310C1XatlasFullNorthWallTriangleId/)?.[0] || '';
+const floorUvBlock = shader.match(/bool r7310C1XatlasFullFloorUv[\s\S]*?bool r7310C1XatlasNorthWallUv/)?.[0] || '';
+const runtimeFloorPageBlock = shader.match(/bool r7310XatlasRuntimeFloorPageMapped[\s\S]*?bool r7310XatlasRuntimeFloorPageFirstHit/)?.[0] || '';
+assert.match(h2UvBlock, /uR7310C1XatlasRuntimeFullCeilingMode < 0\.5/);
+assert.doesNotMatch(h2UvBlock, /uR7310C1XatlasRuntimeFullFloorMode < 0\.5/);
+assert.doesNotMatch(floorUvBlock, /uR7310C1XatlasRuntimeFullCeilingMode < 0\.5/);
+assert.match(runtimeFloorPageBlock, /uR7310C1XatlasRuntimeFullFloorMode > 0\.5/);
 assert.equal(contract.surfaceRolloutStrategy.oneShotFullRoomBake, false);
 assert.equal(contract.surfaceRolloutStrategy.orderBy, 'roi_descending');
 assert.equal(contract.surfaceRolloutStrategy.finalC1CoverageRequired, true);
@@ -700,7 +746,10 @@ assert.match(shader, /r7310C1RuntimeProbeMode < 9\.5/);
 assert.match(shader, /hitIsRayExiting == TRUE/);
 assert.match(shader, /r7310C1FullRoomDiffuseShortCircuit\([^)]*int visibleIsRayExiting/);
 assert.match(shader, /if \(visibleIsRayExiting == TRUE\)\s+return false;/);
-assert.match(shader, /bounces == 0 &&\s*r7310C1FullRoomDiffuseShortCircuit\(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance\)/);
+assert.match(
+  shader,
+  /if \(!r7310XatlasRuntimeMapped &&[\s\S]*?!\(r7310FloorHybridFirstHit \|\|[\s\S]*?r7310IronDoorRevealHybridFirstHit\) &&\s*r7310C1RuntimeFirstHitBakeAllowed\(bounces\) &&\s*r7310C1FullRoomDiffuseShortCircuit\(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance\)\)/
+);
 assert.match(shader, /uCamPos\.y - 0\.5/);
 assert.match(shader, /uR7310C1BakeFloorWorldBounds/);
 assert.match(pathTracingCommon, /r7310C1BakeSurfacePoint/);
@@ -931,8 +980,8 @@ assert.match(runner, /structuralIslandShortCircuitByName/);
 assert.match(runner, /structuralProbeSamples/);
 assert.match(runner, /initial\.floorText === '地板烘焙：開'/);
 assert.match(runner, /initial\.report\.southWallEnabled === true/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
-assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 30\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*30/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(html, /id="r7310-full-floor-actions"/);
 assert.match(html, /id="btn-r7310-floor-diffuse"/);

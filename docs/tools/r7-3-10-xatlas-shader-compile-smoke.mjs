@@ -17,12 +17,32 @@ const cdpPort = Number(args['cdp-port'] || process.env.R7310_CDP_PORT || 9351);
 const viewportWidth = Number(args.width || process.env.R7310_VIEWPORT_WIDTH || 1280);
 const viewportHeight = Number(args.height || process.env.R7310_VIEWPORT_HEIGHT || 720);
 const minSamples = Number(args['min-samples'] || process.env.R7310_MIN_SAMPLES || 8);
+const sppCap = Number(args['spp-cap'] || process.env.R7310_SPP_CAP || 0);
 const timeoutMs = Number(args['timeout-ms'] || process.env.R7310_TIMEOUT_MS || 180000);
+const postLoadWaitMs = Number(args['post-load-wait-ms'] || process.env.R7310_POST_LOAD_WAIT_MS || 0);
+const ironDoorCamera = args['iron-door-camera'] === 'true' || process.env.R7310_IRON_DOOR_CAMERA === 'true';
+const ironDoorRuntimePlanar = args['iron-door-runtime-planar'] === 'true' || process.env.R7310_IRON_DOOR_RUNTIME_PLANAR === 'true';
+const ironDoorRuntimePlanarLighting = args['iron-door-runtime-planar-lighting'] || process.env.R7310_IRON_DOOR_RUNTIME_PLANAR_LIGHTING || '';
+const ironDoorRuntimePlanarSourceDisplay = args['iron-door-runtime-planar-source-display'] === 'true' || process.env.R7310_IRON_DOOR_RUNTIME_PLANAR_SOURCE_DISPLAY === 'true';
+if (ironDoorRuntimePlanar || ironDoorRuntimePlanarSourceDisplay)
+	throw new Error('iron door runtime planar smoke retired: retired_baking_mainline_keep_fix7_live');
+const ironDoorBodyDebugMode = args['iron-door-body-debug-mode'] || process.env.R7310_IRON_DOOR_BODY_DEBUG_MODE || '';
+const cameraStateJson = args['camera-state-json'] || process.env.R7310_CAMERA_STATE_JSON || '';
+const floorProbeMode = String(args['floor-probe-mode'] || process.env.R7310_FLOOR_PROBE_MODE || '').toLowerCase();
 const outputDir = args['out-dir'] || process.env.R7310_OUTPUT_DIR || path.join(os.tmpdir(), `r7310-xatlas-shader-compile-smoke-${Date.now()}`);
 const userDataDir = args['user-data-dir'] || process.env.R7310_USER_DATA_DIR || path.join(os.tmpdir(), `r7310-xatlas-shader-compile-smoke-chrome-${Date.now()}`);
 const httpHost = args.http || process.env.R7310_HTTP_HOST || '127.0.0.1:9003';
 const pageUrl = args.url || process.env.R7310_PAGE_URL || `http://${httpHost}/Home_Studio.html?xatlasPackage=full-north-wall-raw&gateBCompileSmoke=${Date.now()}`;
 const outputPath = args.out || process.env.R7310_OUTPUT_PATH || path.join(outputDir, 'xatlas-shader-compile-smoke.json');
+const screenshotPath = args.screenshot || process.env.R7310_SCREENSHOT_PATH || path.join(outputDir, 'xatlas-shader-compile-smoke.png');
+let cameraState = null;
+if (cameraStateJson) {
+	try {
+		cameraState = JSON.parse(cameraStateJson);
+	} catch (error) {
+		throw new Error(`Invalid --camera-state-json: ${error.message}`);
+	}
+}
 
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -307,6 +327,66 @@ async function waitForExpression(cdp, expression, timeout) {
 	throw new Error(`Timed out waiting for: ${expression}`);
 }
 
+function nearNumber(actual, expected, epsilon = 0.01) {
+	return Number.isFinite(actual) && Number.isFinite(expected) && Math.abs(actual - expected) <= epsilon;
+}
+
+function cameraStateMatches(actual, expected) {
+	if (!expected) return true;
+	if (!actual || !actual.position || !expected.position) return false;
+	return nearNumber(Number(actual.position.x), Number(expected.position.x)) &&
+		nearNumber(Number(actual.position.y), Number(expected.position.y)) &&
+		nearNumber(Number(actual.position.z), Number(expected.position.z)) &&
+		nearNumber(Number(actual.yaw), Number(expected.yaw)) &&
+		nearNumber(Number(actual.pitch), Number(expected.pitch)) &&
+		nearNumber(Number(actual.fov), Number(expected.fov), 0.1);
+}
+
+function normalizeRuntimePlanarLightingMode(value) {
+	return 'same-scene';
+}
+
+function expectedRuntimePlanarLightingMode() {
+	if (ironDoorRuntimePlanarLighting) return normalizeRuntimePlanarLightingMode(ironDoorRuntimePlanarLighting);
+	try {
+		const url = new URL(pageUrl);
+		return normalizeRuntimePlanarLightingMode(
+			url.searchParams.get('ironDoorRuntimePlanarLighting') ||
+			url.searchParams.get('ironDoorPlanarLighting') ||
+			''
+		);
+		} catch {
+			return 'same-scene';
+		}
+	}
+
+function expectedAtlasMasterVariant() {
+	try {
+		const url = new URL(pageUrl);
+		const normalized = String(url.searchParams.get('xatlasMaster') || url.searchParams.get('atlasMaster') || '').toLowerCase();
+		return normalized === 'raw' || normalized === 'oidn' ? normalized : '';
+	} catch {
+		return '';
+	}
+}
+
+function atlasMasterSourceReady(config) {
+	const expectedVariant = expectedAtlasMasterVariant();
+	if (!expectedVariant) return true;
+	const xatlas = config && config.xatlasRuntime ? config.xatlasRuntime : {};
+	return xatlas.enabled === true &&
+		xatlas.ready === true &&
+		xatlas.lightmapPagesMode === true &&
+		xatlas.fullNorthWallActive === true &&
+		xatlas.fullWestWallActive === true &&
+		xatlas.fullWestWallDirectIncluded === true &&
+		xatlas.westThresholdTopActive === true &&
+		xatlas.westThresholdFrontActive === true &&
+		xatlas.masterWestVariant === expectedVariant &&
+		xatlas.masterWestThresholdTopVariant === expectedVariant &&
+		xatlas.masterWestThresholdFrontVariant === expectedVariant;
+}
+
 function pageSmokeExpression() {
 	return `(${async function runXatlasShaderCompileSmoke(smokeConfig) {
 		function sleepInPage(ms) {
@@ -319,42 +399,188 @@ function pageSmokeExpression() {
 			const ctx = scratch.getContext('2d', { willReadFrequently: true });
 			ctx.drawImage(canvas, 0, 0);
 			const image = ctx.getImageData(0, 0, scratch.width, scratch.height).data;
-			let nonBlack = 0;
-			let lumaSum = 0;
-			let lumaMax = 0;
-			let count = 0;
-			const strideX = Math.max(1, Math.floor(scratch.width / 80));
-			const strideY = Math.max(1, Math.floor(scratch.height / 45));
-			for (let y = 0; y < scratch.height; y += strideY) {
-				for (let x = 0; x < scratch.width; x += strideX) {
-					const offset = (y * scratch.width + x) * 4;
-					const luma = 0.2126 * image[offset] + 0.7152 * image[offset + 1] + 0.0722 * image[offset + 2];
-					lumaSum += luma;
-					lumaMax = Math.max(lumaMax, luma);
-					if (luma > 2) nonBlack += 1;
-					count += 1;
+				let nonBlack = 0;
+				let lumaSum = 0;
+				let lumaMax = 0;
+				let rSum = 0;
+				let gSum = 0;
+				let bSum = 0;
+				let greenDominant = 0;
+				let magentaDominant = 0;
+				let count = 0;
+				const strideX = Math.max(1, Math.floor(scratch.width / 80));
+				const strideY = Math.max(1, Math.floor(scratch.height / 45));
+				for (let y = 0; y < scratch.height; y += strideY) {
+					for (let x = 0; x < scratch.width; x += strideX) {
+						const offset = (y * scratch.width + x) * 4;
+						const r = image[offset];
+						const g = image[offset + 1];
+						const b = image[offset + 2];
+						const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+						lumaSum += luma;
+						lumaMax = Math.max(lumaMax, luma);
+						if (luma > 2) nonBlack += 1;
+						rSum += r;
+						gSum += g;
+						bSum += b;
+						if (g > 40 && g > r * 1.2 && g > b * 1.2) greenDominant += 1;
+						if (r > 40 && b > 40 && g < r * 0.8 && g < b * 0.8) magentaDominant += 1;
+						count += 1;
+					}
 				}
-			}
 			return {
 				width: scratch.width,
 				height: scratch.height,
 				gridSamples: count,
 				nonBlack,
-				nonBlackRatio: count > 0 ? nonBlack / count : 0,
-				lumaMean: count > 0 ? lumaSum / count : 0,
-				lumaMax,
-			};
+					nonBlackRatio: count > 0 ? nonBlack / count : 0,
+					lumaMean: count > 0 ? lumaSum / count : 0,
+					lumaMax,
+					rgbMean: {
+						r: count > 0 ? rSum / count : 0,
+						g: count > 0 ? gSum / count : 0,
+						b: count > 0 ? bSum / count : 0,
+					},
+					greenDominant,
+					greenDominantRatio: count > 0 ? greenDominant / count : 0,
+					magentaDominant,
+					magentaDominantRatio: count > 0 ? magentaDominant / count : 0,
+				};
 		}
 
-		if (typeof window.setR739Config1ValidationCameraState === 'function') {
-			window.setR739Config1ValidationCameraState({
-				position: { x: 0.020104, y: 0.288809, z: -1.862723 },
-				yaw: -0.7624,
-				pitch: -0.461,
-				fov: 55,
-				forward: { x: 0.61856, y: -0.444844, z: -0.647686 },
-			});
+		function applySmokeCameraState() {
+			if (typeof window.setR739Config1ValidationCameraState !== 'function') return false;
+			if (smokeConfig.cameraState && smokeConfig.cameraState.position) {
+				window.setR739Config1ValidationCameraState(smokeConfig.cameraState);
+				return true;
+			} else if (smokeConfig.ironDoorCamera) {
+				window.setR739Config1ValidationCameraState({
+					position: { x: -0.62, y: 1.12, z: -1.43 },
+					yaw: 1.5708,
+					pitch: 0.0,
+					fov: 55,
+					forward: { x: -1.0, y: 0.0, z: 0.0 },
+				});
+				return true;
+			} else {
+				window.setR739Config1ValidationCameraState({
+					position: { x: 0.020104, y: 0.288809, z: -1.862723 },
+					yaw: -0.7624,
+					pitch: -0.461,
+					fov: 55,
+					forward: { x: 0.61856, y: -0.444844, z: -0.647686 },
+				});
+				return true;
+			}
 		}
+
+		function reportRuntimeConfig() {
+			return typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+				? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+				: {};
+		}
+
+			function normalizeRuntimePlanarLightingMode(value) {
+				return 'same-scene';
+			}
+
+			function expectedRuntimePlanarLightingMode() {
+				if (smokeConfig.ironDoorRuntimePlanarLighting)
+					return normalizeRuntimePlanarLightingMode(smokeConfig.ironDoorRuntimePlanarLighting);
+				try {
+					const search = new URLSearchParams(window.location.search);
+				return normalizeRuntimePlanarLightingMode(
+					search.get('ironDoorRuntimePlanarLighting') ||
+					search.get('ironDoorPlanarLighting') ||
+					''
+				);
+				} catch (error) {
+					return 'same-scene';
+				}
+			}
+
+			function expectedAtlasMasterVariant() {
+				try {
+					const search = new URLSearchParams(window.location.search);
+					const normalized = String(search.get('xatlasMaster') || search.get('atlasMaster') || '').toLowerCase();
+					return normalized === 'raw' || normalized === 'oidn' ? normalized : '';
+				} catch (error) {
+					return '';
+				}
+			}
+
+			function atlasMasterSourceReady(config) {
+				const expectedVariant = expectedAtlasMasterVariant();
+				if (!expectedVariant) return true;
+				const xatlas = config && config.xatlasRuntime ? config.xatlasRuntime : {};
+				return xatlas.enabled === true &&
+					xatlas.ready === true &&
+					xatlas.lightmapPagesMode === true &&
+					xatlas.fullNorthWallActive === true &&
+					xatlas.fullWestWallActive === true &&
+					xatlas.fullWestWallDirectIncluded === true &&
+					xatlas.westThresholdTopActive === true &&
+					xatlas.westThresholdFrontActive === true &&
+					xatlas.masterWestVariant === expectedVariant &&
+					xatlas.masterWestThresholdTopVariant === expectedVariant &&
+					xatlas.masterWestThresholdFrontVariant === expectedVariant;
+			}
+
+			function retiredRuntimePlanarReady(config) {
+				const expectedLightingMode = expectedRuntimePlanarLightingMode();
+				return config.ironDoorRuntimePlanarReflectionMode === 1 &&
+					config.ironDoorRuntimePlanarReflectionReady === true &&
+					config.ironDoorRuntimePlanarReflectionLightingMode === expectedLightingMode &&
+						(expectedLightingMode !== 'same-scene' ||
+							(config.ironDoorRuntimePlanarReflectionSourceSceneKind === 'main_room_mirror_baked_source' &&
+								config.ironDoorRuntimePlanarReflectionSourceRenderer === 'baked-raster-main-room-mirror' &&
+								config.ironDoorRuntimePlanarReflectionSourceBounceMode === 'baked-raster-source-no-path-tracing' &&
+								config.ironDoorRuntimePlanarReflectionSourceRenderPath === 'threejs-canonical-scene-raster-camera' &&
+								config.ironDoorRuntimePlanarReflectionPathTraceSourcePerFrame === false &&
+								config.ironDoorRuntimePlanarReflectionSameSceneBakeSourceReady === true)) &&
+					config.ironDoorRuntimePlanarReflectionClipPlaneEnabled === true;
+			}
+
+		async function waitForIronDoorRuntimePlanarReady() {
+			if (!smokeConfig.ironDoorRuntimePlanar) return reportRuntimeConfig();
+			const started = performance.now();
+			while (performance.now() - started < smokeConfig.timeoutMs) {
+				const config = reportRuntimeConfig();
+				if (retiredRuntimePlanarReady(config))
+					return config;
+				await sleepInPage(250);
+			}
+			throw new Error(`iron door runtime planar ${expectedRuntimePlanarLightingMode()} source not ready`);
+			}
+
+		async function waitForAtlasMasterReady() {
+			const expectedVariant = expectedAtlasMasterVariant();
+			if (!expectedVariant) return reportRuntimeConfig();
+			const started = performance.now();
+			while (performance.now() - started < smokeConfig.timeoutMs) {
+				const config = reportRuntimeConfig();
+				if (atlasMasterSourceReady(config))
+					return config;
+				await sleepInPage(250);
+			}
+			throw new Error(`atlasMaster ${expectedVariant} source not ready`);
+		}
+
+		async function waitForSamplesAfterReset(reason) {
+			if (typeof resetR738MainAccumulation === 'function')
+				resetR738MainAccumulation();
+			if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+			if (typeof wakeRender === 'function') wakeRender(reason);
+			const sampleStarted = performance.now();
+			while (performance.now() - sampleStarted < smokeConfig.timeoutMs) {
+				const currentSamples = typeof sampleCounter === 'number' ? sampleCounter : 0;
+				if (currentSamples >= smokeConfig.minSamples) return currentSamples;
+				await sleepInPage(250);
+			}
+			return typeof sampleCounter === 'number' ? sampleCounter : 0;
+		}
+
+		applySmokeCameraState();
 		if (typeof window.setR7310C1NorthWallDiffuseRuntimeEnabled === 'function') {
 			window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
 		}
@@ -367,7 +593,9 @@ function pageSmokeExpression() {
 		if (typeof window.setR7310C1FullNorthWallXatlasRuntimeEnabled === 'function') {
 			window.setR7310C1FullNorthWallXatlasRuntimeEnabled(true);
 		}
-		if (typeof window.setSamplingPaused === 'function') window.setSamplingPaused(false);
+		if (smokeConfig.ironDoorBodyDebugMode && typeof window.setR7310C1IronDoorBodyDebugMode === 'function') {
+			window.setR7310C1IronDoorBodyDebugMode(smokeConfig.ironDoorBodyDebugMode);
+		}
 
 		const readyStarted = performance.now();
 		while (performance.now() - readyStarted < smokeConfig.timeoutMs) {
@@ -381,24 +609,99 @@ function pageSmokeExpression() {
 			await sleepInPage(250);
 		}
 
-		const sampleStarted = performance.now();
-		while (performance.now() - sampleStarted < smokeConfig.timeoutMs) {
-			const currentSamples = typeof sampleCounter === 'number' ? sampleCounter : 0;
-			if (currentSamples >= smokeConfig.minSamples) break;
+			applySmokeCameraState();
+			if (smokeConfig.ironDoorRuntimePlanar &&
+				typeof window.setR7310C1IronDoorRuntimePlanarReflectionMode === 'function')
+				window.setR7310C1IronDoorRuntimePlanarReflectionMode('runtime-planar');
+		if (Number.isFinite(smokeConfig.sppCap) && smokeConfig.sppCap > 0 && typeof window.setSppCap === 'function')
+			window.setSppCap(Math.max(1, Math.trunc(smokeConfig.sppCap)));
+		if (Number.isFinite(smokeConfig.sppCap) && smokeConfig.sppCap === 1 && typeof window.setFirstFrameRecoveryConfig === 'function')
+			window.setFirstFrameRecoveryConfig({ targetSamples: 1, movingTargetSamples: 1, clearWhileMoving: true });
+
+		await waitForIronDoorRuntimePlanarReady();
+		await waitForAtlasMasterReady();
+		if (smokeConfig.postLoadWaitMs > 0)
+			await sleepInPage(smokeConfig.postLoadWaitMs);
+		await waitForAtlasMasterReady();
+		if (smokeConfig.floorProbeMode) {
+			if (smokeConfig.floorProbeMode === 'live') {
+				if (typeof window.setR7310C1FloorDiffuseRuntimeEnabled === 'function')
+					window.setR7310C1FloorDiffuseRuntimeEnabled(false);
+			} else if (smokeConfig.floorProbeMode === 'bake') {
+				if (typeof window.setR7310C1FloorDiffuseRuntimeEnabled === 'function')
+					window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+			} else if (smokeConfig.floorProbeMode === 'bake-no-albedo') {
+				if (typeof window.setR7310C1FloorDiffuseRuntimeEnabled === 'function')
+					window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+				await sleepInPage(750);
+				try {
+					r7310C1XatlasRuntimeSeparatedAlbedo = false;
+					r7310C1XatlasRuntimeFullFloorSeparatedAlbedo = false;
+				} catch (error) {}
+				if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+					updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				if (typeof pathTracingUniforms !== 'undefined' &&
+					pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo)
+					pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo.value = 0.0;
+				if (typeof pathTracingUniforms !== 'undefined' &&
+					pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo)
+					pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo.value = 0.0;
+			} else if (smokeConfig.floorProbeMode === 'bake-force-albedo') {
+				if (typeof window.setR7310C1FloorDiffuseRuntimeEnabled === 'function')
+					window.setR7310C1FloorDiffuseRuntimeEnabled(true);
+				await sleepInPage(750);
+				try {
+					r7310C1XatlasRuntimeSeparatedAlbedo = true;
+					r7310C1XatlasRuntimeFullFloorSeparatedAlbedo = true;
+				} catch (error) {}
+				if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+					updateR7310C1FullRoomDiffuseRuntimeUniforms();
+				if (typeof pathTracingUniforms !== 'undefined' &&
+					pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo)
+					pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo.value = 1.0;
+				if (typeof pathTracingUniforms !== 'undefined' &&
+					pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo)
+					pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo.value = 1.0;
+			} else {
+				throw new Error('unknown floor probe mode: ' + smokeConfig.floorProbeMode);
+			}
+			if (typeof resetR738MainAccumulation === 'function')
+				resetR738MainAccumulation();
+			if (typeof wakeRender === 'function')
+				wakeRender('r7-3-10-floor-probe-' + smokeConfig.floorProbeMode);
 			await sleepInPage(250);
 		}
+		applySmokeCameraState();
+		if (smokeConfig.ironDoorRuntimePlanar &&
+			typeof window.setR7310C1IronDoorRuntimePlanarReflectionMode === 'function')
+			window.setR7310C1IronDoorRuntimePlanarReflectionMode('runtime-planar');
+		if (Number.isFinite(smokeConfig.sppCap) && smokeConfig.sppCap > 0 && typeof window.setSppCap === 'function')
+			window.setSppCap(Math.max(1, Math.trunc(smokeConfig.sppCap)));
+		await waitForSamplesAfterReset('r7-3-10-xatlas-smoke-final-camera');
 		await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
 		const canvas = typeof renderer !== 'undefined' && renderer && renderer.domElement ? renderer.domElement : document.querySelector('canvas');
 		if (!canvas) throw new Error('canvas not found');
+		if (smokeConfig.ironDoorRuntimePlanarSourceDisplay)
+		{
+			throw new Error('iron door runtime planar source display retired: retired_baking_mainline_keep_fix7_live');
+		}
+		else if (typeof renderer !== 'undefined' && renderer &&
+			typeof screenOutputScene !== 'undefined' && screenOutputScene &&
+			typeof orthoCamera !== 'undefined' && orthoCamera)
+		{
+			renderer.setRenderTarget(null);
+			renderer.render(screenOutputScene, orthoCamera);
+		}
 		const stats = canvasStats(canvas);
-		const config = typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
-			? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
-			: {};
+		const config = reportRuntimeConfig();
 		return {
 			documentReadyState: document.readyState,
 			canvas: stats,
 			sampleCounter: typeof sampleCounter === 'number' ? sampleCounter : null,
+			sppCap: typeof window.reportSppCap === 'function' ? window.reportSppCap() : null,
+			cameraPose: typeof window.reportR7310CameraPoseInfo === 'function' ? window.reportR7310CameraPoseInfo() : null,
+			requestedCameraState: smokeConfig.cameraState || null,
 			helpers: {
 				cameraSetter: typeof window.setR739Config1ValidationCameraState,
 				runtimeConfigReporter: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig,
@@ -410,10 +713,92 @@ function pageSmokeExpression() {
 				fullNorthWallXatlasPackageKey: config.fullNorthWallXatlasPackageKey,
 				fullNorthWallXatlasReady: config.fullNorthWallXatlasReady,
 				xatlasPackageUrl: config.xatlasPackageUrl,
+				xatlasRuntime: config.xatlasRuntime,
+				ironDoorBodyEnabled: config.ironDoorBodyEnabled,
+				ironDoorBodyReady: config.ironDoorBodyReady,
+				ironDoorBodyPending: config.ironDoorBodyPending,
+				ironDoorBodyPackageDir: config.ironDoorBodyPackageDir,
+				ironDoorBodyAtlasSizePx: config.ironDoorBodyAtlasSizePx,
+				ironDoorBodyError: config.ironDoorBodyError,
+				ironDoorBodyDebugMode: config.ironDoorBodyDebugMode,
+				ironDoorBodyUniformMode: config.ironDoorBodyUniformMode,
+				ironDoorBodyUniformDebugMode: config.ironDoorBodyUniformDebugMode,
+				ironDoorBodyUniformReady: config.ironDoorBodyUniformReady,
+				ironDoorRuntimePlanarReflectionMode: config.ironDoorRuntimePlanarReflectionMode,
+				ironDoorRuntimePlanarReflectionReady: config.ironDoorRuntimePlanarReflectionReady,
+				ironDoorRuntimePlanarReflectionAvailable: config.ironDoorRuntimePlanarReflectionAvailable,
+				ironDoorRuntimePlanarReflectionError: config.ironDoorRuntimePlanarReflectionError,
+				ironDoorRuntimePlanarReflectionFallback: config.ironDoorRuntimePlanarReflectionFallback,
+				ironDoorRuntimePlanarReflectionReferenceMode: config.ironDoorRuntimePlanarReflectionReferenceMode,
+				ironDoorRuntimePlanarReflectionTextureSize: config.ironDoorRuntimePlanarReflectionTextureSize,
+				ironDoorRuntimePlanarReflectionCameraState: config.ironDoorRuntimePlanarReflectionCameraState,
+				ironDoorRuntimePlanarReflectionTextureMatrixReady: config.ironDoorRuntimePlanarReflectionTextureMatrixReady,
+				ironDoorRuntimePlanarReflectionClipPlaneEnabled: config.ironDoorRuntimePlanarReflectionClipPlaneEnabled,
+				ironDoorRuntimePlanarReflectionClipPlane: config.ironDoorRuntimePlanarReflectionClipPlane,
+				ironDoorRuntimePlanarReflectionSceneBoxCount: config.ironDoorRuntimePlanarReflectionSceneBoxCount,
+				ironDoorRuntimePlanarReflectionVisibleBoxCount: config.ironDoorRuntimePlanarReflectionVisibleBoxCount,
+				ironDoorRuntimePlanarReflectionSkippedFixtureBoxCount: config.ironDoorRuntimePlanarReflectionSkippedFixtureBoxCount,
+					ironDoorRuntimePlanarReflectionLightingMode: config.ironDoorRuntimePlanarReflectionLightingMode,
+						ironDoorRuntimePlanarReflectionSourceDebugMode: config.ironDoorRuntimePlanarReflectionSourceDebugMode,
+						ironDoorRuntimePlanarReflectionSourceGeometryMode: config.ironDoorRuntimePlanarReflectionSourceGeometryMode,
+						ironDoorRuntimePlanarReflectionClipBias: config.ironDoorRuntimePlanarReflectionClipBias,
+						ironDoorRuntimePlanarReflectionWallAlbedo: config.ironDoorRuntimePlanarReflectionWallAlbedo,
+						ironDoorRuntimePlanarReflectionBakeLitReady: config.ironDoorRuntimePlanarReflectionBakeLitReady,
+					ironDoorRuntimePlanarReflectionFullRoomBakeReady: config.ironDoorRuntimePlanarReflectionFullRoomBakeReady,
+					ironDoorRuntimePlanarReflectionSameSceneBakeSourceReady: config.ironDoorRuntimePlanarReflectionSameSceneBakeSourceReady,
+					ironDoorRuntimePlanarReflectionXatlasSeparatedAlbedo: config.ironDoorRuntimePlanarReflectionXatlasSeparatedAlbedo,
+					ironDoorRuntimePlanarReflectionRoughnessPrefilter: config.ironDoorRuntimePlanarReflectionRoughnessPrefilter,
+					ironDoorRuntimePlanarReflectionDirectLightDeduplication: config.ironDoorRuntimePlanarReflectionDirectLightDeduplication,
+					ironDoorRuntimePlanarReflectionSpecularBrdf: config.ironDoorRuntimePlanarReflectionSpecularBrdf,
+				ironDoorRuntimePlanarReflectionManualLightDebug: config.ironDoorRuntimePlanarReflectionManualLightDebug,
+				ironDoorRuntimePlanarReflectionUnmappedFallbackMode: config.ironDoorRuntimePlanarReflectionUnmappedFallbackMode,
+				ironDoorRuntimePlanarReflectionDirectLightMode: config.ironDoorRuntimePlanarReflectionDirectLightMode,
+				ironDoorRuntimePlanarReflectionIndirectLightMode: config.ironDoorRuntimePlanarReflectionIndirectLightMode,
+					ironDoorRuntimePlanarReflectionCeilingLampEmissionMode: config.ironDoorRuntimePlanarReflectionCeilingLampEmissionMode,
+					ironDoorRuntimePlanarReflectionSourceSceneKind: config.ironDoorRuntimePlanarReflectionSourceSceneKind,
+					ironDoorRuntimePlanarReflectionSourceRenderer: config.ironDoorRuntimePlanarReflectionSourceRenderer,
+					ironDoorRuntimePlanarReflectionSourceBounceMode: config.ironDoorRuntimePlanarReflectionSourceBounceMode,
+					ironDoorRuntimePlanarReflectionSourceRenderPath: config.ironDoorRuntimePlanarReflectionSourceRenderPath,
+					ironDoorRuntimePlanarReflectionPathTraceSourcePerFrame: config.ironDoorRuntimePlanarReflectionPathTraceSourcePerFrame,
+					ironDoorRuntimePlanarReflectionSourceUpdatePolicy: config.ironDoorRuntimePlanarReflectionSourceUpdatePolicy,
+					ironDoorRuntimePlanarReflectionSourceDirty: config.ironDoorRuntimePlanarReflectionSourceDirty,
+					ironDoorRuntimePlanarReflectionSourceRenderCount: config.ironDoorRuntimePlanarReflectionSourceRenderCount,
+					ironDoorRuntimePlanarReflectionSourceRenderSkipCount: config.ironDoorRuntimePlanarReflectionSourceRenderSkipCount,
+					ironDoorRuntimePlanarReflectionSourceSampleCounter: config.ironDoorRuntimePlanarReflectionSourceSampleCounter,
+					ironDoorRuntimePlanarReflectionVisualParityStatus: config.ironDoorRuntimePlanarReflectionVisualParityStatus,
+					ironDoorRuntimePlanarReflectionBakeMappedBoxCount: config.ironDoorRuntimePlanarReflectionBakeMappedBoxCount,
+					ironDoorRuntimePlanarReflectionBakeUnmappedBoxCount: config.ironDoorRuntimePlanarReflectionBakeUnmappedBoxCount,
+					ironDoorRuntimePlanarReflectionVisibleUnmappedBoxes: config.ironDoorRuntimePlanarReflectionVisibleUnmappedBoxes,
+					ironDoorRuntimePlanarReflectionVisibleSourceBoxes: config.ironDoorRuntimePlanarReflectionVisibleSourceBoxes,
+					ironDoorRuntimePlanarReflectionUniformMode: config.ironDoorRuntimePlanarReflectionUniformMode,
+				ironDoorRuntimePlanarReflectionUniformReady: config.ironDoorRuntimePlanarReflectionUniformReady,
+				ironDoorPlanarReflectionMode: config.ironDoorPlanarReflectionMode,
+				ironDoorPlanarReflectionReady: config.ironDoorPlanarReflectionReady,
+				ironDoorPlanarReflectionPackageDir: config.ironDoorPlanarReflectionPackageDir,
+				ironDoorPlanarReflectionValidationStatus: config.ironDoorPlanarReflectionValidationStatus,
+				ironDoorPlanarReflectionError: config.ironDoorPlanarReflectionError,
+				ironDoorReflectionCurrentMode: config.ironDoorReflectionCurrentMode,
+				renderFeedbackLoopAudit: config.renderFeedbackLoopAudit,
+				renderFeedbackLoopWriteGuard: config.renderFeedbackLoopWriteGuard,
 			},
 			location: window.location.href,
+			floorProbe: {
+				mode: smokeConfig.floorProbeMode || '',
+				uniformSeparatedAlbedo: typeof pathTracingUniforms !== 'undefined' && pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo
+					? pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo.value
+					: null,
+				uniformFullFloorMode: typeof pathTracingUniforms !== 'undefined' && pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode
+					? pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode.value
+					: null,
+				uniformFullFloorDirectIncluded: typeof pathTracingUniforms !== 'undefined' && pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorDirectIncluded
+					? pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorDirectIncluded.value
+					: null,
+				uniformFullFloorSeparatedAlbedo: typeof pathTracingUniforms !== 'undefined' && pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo
+					? pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo.value
+					: null
+			}
 		};
-	}})(${JSON.stringify({ minSamples, timeoutMs })})`;
+	}})(${JSON.stringify({ minSamples, sppCap, timeoutMs, postLoadWaitMs, ironDoorCamera, ironDoorRuntimePlanar, ironDoorRuntimePlanarLighting, ironDoorRuntimePlanarSourceDisplay, ironDoorBodyDebugMode, cameraState, floorProbeMode })})`;
 }
 
 function eventText(event) {
@@ -450,10 +835,14 @@ function classifyEvents(events, chromeStderr) {
 	].join('\n').toLowerCase();
 	const programInvalidMatches = allText.match(/program invalid/g) || [];
 	const shaderErrorMatches = allText.match(/shader error|compile failed|link failed|validateprogram|three\.webglprogram/g) || [];
+	const contextLostMatches = allText.match(/webglcontextlost|context lost|contextlost/g) || [];
+	const resource404Matches = allText.match(/\b404\b|not found/g) || [];
 	return {
 		diagnosticEvents,
 		programInvalidCount: programInvalidMatches.length,
 		shaderErrorCount: shaderErrorMatches.length,
+		contextLostCount: contextLostMatches.length,
+		resource404Count: resource404Matches.length,
 	};
 }
 
@@ -476,17 +865,44 @@ async function main() {
 		await waitForExpression(cdp, `typeof renderer !== 'undefined' && renderer && renderer.domElement && typeof pathTracingUniforms !== 'undefined'`, timeoutMs);
 		const pageSmoke = await evaluate(cdp, pageSmokeExpression(), { awaitPromise: true, timeoutMs: timeoutMs + 30000 });
 		await sleep(1000);
+		const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, 30000);
+		fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));
 		const classified = classifyEvents(cdp.events, chrome.stderrText);
 		const nonBlack = pageSmoke.canvas.nonBlackRatio > 0.01 && pageSmoke.canvas.lumaMax > 2;
+		const expectedLightingMode = expectedRuntimePlanarLightingMode();
+		const runtimePlanarSourceModeReady = !ironDoorRuntimePlanar ||
+				(pageSmoke.config.ironDoorRuntimePlanarReflectionReady === true &&
+					pageSmoke.config.ironDoorRuntimePlanarReflectionLightingMode === expectedLightingMode &&
+						(expectedLightingMode !== 'same-scene' ||
+								(pageSmoke.config.ironDoorRuntimePlanarReflectionSourceSceneKind === 'main_room_mirror_baked_source' &&
+								pageSmoke.config.ironDoorRuntimePlanarReflectionSourceRenderer === 'baked-raster-main-room-mirror' &&
+								pageSmoke.config.ironDoorRuntimePlanarReflectionSourceBounceMode === 'baked-raster-source-no-path-tracing' &&
+								pageSmoke.config.ironDoorRuntimePlanarReflectionSourceRenderPath === 'threejs-canonical-scene-raster-camera' &&
+								pageSmoke.config.ironDoorRuntimePlanarReflectionPathTraceSourcePerFrame === false &&
+								pageSmoke.config.ironDoorRuntimePlanarReflectionSameSceneBakeSourceReady === true)));
+		const runtimePlanarClipPlaneEnabled = !ironDoorRuntimePlanar ||
+			pageSmoke.config.ironDoorRuntimePlanarReflectionClipPlaneEnabled === true;
+		const atlasMasterReady = atlasMasterSourceReady(pageSmoke.config);
+		const cameraStateMatched = cameraStateMatches(
+			pageSmoke.cameraPose ? pageSmoke.cameraPose.cameraState : null,
+			cameraState
+		);
 		const status = pageSmoke.documentReadyState === 'complete' &&
 			nonBlack &&
 			classified.programInvalidCount === 0 &&
-			classified.shaderErrorCount === 0
+			classified.shaderErrorCount === 0 &&
+			classified.contextLostCount === 0 &&
+			classified.resource404Count === 0 &&
+			runtimePlanarSourceModeReady &&
+			runtimePlanarClipPlaneEnabled &&
+			atlasMasterReady &&
+			cameraStateMatched
 			? 'pass'
 			: 'fail';
 		report = {
 			status,
 			pageUrl,
+			screenshotPath,
 			chrome: {
 				path: chromePath,
 				angle: chromeAngle,
@@ -500,6 +916,14 @@ async function main() {
 				nonBlack,
 				programInvalidCount: classified.programInvalidCount,
 				shaderErrorCount: classified.shaderErrorCount,
+				contextLostCount: classified.contextLostCount,
+					resource404Count: classified.resource404Count,
+					runtimePlanarSourceModeReady,
+					expectedRuntimePlanarLightingMode: expectedLightingMode,
+					runtimePlanarClipPlaneEnabled,
+					atlasMasterSourceReady: atlasMasterReady,
+					expectedAtlasMasterVariant: expectedAtlasMasterVariant(),
+				cameraStateMatched,
 				diagnosticEventCount: classified.diagnosticEvents.length,
 			},
 			diagnosticEvents: classified.diagnosticEvents.slice(-80),

@@ -11,7 +11,7 @@
 //   {
 //     "pageUrl": "http://127.0.0.1:9004/Home_Studio.html",   // optional, default 9004
 //     "package": "d800-north-denoise-c",                      // nonSquarePackage key ('' = default)
-//     "outputDir": ".omc/r7-3-10-global-seam/<run>",
+//     "outputDir": "assets/runtime/r7-3-10/work/r7-3-10-global-seam/<run>",
 //     "minSamples": 200,
 //     "sampleTimeoutMs": 120000,
 //     "shots": [
@@ -250,6 +250,17 @@ function shotExpression(shot, minS, sampleTimeout) {
 		set('setR7310C1SouthWallAcShadowRuntimeEnabled', def('acShadow', false));
 		set('setR7310C1IronDoorRevealRuntimeEnabled', def('ironDoorReveal', true));
 		set('setR7310C1UseNonSquareAtlas', def('nonSquare', true));
+		// Diagnostic-only isolation: keep the baked west wall while allowing the
+		// dedicated switch page to fall through to its LIVE material path.
+		if ('westWallSwitch' in f && typeof r7310C1SetXatlasParamWestWallSwitchEnabled === 'function') {
+			const switchEnabled = !!f.westWallSwitch;
+			r7310C1XatlasRuntimeWestWallSwitchActive = switchEnabled;
+			r7310C1XatlasRuntimeWestWallSwitchDirectIncluded = switchEnabled && !!r7310C1XatlasRuntimeWestWallSwitchRawDirectIncluded;
+			r7310C1SetXatlasParamWestWallSwitchEnabled(switchEnabled);
+			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+		}
 		let forcedXatlasMasterLoad = null;
 		if ((shot.forceXatlasMasterVariant === 'raw' || shot.forceXatlasMasterVariant === 'oidn') &&
 			typeof window.loadR7310C1XatlasMasterAll === 'function') {

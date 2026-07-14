@@ -41,7 +41,7 @@ const capture = bodyOf(
 	'window.captureR738C1DirectSurfaceTexelPatch'
 );
 assert.match(capture, /shouldUseR7310BakeOnlyNoBorrowShader\(options\)/);
-assert.match(capture, /createR7310BakeOnlyNoBorrowMaterial\(\)/);
+assert.match(capture, /createR7310BakeCaptureMaterial\(useBakeOnlyNoBorrowShader\)/);
 assert.match(capture, /pathTracingMesh\.material\s*=\s*bakeOnlyNoBorrowMaterial/);
 assert.match(capture, /pathTracingMesh\.material\s*=\s*savedPathTracingMeshMaterial/);
 
@@ -116,6 +116,7 @@ const retiredDedicatedSamplers = [
 	'tR7310C1SouthWindowBottomRevealShadowTexture',
 	'tR7310C1SouthWindowTopRevealShadowTexture',
 	'tR7310C1IronDoorRevealTexture',
+	'tR7310C1IronDoorReflectionProbeAtlas',
 	'tR739C1ReflectionSurfaceCacheTexture',
 ];
 for (const samplerName of retiredDedicatedSamplers)

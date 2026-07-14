@@ -40,8 +40,8 @@ assert.match(fullRoomFallbackGuard, /r7310C1FullRoomDiffuseShortCircuit/);
 
 assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1SeColumnWestShadowTexture/);
 assert.match(homeStudio, /uR7310C1SeColumnWestShadowMode/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
-assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 30\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*30/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 
 assert.match(runner, /--r7310-se-column-west-shadow-visual-test/);

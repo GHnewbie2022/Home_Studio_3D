@@ -25,8 +25,8 @@ assert.match(homeStudio, /uR738C1BakePastePreviewReady/);
 assert.match(homeStudio, /uR738C1BakeDiffuseOnlyMode/);
 assert.match(homeStudio, /uR738C1BakePatchWorldBounds/);
 assert.match(homeStudio, /tR738C1BakeAtlasTexture/);
-assert.match(homeStudio, /uFloorRoughness = \{ value: 1\.0 \}/);
-assert.match(homeStudio, /createS\('slider-floor-roughness', '地板粗糙度', 0\.0, 1\.0, 0\.05, 1\.0/);
+assert.match(homeStudio, /uFloorRoughness = \{ value: 0\.1 \}/);
+assert.match(homeStudio, /createS\('slider-floor-roughness', '地板粗糙度', 0\.0, 1\.0, 0\.05, 0\.1/);
 assert.match(homeStudio, /window\.reportFloorRoughness/);
 assert.match(homeStudio, /window\.setFloorRoughness/);
 
@@ -61,6 +61,8 @@ assert.match(css, /\.snapshot-action-roughness input\[type=number\] \{[\s\S]*wid
 assert.match(initCommon, /R738_C1_BAKE_ACCEPTED_PACKAGE_URL/);
 assert.match(initCommon, /loadR738C1BakePastePreviewPackage/);
 assert.match(initCommon, /updateR738C1BakePastePreviewUniforms/);
+assert.match(initCommon, /let r738C1BakePastePreviewEnabled = false;/);
+assert.match(initCommon, /if \(r738C1BakePastePreviewEnabled && typeof loadR738C1BakePastePreviewPackage === 'function'\)\s*loadR738C1BakePastePreviewPackage\(\)\.catch\(function\(\) \{\}\);/);
 assert.match(initCommon, /diffuseOnly:\s*true/);
 assert.match(initCommon, /function scheduleHomeStudioAnimationFrame/);
 assert.match(initCommon, /homeStudioAnimationSleeping/);
@@ -82,6 +84,8 @@ assert.match(runner, /--floor-roughness-test/);
 assert.match(runner, /reportR738C1BakePastePreviewConfig/);
 assert.match(runner, /reportHomeStudioHibernationLoopState/);
 assert.match(runner, /reportFloorRoughness/);
+assert.match(runner, /floorRoughnessReport\.initialReport\.value === 0\.1/);
+assert.match(runner, /window\.setFloorRoughness\(0\.1\)/);
 assert.match(runner, /rangeClientWidth >= 120/);
 assert.match(runner, /KeyboardEvent\('keydown'/);
 assert.match(runner, /idleKeyReport\.currentSamples === beforeReport\.currentSamples/);

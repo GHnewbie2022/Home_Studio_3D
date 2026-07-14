@@ -1,0 +1,53 @@
+{
+  "schema": "r7-3-10-xatlas-runtime-package-pointer-v1",
+  "packageStatus": "accepted",
+  "runtimeScope": "c1_xatlas_west_wall_switch_runtime",
+  "runtimeArchitecture": "multi_page_west_wall_switch_lightmap",
+  "surfaceName": "west_wall_switch",
+  "atlasGroup": "west_wall_switch",
+  "configId": 1,
+  "targetId": 1400,
+  "targetAtlasWidth": 131,
+  "targetAtlasHeight": 153,
+  "targetAtlasResolution": 153,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "nonSquareAtlas": true,
+  "packageDir": "assets/runtime/r7-3-10/current-room/west-wall-switch/package",
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
+  },
+  "chartEdgeDilation": {
+    "enabled": true,
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 4,
+    "repairedVisibleExactBlackTexels": 144,
+    "unrepairedVisibleExactBlackTexels": 11,
+    "alphaOneExactBlackTexels": 0
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "2ff94c3706950993bfa5d2128de7685c23a47b33138daacb130717b2f8bfb51b",
+    "texelMetadataPatch0Sha256": "cddaab7632da718b4e0e8dbc82d8d1856ed7dac9061382cf82aab6b20962d765"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
+    "contextLostCount": 0,
+    "completedTiles": 9,
+    "tileCount": 9,
+    "minCompletedSamples": 1000
+  },
+  "note": "West-wall physical switch plate and button visible faces use one dedicated non-square full-radiance XATLAS page; the button contacts the plate without an air gap."
+}

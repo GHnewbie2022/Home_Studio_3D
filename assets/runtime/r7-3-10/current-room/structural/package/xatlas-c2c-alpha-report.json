@@ -1,0 +1,227 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": null,
+  "sourceMaskRetiredAfterValidation": true,
+  "atlas": {
+    "width": 1526,
+    "height": 3779
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask",
+    "preserveVisibleExactBlack": false
+  },
+  "counts": {
+    "totalTexels": 5766754,
+    "alphaOneTexels": 4237362,
+    "alphaZeroTexels": 1529392,
+    "metadataInvalidTexels": 1529392,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 0,
+    "repairedVisibleExactBlackTexels": 0,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 0,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {},
+    "maxDistanceTexels": 0
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 576299,
+      "alphaOneTexels": 576299,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4426274856770028
+    },
+    "1": {
+      "texels": 576296,
+      "alphaOneTexels": 576296,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.3140565790139992
+    },
+    "2": {
+      "texels": 243649,
+      "alphaOneTexels": 243649,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.548887783293397
+    },
+    "3": {
+      "texels": 243584,
+      "alphaOneTexels": 243584,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4738625551663754
+    },
+    "4": {
+      "texels": 546661,
+      "alphaOneTexels": 546661,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4285445787247041
+    },
+    "5": {
+      "texels": 546648,
+      "alphaOneTexels": 546648,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.3203259842666438
+    },
+    "6": {
+      "texels": 85584,
+      "alphaOneTexels": 85584,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4714504544395927
+    },
+    "7": {
+      "texels": 85573,
+      "alphaOneTexels": 85573,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5785972597796865
+    },
+    "8": {
+      "texels": 145265,
+      "alphaOneTexels": 145265,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.41030030980917676
+    },
+    "9": {
+      "texels": 143556,
+      "alphaOneTexels": 143556,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.31314865352720606
+    },
+    "10": {
+      "texels": 90687,
+      "alphaOneTexels": 90687,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6011701863377594
+    },
+    "11": {
+      "texels": 90687,
+      "alphaOneTexels": 90687,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5329739568165118
+    },
+    "12": {
+      "texels": 157617,
+      "alphaOneTexels": 157617,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5762593280166953
+    },
+    "13": {
+      "texels": 157552,
+      "alphaOneTexels": 157552,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5693564390235886
+    },
+    "14": {
+      "texels": 157311,
+      "alphaOneTexels": 157311,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.35448636948981405
+    },
+    "15": {
+      "texels": 156857,
+      "alphaOneTexels": 156857,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.11759545721167858
+    },
+    "16": {
+      "texels": 67426,
+      "alphaOneTexels": 67426,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7083570690833729
+    },
+    "17": {
+      "texels": 67424,
+      "alphaOneTexels": 67424,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5644127927612193
+    },
+    "18": {
+      "texels": 49344,
+      "alphaOneTexels": 49344,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6909929300466919
+    },
+    "19": {
+      "texels": 49342,
+      "alphaOneTexels": 49342,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6277468959226775
+    },
+    "-1": {
+      "texels": 1529392,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 1529392,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

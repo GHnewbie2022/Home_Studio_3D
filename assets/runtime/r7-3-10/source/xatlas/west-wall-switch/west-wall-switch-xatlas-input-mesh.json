@@ -1,0 +1,508 @@
+{
+  "positions": [
+    [
+      -1.9,
+      1.148,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.148,
+      0.031
+    ],
+    [
+      -1.9,
+      1.218,
+      0.031
+    ],
+    [
+      -1.9,
+      1.218,
+      -0.089
+    ],
+    [
+      -1.91,
+      1.218,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.218,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.218,
+      0.031
+    ],
+    [
+      -1.91,
+      1.218,
+      0.031
+    ],
+    [
+      -1.91,
+      1.148,
+      0.031
+    ],
+    [
+      -1.9,
+      1.148,
+      0.031
+    ],
+    [
+      -1.9,
+      1.148,
+      -0.089
+    ],
+    [
+      -1.91,
+      1.148,
+      -0.089
+    ],
+    [
+      -1.91,
+      1.148,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.148,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.218,
+      -0.089
+    ],
+    [
+      -1.91,
+      1.218,
+      -0.089
+    ],
+    [
+      -1.9,
+      1.148,
+      0.031
+    ],
+    [
+      -1.91,
+      1.148,
+      0.031
+    ],
+    [
+      -1.91,
+      1.218,
+      0.031
+    ],
+    [
+      -1.9,
+      1.218,
+      0.031
+    ],
+    [
+      -1.898,
+      1.161,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.161,
+      0.018
+    ],
+    [
+      -1.898,
+      1.205,
+      0.018
+    ],
+    [
+      -1.898,
+      1.205,
+      -0.076
+    ],
+    [
+      -1.9,
+      1.205,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.205,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.205,
+      0.018
+    ],
+    [
+      -1.9,
+      1.205,
+      0.018
+    ],
+    [
+      -1.9,
+      1.161,
+      0.018
+    ],
+    [
+      -1.898,
+      1.161,
+      0.018
+    ],
+    [
+      -1.898,
+      1.161,
+      -0.076
+    ],
+    [
+      -1.9,
+      1.161,
+      -0.076
+    ],
+    [
+      -1.9,
+      1.161,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.161,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.205,
+      -0.076
+    ],
+    [
+      -1.9,
+      1.205,
+      -0.076
+    ],
+    [
+      -1.898,
+      1.161,
+      0.018
+    ],
+    [
+      -1.9,
+      1.161,
+      0.018
+    ],
+    [
+      -1.9,
+      1.205,
+      0.018
+    ],
+    [
+      -1.898,
+      1.205,
+      0.018
+    ]
+  ],
+  "indices": [
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      2,
+      3
+    ],
+    [
+      4,
+      5,
+      6
+    ],
+    [
+      4,
+      6,
+      7
+    ],
+    [
+      8,
+      9,
+      10
+    ],
+    [
+      8,
+      10,
+      11
+    ],
+    [
+      12,
+      13,
+      14
+    ],
+    [
+      12,
+      14,
+      15
+    ],
+    [
+      16,
+      17,
+      18
+    ],
+    [
+      16,
+      18,
+      19
+    ],
+    [
+      20,
+      21,
+      22
+    ],
+    [
+      20,
+      22,
+      23
+    ],
+    [
+      24,
+      25,
+      26
+    ],
+    [
+      24,
+      26,
+      27
+    ],
+    [
+      28,
+      29,
+      30
+    ],
+    [
+      28,
+      30,
+      31
+    ],
+    [
+      32,
+      33,
+      34
+    ],
+    [
+      32,
+      34,
+      35
+    ],
+    [
+      36,
+      37,
+      38
+    ],
+    [
+      36,
+      38,
+      39
+    ]
+  ],
+  "triangleMetadata": [
+    {
+      "triangleId": 0,
+      "surfaceHint": "west_wall_switch_plate",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate__full",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 1,
+      "surfaceHint": "west_wall_switch_plate",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate__full",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 2,
+      "surfaceHint": "west_wall_switch_plate_top",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_top__full",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 3,
+      "surfaceHint": "west_wall_switch_plate_top",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_top__full",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 4,
+      "surfaceHint": "west_wall_switch_plate_bottom",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_bottom__full",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 5,
+      "surfaceHint": "west_wall_switch_plate_bottom",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_bottom__full",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 6,
+      "surfaceHint": "west_wall_switch_plate_north",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_north__full",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 7,
+      "surfaceHint": "west_wall_switch_plate_north",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_north__full",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 8,
+      "surfaceHint": "west_wall_switch_plate_south",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_south__full",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 9,
+      "surfaceHint": "west_wall_switch_plate_south",
+      "piece": "full",
+      "pieceId": "west_wall_switch_plate_south__full",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "sourceBoxIndex": 84,
+      "materialType": 1
+    },
+    {
+      "triangleId": 10,
+      "surfaceHint": "west_wall_switch_button",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button__full",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 11,
+      "surfaceHint": "west_wall_switch_button",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button__full",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 12,
+      "surfaceHint": "west_wall_switch_button_top",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_top__full",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 13,
+      "surfaceHint": "west_wall_switch_button_top",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_top__full",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 14,
+      "surfaceHint": "west_wall_switch_button_bottom",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_bottom__full",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 15,
+      "surfaceHint": "west_wall_switch_button_bottom",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_bottom__full",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 16,
+      "surfaceHint": "west_wall_switch_button_north",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_north__full",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 17,
+      "surfaceHint": "west_wall_switch_button_north",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_north__full",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 18,
+      "surfaceHint": "west_wall_switch_button_south",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_south__full",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    },
+    {
+      "triangleId": 19,
+      "surfaceHint": "west_wall_switch_button_south",
+      "piece": "full",
+      "pieceId": "west_wall_switch_button_south__full",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "sourceBoxIndex": 85,
+      "materialType": 1
+    }
+  ]
+}

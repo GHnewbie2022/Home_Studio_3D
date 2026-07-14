@@ -3,7 +3,7 @@
   "runtimeScope": "c1_xatlas_west_threshold_front_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "master_subrect_west_threshold_front",
-  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260622-183234",
+  "packageDir": "assets/runtime/r7-3-10/current-room/west-threshold-front/package",
   "identity": {
     "surfaceName": "west_threshold_front",
     "targetId": 1024,
@@ -41,7 +41,8 @@
   "uploadRowFlip": false,
   "phase2": {
     "kind": "raw",
-    "prepareDir": ".omc/r7-3-10-west-threshold-front-xatlas/20260622-144703",
+    "prepareDir": null,
+    "sourcePrepareRetiredAfterValidation": true,
     "westThresholdFrontFullRadianceBake": true,
     "defaultRuntimePointerChanged": false,
     "runtimePackageSelection": "explicit master sub-rect"

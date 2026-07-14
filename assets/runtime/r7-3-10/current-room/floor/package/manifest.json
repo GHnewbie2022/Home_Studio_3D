@@ -1,0 +1,40 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "config": 1,
+  "northeastFurnitureMode": "bed",
+  "batch": "floor_open",
+  "targetId": 1001,
+  "surfaceName": "floor_open",
+  "worldBounds": {
+    "xMin": -2.11,
+    "xMax": 2.11,
+    "zMin": -2.074,
+    "zMax": 3.256,
+    "y": 0.01
+  },
+  "createdAt": "2026-07-03T19:38:04.258Z",
+  "branch": "codex/r7-3-10-full-bake-remaining-surfaces",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 512,
+  "targetAtlasWidth": 3376,
+  "targetAtlasHeight": 4264,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "fullRadianceProbe": true,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": true,
+  "upscaled": false,
+  "packageDir": "assets/runtime/r7-3-10/current-room/floor/package",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "config": 1,
+  "batch": "iron_door_body_diffuse_light_live_specular_probe",
+  "surfaceTargetCount": 1,
+  "coveredSurfaceNames": [
+    "c1_iron_door_body_diffuse_light_live_specular_probe"
+  ],
+  "missingSurfaceNames": [],
+  "validTexelRatioBySurface": {
+    "c1_iron_door_body_diffuse_light_live_specular_probe": 1
+  },
+  "dilationAppliedBySurface": {
+    "c1_iron_door_body_diffuse_light_live_specular_probe": false
+  },
+  "atlasPathBySurface": {
+    "c1_iron_door_body_diffuse_light_live_specular_probe": "atlas-patch-000-rgba-f32.bin"
+  },
+  "allMajorSurfacesCovered": false,
+  "allStaticVisibleSurfacesAccountedFor": false,
+  "allStaticVisibleSurfacesCovered": false,
+  "finalC1Coverage": false
+}

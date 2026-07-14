@@ -91,7 +91,7 @@ for (const surface of surfaces) {
   assert.match(initCommon, new RegExp(`R7310_C1_${surface.constName}_SURFACE_NAME\\s*=\\s*'${surface.surfaceName}'`));
   assert.match(initCommon, new RegExp(`R7310_C1_${surface.constName}_RUNTIME_PACKAGE_URL`));
   assert.match(initCommon, new RegExp(`loadR7310C1${surface.camel}RuntimePackage`));
-  assert.match(shader, new RegExp(`uniform sampler2D tR7310C1${surface.camel}Texture`));
+  assert.doesNotMatch(shader, new RegExp(`uniform sampler2D tR7310C1${surface.camel}Texture`));
   assert.match(shader, new RegExp(`uniform float uR7310C1${surface.camel}Mode`));
   assert.match(shader, new RegExp(`uniform float uR7310C1${surface.camel}Ready`));
   assert.match(shader, new RegExp(`uniform float uR7310C1${surface.camel}Resolution`));
@@ -105,7 +105,7 @@ for (const surface of surfaces) {
   assert.match(shader, new RegExp(`r7310${surface.camel}HybridFirstHit`));
   assert.match(shader, new RegExp(`!r7310${surface.camel}HybridFirstHit`));
   assert.match(shader, new RegExp(`r7310C1${surface.camel}IndirectBakeFirstHit\\(bounces, diffuseCount\\)`));
-  assert.match(homeStudio, new RegExp(`tR7310C1${surface.camel}Texture`));
+  assert.doesNotMatch(homeStudio, new RegExp(`tR7310C1${surface.camel}Texture`));
   assert.match(runner, new RegExp(surface.cliName));
   assert.match(runner, new RegExp(surface.surfaceName));
   assert.match(runner, new RegExp(surface.packageName));
@@ -125,8 +125,8 @@ for (const surface of surfaces) {
   assert.equal(batch.uniformContractAlias, `tR7310C1${surface.camel}Texture`);
 }
 
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
-assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 30\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*30/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 assert.match(homeStudio, /uR7310C1RuntimeAtlasGridColumns = \{ value: 6\.0 \}/);
 assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS\s*=\s*6/);

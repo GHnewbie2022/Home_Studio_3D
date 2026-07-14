@@ -1,0 +1,289 @@
+{
+  "version": "r7-3-10-iron-door-planar-reflection-runtime-package-v1",
+  "packageStatus": "planar_reflection_candidate",
+  "validationStatus": "failed_candidate",
+  "target": "iron_door_body",
+  "targetId": 230002,
+  "surfaceName": "c1_iron_door_body_planar_reflection_candidate",
+  "runtimeScope": "c1_iron_door_body_planar_reflection_candidate",
+  "runtimeTexture": "tR7310C1FullRoomDiffuseAtlasTexture",
+  "runtimeAtlasSlot": 24,
+  "captureKind": "mirrored_camera_planar_capture",
+  "projection": "single_receiver_plane",
+  "selfCaptureExcluded": true,
+  "captureClipPlane": {
+    "enabled": true,
+    "plane": {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "w": -1.96
+    },
+    "space": "world",
+    "purpose": "start_mirrored_camera_rays_on_room_side_of_receiver_plane",
+    "failureImpact": "clip_plane_present_but_reflection_content_mismatch"
+  },
+  "receiverMask": {
+    "kind": "main_flat_door_plate_only",
+    "debugMode": "hybrid-mask",
+    "shaderFunction": "r7310C1IronDoorMainFlatPlateMask"
+  },
+  "replacementScope": {
+    "planarCandidateRegions": [
+      "full_flat_door_photo_plane"
+    ],
+    "liveFallbackRegions": [],
+    "farFieldProbeRole": "optional_low_frequency_only"
+  },
+  "acceptanceGates": {
+    "fix7ReferenceUrl": "http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7",
+    "sameCameraExposureSppRequired": true,
+    "roiMeanLumaRatio": {
+      "min": 0.75,
+      "max": 1.25
+    },
+    "meanAbsRgbDiff": {
+      "max": 12
+    },
+    "reflectionContentParityRequired": true,
+    "console404Allowed": false,
+    "shaderValidationErrorAllowed": false,
+    "webglContextLostAllowed": false
+  },
+  "humanVisualReviewRequired": true,
+  "metalness": 1,
+  "roughness": 0.3,
+  "failureReason": "planar_scene_probe_reflection_content_mismatch_against_fix7",
+  "recommendedNextCandidate": "hybrid_planar_reflection_resolve",
+  "failureEvidence": {
+    "observedByUser": true,
+    "visualAb": {
+      "runnerStatus": "evidence_captured",
+      "packageDir": ".omc/r7-3-10-iron-door-planar-reflection-visual-ab/20260624-223219",
+      "receiverMask": {
+        "kind": "main_flat_door_plate_only",
+        "debugMode": "hybrid-mask",
+        "shaderFunction": "r7310C1IronDoorMainFlatPlateMask"
+      },
+      "liveReference": "live-reference-spp64.png",
+      "candidate": "planar-candidate-spp64.png",
+      "uvDebug": "planar-uv-debug-spp64.png",
+      "roi": {
+        "xMin": 690,
+        "xMax": 930,
+        "yMin": 40,
+        "yMax": 640
+      },
+      "liveMeanLuma": 39.21163742361111,
+      "candidateMeanLuma": 21.886859993055552,
+      "roiMeanLumaRatio": 0.5581749872252168,
+      "meanAbsRgbDiff": 16.68757638888889,
+      "primaryUserObservedFailure": "reflection_content_image_mismatch_against_fix7",
+      "metricRole": "auxiliary_numeric_diff_signal",
+      "failureSummary": "planar_candidate_reflection_content_image_mismatch_against_fix7"
+    }
+  },
+  "referenceMode": "light_bake_live_reflection_fix7",
+  "sourceKind": "home_studio_runtime_scene_capture",
+  "sceneCapture": {
+    "actualScene": true,
+    "source": "Chrome headless Metal Home_Studio runtime"
+  },
+  "radianceSpace": "linear_hdr",
+  "runtimeFaceSize": 512,
+  "targetAtlasWidth": 512,
+  "targetAtlasHeight": 512,
+  "cameraState": {
+    "position": {
+      "x": -0.82323,
+      "y": 1.411762,
+      "z": -0.457741
+    },
+    "yaw": 1.270399,
+    "pitch": -0.147,
+    "fov": 77,
+    "forward": {
+      "x": -0.944917,
+      "y": -0.146471,
+      "z": -0.292708
+    }
+  },
+  "mirroredCamera": {
+    "position": {
+      "x": -3.09677,
+      "y": 1.411762,
+      "z": -0.457741
+    },
+    "forward": {
+      "x": 0.944917,
+      "y": -0.146471,
+      "z": -0.292708
+    },
+    "right": {
+      "x": 0.295899,
+      "y": 0,
+      "z": 0.955219
+    },
+    "up": {
+      "x": 0.139912,
+      "y": 0.989215,
+      "z": -0.043341
+    },
+    "fov": 77,
+    "fovScale": 0.7954359166678285,
+    "aspect": 1.777778
+  },
+  "prefilter": {
+    "method": "roughness_0_3_planar_prefilter_required",
+    "roughness": 0.3,
+    "implementation": "scene_capture_cpu_prefilter_r0_3"
+  },
+  "packageDir": "assets/runtime/r7-3-10/current-room/iron-door-planar-reflection/package",
+  "artifacts": {
+    "planarReflectionAtlas": "iron-door-planar-reflection-r0.3-rgba-f32.bin",
+    "sourceReflection": "iron-door-planar-reflection-source-rgba-f32.bin",
+    "preview": "iron-door-planar-reflection-preview.png",
+    "validationReport": "iron-door-planar-reflection-validation-report.json",
+    "package": "iron-door-planar-reflection-package.json"
+  },
+  "validation": {
+    "version": "r7-3-10-iron-door-planar-reflection-scene-capture-package-v1",
+    "runnerStatus": "scene_capture",
+    "captureStatus": "path_traced_planar_reflection_capture_complete",
+    "validationStatus": "failed_candidate",
+    "packageStatus": "planar_reflection_candidate",
+    "target": "iron_door_body",
+    "sourceKind": "home_studio_runtime_scene_capture",
+    "sceneCapture": {
+      "actualScene": true,
+      "source": "Chrome headless Metal Home_Studio runtime"
+    },
+    "radianceSpace": "linear_hdr",
+    "captureKind": "mirrored_camera_planar_capture",
+    "projection": "single_receiver_plane",
+    "selfCaptureExcluded": true,
+    "captureClipPlane": {
+      "enabled": true,
+      "plane": {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "w": -1.96
+      },
+      "space": "world",
+      "purpose": "start_mirrored_camera_rays_on_room_side_of_receiver_plane"
+    },
+    "receiverMask": {
+      "kind": "main_flat_door_plate_only",
+      "debugMode": "hybrid-mask",
+      "shaderFunction": "r7310C1IronDoorMainFlatPlateMask"
+    },
+    "replacementScope": {
+      "planarCandidateRegions": [
+        "full_flat_door_photo_plane"
+      ],
+      "liveFallbackRegions": [],
+      "farFieldProbeRole": "optional_low_frequency_only"
+    },
+    "acceptanceGates": {
+      "fix7ReferenceUrl": "http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7",
+      "sameCameraExposureSppRequired": true,
+      "roiMeanLumaRatio": {
+        "min": 0.75,
+        "max": 1.25
+      },
+      "meanAbsRgbDiff": {
+        "max": 12
+      },
+      "console404Allowed": false,
+      "shaderValidationErrorAllowed": false,
+      "webglContextLostAllowed": false
+    },
+    "metalness": 1,
+    "roughness": 0.3,
+    "runtimeFaceSize": 512,
+    "targetAtlasWidth": 512,
+    "targetAtlasHeight": 512,
+    "runtimeAtlasSlot": 24,
+    "targetSamples": 1000,
+    "actualSamples": 1000,
+    "cameraState": {
+      "position": {
+        "x": -0.82323,
+        "y": 1.411762,
+        "z": -0.457741
+      },
+      "yaw": 1.270399,
+      "pitch": -0.147,
+      "fov": 77,
+      "forward": {
+        "x": -0.944917,
+        "y": -0.146471,
+        "z": -0.292708
+      }
+    },
+    "mirroredCamera": {
+      "position": {
+        "x": -3.09677,
+        "y": 1.411762,
+        "z": -0.457741
+      },
+      "forward": {
+        "x": 0.944917,
+        "y": -0.146471,
+        "z": -0.292708
+      },
+      "right": {
+        "x": 0.295899,
+        "y": 0,
+        "z": 0.955219
+      },
+      "up": {
+        "x": 0.139912,
+        "y": 0.989215,
+        "z": -0.043341
+      },
+      "fov": 77,
+      "fovScale": 0.7954359166678285,
+      "aspect": 1.777778
+    },
+    "stats": {
+      "browser": {
+        "face": "planar_reflection",
+        "width": 512,
+        "height": 512,
+        "minLuma": 0,
+        "maxLuma": 31.185919,
+        "meanLuma": 0.303279,
+        "lumaRange": 31.185919,
+        "lumaVariance": 3.59944937,
+        "nonFinitePixels": 0,
+        "highContrastSamples": 2880,
+        "nonBlack": true,
+        "notSolidColor": true,
+        "majorSceneContentVisible": true,
+        "actualSamples": 1000,
+        "slot": 24
+      },
+      "package": {
+        "face": "planar_reflection",
+        "width": 512,
+        "height": 512,
+        "minLuma": 0,
+        "maxLuma": 31.185919,
+        "meanLuma": 0.298266,
+        "lumaRange": 31.185919,
+        "lumaVariance": 3.2584603,
+        "nonFinitePixels": 0,
+        "highContrastSamples": 2896,
+        "nonBlack": true,
+        "notSolidColor": true,
+        "majorSceneContentVisible": true
+      }
+    },
+    "artifactHashes": {
+      "planarReflectionAtlasSha256": "f91550b4841bb390c603bd8272905e75eba2f4ab467455552feb4026a3725d93",
+      "sourceReflectionSha256": "243b24de58de48ad52cc2c90ad0bf1587f3deb8323f1c5bd20261e1a1ee05560"
+    }
+  }
+}

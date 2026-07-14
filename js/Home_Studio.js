@@ -137,7 +137,7 @@ addBox([-2.00, 0.09, -1.874], [-1.96, 2.04, -0.984], z3, C_METAL, 8, 0, 1);     
 addBox([-15.0, -5.0, 14.9], [15.0, 10.0, 15.0], z3, C_WHITE, 5, 0, 0);              // 27 窗外景色背板（type 5: 貼圖採樣；R6 LGG-r30：cullable 1→0，窗外景色不屬於 X-ray 牆系剝離範疇、永遠可見）
 
 // R2-7 KH750 超低音 (index 28)
-addBox([0.79, 0.0, 2.273], [1.12, 0.383, 2.656], z3, C_SPEAKER, 9);          // 28 KH750 超低音（type 9: 正背面貼圖，33×38.3×38.3cm）
+addBox([-0.165, 0.0, 2.273], [0.165, 0.383, 2.656], z3, C_SPEAKER, 9);        // 28 KH750 超低音（type 9: 正背面貼圖，33×38.3×38.3cm；X 置中，與南牆距離不變）
 
 // R2-15 插座面板 (index 29-34, type 11 = OUTLET)
 addBox([-0.39, 1.185, -1.874], [-0.27, 1.255, -1.864], z3, C_WHITE, 11, 0, 1);  // 29 北牆插座，距地約 120cm
@@ -212,7 +212,7 @@ addBox([-0.884, 2.786, -0.686], [ 0.884, 2.803,-0.685], z3, C_STAND_PILLAR, 1, 0
 // 2026-05-20 C2 現場補件：西牆開關。北牆內面 z=-1.874，往南 1.845m → 中心 z=-0.029；中心高度 y=1.183m。
 // 使用白色 box 重用插座尺寸，不套 OUTLET type，避免 shader 自動畫黑色插孔。
 addBox([-1.91, 1.148, -0.089], [-1.90, 1.218, 0.031], z3, C_WHITE, 1, 0, 1);   // 西牆開關面板 7cm × 12cm
-addBox([-1.899, 1.161, -0.076], [-1.898, 1.205, 0.018], z3, C_WHITE, 1, 0, 1); // 西牆開關按鈕：四邊內縮 1.3cm
+addBox([-1.900, 1.161, -0.076], [-1.898, 1.205, 0.018], z3, C_WHITE, 1, 0, 1); // 西牆開關按鈕：貼合面板，四邊內縮 1.3cm
 
 // R3-3：商品規格 D-35NA12V4DR1 軟條燈 480 lm/m。
 // R6-3 Phase 1C：使用者決策預設 1600 lm/m（C3 Cloud-only 亮度）；480 lm/m 保留為低檔產品參考。
@@ -5333,7 +5333,7 @@ function switchCamera(preset) {
 }
 
 function initSceneData() {
-    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-multipage-webgl-v9';
+    demoFragmentShaderFileName = 'Home_Studio_Fragment.glsl?v=r7310-iron-door-fix7-scale-restore-v1';
 
     sceneIsDynamic = false;
     cameraFlightSpeed = 2;
@@ -5571,8 +5571,8 @@ function initSceneData() {
     pathTracingUniforms.uFixtureRoughness = { value: 0.5 };
     pathTracingUniforms.uFixtureMetalness = { value: 0.2 };
 
-    // R2-18 fix17 / R7-3.8：地板粗糙度；1.0 = 最粗糙並關閉地板 Fresnel 反射分支
-    pathTracingUniforms.uFloorRoughness = { value: 1.0 };
+    // R2-18 fix17 / R7-3.8：地板粗糙度；0.1 = 亮面地板，反射仍走 LIVE 分支
+    pathTracingUniforms.uFloorRoughness = { value: 0.1 };
 
     // R2-18 fix19 / R3-7：間接光補償（erichlof 框架 diffuseCount==1 單掛旗 → 2-diffuse-bounce 截斷）
     // 本係數補償第 3 次以後永遠不再累加的間接反彈能量；非臨時值。提 max_bounces 4→8 肉眼無差（R3-7 驗）。
@@ -5602,9 +5602,10 @@ function initSceneData() {
 	r738DefaultBakeAtlasTexture.generateMipmaps = false;
 	r738DefaultBakeAtlasTexture.needsUpdate = true;
 	pathTracingUniforms.tR738C1BakeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
-	pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTexture = { value: r738DefaultBakeAtlasTexture };
 		pathTracingUniforms.tR7310C1FullRoomDiffuseAtlasTextureNonSquare = { value: r738DefaultBakeAtlasTexture };
 		pathTracingUniforms.tR7310C1XatlasRuntimeAtlasTexture = { value: r738DefaultBakeAtlasTexture };
+		pathTracingUniforms.tR7310C1XatlasRuntimeFloorPageTexture = { value: getR7310C1XatlasRuntimeFloorPageFallbackTexture() };
 		pathTracingUniforms.uR7310C1XatlasBakeMode = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasBakeFullRadianceMode = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasBakeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
@@ -5612,16 +5613,29 @@ function initSceneData() {
 		pathTracingUniforms.uR7310C1XatlasRuntimeReady = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
 		pathTracingUniforms.uR7310C1XatlasRuntimeLightmapPageIds = { value: new THREE.Vector4(0.0, 0.0, 0.0, 0.0) };
+		pathTracingUniforms.uR7310C1XatlasRuntimeLightmapPagesMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFloorPageSize = { value: new THREE.Vector2(1.0, 1.0) };
 		pathTracingUniforms.uR7310C1XatlasRuntimeSeparatedAlbedo = { value: 1.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeFullWestWallDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullSouthWallDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeDepthH2DirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeCentralDeskDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeStructuralDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo = { value: 1.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeFullNorthWallMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullEastWallMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullCeilingMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeStackedMode = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeMasterMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1XatlasRectCeiling = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRectNorth = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
 	pathTracingUniforms.uR7310C1XatlasRectEast = { value: new THREE.Vector4(0.0, 0.0, 1.0, 1.0) };
@@ -5685,9 +5699,38 @@ function initSceneData() {
 	pathTracingUniforms.uR7310C1IronDoorRevealMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1IronDoorRevealReady = { value: 0.0 };
 	pathTracingUniforms.uR7310C1IronDoorRevealResolution = { value: 1024.0 };
+	pathTracingUniforms.uR7310C1IronDoorBodyMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorBodyReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorBodyDebugMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeAtlasSize = { value: new THREE.Vector2(1.0, 1.0) };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeFaceSize = { value: 1.0 };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbePosition = { value: new THREE.Vector3(-1.96, 1.08, -1.43) };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeBoxMin = { value: new THREE.Vector3(-1.91, 0.0, -1.874) };
+	pathTracingUniforms.uR7310C1IronDoorReflectionProbeBoxMax = { value: new THREE.Vector3(1.91, 2.905, 3.056) };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionTextureSize = { value: new THREE.Vector2(1024.0, 1024.0) };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionTextureMatrix = { value: new THREE.Matrix4() };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionSourcePass = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorRuntimePlanarReflectionSourceOneOverSampleCounter = { value: 1.0 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionReady = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionAtlasSize = { value: new THREE.Vector2(512.0, 512.0) };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraPosition = { value: new THREE.Vector3(-3.09677, 1.411762, -0.457741) };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraForward = { value: new THREE.Vector3(0.944917, -0.146471, -0.292708) };
+pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraRight = { value: new THREE.Vector3(0.295899, 0.0, 0.955219) };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraUp = { value: new THREE.Vector3(0.139912, 0.989215, -0.043341) };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraFovScale = { value: 0.7954359166678285 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCameraAspect = { value: 1.777778 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCaptureExcludeDoor = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCaptureClipPlaneMode = { value: 0.0 };
+	pathTracingUniforms.uR7310C1IronDoorPlanarReflectionCaptureClipPlane = { value: new THREE.Vector4(1.0, 0.0, 0.0, -1.96) };
+	pathTracingUniforms.uR7310C1IronDoorBodyAtlasSize = { value: new THREE.Vector2(467.0, 1024.0) };
 	pathTracingUniforms.uR7310C1RuntimeProbeMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasPatchResolution = { value: 512.0 };
-	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 23.0 };
+	pathTracingUniforms.uR7310C1RuntimeAtlasPatchCount = { value: 30.0 };
 	pathTracingUniforms.uR7310C1RuntimeAtlasGridColumns = { value: 6.0 };
 	pathTracingUniforms.uR7310C1SeparatedBakeMode = { value: 0.0 };
 	// R7-3.10 Stage 0.5 RNG seed 接線：不帶 ?seed 時維持 (0,0)，對現有 runtime / bake 中性。
@@ -5748,6 +5791,8 @@ function initSceneData() {
 	}
 	pathTracingUniforms.uR7310C1WestScopeProbeMode = { value: r7310WestScopeProbeMode };
 	pathTracingUniforms.uR7310C1XatlasParamWestSurfaceIndex = { value: -1.0 };
+	pathTracingUniforms.uR7310C1XatlasParamWestWallSwitchPlateIndex = { value: -1.0 };
+	pathTracingUniforms.uR7310C1XatlasParamWestWallSwitchButtonIndex = { value: -1.0 };
 	pathTracingUniforms.uR7310C1NorthWallSeparatedDiffuseMode = { value: 0.0 };
 	pathTracingUniforms.uR7310C1UseNonSquareAtlas = { value: 0.0 };
 	pathTracingUniforms.uR7310C1NonSquareAtlasReady = { value: 0.0 };
@@ -6512,7 +6557,7 @@ function initUI() {
     function applyFloorRoughness(value)
     {
         var v = Math.max(0.0, Math.min(1.0, Number(value)));
-        if (!Number.isFinite(v)) v = 1.0;
+        if (!Number.isFinite(v)) v = 0.1;
         if (pathTracingUniforms && pathTracingUniforms.uFloorRoughness)
             pathTracingUniforms.uFloorRoughness.value = v;
         setSliderValue('slider-floor-roughness', v);
@@ -6527,7 +6572,7 @@ function initUI() {
             pureDiffuseAtOne: true
         };
     };
-    createS('slider-floor-roughness', '地板粗糙度', 0.0, 1.0, 0.05, 1.0, function(v) {
+    createS('slider-floor-roughness', '地板粗糙度', 0.0, 1.0, 0.05, 0.1, function(v) {
         return applyFloorRoughness(v);
     });
 

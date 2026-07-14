@@ -1,0 +1,67 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": null,
+  "sourceMaskRetiredAfterValidation": true,
+  "atlas": {
+    "width": 4265,
+    "height": 3377
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "counts": {
+    "totalTexels": 14402905,
+    "alphaOneTexels": 11743102,
+    "alphaZeroTexels": 2659803,
+    "metadataInvalidTexels": 7641,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 2709004,
+    "repairedVisibleExactBlackTexels": 56842,
+    "unrepairedVisibleExactBlackTexels": 2652162,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 56842,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {
+      "0": 28775,
+      "1": 28067
+    },
+    "maxDistanceTexels": 4
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 7193816,
+      "alphaOneTexels": 5836594,
+      "alphaZeroTexels": 1357222,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 81.13349020881267,
+      "alphaZeroPct": 18.86650979118732,
+      "lumaAlphaOneMean": 0.560365440874532
+    },
+    "1": {
+      "texels": 7201448,
+      "alphaOneTexels": 5906508,
+      "alphaZeroTexels": 1294940,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 82.01833853413925,
+      "alphaZeroPct": 17.981661465860753,
+      "lumaAlphaOneMean": 0.48955328195487574
+    },
+    "-1": {
+      "texels": 7641,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 7641,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

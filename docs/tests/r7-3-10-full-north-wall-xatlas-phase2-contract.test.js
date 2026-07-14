@@ -92,7 +92,7 @@ assert.match(
 	/bool\s+r7310XatlasRuntimeWestFirstHit\b\s*=\s*r7310XatlasRuntimeFirstHit\s*&&\s*r7310XatlasRuntimeWestMapped\s*;/,
 	'xatlas runtime must classify west first-hit from the shared xatlas hit and the west param mapping'
 );
-const directIncludedBreakBlock = /if\s*\(\s*uR7310C1XatlasRuntime(?:FullWestWall|WestThresholdTop|WestThresholdFront)DirectIncluded\s*>\s*0\.5\s*&&[\s\S]*?\n\s*\}/g;
+const directIncludedBreakBlock = /if\s*\(\s*uR7310C1XatlasRuntime(?:FullWestWall|WestThresholdTop|WestThresholdFront|FullNorthWall)DirectIncluded\s*>\s*0\.5\s*&&[\s\S]*?\n\s*\}/g;
 const indirectContinuationBody = applyBody.replace(directIncludedBreakBlock, '');
 assert.doesNotMatch(indirectContinuationBody, /\bbreak\s*;/, 'indirect xatlas first-hit apply path must keep direct-light continuation');
 

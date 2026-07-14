@@ -1,0 +1,33 @@
+{
+  "schema": "r7-3-10-xatlas-geometric-edge-extrapolation-v1",
+  "atlas": {
+    "width": 1526,
+    "height": 3779
+  },
+  "policy": {
+    "sourceScope": "same-piece-interior-valid-radiance",
+    "targetScope": "one-texel physical chart perimeter",
+    "maxDistanceLimitTexels": 4
+  },
+  "counts": {
+    "pieces": 10,
+    "targetTexels": 52298,
+    "repairedTexels": 52298,
+    "unrepairedTexels": 0,
+    "sourceExactBlackTexels": 0,
+    "sourcePieceMismatchTexels": 0,
+    "maxDistanceTexels": 1
+  },
+  "repairedByPiece": {
+    "west_beam_inner_x__full": 8164,
+    "west_beam_under_y__full": 7808,
+    "se_column_inner_x__upper": 2288,
+    "sw_column_inner_x__full": 3752,
+    "east_beam_inner_x__full": 7608,
+    "east_beam_under_y__full": 7080,
+    "sw_column_north_z__full": 3066,
+    "se_column_north_z__west_full": 4762,
+    "se_column_north_z__east_lower": 4122,
+    "se_column_inner_x__front_lower": 3648
+  }
+}

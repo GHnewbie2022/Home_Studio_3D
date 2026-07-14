@@ -19,7 +19,7 @@ import numpy as np
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT_ROOT = REPO / ".omc/r7-3-10-west-threshold-front-xatlas"
+DEFAULT_OUT_ROOT = REPO / "assets/runtime/r7-3-10/work/r7-3-10-west-threshold-front-xatlas"
 WIDTH = 72
 HEIGHT = 712
 X = -1.91
