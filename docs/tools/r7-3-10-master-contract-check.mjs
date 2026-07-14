@@ -2,7 +2,7 @@
 // R7-3.10 Phase 2B I2/I3 全域 master 契約檢查（改寫自 west-only check-r7310-west-wall-albedo-contract.cjs，
 // 改為涵蓋全 master sub-rect；west 只是第一個使用者，後續南牆/樑柱吃同一套）。
 // R4-2C master contract（registry 已含 west_wall_open owner、west identity 硬契約已實作）：驗
-//   1. albedo 跨 sub-rect 一致性（全 pointer multiplyAlbedoAfterBakeLookup 同值）
+//   1. 牆面 / H2 / 天花板 albedo 規格一致；floor 由地板專用 uniform 控制
 //   2. 每 pointer bakeAlbedoFree（multiplyAlbedo=true 須伴 bakeAlbedoFree=true，防雙乘色）
 //   3. 已存在 sub-rect 尺寸（package targetAtlasWidth/Height == 獨立 axis spec atlasW/H）
 //   4. packing 可行性（各面與 master target 尺寸 ≤ MAX_TEXTURE_SIZE 16384）
@@ -33,7 +33,7 @@ function loadPointer(rel) {
 
 let fail = false;
 const lines = [];
-const records = []; // {face, variant, mul, free, w, h, rel}
+const records = []; // {face, variant, mul, free, kind, direct, addDirect, w, h, rel}
 
 for (const s of SPEC.surfaces) {
   const cands = [];
@@ -44,23 +44,45 @@ for (const s of SPEC.surfaces) {
     if (!pj) { lines.push(`NOTE ${s.masterRectKey}/${variant}：pointer 不存在（${rel}）`); continue; }
     records.push({
       face: s.masterRectKey, variant, rel,
-      mul: pj.multiplyAlbedoAfterBakeLookup !== false,
-      free: pj.bakeAlbedoFree === true,
-      w: Math.trunc(Number(pj.targetAtlasWidth) || 0),
+	      mul: pj.multiplyAlbedoAfterBakeLookup !== false,
+	      free: pj.bakeAlbedoFree === true,
+	      kind: pj.bakedRadianceKind || '',
+	      direct: pj.directLightAlreadyIncluded === true,
+	      addDirect: pj.addDirectLightAfterBakeLookup === true,
+	      w: Math.trunc(Number(pj.targetAtlasWidth) || 0),
       h: Math.trunc(Number(pj.targetAtlasHeight) || 0),
       specW: s.atlasW, specH: s.atlasH
     });
   }
 }
 
-// 1. albedo 跨 sub-rect 一致性
-const mulSet = [...new Set(records.map(r => r.mul))];
+// 1. albedo 規格：牆面 / H2 / 天花板仍一致；floor 由 uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo 控制
+const sharedRecords = records.filter(r => r.face !== 'floor');
+const floorRecords = records.filter(r => r.face === 'floor');
+const mulSet = [...new Set(sharedRecords.map(r => r.mul))];
 if (mulSet.length > 1) {
   fail = true;
-  lines.push(`FAIL albedo 跨面一致性：multiplyAlbedoAfterBakeLookup 出現混用 ${JSON.stringify(mulSet)}`);
-  for (const r of records) lines.push(`     ${r.face}/${r.variant} mul=${r.mul} (${r.rel})`);
+  lines.push(`FAIL albedo 共享面一致性：floor 以外的 pointer multiplyAlbedoAfterBakeLookup 出現混用 ${JSON.stringify(mulSet)}`);
+  for (const r of sharedRecords) lines.push(`     ${r.face}/${r.variant} mul=${r.mul} (${r.rel})`);
 } else {
-  lines.push(`PASS albedo 跨面一致性：全 ${records.length} 個 pointer multiplyAlbedoAfterBakeLookup=${mulSet[0]}`);
+  lines.push(`PASS albedo 共享面一致性：floor 以外 ${sharedRecords.length} 個 pointer multiplyAlbedoAfterBakeLookup=${mulSet[0]}`);
+}
+const badFloorAlbedo = floorRecords.filter(r => {
+  const albedoFreeIndirect = r.mul && r.free;
+  const fullRadianceCarriesMaterialColor =
+    !r.mul &&
+    !r.free &&
+    r.kind === 'full_diffuse_radiance' &&
+    r.direct &&
+    !r.addDirect;
+  return !(albedoFreeIndirect || fullRadianceCarriesMaterialColor);
+});
+if (badFloorAlbedo.length) {
+  fail = true;
+  for (const r of badFloorAlbedo)
+    lines.push(`FAIL floor albedo 規格：${r.face}/${r.variant} mul=${r.mul} free=${r.free} kind=${r.kind} direct=${r.direct} addDirect=${r.addDirect}（${r.rel}）`);
+} else if (floorRecords.length) {
+  lines.push(`PASS floor albedo 規格：${floorRecords.length} 個 floor pointer 符合地板專用 runtime 旗標`);
 }
 
 // 2. bakeAlbedoFree 契約（mul=true 必伴 free=true）

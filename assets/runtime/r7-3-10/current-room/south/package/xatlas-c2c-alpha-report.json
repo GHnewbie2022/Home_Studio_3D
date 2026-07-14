@@ -1,0 +1,147 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": null,
+  "sourceMaskRetiredAfterValidation": true,
+  "atlas": {
+    "width": 3376,
+    "height": 2324
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "counts": {
+    "totalTexels": 7845824,
+    "alphaOneTexels": 2200771,
+    "alphaZeroTexels": 5645053,
+    "metadataInvalidTexels": 2921828,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 2779216,
+    "repairedVisibleExactBlackTexels": 55991,
+    "unrepairedVisibleExactBlackTexels": 2723225,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 55991,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {
+      "0": 160,
+      "1": 80,
+      "2": 2859,
+      "3": 3264,
+      "4": 15110,
+      "5": 8807,
+      "6": 5362,
+      "7": 1965,
+      "8": 12283,
+      "9": 6101
+    },
+    "maxDistanceTexels": 4
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 119265,
+      "alphaOneTexels": 162,
+      "alphaZeroTexels": 119103,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0.13583197082128035,
+      "alphaZeroPct": 99.86416802917873,
+      "lumaAlphaOneMean": 0.0003384762898829645
+    },
+    "1": {
+      "texels": 119232,
+      "alphaOneTexels": 81,
+      "alphaZeroTexels": 119151,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0.06793478260869565,
+      "alphaZeroPct": 99.93206521739131,
+      "lumaAlphaOneMean": 0.0006903313537128258
+    },
+    "2": {
+      "texels": 213802,
+      "alphaOneTexels": 45506,
+      "alphaZeroTexels": 168296,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 21.28417881965557,
+      "alphaZeroPct": 78.71582118034443,
+      "lumaAlphaOneMean": 0.3879356363915397
+    },
+    "3": {
+      "texels": 214115,
+      "alphaOneTexels": 151468,
+      "alphaZeroTexels": 62647,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 70.74142400112089,
+      "alphaZeroPct": 29.258575998879106,
+      "lumaAlphaOneMean": 0.09926558762681081
+    },
+    "4": {
+      "texels": 811510,
+      "alphaOneTexels": 462154,
+      "alphaZeroTexels": 349356,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 56.949883550418356,
+      "alphaZeroPct": 43.050116449581644,
+      "lumaAlphaOneMean": 0.6389172737718569
+    },
+    "5": {
+      "texels": 810602,
+      "alphaOneTexels": 679098,
+      "alphaZeroTexels": 131504,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 83.776995368874,
+      "alphaZeroPct": 16.223004631126003,
+      "lumaAlphaOneMean": 0.29470487593378625
+    },
+    "6": {
+      "texels": 471936,
+      "alphaOneTexels": 169773,
+      "alphaZeroTexels": 302163,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 35.973733726607,
+      "alphaZeroPct": 64.026266273393,
+      "lumaAlphaOneMean": 0.33461167654760227
+    },
+    "7": {
+      "texels": 471249,
+      "alphaOneTexels": 27399,
+      "alphaZeroTexels": 443850,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 5.81412374349866,
+      "alphaZeroPct": 94.18587625650134,
+      "lumaAlphaOneMean": 0.0684248954298751
+    },
+    "8": {
+      "texels": 846029,
+      "alphaOneTexels": 567701,
+      "alphaZeroTexels": 278328,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 67.10183693466773,
+      "alphaZeroPct": 32.89816306533228,
+      "lumaAlphaOneMean": 0.42563633604954915
+    },
+    "9": {
+      "texels": 846256,
+      "alphaOneTexels": 97429,
+      "alphaZeroTexels": 748827,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 11.51294643701197,
+      "alphaZeroPct": 88.48705356298802,
+      "lumaAlphaOneMean": 0.5011539704033167
+    },
+    "-1": {
+      "texels": 2921828,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 2921828,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

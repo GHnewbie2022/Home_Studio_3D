@@ -1,0 +1,56 @@
+{
+  "schema": "r7-3-10-xatlas-runtime-package-pointer-v1",
+  "packageStatus": "accepted",
+  "runtimeScope": "c1_xatlas_south_window_reveals_runtime",
+  "runtimeArchitecture": "multi_page_south_window_reveals_lightmap",
+  "surfaceName": "south_window_reveals",
+  "atlasGroup": "south_window_reveals",
+  "configId": 1,
+  "targetId": 1300,
+  "targetAtlasWidth": 502,
+  "targetAtlasHeight": 1953,
+  "targetAtlasResolution": 1953,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "nonSquareAtlas": true,
+  "packageDir": "assets/runtime/r7-3-10/current-room/south-window-reveals/package",
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
+    "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json"
+  },
+  "chartEdgeDilation": {
+    "enabled": true,
+    "fillMode": "same-piece-interior-geometric-edge-extrapolation-plus-chart-gutter",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 4,
+    "repairedVisibleExactBlackTexels": 10838,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "99b67e278ba003387d1e1b9be21a3bfdf89bbac0f64738161ff6d540d7ff8246",
+    "texelMetadataPatch0Sha256": "01cafa6ac13a9dfb3adac0e0ea7d63920776bb2c6d7c1f496349db4a71a5e024"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
+    "contextLostCount": 0,
+    "completedTiles": 4,
+    "tileCount": 4,
+    "minCompletedSamples": 1000
+  },
+  "note": "South-window left jamb, right jamb, and sill use one formal non-square full-radiance XATLAS page. Formal package publishing now requires geometric edge extrapolation, chart gutter dilation, and the full-room baked seam gate."
+}

@@ -12,6 +12,8 @@ const tests = [
 	'docs/tests/r7-3-10-south-wall-side-column-contract.test.js',
 	'docs/tests/r7-3-10-seam-shared-constant-contract.test.js',
 	'docs/tests/r7-3-10-a1-contact-edge-registry-contract.test.js',
+	'docs/tests/r7-3-10-table-floor-full-bake-contact-contract.test.js',
+	'docs/tests/r7-3-10-coplanar-lightmap-continuity.test.js',
 ];
 
 let failed = 0;

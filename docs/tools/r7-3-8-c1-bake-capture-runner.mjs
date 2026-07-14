@@ -4,14 +4,84 @@ import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
-import { spawn, execFileSync } from 'node:child_process';
+import { deflateSync } from 'node:zlib';
+import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { FLOOR_OCCLUSION_EXCLUSIONS, isFloorOccluded } from '../generated/r7-3-10-floor-occlusion-table.mjs';
+import { evaluateBakedSeamRadianceGate } from './lib/r7-3-10-baked-seam-radiance-gate-core.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
+function r7310WorkPath(...segments) {
+  return path.join(repoRoot, 'assets', 'runtime', 'r7-3-10', 'work', ...segments);
+}
+const R7310_IRON_DOOR_ACCEPTANCE_CAMERA_STATE = Object.freeze({
+  position: Object.freeze({
+    x: -0.82323,
+    y: 1.411762,
+    z: -0.457741
+  }),
+  yaw: 1.270399,
+  pitch: -0.147,
+  fov: 77,
+  forward: Object.freeze({
+    x: -0.944917,
+    y: -0.146471,
+    z: -0.292708
+  })
+});
+const R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_GATE_IDS = Object.freeze([
+  'noise_gate_1_spp'
+]);
+const R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_TARGET_SAMPLES = Object.freeze({
+  noise_gate_1_spp: 1
+});
+const R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_METRIC_CONTRACT = 'main_plate_metric_v1';
 
-function parseArgs(argv) {
+function cameraStatesApproximatelyEqual(actual, expected, epsilon = 1e-6) {
+  if (!actual || !expected) return false;
+  const actualPosition = actual.position || {};
+  const expectedPosition = expected.position || {};
+  const actualForward = actual.forward || {};
+  const expectedForward = expected.forward || {};
+  for (const key of ['x', 'y', 'z']) {
+    if (!Number.isFinite(Number(actualPosition[key])) || !Number.isFinite(Number(expectedPosition[key]))) return false;
+    if (!Number.isFinite(Number(actualForward[key])) || !Number.isFinite(Number(expectedForward[key]))) return false;
+    if (Math.abs(Number(actualPosition[key]) - Number(expectedPosition[key])) > epsilon) return false;
+    if (Math.abs(Number(actualForward[key]) - Number(expectedForward[key])) > epsilon) return false;
+  }
+  for (const key of ['yaw', 'pitch', 'fov']) {
+    if (!Number.isFinite(Number(actual[key])) || !Number.isFinite(Number(expected[key]))) return false;
+    if (Math.abs(Number(actual[key]) - Number(expected[key])) > epsilon) return false;
+  }
+  return true;
+}
+
+function resolveR7310IronDoorHybridNextStagedAcceptanceGateFromPointer() {
+  const pointerPath = path.join(repoRoot, 'docs/data/r7-3-10-c1-iron-door-hybrid-reflection-runtime-package.json');
+  let pointer = null;
+  try {
+    pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`--r7310-iron-door-hybrid-reflection-visual-ab-test cannot read staged acceptance pointer: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const stagedAcceptance = pointer.stagedAcceptance?.metricContract === R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_METRIC_CONTRACT
+    ? pointer.stagedAcceptance
+    : null;
+  const completedGateIds = new Set(Array.isArray(stagedAcceptance?.completedGateIds)
+    ? stagedAcceptance.completedGateIds
+    : []);
+  const nextGateId = R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_GATE_IDS
+    .find((gateId) => !completedGateIds.has(gateId)) || null;
+  return nextGateId === null
+    ? null
+    : {
+      id: nextGateId,
+      targetSamples: R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_TARGET_SAMPLES[nextGateId]
+    };
+}
+
+export function parseArgs(argv) {
   const out = {
     samples: 1000,
     atlasResolution: 512,
@@ -37,9 +107,17 @@ function parseArgs(argv) {
     surfaceCache: false,
     currentViewValidation: false,
     accurateReflectionPreviewTest: false,
+    r7310IronDoorReflectionProbeCapture: false,
+    r7310IronDoorPlanarReflectionCapture: false,
+    r7310IronDoorPlanarReflectionRuntimeTest: false,
+    r7310IronDoorReflectionProbeRuntimeTest: false,
+    r7310IronDoorPlanarReflectionVisualAbTest: false,
+    r7310IronDoorHybridReflectionVisualAbTest: false,
+    r7310ConfirmIronDoorChromeMetalCapture: false,
     fullRoomDiffuseBake: false,
     xatlasBake: false,
     xatlasFullRadianceBake: false,
+    fullRadianceBake: false,
     xatlasTexelmapDir: 'docs/html-review/2026-06-04-r7-3-10-xatlas-seamoptimizer-plan/xatlas-bake-spike',
     xatlasValidityMaskPath: null,
     xatlasBakeProbeLevel: null,
@@ -87,6 +165,7 @@ function parseArgs(argv) {
     uiToggleTest: false,
     neFurnitureRuntimeTest: false,
     targetSamples: null,
+    r7310IronDoorReflectionCaptureSamples: 1,
     cameraState: null,
     westJoinD1OverrideZMax: 2.7179,
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
@@ -121,9 +200,17 @@ function parseArgs(argv) {
     else if (arg === '--surface-cache') out.surfaceCache = true;
     else if (arg === '--r739-current-view-validation') out.currentViewValidation = true;
     else if (arg === '--accurate-reflection-preview-test') out.accurateReflectionPreviewTest = true;
+    else if (arg === '--r7310-iron-door-reflection-probe-capture') out.r7310IronDoorReflectionProbeCapture = true;
+    else if (arg === '--r7310-iron-door-planar-reflection-capture') out.r7310IronDoorPlanarReflectionCapture = true;
+    else if (arg === '--r7310-iron-door-planar-reflection-runtime-test') out.r7310IronDoorPlanarReflectionRuntimeTest = true;
+    else if (arg === '--r7310-iron-door-reflection-probe-runtime-test') out.r7310IronDoorReflectionProbeRuntimeTest = true;
+    else if (arg === '--r7310-iron-door-planar-reflection-visual-ab-test') out.r7310IronDoorPlanarReflectionVisualAbTest = true;
+    else if (arg === '--r7310-iron-door-hybrid-reflection-visual-ab-test') out.r7310IronDoorHybridReflectionVisualAbTest = true;
+    else if (arg === '--confirm-r7310-iron-door-chrome-metal-capture') out.r7310ConfirmIronDoorChromeMetalCapture = true;
     else if (arg === '--r7310-full-room-diffuse-bake') out.fullRoomDiffuseBake = true;
     else if (arg === '--r7310-xatlas-bake') out.xatlasBake = true;
     else if (arg === '--r7310-xatlas-full-radiance-bake') out.xatlasFullRadianceBake = true;
+    else if (arg === '--r7310-full-radiance-bake') out.fullRadianceBake = true;
     else if (arg.startsWith('--xatlas-texelmap-dir=')) out.xatlasTexelmapDir = arg.slice('--xatlas-texelmap-dir='.length);
     else if (arg.startsWith('--xatlas-validity-mask=')) out.xatlasValidityMaskPath = arg.slice('--xatlas-validity-mask='.length);
     else if (arg.startsWith('--xatlas-alpha-dilation-limit=')) out.xatlasAlphaDilationLimit = Number(arg.slice('--xatlas-alpha-dilation-limit='.length));
@@ -173,6 +260,7 @@ function parseArgs(argv) {
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
     else if (arg === '--r7310-ne-furniture-runtime-test') out.neFurnitureRuntimeTest = true;
     else if (arg.startsWith('--target-samples=')) out.targetSamples = Number(arg.slice('--target-samples='.length));
+    else if (arg.startsWith('--r7310-iron-door-reflection-capture-samples=')) out.r7310IronDoorReflectionCaptureSamples = Number(arg.slice('--r7310-iron-door-reflection-capture-samples='.length));
     else if (arg.startsWith('--camera-state-json=')) out.cameraState = JSON.parse(arg.slice('--camera-state-json='.length));
     else if (arg.startsWith('--r7310-west-join-d1-override-zmax=')) out.westJoinD1OverrideZMax = Number(arg.slice('--r7310-west-join-d1-override-zmax='.length));
     // ADR-Bake-Runner-Extensions (v4 九審 APPROVE 後動工、plan §13 ADR)
@@ -180,11 +268,19 @@ function parseArgs(argv) {
     else if (arg.startsWith('--dump-at-samples=')) out.dumpAtSamples = arg.slice('--dump-at-samples='.length).split(',').filter(Boolean).map(Number);
     else if (arg.startsWith('--output-mode=')) out.outputMode = arg.slice('--output-mode='.length);
   }
+  if (out.xatlasBake && out.xatlasValidityMaskPath === null) {
+    out.xatlasValidityMaskPath = path.posix.join(
+      out.xatlasTexelmapDir,
+      'xatlas-bake-tri-valid-rgba32f.bin'
+    );
+  }
+  if (out.xatlasBake && out.xatlasAlphaDilationLimit === null)
+    out.xatlasAlphaDilationLimit = R7310_C1_XATLAS_A1_DILATION_PADDING_TEXELS;
   if (!['metal', 'swiftshader', 'opengl'].includes(out.angle)) throw new Error('Invalid angle mode');
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
   if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
   if (!['none', 'flush', 'fence', 'finish'].includes(out.r7310BakeSubmissionBoundary)) throw new Error('Invalid r7310BakeSubmissionBoundary');
-  if (!['floor', 'north-wall', 'east-wall', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'full-floor-xatlas', 'iron-door-reveal'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+	  if (!['floor', 'north-wall', 'east-wall', 'full-east-wall-xatlas', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'structural-beams-columns-xatlas', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-floor-xatlas', 'central-desk-xatlas', 'iron-door-reveal', 'iron-door-body'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
   // R7-3.10 第6步防呆（CODEX 4，2026-06-16）：south-window-top-reveal-depth-h2（H2 -Y 窗楣）必須搭 --r7310-full-room-diffuse-bake，
   // 否則 captureHelper 會掉回預設 reportR738C1BakeCaptureAfterSamples、靜默烤成地板（0519/0616 兩次地板錯包的真因）。直接擋下。
   if (out.r7310Surface === 'south-window-top-reveal-depth-h2' && !out.fullRoomDiffuseBake)
@@ -192,6 +288,46 @@ function parseArgs(argv) {
   // R7-3.10 §13 地板 C1A shell：full-floor-xatlas 必須搭 --r7310-full-room-diffuse-bake，否則 captureHelper 掉回預設、靜默烤成舊方形地板。
   if (out.r7310Surface === 'full-floor-xatlas' && !out.fullRoomDiffuseBake)
     throw new Error('--r7310-surface=full-floor-xatlas requires --r7310-full-room-diffuse-bake');
+  if (out.r7310Surface === 'full-floor-xatlas' && out.r7310SeparatedIrradianceBake)
+    throw new Error('--r7310-surface=full-floor-xatlas uses albedo-in full-radiance; remove --r7310-separated-irradiance-bake');
+  if (out.r7310Surface === 'central-desk-xatlas' && !out.xatlasBake)
+    throw new Error('--r7310-surface=central-desk-xatlas requires --r7310-xatlas-bake');
+  if (out.r7310Surface === 'central-desk-xatlas' && !out.xatlasFullRadianceBake)
+    throw new Error('--r7310-surface=central-desk-xatlas requires --r7310-xatlas-full-radiance-bake');
+  if (out.r7310Surface === 'central-desk-xatlas' && out.r7310SeparatedIrradianceBake)
+    throw new Error('--r7310-surface=central-desk-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+  if (out.r7310Surface === 'structural-beams-columns-xatlas' && !out.xatlasBake)
+    throw new Error('--r7310-surface=structural-beams-columns-xatlas requires --r7310-xatlas-bake');
+  if (out.r7310Surface === 'structural-beams-columns-xatlas' && !out.xatlasFullRadianceBake)
+    throw new Error('--r7310-surface=structural-beams-columns-xatlas requires --r7310-xatlas-full-radiance-bake');
+	  if (out.r7310Surface === 'structural-beams-columns-xatlas' && out.r7310SeparatedIrradianceBake)
+	    throw new Error('--r7310-surface=structural-beams-columns-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+	  if (out.r7310Surface === 'south-window-reveals-xatlas' && !out.fullRoomDiffuseBake)
+	    throw new Error('--r7310-surface=south-window-reveals-xatlas requires --r7310-full-room-diffuse-bake');
+	  if (out.r7310Surface === 'south-window-reveals-xatlas' && !out.xatlasBake)
+	    throw new Error('--r7310-surface=south-window-reveals-xatlas requires --r7310-xatlas-bake');
+	  if (out.r7310Surface === 'south-window-reveals-xatlas' && !out.xatlasFullRadianceBake)
+	    throw new Error('--r7310-surface=south-window-reveals-xatlas requires --r7310-xatlas-full-radiance-bake');
+	  if (out.r7310Surface === 'south-window-reveals-xatlas' && out.r7310SeparatedIrradianceBake)
+	    throw new Error('--r7310-surface=south-window-reveals-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+	  if (out.r7310Surface === 'west-wall-switch-xatlas' && !out.fullRoomDiffuseBake)
+	    throw new Error('--r7310-surface=west-wall-switch-xatlas requires --r7310-full-room-diffuse-bake');
+	  if (out.r7310Surface === 'west-wall-switch-xatlas' && !out.xatlasBake)
+	    throw new Error('--r7310-surface=west-wall-switch-xatlas requires --r7310-xatlas-bake');
+	  if (out.r7310Surface === 'west-wall-switch-xatlas' && !out.xatlasFullRadianceBake)
+	    throw new Error('--r7310-surface=west-wall-switch-xatlas requires --r7310-xatlas-full-radiance-bake');
+	  if (out.r7310Surface === 'west-wall-switch-xatlas' && out.r7310SeparatedIrradianceBake)
+	    throw new Error('--r7310-surface=west-wall-switch-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+	  if (out.r7310Surface === 'full-east-wall-xatlas' && !out.fullRoomDiffuseBake)
+	    throw new Error('--r7310-surface=full-east-wall-xatlas requires --r7310-full-room-diffuse-bake');
+	  if (out.r7310Surface === 'full-east-wall-xatlas' && !out.xatlasBake)
+	    throw new Error('--r7310-surface=full-east-wall-xatlas requires --r7310-xatlas-bake');
+	  if (out.r7310Surface === 'full-east-wall-xatlas' && !out.xatlasFullRadianceBake)
+	    throw new Error('--r7310-surface=full-east-wall-xatlas requires --r7310-xatlas-full-radiance-bake');
+	  if (out.r7310Surface === 'full-east-wall-xatlas' && out.r7310SeparatedIrradianceBake)
+	    throw new Error('--r7310-surface=full-east-wall-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+  if (out.r7310Surface === 'iron-door-body' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=iron-door-body requires --r7310-full-room-diffuse-bake');
   if (!['bed', 'wardrobe'].includes(out.r7310NeFurniture)) throw new Error('Invalid r7310NeFurniture');
   if (typeof out.xatlasTexelmapDir !== 'string' || out.xatlasTexelmapDir.length === 0 || out.xatlasTexelmapDir.startsWith('/') || out.xatlasTexelmapDir.includes('..')) throw new Error('Invalid xatlasTexelmapDir');
   if (out.xatlasValidityMaskPath !== null && (typeof out.xatlasValidityMaskPath !== 'string' || out.xatlasValidityMaskPath.length === 0 || out.xatlasValidityMaskPath.startsWith('/') || out.xatlasValidityMaskPath.includes('..'))) throw new Error('Invalid xatlasValidityMaskPath');
@@ -211,7 +347,10 @@ function parseArgs(argv) {
     if (!Number.isFinite(out.targetSamples) || out.targetSamples <= 0) throw new Error('Invalid targetSamples');
     out.targetSamples = Math.trunc(out.targetSamples);
   }
+  if (!Number.isFinite(out.r7310IronDoorReflectionCaptureSamples) || out.r7310IronDoorReflectionCaptureSamples <= 0) throw new Error('Invalid r7310IronDoorReflectionCaptureSamples');
+  out.r7310IronDoorReflectionCaptureSamples = Math.trunc(out.r7310IronDoorReflectionCaptureSamples);
   if (out.xatlasFullRadianceBake && !out.xatlasBake) throw new Error('--r7310-xatlas-full-radiance-bake requires --r7310-xatlas-bake');
+  if (out.fullRadianceBake && !out.fullRoomDiffuseBake) throw new Error('--r7310-full-radiance-bake requires --r7310-full-room-diffuse-bake');
   for (const key of ['atlasWidth', 'atlasHeight']) {
     if (out[key] !== null) {
       if (!Number.isFinite(out[key]) || out[key] <= 0) throw new Error(`Invalid ${key}`);
@@ -223,6 +362,34 @@ function parseArgs(argv) {
   if (out.seed !== null && !/^0x[0-9a-fA-F]{1,8}$/.test(out.seed)) throw new Error('Invalid seed (must be 0x-prefixed 1-8 hex digits, e.g. 0xDEADBEEF)');
   if (!Array.isArray(out.dumpAtSamples) || !out.dumpAtSamples.every((n) => Number.isFinite(n) && n > 0 && Number.isInteger(n))) throw new Error('Invalid dumpAtSamples (must be comma-separated positive integers)');
   if (!['indirect_radiance', 'normal'].includes(out.outputMode)) throw new Error('Invalid outputMode (must be indirect_radiance | normal)');
+  if (out.r7310IronDoorReflectionProbeCapture) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-reflection-probe-capture requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-reflection-probe-capture requires --angle=metal');
+    if (out.atlasResolution !== 1024) throw new Error('--r7310-iron-door-reflection-probe-capture requires --atlas-resolution=1024');
+  }
+  if (out.r7310IronDoorPlanarReflectionCapture) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-planar-reflection-capture requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-planar-reflection-capture requires --angle=metal');
+    if (![512, 1024].includes(out.atlasResolution)) throw new Error('--r7310-iron-door-planar-reflection-capture requires --atlas-resolution=512 or 1024');
+  }
+  if (out.r7310IronDoorReflectionProbeRuntimeTest) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-reflection-probe-runtime-test requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-reflection-probe-runtime-test requires --angle=metal');
+  }
+  if (out.r7310IronDoorPlanarReflectionRuntimeTest) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-planar-reflection-runtime-test requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-planar-reflection-runtime-test requires --angle=metal');
+  }
+  if (out.r7310IronDoorPlanarReflectionVisualAbTest) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-planar-reflection-visual-ab-test requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-planar-reflection-visual-ab-test requires --angle=metal');
+  }
+  if (out.r7310IronDoorHybridReflectionVisualAbTest) {
+    if (out.browser !== 'chrome') throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test requires --browser=chrome');
+    if (out.angle !== 'metal') throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test requires --angle=metal');
+    if (!out.r7310ConfirmIronDoorChromeMetalCapture) throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test requires --confirm-r7310-iron-door-chrome-metal-capture');
+    if (out.cameraState === null) throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test requires --camera-state-json');
+  }
   if (out.cameraState !== null) {
     const position = out.cameraState.position || {};
     const forward = out.cameraState.forward || null;
@@ -236,6 +403,21 @@ function parseArgs(argv) {
       for (const key of ['x', 'y', 'z']) {
         if (!Number.isFinite(forward[key])) throw new Error(`Invalid cameraState.forward.${key}`);
       }
+    }
+  }
+  if (
+    out.r7310IronDoorHybridReflectionVisualAbTest &&
+    !cameraStatesApproximatelyEqual(out.cameraState, R7310_IRON_DOOR_ACCEPTANCE_CAMERA_STATE)
+  ) {
+    throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test requires the fixed acceptance --camera-state-json');
+  }
+  if (out.r7310IronDoorHybridReflectionVisualAbTest) {
+    const nextStagedGate = resolveR7310IronDoorHybridNextStagedAcceptanceGateFromPointer();
+    if (nextStagedGate === null) {
+      throw new Error('--r7310-iron-door-hybrid-reflection-visual-ab-test staged acceptance gates are already complete');
+    }
+    if (out.targetSamples !== nextStagedGate.targetSamples) {
+      throw new Error(`--r7310-iron-door-hybrid-reflection-visual-ab-test requires next staged gate ${nextStagedGate.id} --target-samples=${nextStagedGate.targetSamples}`);
     }
   }
   return out;
@@ -638,6 +820,1152 @@ async function readBrowserFloatArtifactBuffer(cdp, artifactExpression, chunkByte
     chunks.push(base64ToBuffer(base64));
   }
   return Buffer.concat(chunks);
+}
+
+const R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER = ['+X', '-X', '+Y', '-Y', '+Z', '-Z'];
+const R7310_IRON_DOOR_REFLECTION_PROBE_FACE_SLOTS = { '+X': 24, '-X': 25, '+Y': 26, '-Y': 27, '+Z': 28, '-Z': 29 };
+const R7310_IRON_DOOR_REFLECTION_PROBE_FACE_CODES = { '+X': 'px', '-X': 'nx', '+Y': 'py', '-Y': 'ny', '+Z': 'pz', '-Z': 'nz' };
+
+function bufferToFloat32Array(buffer) {
+  const copied = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+  return new Float32Array(copied);
+}
+
+function float32ArrayToBuffer(value) {
+  return Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+}
+
+function crc32(buffer) {
+  let crc = ~0;
+  for (let i = 0; i < buffer.length; i += 1) {
+    crc ^= buffer[i];
+    for (let k = 0; k < 8; k += 1) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+  return ~crc >>> 0;
+}
+
+function pngChunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  const name = Buffer.from(type, 'ascii');
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(Buffer.concat([name, data])));
+  return Buffer.concat([len, name, data, crc]);
+}
+
+function linearToSrgbByte(value) {
+  const clamped = Math.max(0, Math.min(1, value / 4.0));
+  const srgb = clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+  return Math.max(0, Math.min(255, Math.round(srgb * 255)));
+}
+
+function writeR7310IronDoorProbePreviewPng(filePath, pixels, width, height) {
+  const raw = Buffer.alloc((width * 3 + 1) * height);
+  for (let y = 0; y < height; y += 1) {
+    const row = y * (width * 3 + 1);
+    raw[row] = 0;
+    for (let x = 0; x < width; x += 1) {
+      const src = (y * width + x) * 4;
+      const dst = row + 1 + x * 3;
+      raw[dst] = linearToSrgbByte(pixels[src]);
+      raw[dst + 1] = linearToSrgbByte(pixels[src + 1]);
+      raw[dst + 2] = linearToSrgbByte(pixels[src + 2]);
+    }
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', deflateSync(raw)),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+  fs.writeFileSync(filePath, png);
+}
+
+function resolveExecutableOnPath(commandName) {
+  const pathEnv = process.env.PATH || '';
+  for (const entry of pathEnv.split(path.delimiter)) {
+    if (!entry) continue;
+    const candidate = path.join(entry, commandName);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      // Keep scanning PATH.
+    }
+  }
+  return null;
+}
+
+function quoteCommandArg(value) {
+  const text = String(value);
+  return /^[A-Za-z0-9_./:=+-]+$/.test(text)
+    ? text
+    : `'${text.replace(/'/g, "'\\''")}'`;
+}
+
+function commandString(parts) {
+  return parts.map(quoteCommandArg).join(' ');
+}
+
+function runR7310IronDoorOpenImageIoDiff({ liveScreenshotPath, candidateScreenshotPath, diffImagePath }) {
+  const executable = resolveExecutableOnPath('oiiotool');
+  const liveRelativePath = path.relative(repoRoot, liveScreenshotPath);
+  const candidateRelativePath = path.relative(repoRoot, candidateScreenshotPath);
+  const diffRelativePath = path.relative(repoRoot, diffImagePath);
+  const args = [
+    liveRelativePath,
+    candidateRelativePath,
+    '--fail',
+    '0.004',
+    '--failpercent',
+    '1',
+    '--hardfail',
+    '0.008',
+    '--diff',
+    '--absdiff',
+    '-o',
+    diffRelativePath
+  ];
+  const command = commandString(['oiiotool', ...args]);
+  if (!executable) {
+    return {
+      tool: 'oiiotool',
+      source: 'OpenImageIO',
+      requiredForAcceptance: true,
+      available: false,
+      status: 'tool_missing',
+      command,
+      diffImage: diffRelativePath,
+      stdout: '',
+      stderr: 'oiiotool was not found on PATH'
+    };
+  }
+  const result = spawnSync(executable, args, {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    timeout: 60000
+  });
+  return {
+    tool: 'oiiotool',
+    source: 'OpenImageIO',
+    requiredForAcceptance: true,
+    available: true,
+    status: result.status === 0 ? 'pass' : 'fail',
+    exitCode: typeof result.status === 'number' ? result.status : null,
+    signal: result.signal || null,
+    command,
+    diffImage: diffRelativePath,
+    stdout: result.stdout || '',
+    stderr: result.stderr || ''
+  };
+}
+
+function buildR7310IronDoorExternalVisualValidationContract({
+  visualDir,
+  liveScreenshotPath,
+  candidateScreenshotPath,
+  diagnosticScreenshotPath,
+  targetSamples,
+  width,
+  height,
+  isHybridVisualAb
+}) {
+  const diffImagePath = path.join(visualDir, `openimageio-diff-spp${targetSamples}.tif`);
+  const openImageIoDiff = runR7310IronDoorOpenImageIoDiff({
+    liveScreenshotPath,
+    candidateScreenshotPath,
+    diffImagePath
+  });
+  return {
+    version: 'external_visual_tool_bridge_v1',
+    status: openImageIoDiff.status === 'pass' ? 'pass' : 'fail',
+    requiredForAcceptance: true,
+    targetSamples,
+    fixedAcceptanceCamera: true,
+    candidateKind: isHybridVisualAb ? 'hybrid_planar_reflection_resolve' : 'planar_reflection_candidate',
+    imageArtifacts: {
+      liveReferencePng: path.relative(repoRoot, liveScreenshotPath),
+      candidatePng: path.relative(repoRoot, candidateScreenshotPath),
+      diagnosticPng: path.relative(repoRoot, diagnosticScreenshotPath),
+      width,
+      height
+    },
+    webglReadback: {
+      status: 'pass',
+      source: 'float32_framebuffer_readback_before_png_preview',
+      normalizedBySamples: false,
+      artifacts: [
+        'r7310-iron-door-visual-ab-live-reference',
+        isHybridVisualAb ? 'r7310-iron-door-visual-ab-hybrid-candidate' : 'r7310-iron-door-visual-ab-planar-candidate',
+        isHybridVisualAb ? 'r7310-iron-door-visual-ab-main-plate-mask' : 'r7310-iron-door-visual-ab-planar-uv-debug'
+      ]
+    },
+    openImageIoDiff,
+    playwrightScreenshot: {
+      tool: '@playwright/test',
+      status: 'declared_optional_not_run',
+      role: 'fixed-environment screenshot golden comparison'
+    },
+    spectorJsFrameCapture: {
+      tool: 'spectorjs',
+      status: 'declared_optional_not_run',
+      role: 'WebGL frame command and texture-slot inspection'
+    }
+  };
+}
+
+function downsampleR7310IronDoorProbeFace(sourcePixels, sourceSize, runtimeSize) {
+  const ratio = sourceSize / runtimeSize;
+  if (!Number.isInteger(ratio) || ratio <= 0) throw new Error('Iron door probe source/runtime face ratio must be a positive integer');
+  const output = new Float32Array(runtimeSize * runtimeSize * 4);
+  const divisor = ratio * ratio;
+  for (let y = 0; y < runtimeSize; y += 1) {
+    for (let x = 0; x < runtimeSize; x += 1) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      for (let by = 0; by < ratio; by += 1) {
+        for (let bx = 0; bx < ratio; bx += 1) {
+          const sx = x * ratio + bx;
+          const sy = y * ratio + by;
+          const src = (sy * sourceSize + sx) * 4;
+          r += sourcePixels[src];
+          g += sourcePixels[src + 1];
+          b += sourcePixels[src + 2];
+        }
+      }
+      const dst = (y * runtimeSize + x) * 4;
+      output[dst] = r / divisor;
+      output[dst + 1] = g / divisor;
+      output[dst + 2] = b / divisor;
+      output[dst + 3] = 1.0;
+    }
+  }
+  return output;
+}
+
+function prefilterR7310IronDoorProbeFace(facePixels, size, radius = 2) {
+  const output = new Float32Array(facePixels.length);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let weightSum = 0;
+      for (let oy = -radius; oy <= radius; oy += 1) {
+        for (let ox = -radius; ox <= radius; ox += 1) {
+          const sx = Math.max(0, Math.min(size - 1, x + ox));
+          const sy = Math.max(0, Math.min(size - 1, y + oy));
+          const dist2 = ox * ox + oy * oy;
+          const weight = 1 / (1 + dist2);
+          const src = (sy * size + sx) * 4;
+          r += facePixels[src] * weight;
+          g += facePixels[src + 1] * weight;
+          b += facePixels[src + 2] * weight;
+          weightSum += weight;
+        }
+      }
+      const dst = (y * size + x) * 4;
+      output[dst] = r / weightSum;
+      output[dst + 1] = g / weightSum;
+      output[dst + 2] = b / weightSum;
+      output[dst + 3] = 1.0;
+    }
+  }
+  return output;
+}
+
+function copyR7310IronDoorProbeFaceToAtlas(atlasPixels, atlasWidth, facePixels, faceSize, faceIndex) {
+  const cellX = faceIndex % 3;
+  const cellY = Math.floor(faceIndex / 3);
+  for (let y = 0; y < faceSize; y += 1) {
+    for (let x = 0; x < faceSize; x += 1) {
+      const src = (y * faceSize + x) * 4;
+      const atlasX = cellX * faceSize + x;
+      const atlasY = cellY * faceSize + y;
+      const dst = (atlasY * atlasWidth + atlasX) * 4;
+      atlasPixels[dst] = facePixels[src];
+      atlasPixels[dst + 1] = facePixels[src + 1];
+      atlasPixels[dst + 2] = facePixels[src + 2];
+      atlasPixels[dst + 3] = 1.0;
+    }
+  }
+}
+
+function statsForR7310IronDoorProbeFace(faceName, pixels, size) {
+  let minLuma = Infinity;
+  let maxLuma = -Infinity;
+  let sumLuma = 0;
+  let sumSqLuma = 0;
+  let nonFinitePixels = 0;
+  let highContrastSamples = 0;
+  let count = 0;
+  const step = Math.max(1, Math.floor(size / 64));
+  for (let y = 0; y < size; y += step) {
+    for (let x = 0; x < size; x += step) {
+      const src = (y * size + x) * 4;
+      const r = pixels[src];
+      const g = pixels[src + 1];
+      const b = pixels[src + 2];
+      if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) {
+        nonFinitePixels += 1;
+        continue;
+      }
+      const luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
+      minLuma = Math.min(minLuma, luma);
+      maxLuma = Math.max(maxLuma, luma);
+      sumLuma += luma;
+      sumSqLuma += luma * luma;
+      count += 1;
+      if (Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b) > 0.035) highContrastSamples += 1;
+    }
+  }
+  const meanLuma = count > 0 ? sumLuma / count : 0;
+  const variance = count > 0 ? Math.max(0, sumSqLuma / count - meanLuma * meanLuma) : 0;
+  const lumaRange = Number.isFinite(maxLuma) && Number.isFinite(minLuma) ? maxLuma - minLuma : 0;
+  return {
+    face: faceName,
+    slot: R7310_IRON_DOOR_REFLECTION_PROBE_FACE_SLOTS[faceName],
+    width: size,
+    height: size,
+    minLuma: Number((Number.isFinite(minLuma) ? minLuma : 0).toFixed(6)),
+    maxLuma: Number((Number.isFinite(maxLuma) ? maxLuma : 0).toFixed(6)),
+    meanLuma: Number(meanLuma.toFixed(6)),
+    lumaRange: Number(lumaRange.toFixed(6)),
+    lumaVariance: Number(variance.toFixed(8)),
+    nonFinitePixels,
+    highContrastSamples,
+    nonBlack: maxLuma > 0.0005,
+    notSolidColor: lumaRange > 0.0025 || variance > 0.000001,
+    majorSceneContentVisible: lumaRange > 0.01 && highContrastSamples > 0
+  };
+}
+
+function statsForR7310FramePixels(label, pixels, width, height) {
+  if (!(pixels instanceof Float32Array) || pixels.length !== width * height * 4) {
+    throw new Error(`R7-3.10 frame stats buffer size mismatch for ${label}`);
+  }
+  let minLuma = Infinity;
+  let maxLuma = -Infinity;
+  let sumLuma = 0;
+  let sumSqLuma = 0;
+  let nonFinitePixels = 0;
+  let count = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) {
+      nonFinitePixels += 1;
+      continue;
+    }
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    minLuma = Math.min(minLuma, luma);
+    maxLuma = Math.max(maxLuma, luma);
+    sumLuma += luma;
+    sumSqLuma += luma * luma;
+    count += 1;
+  }
+  const meanLuma = count > 0 ? sumLuma / count : 0;
+  const variance = count > 0 ? Math.max(0, sumSqLuma / count - meanLuma * meanLuma) : 0;
+  const lumaRange = Number.isFinite(maxLuma) && Number.isFinite(minLuma) ? maxLuma - minLuma : 0;
+  return {
+    label,
+    width,
+    height,
+    minLuma: Number((Number.isFinite(minLuma) ? minLuma : 0).toFixed(6)),
+    maxLuma: Number((Number.isFinite(maxLuma) ? maxLuma : 0).toFixed(6)),
+    meanLuma: Number(meanLuma.toFixed(6)),
+    lumaRange: Number(lumaRange.toFixed(6)),
+    lumaVariance: Number(variance.toFixed(8)),
+    nonFinitePixels,
+    nonBlack: maxLuma > 0.0005,
+    notSolidColor: lumaRange > 0.0025 || variance > 0.000001
+  };
+}
+
+function assertNoR7310IronDoorProbeFatalEvents(cdp, stderr) {
+  const haystack = `${JSON.stringify(cdp.events.slice(-2000))}\n${stderr || ''}`;
+  const fatalPatterns = [
+    /CONTEXT_LOST_WEBGL/i,
+    /WebGLRenderer:\s*Context Lost/i,
+    /Shader Error/i,
+    /VALIDATE_STATUS false/i,
+    /program not valid/i
+  ];
+  const matched = fatalPatterns.find((pattern) => pattern.test(haystack));
+  if (matched) throw new Error(`R7-3.10 iron door reflection probe aborted by fatal WebGL event: ${matched}`);
+}
+
+function countR7310IronDoorFatalPattern(haystack, pattern) {
+  const matches = haystack.match(pattern);
+  return matches ? matches.length : 0;
+}
+
+function collectR7310IronDoorProbeRuntimeFatalEventCounts(cdp, stderr) {
+  const haystack = `${JSON.stringify(cdp.events.slice(-2000))}\n${stderr || ''}`;
+  return {
+    webglContextLost: countR7310IronDoorFatalPattern(
+      haystack,
+      /CONTEXT_LOST_WEBGL|WebGLRenderer:\s*Context Lost/ig
+    ),
+    shaderValidationError: countR7310IronDoorFatalPattern(
+      haystack,
+      /Shader Error|VALIDATE_STATUS false|program not valid/ig
+    ),
+    console404: countR7310IronDoorFatalPattern(
+      haystack,
+      /Failed to load resource|\b404\b|probe load failed|reflection probe pointer not found|not found/ig
+    )
+  };
+}
+
+function assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr) {
+  const counts = collectR7310IronDoorProbeRuntimeFatalEventCounts(cdp, stderr);
+  if (counts.webglContextLost > 0)
+    throw new Error('R7-3.10 iron door reflection probe runtime smoke failed: webglContextLost');
+  if (counts.shaderValidationError > 0)
+    throw new Error('R7-3.10 iron door reflection probe runtime smoke failed: shaderValidationError');
+  if (counts.console404 > 0)
+    throw new Error('R7-3.10 iron door reflection probe runtime smoke failed: console404');
+}
+
+function writeR7310IronDoorReflectionProbePackage({ report, sourceFaceBuffers, packageDir }) {
+  const sourceFaceSize = 1024;
+  const runtimeFaceSize = 512;
+  const atlasWidth = runtimeFaceSize * 3;
+  const atlasHeight = runtimeFaceSize * 2;
+  const sourceFaces = {};
+  const sourceFaceArtifacts = {};
+  const sourceFaceHashes = {};
+  const stats = [];
+  const atlasPixels = new Float32Array(atlasWidth * atlasHeight * 4);
+  fs.mkdirSync(packageDir, { recursive: true });
+  for (let faceIndex = 0; faceIndex < R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER.length; faceIndex += 1) {
+    const faceName = R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER[faceIndex];
+    const buffer = sourceFaceBuffers[faceName];
+    const expectedBytes = sourceFaceSize * sourceFaceSize * 4 * 4;
+    if (!Buffer.isBuffer(buffer) || buffer.byteLength !== expectedBytes) {
+      throw new Error(`R7-3.10 iron door reflection probe source face length mismatch: ${faceName}`);
+    }
+    const faceCode = R7310_IRON_DOOR_REFLECTION_PROBE_FACE_CODES[faceName];
+    const sourceFile = `iron-door-reflection-probe-source-face-${faceCode}-linear-rgba-f32.bin`;
+    fs.writeFileSync(path.join(packageDir, sourceFile), buffer);
+    sourceFaceArtifacts[faceName] = sourceFile;
+    sourceFaceHashes[faceName] = sha256(buffer);
+    sourceFaces[faceName] = bufferToFloat32Array(buffer);
+    const downsampled = downsampleR7310IronDoorProbeFace(sourceFaces[faceName], sourceFaceSize, runtimeFaceSize);
+    const prefiltered = prefilterR7310IronDoorProbeFace(downsampled, runtimeFaceSize, 2);
+    const faceStats = statsForR7310IronDoorProbeFace(faceName, sourceFaces[faceName], sourceFaceSize);
+    if (faceStats.nonFinitePixels > 0 || !faceStats.nonBlack || !faceStats.notSolidColor || !faceStats.majorSceneContentVisible) {
+      throw new Error(`R7-3.10 iron door reflection probe validation failed: ${faceName} ${JSON.stringify(faceStats)}`);
+    }
+    stats.push(faceStats);
+    copyR7310IronDoorProbeFaceToAtlas(atlasPixels, atlasWidth, prefiltered, runtimeFaceSize, faceIndex);
+  }
+  const atlasFile = 'iron-door-reflection-probe-prefiltered-r0.3-3x2-rgba-f32.bin';
+  const previewFile = 'iron-door-reflection-probe-prefiltered-r0.3-preview.png';
+  const validationFile = 'iron-door-reflection-probe-validation-report.json';
+  fs.writeFileSync(path.join(packageDir, atlasFile), Buffer.from(atlasPixels.buffer));
+  writeR7310IronDoorProbePreviewPng(path.join(packageDir, previewFile), atlasPixels, atlasWidth, atlasHeight);
+  const packageDirRel = path.relative(repoRoot, packageDir);
+  const validationReport = {
+    version: 'r7-3-10-iron-door-reflection-probe-scene-capture-package-v1',
+    runnerStatus: 'scene_capture',
+    captureStatus: 'path_traced_cubemap_capture_complete',
+    validationStatus: 'scene_capture_candidate',
+    sourceKind: 'home_studio_runtime_scene_capture',
+    sceneCapture: {
+      actualScene: true,
+      source: 'Chrome headless Metal Home_Studio runtime'
+    },
+    radianceSpace: 'linear_hdr',
+    faceOrder: R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER,
+    sourceFaceSize,
+    runtimeFaceSize,
+    targetAtlasWidth: atlasWidth,
+    targetAtlasHeight: atlasHeight,
+    targetSamples: report.targetSamples,
+    stats,
+    browserReportStats: report.stats,
+    artifactHashes: {
+      prefilteredCubemapAtlasSha256: sha256(Buffer.from(atlasPixels.buffer)),
+      sourceFaces: sourceFaceHashes
+    }
+  };
+  fs.writeFileSync(path.join(packageDir, validationFile), `${JSON.stringify(validationReport, null, 2)}\n`);
+  const pointer = {
+    packageStatus: 'scene_capture_probe',
+    probeKind: 'captured_local_cubemap',
+    target: 'iron_door_body',
+    targetId: 230002,
+    surfaceName: 'c1_iron_door_body_captured_local_reflection_probe',
+    runtimeScope: 'c1_iron_door_body_captured_local_reflection_probe',
+    runtimeTexture: 'tR7310C1FullRoomDiffuseAtlasTexture',
+    sourceKind: 'home_studio_runtime_scene_capture',
+    sceneCapture: validationReport.sceneCapture,
+    radianceSpace: 'linear_hdr',
+    projection: 'box',
+    probePosition: report.probePosition || { x: -1.82, y: 1.08, z: -1.43 },
+    boxMin: { x: -1.91, y: 0.0, z: -1.874 },
+    boxMax: { x: 1.91, y: 2.905, z: 3.056 },
+    faceLayout: '3x2',
+    faceOrder: R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER,
+    sourceFaceSize,
+    runtimeFaceSize,
+    targetAtlasWidth: atlasWidth,
+    targetAtlasHeight: atlasHeight,
+    runtimeAtlasSlotBase: 24,
+    runtimeAtlasSlotCount: 6,
+    runtimeAtlasSlots: R7310_IRON_DOOR_REFLECTION_PROBE_FACE_SLOTS,
+    prefilter: {
+      method: 'ggx_or_equivalent_importance_prefilter',
+      roughness: 0.3,
+      implementation: 'scene_capture_cpu_prefilter_r0_3'
+    },
+    lightBake: 'iron_door_body_full_bake_fix7',
+    reflectionBake: 'captured_local_cubemap_box_projected',
+    packageDir: packageDirRel,
+    artifacts: {
+      prefilteredCubemapAtlas: atlasFile,
+      preview: previewFile,
+      validationReport: validationFile,
+      package: 'iron-door-reflection-probe-package.json',
+      sourceFaces: sourceFaceArtifacts
+    },
+    validationStatus: 'scene_capture_candidate',
+    validation: validationReport
+  };
+  fs.writeFileSync(path.join(packageDir, pointer.artifacts.package), `${JSON.stringify(pointer, null, 2)}\n`);
+  fs.writeFileSync(path.join(repoRoot, 'docs/data/r7-3-10-c1-iron-door-reflection-probe-runtime-package.json'), `${JSON.stringify(pointer, null, 2)}\n`);
+  return pointer;
+}
+
+function writeR7310IronDoorPlanarReflectionPackage({ report, planarBuffer, packageDir, updateRuntimePointer = true }) {
+  const runtimeFaceSize = Number.isFinite(report.runtimeFaceSize) ? Math.trunc(report.runtimeFaceSize) : 512;
+  const expectedBytes = runtimeFaceSize * runtimeFaceSize * 4 * 4;
+  if (!Buffer.isBuffer(planarBuffer) || planarBuffer.byteLength !== expectedBytes) {
+    throw new Error(`R7-3.10 iron door planar reflection atlas length mismatch: expected ${expectedBytes}, got ${planarBuffer ? planarBuffer.byteLength : 0}`);
+  }
+  fs.mkdirSync(packageDir, { recursive: true });
+  const sourcePixels = bufferToFloat32Array(planarBuffer);
+  const prefilteredPixels = prefilterR7310IronDoorProbeFace(sourcePixels, runtimeFaceSize, 2);
+  const planarStats = statsForR7310IronDoorProbeFace('planar_reflection', prefilteredPixels, runtimeFaceSize);
+  if (planarStats.nonFinitePixels > 0 || !planarStats.nonBlack || !planarStats.notSolidColor) {
+    throw new Error(`R7-3.10 iron door planar reflection validation failed: ${JSON.stringify(planarStats)}`);
+  }
+  const atlasFile = 'iron-door-planar-reflection-r0.3-rgba-f32.bin';
+  const sourceFile = 'iron-door-planar-reflection-source-rgba-f32.bin';
+  const previewFile = 'iron-door-planar-reflection-preview.png';
+  const validationFile = 'iron-door-planar-reflection-validation-report.json';
+  const packageFile = 'iron-door-planar-reflection-package.json';
+  const atlasBuffer = float32ArrayToBuffer(prefilteredPixels);
+  fs.writeFileSync(path.join(packageDir, sourceFile), planarBuffer);
+  fs.writeFileSync(path.join(packageDir, atlasFile), atlasBuffer);
+  writeR7310IronDoorProbePreviewPng(path.join(packageDir, previewFile), prefilteredPixels, runtimeFaceSize, runtimeFaceSize);
+  const packageDirRel = path.relative(repoRoot, packageDir);
+  const receiverMask = {
+    kind: 'main_flat_door_plate_only',
+    debugMode: 'hybrid-mask',
+    shaderFunction: 'r7310C1IronDoorMainFlatPlateMask'
+  };
+  const replacementScope = {
+    planarCandidateRegions: ['full_flat_door_photo_plane'],
+    liveFallbackRegions: [],
+    farFieldProbeRole: 'optional_low_frequency_only'
+  };
+	  const acceptanceGates = {
+	    fix7ReferenceUrl: 'http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7',
+	    sameCameraExposureSppRequired: true,
+	    roiMeanLumaRatio: { min: 0.75, max: 1.25 },
+	    meanAbsRgbDiff: { max: 12 },
+	    reflectionContentParityRequired: true,
+	    freeNavigationViewDependentReflectionRequired: true,
+	    console404Allowed: false,
+	    shaderValidationErrorAllowed: false,
+	    webglContextLostAllowed: false
+	  };
+  const validationReport = {
+    version: 'r7-3-10-iron-door-planar-reflection-scene-capture-package-v1',
+    runnerStatus: 'scene_capture',
+    captureStatus: 'path_traced_planar_reflection_capture_complete',
+    validationStatus: 'candidate_pending_visual_acceptance',
+    packageStatus: 'planar_reflection_candidate',
+    target: 'iron_door_body',
+    sourceKind: 'home_studio_runtime_scene_capture',
+    sceneCapture: {
+      actualScene: true,
+      source: 'Chrome headless Metal Home_Studio runtime'
+    },
+    radianceSpace: 'linear_hdr',
+    captureKind: 'mirrored_camera_planar_capture',
+    projection: 'single_receiver_plane',
+    selfCaptureExcluded: true,
+    captureClipPlane: report.captureClipPlane || null,
+    receiverMask,
+    replacementScope,
+    acceptanceGates,
+    metalness: 1.0,
+    roughness: 0.3,
+    runtimeFaceSize,
+    targetAtlasWidth: runtimeFaceSize,
+    targetAtlasHeight: runtimeFaceSize,
+    runtimeAtlasSlot: 24,
+    targetSamples: report.targetSamples,
+    actualSamples: report.actualSamples,
+    cameraState: report.cameraState,
+    mirroredCamera: report.mirroredCamera,
+    stats: {
+      browser: report.stats || null,
+      package: planarStats
+    },
+    artifactHashes: {
+      planarReflectionAtlasSha256: sha256(atlasBuffer),
+      sourceReflectionSha256: sha256(planarBuffer)
+    }
+  };
+  fs.writeFileSync(path.join(packageDir, validationFile), `${JSON.stringify(validationReport, null, 2)}\n`);
+  const pointer = {
+    version: 'r7-3-10-iron-door-planar-reflection-runtime-package-v1',
+    packageStatus: 'planar_reflection_candidate',
+    validationStatus: 'candidate_pending_visual_acceptance',
+    target: 'iron_door_body',
+    targetId: 230002,
+    surfaceName: 'c1_iron_door_body_planar_reflection_candidate',
+    runtimeScope: 'c1_iron_door_body_planar_reflection_candidate',
+    runtimeTexture: 'tR7310C1FullRoomDiffuseAtlasTexture',
+    runtimeAtlasSlot: 24,
+    captureKind: 'mirrored_camera_planar_capture',
+    projection: 'single_receiver_plane',
+    selfCaptureExcluded: true,
+    captureClipPlane: validationReport.captureClipPlane,
+    receiverMask,
+    replacementScope,
+    acceptanceGates,
+    metalness: 1.0,
+    roughness: 0.3,
+    referenceMode: 'light_bake_live_reflection_fix7',
+    sourceKind: 'home_studio_runtime_scene_capture',
+    sceneCapture: validationReport.sceneCapture,
+    radianceSpace: 'linear_hdr',
+    runtimeFaceSize,
+    targetAtlasWidth: runtimeFaceSize,
+    targetAtlasHeight: runtimeFaceSize,
+    cameraState: report.cameraState,
+    mirroredCamera: report.mirroredCamera,
+    prefilter: {
+      method: 'roughness_0_3_planar_prefilter_required',
+      roughness: 0.3,
+      implementation: 'scene_capture_cpu_prefilter_r0_3'
+    },
+    packageDir: packageDirRel,
+    artifacts: {
+      planarReflectionAtlas: atlasFile,
+      sourceReflection: sourceFile,
+      preview: previewFile,
+      validationReport: validationFile,
+      package: packageFile
+    },
+    validation: validationReport
+  };
+  fs.writeFileSync(path.join(packageDir, packageFile), `${JSON.stringify(pointer, null, 2)}\n`);
+  if (updateRuntimePointer) {
+    fs.writeFileSync(path.join(repoRoot, 'docs/data/r7-3-10-c1-iron-door-planar-reflection-runtime-package.json'), `${JSON.stringify(pointer, null, 2)}\n`);
+  }
+  return pointer;
+}
+
+function r7310IronDoorVisualAbLuma(pixels, offset) {
+  return 0.299 * pixels[offset] + 0.587 * pixels[offset + 1] + 0.114 * pixels[offset + 2];
+}
+
+function summarizeR7310IronDoorVisualAbRegion({ livePixels, candidatePixels, width, height, includePixel }) {
+  let liveLumaSum = 0;
+  let candidateLumaSum = 0;
+  let absDiffSum = 0;
+  let count = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      if (!includePixel(x, y, i)) continue;
+      const liveLuma = r7310IronDoorVisualAbLuma(livePixels, i);
+      const candidateLuma = r7310IronDoorVisualAbLuma(candidatePixels, i);
+      liveLumaSum += liveLuma;
+      candidateLumaSum += candidateLuma;
+      absDiffSum += (
+        Math.abs(livePixels[i] - candidatePixels[i]) +
+        Math.abs(livePixels[i + 1] - candidatePixels[i + 1]) +
+        Math.abs(livePixels[i + 2] - candidatePixels[i + 2])
+      ) / 3;
+      count += 1;
+    }
+  }
+  const liveMeanLuma = count > 0 ? liveLumaSum / count : 0;
+  const candidateMeanLuma = count > 0 ? candidateLumaSum / count : 0;
+  return {
+    count,
+    liveMeanLuma,
+    candidateMeanLuma,
+    meanLumaRatio: liveMeanLuma > 0.000001 ? candidateMeanLuma / liveMeanLuma : 0,
+    meanAbsRgbDiff: count > 0 ? absDiffSum / count : Infinity
+  };
+}
+
+function isR7310IronDoorMainPlateMaskPixel(maskPixels, offset) {
+  const r = maskPixels[offset];
+  const g = maskPixels[offset + 1];
+  const b = maskPixels[offset + 2];
+  return Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b) &&
+    g >= 0.2 &&
+    g > r + 0.12 &&
+    g > b + 0.12;
+}
+
+function r7310IronDoorWarmReflectionScore(pixels, offset) {
+  const r = pixels[offset];
+  const g = pixels[offset + 1];
+  const b = pixels[offset + 2];
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return 0;
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const maxChannel = Math.max(r, g, b);
+  const minChannel = Math.min(r, g, b);
+  const warmExcess = Math.max(0, r - Math.max(g, b) * 1.03);
+  const chroma = Math.max(0, maxChannel - minChannel);
+  return warmExcess * chroma * Math.max(0, luma);
+}
+
+function summarizeR7310IronDoorWarmReflectionFeature({ pixels, maskPixels, width, height, roi, topFraction }) {
+  const scores = [];
+  let mainPlateRoiMaskPixelCount = 0;
+  for (let y = roi.yMin; y < roi.yMax; y += 1) {
+    for (let x = roi.xMin; x < roi.xMax; x += 1) {
+      const i = (y * width + x) * 4;
+      if (!isR7310IronDoorMainPlateMaskPixel(maskPixels, i)) continue;
+      mainPlateRoiMaskPixelCount += 1;
+      const score = r7310IronDoorWarmReflectionScore(pixels, i);
+      if (score > 0) scores.push({ score, x, y });
+    }
+  }
+  scores.sort((a, b) => b.score - a.score);
+  const selectedTargetCount = Math.max(32, Math.floor(mainPlateRoiMaskPixelCount * topFraction));
+  const selected = scores.slice(0, Math.min(scores.length, selectedTargetCount));
+  let scoreSum = 0;
+  let weightedX = 0;
+  let weightedY = 0;
+  let xMin = Infinity;
+  let yMin = Infinity;
+  let xMax = -Infinity;
+  let yMax = -Infinity;
+  for (const entry of selected) {
+    scoreSum += entry.score;
+    weightedX += entry.score * entry.x;
+    weightedY += entry.score * entry.y;
+    xMin = Math.min(xMin, entry.x);
+    yMin = Math.min(yMin, entry.y);
+    xMax = Math.max(xMax, entry.x);
+    yMax = Math.max(yMax, entry.y);
+  }
+  const selectedCount = selected.length;
+  return {
+    mainPlateRoiMaskPixelCount,
+    selectedCount,
+    selectedTargetCount,
+    thresholdScore: selectedCount > 0 ? selected[selectedCount - 1].score : 0,
+    scoreSum,
+    areaFraction: mainPlateRoiMaskPixelCount > 0 ? selectedCount / mainPlateRoiMaskPixelCount : 0,
+    centroid: scoreSum > 0
+      ? { x: weightedX / scoreSum, y: weightedY / scoreSum }
+      : null,
+    bbox: selectedCount > 0
+      ? { xMin, yMin, xMax, yMax }
+      : null
+  };
+}
+
+function r7310IronDoorBboxIou(a, b) {
+  if (!a || !b) return 0;
+  const ix = Math.max(0, Math.min(a.xMax, b.xMax) - Math.max(a.xMin, b.xMin) + 1);
+  const iy = Math.max(0, Math.min(a.yMax, b.yMax) - Math.max(a.yMin, b.yMin) + 1);
+  const intersection = ix * iy;
+  const areaA = Math.max(0, a.xMax - a.xMin + 1) * Math.max(0, a.yMax - a.yMin + 1);
+  const areaB = Math.max(0, b.xMax - b.xMin + 1) * Math.max(0, b.yMax - b.yMin + 1);
+  const union = areaA + areaB - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+function computeR7310IronDoorReflectionContentPositionMetrics({ livePixels, candidatePixels, maskPixels, width, height, roi }) {
+  if (!(maskPixels instanceof Float32Array)) return null;
+  const topFraction = 0.08;
+  const live = summarizeR7310IronDoorWarmReflectionFeature({
+    pixels: livePixels,
+    maskPixels,
+    width,
+    height,
+    roi,
+    topFraction
+  });
+  const candidate = summarizeR7310IronDoorWarmReflectionFeature({
+    pixels: candidatePixels,
+    maskPixels,
+    width,
+    height,
+    roi,
+    topFraction
+  });
+  const minFeaturePixels = Math.max(32, Math.floor(Math.min(
+    live.mainPlateRoiMaskPixelCount,
+    candidate.mainPlateRoiMaskPixelCount
+  ) * 0.005));
+  const centerDistancePx = live.centroid && candidate.centroid
+    ? Math.hypot(candidate.centroid.x - live.centroid.x, candidate.centroid.y - live.centroid.y)
+    : Infinity;
+  const roiDiagonalPx = Math.hypot(roi.xMax - roi.xMin, roi.yMax - roi.yMin);
+  const centerDistanceNormalized = roiDiagonalPx > 0 ? centerDistancePx / roiDiagonalPx : Infinity;
+  const bboxIou = r7310IronDoorBboxIou(live.bbox, candidate.bbox);
+  const scoreRatio = live.scoreSum > 0.000001 ? candidate.scoreSum / live.scoreSum : 0;
+  const gates = {
+    liveFeatureDetectedPass: live.selectedCount >= minFeaturePixels && live.scoreSum > 0,
+    candidateFeatureDetectedPass: candidate.selectedCount >= minFeaturePixels && candidate.scoreSum > 0,
+    centerDistancePass: centerDistanceNormalized <= 0.12,
+    bboxIouPass: bboxIou >= 0.15,
+    scoreRatioPass: scoreRatio >= 0.25 && scoreRatio <= 4.0
+  };
+  const contentPositionGatePass = gates.liveFeatureDetectedPass &&
+    gates.candidateFeatureDetectedPass &&
+    gates.centerDistancePass &&
+    gates.bboxIouPass &&
+    gates.scoreRatioPass;
+  return {
+    version: 'r7-3-10-iron-door-reflection-content-position-metrics-v1',
+    featureKind: 'warm_reflection_content_inside_main_plate_roi',
+    topFraction,
+    roi,
+    minFeaturePixels,
+    live,
+    candidate,
+    comparison: {
+      centerDistancePx,
+      centerDistanceNormalized,
+      bboxIou,
+      scoreRatio
+    },
+    gates,
+    contentPositionGatePass,
+    status: contentPositionGatePass ? 'pass' : 'fail'
+  };
+}
+
+function computeR7310IronDoorVisualAbMetrics({ livePixels, candidatePixels, maskPixels, mainPlateMaskRequired = false, width, height }) {
+  if (!(livePixels instanceof Float32Array) || !(candidatePixels instanceof Float32Array)) {
+    throw new Error('R7-3.10 iron door visual A/B metrics require Float32Array pixels');
+  }
+  if (livePixels.length !== candidatePixels.length || livePixels.length !== width * height * 4) {
+    throw new Error('R7-3.10 iron door visual A/B metrics buffer size mismatch');
+  }
+  if (maskPixels != null && (!(maskPixels instanceof Float32Array) || maskPixels.length !== width * height * 4)) {
+    throw new Error('R7-3.10 iron door visual A/B metrics mask buffer size mismatch');
+  }
+  if (mainPlateMaskRequired && !(maskPixels instanceof Float32Array)) {
+    throw new Error('R7-3.10 iron door hybrid visual A/B metrics require main-plate mask pixels');
+  }
+  const roi = {
+    xMin: Math.max(0, Math.floor(width * 0.539)),
+    xMax: Math.min(width, Math.ceil(width * 0.727)),
+    yMin: Math.max(0, Math.floor(height * 0.056)),
+    yMax: Math.min(height, Math.ceil(height * 0.889))
+  };
+  const roiMetrics = summarizeR7310IronDoorVisualAbRegion({
+    livePixels,
+    candidatePixels,
+    width,
+    height,
+    includePixel: (x, y) => x >= roi.xMin && x < roi.xMax && y >= roi.yMin && y < roi.yMax
+  });
+  const liveMeanLuma = roiMetrics.liveMeanLuma;
+  const candidateMeanLuma = roiMetrics.candidateMeanLuma;
+  const roiMeanLumaRatio = roiMetrics.meanLumaRatio;
+  const meanAbsRgbDiff = roiMetrics.meanAbsRgbDiff;
+  const lumaRatioPass = roiMeanLumaRatio >= 0.75 && roiMeanLumaRatio <= 1.25;
+  const meanAbsRgbDiffPass = meanAbsRgbDiff <= 12;
+  const minMainPlateMaskPixels = Math.max(64, Math.floor(width * height * 0.002));
+  const mainPlateRegion = maskPixels instanceof Float32Array
+    ? summarizeR7310IronDoorVisualAbRegion({
+      livePixels,
+      candidatePixels,
+      width,
+      height,
+      includePixel: (_x, _y, i) => isR7310IronDoorMainPlateMaskPixel(maskPixels, i)
+    })
+    : null;
+  const mainPlateMetrics = mainPlateRegion
+    ? {
+      mainPlateMaskPixelCount: mainPlateRegion.count,
+      minMainPlateMaskPixels,
+      liveMeanLuma: mainPlateRegion.liveMeanLuma,
+      candidateMeanLuma: mainPlateRegion.candidateMeanLuma,
+      mainPlateMeanLumaRatio: mainPlateRegion.meanLumaRatio,
+      meanAbsRgbDiff: mainPlateRegion.meanAbsRgbDiff,
+      gates: {
+        maskCoveragePass: mainPlateRegion.count >= minMainPlateMaskPixels,
+        lumaRatioPass: mainPlateRegion.meanLumaRatio >= 0.75 && mainPlateRegion.meanLumaRatio <= 1.25,
+        meanAbsRgbDiffPass: mainPlateRegion.meanAbsRgbDiff <= 12
+      }
+    }
+    : null;
+  const mainPlateGatePass = !mainPlateMaskRequired ||
+    !!(mainPlateMetrics &&
+      mainPlateMetrics.gates.maskCoveragePass &&
+      mainPlateMetrics.gates.lumaRatioPass &&
+      mainPlateMetrics.gates.meanAbsRgbDiffPass);
+  const reflectionContentPositionMetrics = maskPixels instanceof Float32Array
+    ? computeR7310IronDoorReflectionContentPositionMetrics({
+      livePixels,
+      candidatePixels,
+      maskPixels,
+      width,
+      height,
+      roi
+    })
+    : null;
+  const contentPositionGatePass = !mainPlateMaskRequired ||
+    !!(reflectionContentPositionMetrics && reflectionContentPositionMetrics.contentPositionGatePass);
+  return {
+    version: 'r7-3-10-iron-door-planar-reflection-visual-ab-metrics',
+    roi,
+    liveMeanLuma,
+    candidateMeanLuma,
+    roiMeanLumaRatio,
+    meanAbsRgbDiff,
+    mainPlateMetrics,
+    reflectionContentPositionMetrics,
+    gates: {
+      lumaRatioPass,
+      meanAbsRgbDiffPass,
+      mainPlateGatePass,
+      contentPositionGatePass
+    },
+    status: lumaRatioPass && meanAbsRgbDiffPass && mainPlateGatePass && contentPositionGatePass ? 'candidate_pending_human_visual_review' : 'candidate_rejected_by_visual_ab_metrics'
+  };
+}
+
+function updateR7310IronDoorPlanarReflectionPointerFromVisualAb({ visualReport, visualDir, pointerPath }) {
+  if (!visualReport || !visualReport.metrics) {
+    throw new Error('R7-3.10 iron door visual A/B pointer update requires metrics');
+  }
+  const pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+  const receiverMask = visualReport.receiverMask || {
+    kind: 'main_flat_door_plate_only',
+    debugMode: 'hybrid-mask',
+    shaderFunction: 'r7310C1IronDoorMainFlatPlateMask'
+  };
+  const replacementScope = visualReport.replacementScope || {
+    planarCandidateRegions: ['full_flat_door_photo_plane'],
+    liveFallbackRegions: [],
+    farFieldProbeRole: 'optional_low_frequency_only'
+  };
+  const acceptanceGates = visualReport.acceptanceGates || {
+    fix7ReferenceUrl: 'http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7',
+    sameCameraExposureSppRequired: true,
+	    roiMeanLumaRatio: { min: 0.75, max: 1.25 },
+	    meanAbsRgbDiff: { max: 12 },
+	    reflectionContentParityRequired: true,
+	    freeNavigationViewDependentReflectionRequired: true,
+	    console404Allowed: false,
+    shaderValidationErrorAllowed: false,
+    webglContextLostAllowed: false
+  };
+  pointer.receiverMask = receiverMask;
+  pointer.replacementScope = replacementScope;
+  pointer.acceptanceGates = acceptanceGates;
+  pointer.humanVisualReviewRequired = true;
+  if (visualReport.metrics.status === 'candidate_rejected_by_visual_ab_metrics') {
+    pointer.validationStatus = 'failed_candidate';
+    pointer.failureReason = 'planar_scene_probe_reflection_content_mismatch_against_fix7';
+    pointer.recommendedNextCandidate = 'hybrid_planar_reflection_resolve';
+    pointer.failureEvidence = {
+      observedByUser: false,
+      visualAb: {
+        runnerStatus: visualReport.status,
+        packageDir: path.relative(repoRoot, visualDir),
+        receiverMask,
+        liveReference: visualReport.liveReference ? visualReport.liveReference.screenshot : null,
+        candidate: visualReport.planarCandidate ? visualReport.planarCandidate.screenshot : null,
+        uvDebug: visualReport.planarUvDebug ? visualReport.planarUvDebug.screenshot : null,
+        roi: visualReport.metrics.roi,
+        liveMeanLuma: visualReport.metrics.liveMeanLuma,
+        candidateMeanLuma: visualReport.metrics.candidateMeanLuma,
+        roiMeanLumaRatio: visualReport.metrics.roiMeanLumaRatio,
+        meanAbsRgbDiff: visualReport.metrics.meanAbsRgbDiff,
+        primaryUserObservedFailure: 'reflection_content_image_mismatch_against_fix7',
+        metricRole: 'auxiliary_numeric_diff_signal',
+        failureSummary: 'planar_candidate_reflection_content_image_mismatch_against_fix7'
+      }
+    };
+  } else if (visualReport.metrics.status === 'candidate_pending_human_visual_review') {
+    pointer.validationStatus = 'candidate_pending_visual_acceptance';
+    delete pointer.failureReason;
+    delete pointer.recommendedNextCandidate;
+    delete pointer.failureEvidence;
+    pointer.visualAcceptanceEvidence = {
+      runnerStatus: visualReport.status,
+      packageDir: path.relative(repoRoot, visualDir),
+      receiverMask,
+      metrics: visualReport.metrics,
+      humanVisualReviewRequired: true
+    };
+  } else {
+    throw new Error(`R7-3.10 iron door visual A/B unknown status: ${visualReport.metrics.status}`);
+  }
+  fs.writeFileSync(pointerPath, `${JSON.stringify(pointer, null, 2)}\n`);
+  if (pointer.packageDir && pointer.artifacts && pointer.artifacts.package) {
+    fs.writeFileSync(path.join(repoRoot, pointer.packageDir, pointer.artifacts.package), `${JSON.stringify(pointer, null, 2)}\n`);
+  }
+  return pointer;
+}
+
+function resolveR7310IronDoorHybridStagedAcceptanceGate(targetSamples) {
+  return { id: 'noise_gate_1_spp', targetSamples: 1 };
+}
+
+function buildR7310IronDoorHybridStagedAcceptance({ previousStagedAcceptance, stagedAcceptanceGate, gatePassed, visualDir = null }) {
+  const requiredGateIds = [...R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_GATE_IDS];
+  const compatiblePreviousStagedAcceptance = previousStagedAcceptance?.metricContract === R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_METRIC_CONTRACT
+    ? previousStagedAcceptance
+    : null;
+  const completedGateIds = new Set(Array.isArray(compatiblePreviousStagedAcceptance?.completedGateIds)
+    ? compatiblePreviousStagedAcceptance.completedGateIds.filter((gateId) => requiredGateIds.includes(gateId))
+    : []);
+  const previousGateEvidence = Array.isArray(compatiblePreviousStagedAcceptance?.gateEvidence)
+    ? compatiblePreviousStagedAcceptance.gateEvidence.filter((entry) => requiredGateIds.includes(entry?.id))
+    : [];
+  const gateEvidenceById = new Map(previousGateEvidence.map((entry) => [entry.id, entry]));
+  if (gatePassed === true && stagedAcceptanceGate && requiredGateIds.includes(stagedAcceptanceGate.id)) {
+    completedGateIds.add(stagedAcceptanceGate.id);
+    if (visualDir) {
+      gateEvidenceById.set(stagedAcceptanceGate.id, {
+        id: stagedAcceptanceGate.id,
+        targetSamples: stagedAcceptanceGate.targetSamples,
+        reportPath: path.relative(repoRoot, path.join(visualDir, 'visual-ab-report.json')),
+        metricContract: R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_METRIC_CONTRACT,
+        status: 'pass'
+      });
+    }
+  }
+  const orderedCompletedGateIds = requiredGateIds.filter((gateId) => completedGateIds.has(gateId));
+  const missingGateIds = requiredGateIds.filter((gateId) => !completedGateIds.has(gateId));
+  const gateEvidence = requiredGateIds
+    .filter((gateId) => gateEvidenceById.has(gateId))
+    .map((gateId) => gateEvidenceById.get(gateId));
+  return {
+    metricContract: R7310_IRON_DOOR_HYBRID_STAGED_ACCEPTANCE_METRIC_CONTRACT,
+    requiredGateIds,
+    completedGateIds: orderedCompletedGateIds,
+    missingGateIds,
+    stagedAcceptanceComplete: missingGateIds.length === 0,
+    lastGate: stagedAcceptanceGate || null,
+    gateEvidence
+  };
+}
+
+function updateR7310IronDoorHybridReflectionContractFromVisualAb({ visualReport, visualDir, pointerPath }) {
+  if (!visualReport || !visualReport.metrics) {
+    throw new Error('R7-3.10 iron door hybrid visual A/B contract update requires metrics');
+  }
+  const contract = JSON.parse(fs.readFileSync(pointerPath, 'utf8'));
+  const receiverMask = visualReport.receiverMask || {
+    kind: 'main_flat_door_plate_only',
+    debugMode: 'hybrid-mask',
+    shaderFunction: 'r7310C1IronDoorMainFlatPlateMask'
+  };
+  const replacementScope = visualReport.replacementScope || {
+    planarCandidateRegions: ['full_flat_door_photo_plane'],
+    liveFallbackRegions: [],
+    farFieldProbeRole: 'optional_low_frequency_only'
+  };
+	  const acceptanceGates = visualReport.acceptanceGates || {
+	    fix7ReferenceUrl: 'http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7',
+	    sameCameraExposureSppRequired: true,
+	    roiMeanLumaRatio: { min: 0.75, max: 1.25 },
+	    meanAbsRgbDiff: { max: 12 },
+	    reflectionContentParityRequired: true,
+	    freeNavigationViewDependentReflectionRequired: true,
+	    console404Allowed: false,
+	    shaderValidationErrorAllowed: false,
+    webglContextLostAllowed: false
+  };
+  contract.currentMode = 'hybrid_planar_reflection_candidate';
+  contract.captureKind = 'hybrid_planar_or_live_reflection_resolve';
+  contract.projectionKind = 'receiver_plane_masked_planar_full_photo_plane';
+  contract.selfCaptureExcluded = true;
+  contract.captureClipPlaneEnabled = true;
+  contract.prefilterKind = 'roughness_0_3_planar_prefilter_required';
+  contract.reflectionCaptureSamples = visualReport.reflectionCaptureSamples || contract.reflectionCaptureSamples || 1;
+  contract.receiverMask = receiverMask;
+  contract.replacementScope = replacementScope;
+  contract.acceptanceGates = acceptanceGates;
+  contract.visualAbRunner = '--r7310-iron-door-hybrid-reflection-visual-ab-test';
+  contract.humanVisualReviewRequired = true;
+  contract.packageDir = path.relative(repoRoot, visualDir);
+  const stagedAcceptance = visualReport.stagedAcceptance || buildR7310IronDoorHybridStagedAcceptance({
+    previousStagedAcceptance: contract.stagedAcceptance,
+    stagedAcceptanceGate: visualReport.stagedAcceptanceGate || resolveR7310IronDoorHybridStagedAcceptanceGate(visualReport.targetSamples),
+    gatePassed: visualReport.acceptanceGate?.overallPass === true,
+    visualDir
+  });
+  contract.stagedAcceptance = stagedAcceptance;
+  contract.visualAcceptanceEvidence = {
+    candidateKind: 'hybrid_planar_reflection_resolve',
+    runnerStatus: visualReport.status,
+    packageDir: contract.packageDir,
+    hybridCandidateSource: visualReport.hybridCandidateSource || null,
+    reflectionCaptureSamples: contract.reflectionCaptureSamples,
+    freshSceneCapturePackage: visualReport.freshSceneCapturePackage || null,
+    liveReference: visualReport.liveReference ? visualReport.liveReference.screenshot : null,
+    hybridCandidate: visualReport.hybridCandidate ? visualReport.hybridCandidate.screenshot : null,
+    mainPlateMask: visualReport.mainPlateMask ? visualReport.mainPlateMask.screenshot : null,
+    metrics: visualReport.metrics,
+    runtimeFatalEventCounts: visualReport.runtimeFatalEventCounts || null,
+    acceptanceGate: visualReport.acceptanceGate || null,
+    externalValidation: visualReport.externalValidation || null,
+    stagedAcceptance,
+    stagedGateEvidence: stagedAcceptance.gateEvidence || [],
+    humanVisualReviewRequired: true
+  };
+  if (visualReport.validationStatus === 'failed_candidate') {
+    contract.validationStatus = 'failed_candidate';
+    contract.failureReason = visualReport.failureReason || (
+      visualReport.metrics.status === 'candidate_rejected_by_visual_ab_metrics'
+        ? 'hybrid_planar_candidate_visual_ab_mismatch_against_fix7'
+        : 'hybrid_planar_candidate_acceptance_gate_failed'
+    );
+    contract.recommendedNextCandidate = 'hybrid_planar_reflection_resolve';
+  } else if (visualReport.validationStatus === 'candidate_pending_human_visual_review') {
+    contract.validationStatus = stagedAcceptance.stagedAcceptanceComplete
+      ? 'candidate_pending_human_visual_review'
+      : 'candidate_pending_staged_acceptance';
+    delete contract.failureReason;
+    delete contract.recommendedNextCandidate;
+  } else if (visualReport.validationStatus === 'candidate_pending_staged_acceptance') {
+    contract.validationStatus = stagedAcceptance.stagedAcceptanceComplete
+      ? 'candidate_pending_human_visual_review'
+      : 'candidate_pending_staged_acceptance';
+    delete contract.failureReason;
+    delete contract.recommendedNextCandidate;
+  } else {
+    throw new Error(`R7-3.10 iron door hybrid visual A/B unknown validation status: ${visualReport.validationStatus}`);
+  }
+  fs.writeFileSync(pointerPath, `${JSON.stringify(contract, null, 2)}\n`);
+  return contract;
 }
 
 function computeWestJoinSanityAggregate(probeResult) {
@@ -1116,9 +2444,13 @@ function buildManifest({ report, packageDir, smokeTest }) {
 	    targetAtlasHeight: report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || report.targetAtlasResolution,
 	    requestedSamples: report.requestedSamples,
 	    diffuseOnly: report.diffuseOnly === true,
+	    fullRadianceProbe: report.fullRadianceProbe === true,
 	    bakedRadianceKind: report.bakedRadianceKind || null,
 	    directLightAlreadyIncluded: report.directLightAlreadyIncluded === true,
 	    addDirectLightAfterBakeLookup: report.addDirectLightAfterBakeLookup === true,
+	    multiplyAlbedoAfterBakeLookup: report.multiplyAlbedoAfterBakeLookup === true,
+	    bakeAlbedoFree: report.bakeAlbedoFree === true,
+	    liveSpecularReflection: report.liveSpecularReflection === true,
 	    upscaled: false,
     packageDir: path.relative(repoRoot, packageDir),
     artifacts: {
@@ -1171,11 +2503,19 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
   };
   const stepX = (B.xMax - B.xMin) / width, stepZ = (B.zMax - B.zMin) / height;
   const inB = (wx, wz) => wx >= B.xMin && wx <= B.xMax && wz >= B.zMin && wz <= B.zMax;
+  const inContactBand = (e, wx, wz) => {
+    const cc = e.contactContinuity;
+    if (!cc || cc.mode !== 'preserve_visible_full_bake_band') return false;
+    const band = Number(cc.bandMeters) || 0;
+    if (!(band > 0) || !e.bounds || !e.bounds.x || !e.bounds.z) return false;
+    return wx <= e.bounds.x[0] + band || wx >= e.bounds.x[1] - band || wz <= e.bounds.z[0] + band || wz >= e.bounds.z[1] - band;
+  };
   const issues = [];
   const warnings = []; // R7-3.10 Phase C3：保留具名 WARN 通道；KH150 ring 放行已撤銷，框外 hard-black 維持 BLOCK。
   let insideChecked = 0, openChecked = 0;
   // R7-3.10 bug#2 BLOCKER3：邊界級 audit——每個 enabled footprint 驗 中心+四角+四邊中點(往內 inset 避開 contact band 夾值列)，
-  // 全部 alpha 應 0；再對四邊外側相鄰 open-floor(用 isFloorOccluded 過濾仍被別的 footprint 蓋住者) 驗 alpha=1 且 luma>0(沒過切/誤歸零)。
+  // 全部 alpha 應 0；再對四邊外側相鄰 open-floor(用 isFloorOccluded 過濾仍被別的 footprint 蓋住者) 驗 alpha=1。
+  // 亮度只在 room-centre 保底檢查；鄰居點可能位於桌下陰影，不能用 luma 當 alpha correctness gate。
   for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
     if (!e.enabled) continue;
     if (Array.isArray(e.configIds) && e.configIds.indexOf(cfg) < 0) continue;
@@ -1202,12 +2542,6 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
         const t = texelAt(wx, wz);
         // overcut（可見地板被誤清 alpha=0）仍 BLOCK，不論哪個 footprint（CODEX 第3點）。
         if (t.a < 0.5) issues.push(`${e.id} open-floor neighbour (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1 — overcut?)`);
-        else if (t.l < 0.001) {
-          // R7-3.10 2026-06-18：撤銷 KH150 StandBase ring 的「render-space proof 畫面不可見→WARN」放行。
-          // CODEX 判定該舊視角 proof 失效（紅框低角度視角下該 hard-black 進畫面顯黑）。根因＝旋轉號誌反向，
-          // 修正 inside-test 後真實 toe-in 底座地板已被排成 alpha=0；框外鄰域不應再有 hard-black，故一律 BLOCK。
-          issues.push(`${e.id} ring alpha=1 luma=0 (${wx.toFixed(2)},${wz.toFixed(2)}) (誤歸零→BLOCK)`);
-        }
       }
       continue;
     }
@@ -1220,7 +2554,9 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
       if (!inB(wx, wz)) continue;
       insideChecked++;
       const t = texelAt(wx, wz);
-      if (t.a > 0.5) issues.push(`${e.id} inside (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 0)`);
+      if (inContactBand(e, wx, wz)) {
+        if (t.a < 0.5) issues.push(`${e.id} contact-band (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1)`);
+      } else if (t.a > 0.5) issues.push(`${e.id} inside (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 0)`);
     }
     const outPts = [[cx, z0 - 2 * stepZ], [cx, z1 + 2 * stepZ], [x0 - 2 * stepX, cz], [x1 + 2 * stepX, cz]];
     for (const [wx, wz] of outPts) {
@@ -1228,7 +2564,6 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
       openChecked++;
       const t = texelAt(wx, wz);
       if (t.a < 0.5) issues.push(`${e.id} open-floor neighbour (${wx.toFixed(2)},${wz.toFixed(2)}) alpha=${t.a.toFixed(2)} (expected 1 — overcut?)`);
-      else if (t.l < 0.001) issues.push(`${e.id} open-floor neighbour alpha=1 but luma=0 (誤歸零)`);
     }
   }
   if (!isFloorOccluded(0, 1.0, cfg, mode)) {
@@ -1237,10 +2572,10 @@ function floorAlphaExclusionCheck(report, atlasBuffer, width, height) {
     if (open.a < 0.5) issues.push(`room-centre open floor (0,1.0) alpha=${open.a.toFixed(2)} (expected 1)`);
     else if (open.l < 0.001) issues.push(`room-centre open floor (0,1.0) alpha=1 but luma=0 (誤歸零)`);
   }
-  return { ok: issues.length === 0, detail: issues.length ? issues.slice(0, 8).join('; ') : `footprint inside(${insideChecked}) alpha=0 + open-floor(${openChecked}) alpha=1/luma>0 OK${warnings.length ? ` | WARN×${warnings.length}` : ''}`, issues, warnings };
+  return { ok: issues.length === 0, detail: issues.length ? issues.slice(0, 8).join('; ') : `footprint inside(${insideChecked}) alpha=0 + open-floor(${openChecked}) alpha=1 OK${warnings.length ? ` | WARN×${warnings.length}` : ''}`, issues, warnings };
 }
 
-function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer, smokeTest }) {
+function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer, smokeTest, expectedValidTexelRatio = null }) {
 	const resolution = report.targetAtlasResolution;
 	const width = report.targetAtlasWidth || (report.atlasSummary && report.atlasSummary.patchWidth) || resolution;
 	const height = report.targetAtlasHeight || (report.atlasSummary && report.atlasSummary.patchHeight) || resolution;
@@ -1258,30 +2593,43 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
     c1_east_wall_beam_shadow: 0.70,
     c1_structural_beams_columns: 0.30,
     c1_se_column_north_shadow: 0.93,
-    c1_se_column_west_shadow: 0.50,
-    c1_ceiling: 0.83,
-    c1_iron_door_reveal: 0.60,
-    c1_xatlas_a1_bake_spike: 0.70,
-    floor_open: 0.618
-  };
-  const validTexelRatioMinimum = Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
-    ? validTexelRatioMinimumBySurface[report.surfaceName]
-    : 0.99;
+	    c1_se_column_west_shadow: 0.50,
+	    c1_ceiling: 0.83,
+	    c1_iron_door_reveal: 0.60,
+	    c1_iron_door_body_diffuse_light_live_specular_probe: 0.99,
+	    c1_xatlas_a1_bake_spike: 0.70,
+	    central_desk: 0.75,
+	    floor_open: 0.618
+	  };
+  const ratioTolerance = 0.002;
+  const validTexelRatioMinimum = Number.isFinite(expectedValidTexelRatio)
+    ? Math.max(0, expectedValidTexelRatio - ratioTolerance)
+    : (Object.prototype.hasOwnProperty.call(validTexelRatioMinimumBySurface, report.surfaceName)
+      ? validTexelRatioMinimumBySurface[report.surfaceName]
+      : 0.99);
   // R7-3.10 bug#2 BLOCKER2：floor_open 需上下限——舊錯誤包正是 validTexelRatio≈1（牆下/床下誤標 valid）。
   // 第一版 0.70-0.90，重烤 audit 後再收斂窄區間。
   const validTexelRatioMaximumBySurface = { floor_open: 0.625 };
-  const validTexelRatioMaximum = Object.prototype.hasOwnProperty.call(validTexelRatioMaximumBySurface, report.surfaceName)
-    ? validTexelRatioMaximumBySurface[report.surfaceName]
-    : 1.0001;
-  const atlasVisibleLuma = summarizeAtlasVisibleLuma(atlasBuffer);
-  const alphaExclusionResult = floorAlphaExclusionCheck(report, atlasBuffer, width, height);
-  const checks = {
+  const validTexelRatioMaximum = Number.isFinite(expectedValidTexelRatio)
+    ? Math.min(1.0001, expectedValidTexelRatio + ratioTolerance)
+    : (Object.prototype.hasOwnProperty.call(validTexelRatioMaximumBySurface, report.surfaceName)
+      ? validTexelRatioMaximumBySurface[report.surfaceName]
+      : 1.0001);
+	  const atlasVisibleLuma = summarizeAtlasVisibleLuma(atlasBuffer);
+	  const alphaExclusionResult = floorAlphaExclusionCheck(report, atlasBuffer, width, height);
+	  const reportIsFullRadiance =
+	    report.fullRadianceProbe === true ||
+	    (report.bakedRadianceKind === 'full_diffuse_radiance' &&
+	      report.directLightAlreadyIncluded === true &&
+	      report.addDirectLightAfterBakeLookup === false);
+	  const expectsDiffuseOnly = !reportIsFullRadiance;
+	  const checks = {
     version: report.version === 'r7-3-8-c1-1000spp-bake-capture' || report.version === 'r7-3-10-full-room-diffuse-bake-architecture-probe' || isXatlasBake,
     config: report.config === 1,
     rawSamples: isXatlasBake ? true : (smokeTest ? report.rawHdr.actualSamples >= report.requestedSamples : report.rawHdr.actualSamples >= 1000),
     atlasSamples: smokeTest ? report.atlasSummary.actualSamples >= report.requestedSamples : report.atlasSummary.actualSamples >= 1000,
     patchSamples: Array.isArray(report.atlasSummary.actualSamplesByPatch) && report.atlasSummary.actualSamplesByPatch.every((entry) => smokeTest ? entry.actualSamples >= report.requestedSamples : entry.actualSamples >= 1000),
-    diffuseOnly: report.diffuseOnly === true && report.atlasSummary.diffuseOnly === true,
+	    diffuseOnly: expectsDiffuseOnly ? (report.diffuseOnly === true && report.atlasSummary.diffuseOnly === true) : (report.diffuseOnly === false && report.atlasSummary.diffuseOnly === false),
     upscaled: report.upscaled === false && report.atlasSummary.upscaled === false,
     atlasResolution: report.atlasSummary.patchSize === resolution,
     atlasDimensions: report.atlasSummary.patchWidth === width && report.atlasSummary.patchHeight === height,
@@ -1652,6 +3000,43 @@ function loadR7310C1XatlasValidityMask(args, width, height) {
   return { maskPath, maskBuffer };
 }
 
+function loadR7310C1XatlasDilationSource(args, width, height) {
+  if (!args.xatlasValidityMaskPath) return null;
+  const sourcePath = path.join(path.dirname(path.join(repoRoot, args.xatlasValidityMaskPath)), 'xatlas-bake-dilation-source.bin');
+  const expectedBytes = width * height * 4 * 4;
+  if (!fs.existsSync(sourcePath)) return null;
+  const sourceBuffer = fs.readFileSync(sourcePath);
+  if (sourceBuffer.length !== expectedBytes) {
+    throw new Error(`Invalid xatlas dilation source byte length: expected ${expectedBytes}, got ${sourceBuffer.length}`);
+  }
+  return { sourcePath, sourceBuffer };
+}
+
+function loadR7310C1XatlasPreparedMesh(args) {
+  if (!args.xatlasValidityMaskPath) return null;
+  const prepareDir = path.dirname(path.join(repoRoot, args.xatlasValidityMaskPath));
+  const meshNames = fs.readdirSync(prepareDir)
+    .filter((name) => name.endsWith('-input-mesh.json'))
+    .sort();
+  if (meshNames.length === 0) return null;
+  if (meshNames.length !== 1)
+    throw new Error(`Expected one prepared xatlas input mesh in ${path.relative(repoRoot, prepareDir)}, got ${meshNames.length}`);
+  const meshPath = path.join(prepareDir, meshNames[0]);
+  const mesh = JSON.parse(fs.readFileSync(meshPath, 'utf8'));
+  if (!Array.isArray(mesh.triangleMetadata) || mesh.triangleMetadata.length === 0)
+    throw new Error(`Prepared xatlas input mesh has no triangle metadata: ${path.relative(repoRoot, meshPath)}`);
+  return { meshPath, mesh };
+}
+
+function r7310C1XatlasValidityMaskRatio(maskBuffer, width, height) {
+  const total = width * height;
+  let valid = 0;
+  for (let idx = 0; idx < total; idx += 1) {
+    if (readF32LE(maskBuffer, idx * 4 + 3) > 0.5) valid += 1;
+  }
+  return valid / Math.max(1, total);
+}
+
 function ensureTriSummary(summary, triId) {
   const key = String(triId);
   if (!summary[key]) {
@@ -1753,7 +3138,7 @@ function alphaAwareR7310C1XatlasDilation(atlasBuffer, metadataBuffer, alpha, fil
   };
 }
 
-function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height, maxDistanceLimitTexels, maskRowMapping }) {
+export function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMask, width, height, maxDistanceLimitTexels, maskRowMapping, preserveVisibleExactBlack = false }) {
   if (!validityMask) return { atlasBuffer, report: null };
   const expectedAtlasBytes = width * height * 4 * 4;
   const expectedMetadataBytes = width * height * 12 * 4;
@@ -1787,12 +3172,17 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
         const luma = 0.2126 * readF32LE(output, out4 + 0) + 0.7152 * readF32LE(output, out4 + 1) + 0.0722 * readF32LE(output, out4 + 2);
         if (luma <= 1.0e-9) {
           visibleExactBlackTexels += 1;
-          fillable[outIndex] = 1;
-          alpha[outIndex] = 0;
-          writeF32LE(output, out4 + 0, 0.0);
-          writeF32LE(output, out4 + 1, 0.0);
-          writeF32LE(output, out4 + 2, 0.0);
-          writeF32LE(output, out4 + 3, 0.0);
+          if (preserveVisibleExactBlack) {
+            alpha[outIndex] = 1;
+            writeF32LE(output, out4 + 3, 1.0);
+          } else {
+            fillable[outIndex] = 1;
+            alpha[outIndex] = 0;
+            writeF32LE(output, out4 + 0, 0.0);
+            writeF32LE(output, out4 + 1, 0.0);
+            writeF32LE(output, out4 + 2, 0.0);
+            writeF32LE(output, out4 + 3, 0.0);
+          }
         } else {
           alpha[outIndex] = 1;
           writeF32LE(output, out4 + 3, 1.0);
@@ -1857,7 +3247,8 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
         maskRowMapping: normalizedMaskRowMapping === 'direct'
           ? 'mask row y maps directly to output row y'
           : 'mask source row y maps to output row height - 1 - y',
-        decisionSource: 'per-texel backface-ratio validity mask'
+        decisionSource: 'per-texel backface-ratio validity mask',
+        preserveVisibleExactBlack
       },
       counts: {
         totalTexels: total,
@@ -1872,6 +3263,410 @@ function applyR7310C1XatlasAlphaPolicy({ atlasBuffer, metadataBuffer, validityMa
       },
       dilation,
       perTriangle
+    }
+  };
+}
+
+export function applyR7310C1XatlasChartGutterDilation({ atlasBuffer, dilationSource, width, height, maxDistanceLimitTexels, rowMapping }) {
+  if (!dilationSource) return { atlasBuffer, report: null };
+  const expectedBytes = width * height * 4 * 4;
+  if (atlasBuffer.length !== expectedBytes) throw new Error('xatlas chart gutter atlas byte length mismatch');
+  if (dilationSource.sourceBuffer.length !== expectedBytes) throw new Error('xatlas chart gutter source byte length mismatch');
+  const normalizedRowMapping = rowMapping === 'direct' ? 'direct' : 'flipped';
+  const distanceLimit = Number.isFinite(maxDistanceLimitTexels)
+    ? Math.max(0, Math.floor(maxDistanceLimitTexels))
+    : R7310_C1_XATLAS_A1_DILATION_PADDING_TEXELS;
+  const output = Buffer.from(atlasBuffer);
+  let targetTexels = 0;
+  let repairedTexels = 0;
+  let sourceExactBlackTexels = 0;
+  let sourceAlphaZeroTexels = 0;
+  let unrepairedTexels = 0;
+  let maxDistanceTexels = 0;
+
+  for (let outputY = 0; outputY < height; outputY += 1) {
+    const targetMapY = normalizedRowMapping === 'direct' ? outputY : height - 1 - outputY;
+    for (let x = 0; x < width; x += 1) {
+      const mapIndex = targetMapY * width + x;
+      const map4 = mapIndex * 4;
+      const distance = Math.round(readF32LE(dilationSource.sourceBuffer, map4 + 2));
+      const isPaddingTarget = readF32LE(dilationSource.sourceBuffer, map4 + 3) > 0.5;
+      if (!isPaddingTarget || distance <= 0 || distance > distanceLimit) continue;
+      targetTexels += 1;
+      if (distance > maxDistanceTexels) maxDistanceTexels = distance;
+      const sourceX = Math.round(readF32LE(dilationSource.sourceBuffer, map4 + 0));
+      const nearestValidMapY = Math.round(readF32LE(dilationSource.sourceBuffer, map4 + 1));
+      const sourceOutputY = normalizedRowMapping === 'direct' ? nearestValidMapY : height - 1 - nearestValidMapY;
+      const targetIndex = outputY * width + x;
+      if (sourceX < 0 || sourceX >= width || sourceOutputY < 0 || sourceOutputY >= height) {
+        unrepairedTexels += 1;
+        continue;
+      }
+      const sourceIndex = sourceOutputY * width + sourceX;
+      const source4 = sourceIndex * 4;
+      const target4 = targetIndex * 4;
+      const sourceAlpha = readF32LE(output, source4 + 3);
+      const sourceLuma = 0.2126 * readF32LE(output, source4 + 0) +
+        0.7152 * readF32LE(output, source4 + 1) +
+        0.0722 * readF32LE(output, source4 + 2);
+      if (sourceAlpha <= 0.5) {
+        sourceAlphaZeroTexels += 1;
+        unrepairedTexels += 1;
+        continue;
+      }
+      if (sourceLuma <= 1.0e-9) {
+        sourceExactBlackTexels += 1;
+        unrepairedTexels += 1;
+        continue;
+      }
+      writeF32LE(output, target4 + 0, readF32LE(output, source4 + 0));
+      writeF32LE(output, target4 + 1, readF32LE(output, source4 + 1));
+      writeF32LE(output, target4 + 2, readF32LE(output, source4 + 2));
+      writeF32LE(output, target4 + 3, 1.0);
+      repairedTexels += 1;
+    }
+  }
+
+  return {
+    atlasBuffer: output,
+    report: {
+      schema: 'r7-3-10-xatlas-chart-gutter-dilation-report-v1',
+      sourcePath: path.relative(repoRoot, dilationSource.sourcePath),
+      atlas: { width, height },
+      policy: {
+        sourceScope: 'nearest valid texel from the same prepared xatlas chart',
+        targetScope: 'prepared chart padding only',
+        maxDistanceLimitTexels: distanceLimit,
+        rowMapping: normalizedRowMapping
+      },
+      counts: {
+        targetTexels,
+        repairedTexels,
+        sourceExactBlackTexels,
+        sourceAlphaZeroTexels,
+        unrepairedTexels,
+        maxDistanceTexels
+      }
+    }
+  };
+}
+
+export function applyR7310C1XatlasGeometricEdgeExtrapolation({
+  atlasBuffer,
+  metadataBuffer,
+  width,
+  height,
+  trianglePieceIds,
+  maxDistanceLimitTexels = R7310_C1_XATLAS_A1_DILATION_PADDING_TEXELS
+}) {
+  const expectedAtlasBytes = width * height * 4 * 4;
+  const expectedMetadataBytes = width * height * 12 * 4;
+  if (atlasBuffer.length !== expectedAtlasBytes)
+    throw new Error('xatlas geometric edge atlas byte length mismatch');
+  if (metadataBuffer.length !== expectedMetadataBytes)
+    throw new Error('xatlas geometric edge metadata byte length mismatch');
+  if (!Array.isArray(trianglePieceIds) || trianglePieceIds.length === 0)
+    throw new Error('xatlas geometric edge triangle piece ids missing');
+
+  const output = Buffer.from(atlasBuffer);
+  const total = width * height;
+  const valid = new Uint8Array(total);
+  const target = new Uint8Array(total);
+  const pieceIds = new Int32Array(total);
+  pieceIds.fill(-1);
+  const pieceIdByKey = new Map();
+  let nextPieceId = 0;
+
+  for (let idx = 0; idx < total; idx += 1) {
+    if (readF32LE(metadataBuffer, idx * 12 + 7) <= 0.5) continue;
+    const triangleId = Math.round(readF32LE(metadataBuffer, idx * 12 + 6));
+    const pieceKey = trianglePieceIds[triangleId];
+    if (pieceKey === undefined || pieceKey === null) continue;
+    if (!pieceIdByKey.has(pieceKey)) pieceIdByKey.set(pieceKey, nextPieceId++);
+    valid[idx] = 1;
+    pieceIds[idx] = pieceIdByKey.get(pieceKey);
+  }
+
+  let targetTexels = 0;
+  for (let idx = 0; idx < total; idx += 1) {
+    if (!valid[idx]) continue;
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    const pieceId = pieceIds[idx];
+    let isEdge = false;
+    for (let dy = -1; dy <= 1 && !isEdge; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+          isEdge = true;
+          break;
+        }
+        const neighborIndex = ny * width + nx;
+        if (!valid[neighborIndex] || pieceIds[neighborIndex] !== pieceId) {
+          isEdge = true;
+          break;
+        }
+      }
+    }
+    if (isEdge) {
+      target[idx] = 1;
+      targetTexels += 1;
+    }
+  }
+
+  const distanceLimit = Math.max(1, Math.floor(maxDistanceLimitTexels));
+  let repairedTexels = 0;
+  let unrepairedTexels = 0;
+  let sourceExactBlackTexels = 0;
+  let sourcePieceMismatchTexels = 0;
+  let maxDistanceTexels = 0;
+  const repairedByPiece = {};
+
+  for (let idx = 0; idx < total; idx += 1) {
+    if (!target[idx]) continue;
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    const pieceId = pieceIds[idx];
+    let sourceIndex = -1;
+    let sourceDistance = -1;
+    for (let distance = 1; distance <= distanceLimit && sourceIndex < 0; distance += 1) {
+      for (let dy = -distance; dy <= distance && sourceIndex < 0; dy += 1) {
+        for (let dx = -distance; dx <= distance; dx += 1) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== distance) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          const candidate = ny * width + nx;
+          if (!valid[candidate] || target[candidate] || pieceIds[candidate] !== pieceId) continue;
+          const src4 = candidate * 4;
+          const sourceAlpha = readF32LE(output, src4 + 3);
+          const sourceLuma =
+            0.2126 * readF32LE(output, src4 + 0) +
+            0.7152 * readF32LE(output, src4 + 1) +
+            0.0722 * readF32LE(output, src4 + 2);
+          if (sourceAlpha <= 0.5 || sourceLuma <= 1.0e-9) continue;
+          sourceIndex = candidate;
+          sourceDistance = distance;
+          break;
+        }
+      }
+    }
+    if (sourceIndex < 0) {
+      unrepairedTexels += 1;
+      continue;
+    }
+    if (pieceIds[sourceIndex] !== pieceId) {
+      sourcePieceMismatchTexels += 1;
+      unrepairedTexels += 1;
+      continue;
+    }
+    const src4 = sourceIndex * 4;
+    const dst4 = idx * 4;
+    const sourceLuma =
+      0.2126 * readF32LE(output, src4 + 0) +
+      0.7152 * readF32LE(output, src4 + 1) +
+      0.0722 * readF32LE(output, src4 + 2);
+    if (sourceLuma <= 1.0e-9) {
+      sourceExactBlackTexels += 1;
+      unrepairedTexels += 1;
+      continue;
+    }
+    writeF32LE(output, dst4 + 0, readF32LE(output, src4 + 0));
+    writeF32LE(output, dst4 + 1, readF32LE(output, src4 + 1));
+    writeF32LE(output, dst4 + 2, readF32LE(output, src4 + 2));
+    writeF32LE(output, dst4 + 3, 1.0);
+    repairedTexels += 1;
+    maxDistanceTexels = Math.max(maxDistanceTexels, sourceDistance);
+    const pieceKey = String(trianglePieceIds[Math.round(readF32LE(metadataBuffer, idx * 12 + 6))]);
+    repairedByPiece[pieceKey] = (repairedByPiece[pieceKey] || 0) + 1;
+  }
+
+  return {
+    atlasBuffer: output,
+    report: {
+      schema: 'r7-3-10-xatlas-geometric-edge-extrapolation-v1',
+      atlas: { width, height },
+      policy: {
+        sourceScope: 'same-piece-interior-valid-radiance',
+        targetScope: 'one-texel physical chart perimeter',
+        maxDistanceLimitTexels: distanceLimit
+      },
+      counts: {
+        pieces: pieceIdByKey.size,
+        targetTexels,
+        repairedTexels,
+        unrepairedTexels,
+        sourceExactBlackTexels,
+        sourcePieceMismatchTexels,
+        maxDistanceTexels
+      },
+      repairedByPiece
+    }
+  };
+}
+
+const R7310_C1_CENTRAL_DESK_BOUNDS = Object.freeze({
+  min: Object.freeze([-0.60, 0.0, 0.405]),
+  max: Object.freeze([0.60, 0.757, 0.945])
+});
+
+function r7310CentralDeskMetadataFaceCode(metadataBuffer, idx) {
+  const offset = idx * 12;
+  const nx = readF32LE(metadataBuffer, offset + 3);
+  const ny = readF32LE(metadataBuffer, offset + 4);
+  const nz = readF32LE(metadataBuffer, offset + 5);
+  const absNormal = [Math.abs(nx), Math.abs(ny), Math.abs(nz)];
+  let axis = 0;
+  if (absNormal[1] > absNormal[axis]) axis = 1;
+  if (absNormal[2] > absNormal[axis]) axis = 2;
+  if (absNormal[axis] < 0.5) return -1;
+  const sign = [nx, ny, nz][axis] >= 0.0 ? 1 : 0;
+  return axis * 2 + sign;
+}
+
+function r7310CentralDeskMetadataIsGeometricEdge(metadataBuffer, idx, tolerance) {
+  const offset = idx * 12;
+  const faceCode = r7310CentralDeskMetadataFaceCode(metadataBuffer, idx);
+  if (faceCode < 0) return false;
+  const fixedAxis = Math.floor(faceCode / 2);
+  for (let axis = 0; axis < 3; axis += 1) {
+    if (axis === fixedAxis) continue;
+    const value = readF32LE(metadataBuffer, offset + axis);
+    if (
+      value <= R7310_C1_CENTRAL_DESK_BOUNDS.min[axis] + tolerance ||
+      value >= R7310_C1_CENTRAL_DESK_BOUNDS.max[axis] - tolerance
+    ) return true;
+  }
+  return false;
+}
+
+export function applyR7310C1CentralDeskGeometricEdgeExtrapolation({
+  atlasBuffer,
+  metadataBuffer,
+  width,
+  height,
+  maxDistanceLimitTexels = R7310_C1_XATLAS_A1_DILATION_PADDING_TEXELS,
+  edgeCoordinateTolerance = 1.0e-6
+}) {
+  const expectedAtlasBytes = width * height * 4 * 4;
+  const expectedMetadataBytes = width * height * 12 * 4;
+  if (atlasBuffer.length !== expectedAtlasBytes)
+    throw new Error('central desk edge extrapolation atlas byte length mismatch');
+  if (metadataBuffer.length !== expectedMetadataBytes)
+    throw new Error('central desk edge extrapolation metadata byte length mismatch');
+
+  const output = Buffer.from(atlasBuffer);
+  const total = width * height;
+  const target = new Uint8Array(total);
+  const faceCode = new Int8Array(total);
+  faceCode.fill(-1);
+  const source = new Int32Array(total);
+  const distance = new Int16Array(total);
+  source.fill(-1);
+  distance.fill(-1);
+  const queue = new Int32Array(total);
+  let head = 0;
+  let tail = 0;
+  let targetTexels = 0;
+
+  for (let idx = 0; idx < total; idx += 1) {
+    const metadataValid = readF32LE(metadataBuffer, idx * 12 + 7) > 0.5;
+    if (!metadataValid) continue;
+    const code = r7310CentralDeskMetadataFaceCode(metadataBuffer, idx);
+    if (code < 0) continue;
+    faceCode[idx] = code;
+    const isEdge = r7310CentralDeskMetadataIsGeometricEdge(
+      metadataBuffer,
+      idx,
+      edgeCoordinateTolerance
+    );
+    if (isEdge) {
+      target[idx] = 1;
+      targetTexels += 1;
+      continue;
+    }
+    if (readF32LE(output, idx * 4 + 3) <= 0.5) continue;
+    const luma =
+      0.2126 * readF32LE(output, idx * 4 + 0) +
+      0.7152 * readF32LE(output, idx * 4 + 1) +
+      0.0722 * readF32LE(output, idx * 4 + 2);
+    if (luma <= 1.0e-9) continue;
+    source[idx] = idx;
+    distance[idx] = 0;
+    queue[tail++] = idx;
+  }
+
+  while (head < tail) {
+    const idx = queue[head++];
+    if (distance[idx] >= maxDistanceLimitTexels) continue;
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        const nidx = ny * width + nx;
+        if (source[nidx] >= 0 || target[nidx] === 0) continue;
+        if (faceCode[nidx] !== faceCode[idx]) continue;
+        source[nidx] = source[idx];
+        distance[nidx] = distance[idx] + 1;
+        queue[tail++] = nidx;
+      }
+    }
+  }
+
+  let repairedTexels = 0;
+  let unrepairedTexels = 0;
+  let sourceExactBlackTexels = 0;
+  let maxDistanceTexels = 0;
+  const repairedByFaceCode = {};
+  for (let idx = 0; idx < total; idx += 1) {
+    if (target[idx] === 0) continue;
+    const sourceIndex = source[idx];
+    if (sourceIndex < 0 || distance[idx] <= 0) {
+      unrepairedTexels += 1;
+      continue;
+    }
+    const src4 = sourceIndex * 4;
+    const dst4 = idx * 4;
+    const sourceLuma =
+      0.2126 * readF32LE(output, src4 + 0) +
+      0.7152 * readF32LE(output, src4 + 1) +
+      0.0722 * readF32LE(output, src4 + 2);
+    if (sourceLuma <= 1.0e-9) sourceExactBlackTexels += 1;
+    writeF32LE(output, dst4 + 0, readF32LE(output, src4 + 0));
+    writeF32LE(output, dst4 + 1, readF32LE(output, src4 + 1));
+    writeF32LE(output, dst4 + 2, readF32LE(output, src4 + 2));
+    writeF32LE(output, dst4 + 3, 1.0);
+    repairedTexels += 1;
+    maxDistanceTexels = Math.max(maxDistanceTexels, distance[idx]);
+    const key = String(faceCode[idx]);
+    repairedByFaceCode[key] = (repairedByFaceCode[key] || 0) + 1;
+  }
+
+  return {
+    atlasBuffer: output,
+    report: {
+      schema: 'r7-3-10-central-desk-geometric-edge-extrapolation-v1',
+      atlas: { width, height },
+      policy: {
+        sourceScope: 'same-face-interior-valid-radiance',
+        targetScope: 'central-desk-geometric-chart-edge',
+        edgeCoordinateTolerance,
+        maxDistanceLimitTexels
+      },
+      counts: {
+        targetTexels,
+        repairedTexels,
+        unrepairedTexels,
+        sourceExactBlackTexels
+      },
+      maxDistanceTexels,
+      repairedByFaceCode
     }
   };
 }
@@ -1979,7 +3774,11 @@ async function main() {
       `outputMode=${encodeURIComponent(args.outputMode)}`,
       args.dumpAtSamples.length ? `dumpAtSamples=${encodeURIComponent(args.dumpAtSamples.join(','))}` : ''
     ].filter(Boolean).join('&');
-    const url = `http://127.0.0.1:${args.httpPort}/Home_Studio.html?verify=r7-3-8-c1-1000spp-bake-capture&runner=${Date.now()}&${adrExtensionsQuery}`;
+    const url = args.r7310IronDoorHybridReflectionVisualAbTest
+      ? `http://127.0.0.1:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-hybrid-visual-ab-${Date.now()}`
+      : args.r7310IronDoorPlanarReflectionVisualAbTest
+        ? `http://127.0.0.1:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-planar-visual-ab-${Date.now()}`
+      : `http://127.0.0.1:${args.httpPort}/Home_Studio.html?atlasMaster=raw&verify=r7-3-8-c1-1000spp-bake-capture&runner=${Date.now()}&${adrExtensionsQuery}`;
     console.error('[r738-runner] opening target');
     const target = await openCdpTarget(args.cdpPort, 'about:blank');
     cdp = new CdpWebSocket(target.webSocketDebuggerUrl);
@@ -1987,7 +3786,21 @@ async function main() {
     await cdp.send('Runtime.enable');
     await cdp.send('Log.enable');
     await cdp.send('Page.enable');
-    if (args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.northWallNormalFidelityProbeTest) {
+    if (args.r7310IronDoorReflectionProbeCapture) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 1024,
+        height: 1024,
+        deviceScaleFactor: 1,
+        mobile: false
+      });
+    } else if (args.r7310IronDoorPlanarReflectionCapture) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 1280,
+        height: 720,
+        deviceScaleFactor: 1,
+        mobile: false
+      });
+    } else if (args.northBeamGapProbeTest || args.northBeamGapRedLiveProbeTest || args.northWallNormalFidelityProbeTest) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: 727,
         height: 741,
@@ -1998,6 +3811,16 @@ async function main() {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: 1458,
         height: 741,
+        deviceScaleFactor: 1,
+        mobile: false
+      });
+    } else if (args.r7310IronDoorPlanarReflectionRuntimeTest ||
+      args.r7310IronDoorReflectionProbeRuntimeTest ||
+      args.r7310IronDoorPlanarReflectionVisualAbTest ||
+      args.r7310IronDoorHybridReflectionVisualAbTest) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 1280,
+        height: 720,
         deviceScaleFactor: 1,
         mobile: false
       });
@@ -2024,6 +3847,18 @@ async function main() {
             ? 'typeof window.reportR739C1AccurateReflectionConfig === "function"'
             : args.previewTest
               ? 'typeof window.reportR738C1BakePastePreviewConfig === "function"'
+              : args.r7310IronDoorReflectionProbeCapture
+                ? 'typeof window.reportR7310C1IronDoorReflectionProbeAfterSamples === "function"'
+                : args.r7310IronDoorPlanarReflectionCapture
+                  ? 'typeof window.reportR7310C1IronDoorPlanarReflectionAfterSamples === "function"'
+                  : args.r7310IronDoorPlanarReflectionRuntimeTest
+                    ? 'typeof window.loadR7310C1IronDoorPlanarReflectionRuntimePackage === "function" && typeof window.setR7310C1IronDoorPlanarReflectionMode === "function" && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === "function"'
+                    : args.r7310IronDoorReflectionProbeRuntimeTest
+                      ? 'typeof window.loadR7310C1IronDoorReflectionProbeRuntimePackage === "function" && typeof window.setR7310C1IronDoorReflectionProbeMode === "function" && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === "function"'
+                      : (args.r7310IronDoorPlanarReflectionVisualAbTest || args.r7310IronDoorHybridReflectionVisualAbTest)
+                        ? (args.r7310IronDoorHybridReflectionVisualAbTest
+                          ? 'typeof window.reportR7310C1IronDoorPlanarReflectionAfterSamples === "function" && typeof window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb === "function" && typeof window.setR7310C1IronDoorPlanarReflectionMode === "function" && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === "function" && typeof window.setR739Config1ValidationCameraState === "function"'
+                          : 'typeof window.loadR7310C1IronDoorPlanarReflectionRuntimePackage === "function" && typeof window.setR7310C1IronDoorPlanarReflectionMode === "function" && typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === "function" && typeof window.setR739Config1ValidationCameraState === "function"')
           : args.accurateReflectionCapture
                 ? 'typeof window.reportR739C1AccurateReflectionAfterSamples === "function"'
                 : args.cameraPoseInfoTest
@@ -2038,6 +3873,822 @@ async function main() {
                     ? 'typeof window.reportR7310C1FloorDiffuseBakeAfterSamples === "function"'
                     : 'typeof window.reportR738C1BakeCaptureAfterSamples === "function"';
     await waitForExpression(cdp, helperExpression, 60000);
+    if (args.r7310IronDoorReflectionProbeCapture) {
+      console.error('[r7310-runner] running iron door reflection probe scene capture');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
+          const report = await window.reportR7310C1IronDoorReflectionProbeAfterSamples(${args.samples}, ${args.timeoutMs}, {
+            sourceFaceSize: ${args.atlasResolution}
+          });
+          return report;
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs * 8 + 180000
+      });
+      assertNoR7310IronDoorProbeFatalEvents(cdp, stderr);
+      if (!report ||
+        report.runnerStatus !== 'scene_capture' ||
+        report.captureStatus !== 'path_traced_cubemap_capture_complete' ||
+        report.sourceKind !== 'home_studio_runtime_scene_capture') {
+        throw new Error(`R7-3.10 iron door reflection probe browser report failed contract: ${JSON.stringify(report)}`);
+      }
+      const sourceFaceBuffers = {};
+      for (const faceName of R7310_IRON_DOOR_REFLECTION_PROBE_FACE_ORDER) {
+        const expressionFace = `window.getR7310C1IronDoorReflectionProbeCaptureArtifacts().sourceFaces[${JSON.stringify(faceName)}]`;
+        sourceFaceBuffers[faceName] = await readBrowserFloatArtifactBuffer(cdp, expressionFace, 4 * 1024 * 1024);
+      }
+      assertNoR7310IronDoorProbeFatalEvents(cdp, stderr);
+      const packageDir = r7310WorkPath('r7-3-10-iron-door-reflection-probe', timestampForPath());
+      const pointer = writeR7310IronDoorReflectionProbePackage({ report, sourceFaceBuffers, packageDir });
+      console.log('R7-3.10 iron door reflection probe scene capture completed');
+      console.log(`packageDir: ${pointer.packageDir}`);
+      console.log(`captureStatus: ${pointer.validation.captureStatus}`);
+      console.log(`runnerStatus: ${pointer.validation.runnerStatus}`);
+      console.log(`preview: http://localhost:${args.httpPort}/${pointer.packageDir}/${pointer.artifacts.preview}`);
+      console.log(`open: http://localhost:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-scene-probe-v1`);
+      completed = true;
+      return;
+    }
+    if (args.r7310IronDoorPlanarReflectionCapture) {
+      console.error('[r7310-runner] running iron door planar reflection scene capture');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
+          const report = await window.reportR7310C1IronDoorPlanarReflectionAfterSamples(${args.samples}, ${args.timeoutMs}, {
+            runtimeFaceSize: ${args.atlasResolution}
+          });
+          return report;
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 180000
+      });
+      assertNoR7310IronDoorProbeFatalEvents(cdp, stderr);
+      if (!report ||
+        report.runnerStatus !== 'scene_capture' ||
+        report.captureStatus !== 'path_traced_planar_reflection_capture_complete' ||
+        report.sourceKind !== 'home_studio_runtime_scene_capture' ||
+        report.captureKind !== 'mirrored_camera_planar_capture' ||
+        report.projection !== 'single_receiver_plane' ||
+        report.selfCaptureExcluded !== true) {
+        throw new Error(`R7-3.10 iron door planar reflection browser report failed contract: ${JSON.stringify(report)}`);
+      }
+      const planarBuffer = await readBrowserFloatArtifactBuffer(cdp, 'window.getR7310C1IronDoorPlanarReflectionCaptureArtifacts().planarReflection', 4 * 1024 * 1024);
+      assertNoR7310IronDoorProbeFatalEvents(cdp, stderr);
+      const packageDir = r7310WorkPath('r7-3-10-iron-door-planar-reflection', timestampForPath());
+      const pointer = writeR7310IronDoorPlanarReflectionPackage({ report, planarBuffer, packageDir });
+      console.log('R7-3.10 iron door planar reflection scene capture completed');
+      console.log(`packageDir: ${pointer.packageDir}`);
+      console.log(`captureStatus: ${pointer.validation.captureStatus}`);
+      console.log(`runnerStatus: ${pointer.validation.runnerStatus}`);
+      console.log(`validationStatus: ${pointer.validationStatus}`);
+      console.log(`preview: http://localhost:${args.httpPort}/${pointer.packageDir}/${pointer.artifacts.preview}`);
+      console.log(`open: http://localhost:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-planar-reflection-v1`);
+      completed = true;
+      return;
+    }
+    if (args.r7310IronDoorPlanarReflectionRuntimeTest) {
+      console.error('[r7310-runner] running iron door planar reflection runtime smoke');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const before = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const loaded = await window.loadR7310C1IronDoorPlanarReflectionRuntimePackage();
+          const afterLoad = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const modeSet = window.setR7310C1IronDoorPlanarReflectionMode(1);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const afterMode = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const checks = {
+            loadedTruthy: !!loaded,
+            readyAfterLoad: afterLoad.ironDoorPlanarReflectionReady === true,
+            modeAfterSet: afterMode.ironDoorPlanarReflectionMode === 1,
+            uniformModeAfterSet: afterMode.ironDoorPlanarReflectionUniformMode === 1,
+            uniformReadyAfterSet: afterMode.ironDoorPlanarReflectionUniformReady === 1,
+            currentMode: afterMode.ironDoorReflectionCurrentMode === 'planar_reflection_candidate',
+            packageDir: typeof afterMode.ironDoorPlanarReflectionPackageDir === 'string' && afterMode.ironDoorPlanarReflectionPackageDir.includes('.omc/r7-3-10-iron-door-planar-reflection/'),
+            validationStatus: afterMode.ironDoorPlanarReflectionValidationStatus === 'candidate_pending_visual_acceptance',
+            captureKind: afterMode.ironDoorPlanarReflectionCaptureKind === 'mirrored_camera_planar_capture',
+            projectionKind: afterMode.ironDoorPlanarReflectionProjectionKind === 'single_receiver_plane',
+            selfCaptureExcluded: afterMode.ironDoorPlanarReflectionSelfCaptureExcluded === true,
+            prefilterKind: afterMode.ironDoorPlanarReflectionPrefilterKind === 'roughness_0_3_planar_prefilter_required',
+            atlasSlot: afterMode.ironDoorPlanarReflectionRuntimeAtlasSlot === 24,
+            noRuntimeError: afterMode.ironDoorPlanarReflectionError === null
+          };
+          const failed = Object.entries(checks).filter(([, value]) => !value).map(([key]) => key);
+          return {
+            version: 'r7-3-10-iron-door-planar-reflection-runtime-smoke',
+            before,
+            afterLoad,
+            modeSet,
+            afterMode,
+            checks,
+            failed,
+            status: failed.length === 0 ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+      const packageDir = r7310WorkPath('r7-3-10-iron-door-planar-reflection-runtime-smoke', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-smoke-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 iron door planar reflection runtime smoke completed');
+      console.log(`status: ${report.status}`);
+      console.log(`planarReady: ${report.afterMode.ironDoorPlanarReflectionReady}`);
+      console.log(`validationStatus: ${report.afterMode.ironDoorPlanarReflectionValidationStatus}`);
+      console.log(`captureKind: ${report.afterMode.ironDoorPlanarReflectionCaptureKind}`);
+      console.log(`projectionKind: ${report.afterMode.ironDoorPlanarReflectionProjectionKind}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.r7310IronDoorPlanarReflectionVisualAbTest || args.r7310IronDoorHybridReflectionVisualAbTest) {
+      const isHybridVisualAb = args.r7310IronDoorHybridReflectionVisualAbTest;
+      console.error(isHybridVisualAb
+        ? '[r7310-runner] running iron door hybrid reflection visual A/B helper'
+        : '[r7310-runner] running iron door planar reflection visual A/B helper');
+      const visualDir = path.join(
+        repoRoot,
+        '.omc',
+        isHybridVisualAb ? 'r7-3-10-iron-door-hybrid-reflection-visual-ab' : 'r7-3-10-iron-door-planar-reflection-visual-ab',
+        timestampForPath()
+      );
+      fs.mkdirSync(visualDir, { recursive: true });
+      const targetSamples = args.targetSamples || 1;
+      const hybridReflectionCaptureSamples = isHybridVisualAb
+        ? Math.max(1, args.r7310IronDoorReflectionCaptureSamples || targetSamples)
+        : targetSamples;
+      const acceptanceCameraState = args.cameraState || {
+        name: isHybridVisualAb ? 'r7310_iron_door_hybrid_visual_ab' : 'r7310_iron_door_planar_visual_ab',
+        position: { x: -0.82323, y: 1.411762, z: -0.457741 },
+        yaw: 1.270399,
+        pitch: -0.147,
+        fov: 77,
+        forward: { x: -0.944917, y: -0.146471, z: -0.292708 }
+      };
+      const visualSetupExpression = `
+        async function r7310IronDoorVisualPrepareCommon(cameraState, targetSamples, timeoutMs, reason, debugMode) {
+          window.__r7310IronDoorVisualAbArtifacts = window.__r7310IronDoorVisualAbArtifacts || {};
+          if (typeof applyPanelConfig === 'function') applyPanelConfig(1);
+          if (typeof window.setR7310C1FullRoomDiffuseRuntimeEnabled === 'function')
+            window.setR7310C1FullRoomDiffuseRuntimeEnabled(true);
+          if (typeof window.setR7310C1IronDoorBodyRuntimeEnabled === 'function')
+            window.setR7310C1IronDoorBodyRuntimeEnabled(true);
+          if (typeof window.setR7310C1IronDoorBodyDebugMode === 'function')
+            window.setR7310C1IronDoorBodyDebugMode(debugMode || 'normal');
+          await window.waitForR7310C1FullRoomDiffuseRuntimeReady(timeoutMs);
+          const waitStartedAt = performance.now();
+          while (performance.now() - waitStartedAt < timeoutMs) {
+            const runtimeConfig = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+            if (runtimeConfig && runtimeConfig.ironDoorBodyReady === true && runtimeConfig.ironDoorBodyPending === false)
+              break;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+          const bodyConfig = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          if (!bodyConfig || bodyConfig.ironDoorBodyReady !== true || bodyConfig.ironDoorBodyPending !== false)
+            throw new Error('R7-3.10 iron door body light bake runtime not ready for visual A/B');
+          [
+            'ui-container',
+            'snapshot-controls',
+            'top-right-group',
+            'info-panel',
+            'cameraInfo',
+            'cameraPoseInfo',
+            'copyCameraPoseInfo'
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          if (typeof window.setR739Config1ValidationCameraState === 'function')
+            window.setR739Config1ValidationCameraState(cameraState);
+          if (typeof window.setSppCap === 'function')
+            window.setSppCap(Math.max(1, Math.trunc(Number(targetSamples) || 1)));
+          if (typeof wakeRender === 'function')
+            wakeRender(reason);
+          if (typeof renderR739MainReadback !== 'function')
+            throw new Error('R7-3.10 iron door visual A/B missing deterministic readback renderer');
+          const rendered = await renderR739MainReadback(targetSamples, timeoutMs, 0.0, {
+            floorRoughness: 0.1,
+            cameraState
+          });
+          if (!rendered || !rendered.readback || !(rendered.readback.pixels instanceof Float32Array))
+            throw new Error('R7-3.10 iron door visual A/B readback missing pixels');
+          const pixels = typeof normalizeR7310C1IronDoorReflectionProbeReadback === 'function'
+            ? normalizeR7310C1IronDoorReflectionProbeReadback(rendered.readback, rendered.actualSamples)
+            : rendered.readback.pixels;
+          window.__r7310IronDoorVisualAbArtifacts[reason] = pixels;
+          return {
+            actualSamples: rendered.actualSamples,
+            readbackWidth: rendered.readback.width,
+            readbackHeight: rendered.readback.height,
+            artifactKey: reason,
+            artifactByteLength: pixels.byteLength,
+            sampleCounter: typeof sampleCounter === 'number' ? Math.round(sampleCounter) : null,
+            config: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig === 'function'
+              ? window.reportR7310C1FullRoomDiffuseRuntimeConfig()
+              : null,
+            pose: typeof window.reportR7310CameraPoseInfo === 'function'
+              ? window.reportR7310CameraPoseInfo()
+              : null,
+            planarProjectionDiagnostics: typeof window.reportR7310C1IronDoorPlanarReflectionProjectionDiagnostics === 'function'
+              ? window.reportR7310C1IronDoorPlanarReflectionProjectionDiagnostics(9)
+              : null
+          };
+        }
+      `;
+      const liveReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${visualSetupExpression}
+          if (typeof window.setR7310C1IronDoorPlanarReflectionMode === 'function')
+            window.setR7310C1IronDoorPlanarReflectionMode(0);
+          if (typeof window.setR7310C1IronDoorReflectionProbeMode === 'function')
+            window.setR7310C1IronDoorReflectionProbeMode(0);
+          const prepared = await r7310IronDoorVisualPrepareCommon(
+            ${JSON.stringify(acceptanceCameraState)},
+            ${targetSamples},
+            ${args.timeoutMs},
+            'r7310-iron-door-visual-ab-live-reference',
+            'normal'
+          );
+          return {
+            version: ${JSON.stringify(isHybridVisualAb ? 'r7-3-10-iron-door-hybrid-reflection-visual-ab' : 'r7-3-10-iron-door-planar-reflection-visual-ab')},
+            role: 'live_reference',
+            targetSamples: ${targetSamples},
+            cameraState: ${JSON.stringify(acceptanceCameraState)},
+            prepared,
+            status: prepared.actualSamples >= ${targetSamples} ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+      const candidateArtifactKey = isHybridVisualAb
+        ? 'r7310-iron-door-visual-ab-hybrid-candidate'
+        : 'r7310-iron-door-visual-ab-planar-candidate';
+      const diagnosticArtifactKey = isHybridVisualAb
+        ? 'r7310-iron-door-visual-ab-main-plate-mask'
+        : 'r7310-iron-door-visual-ab-planar-uv-debug';
+      const diagnosticDebugMode = isHybridVisualAb ? 'hybrid-mask' : 'planar-uv';
+      const candidateReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${visualSetupExpression}
+          const isHybridVisualAb = ${isHybridVisualAb ? 'true' : 'false'};
+          let loaded = null;
+          let hybridFreshCaptureReport = null;
+          let hybridCandidateSource = 'runtime_pointer_package';
+          if (isHybridVisualAb) {
+            if (typeof window.reportR7310C1IronDoorPlanarReflectionAfterSamples !== 'function' ||
+              typeof window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb !== 'function') {
+              throw new Error('R7-3.10 iron door hybrid visual A/B missing fresh scene capture installer');
+            }
+            hybridFreshCaptureReport = await window.reportR7310C1IronDoorPlanarReflectionAfterSamples(${hybridReflectionCaptureSamples}, ${args.timeoutMs}, {
+              runtimeFaceSize: 512
+            });
+            loaded = window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb();
+            hybridCandidateSource = 'fresh_scene_capture_in_memory_runtime';
+          } else {
+            loaded = await window.loadR7310C1IronDoorPlanarReflectionRuntimePackage();
+          }
+          const modeReport = window.setR7310C1IronDoorPlanarReflectionMode(1);
+          const prepared = await r7310IronDoorVisualPrepareCommon(
+            ${JSON.stringify(acceptanceCameraState)},
+            ${targetSamples},
+            ${args.timeoutMs},
+            ${JSON.stringify(candidateArtifactKey)},
+            'normal'
+          );
+          return {
+            version: ${JSON.stringify(isHybridVisualAb ? 'r7-3-10-iron-door-hybrid-reflection-visual-ab' : 'r7-3-10-iron-door-planar-reflection-visual-ab')},
+            role: ${JSON.stringify(isHybridVisualAb ? 'hybrid_candidate' : 'planar_candidate')},
+            targetSamples: ${targetSamples},
+            reflectionCaptureSamples: ${hybridReflectionCaptureSamples},
+            cameraState: ${JSON.stringify(acceptanceCameraState)},
+            loaded: !!loaded,
+            hybridFreshCaptureReport,
+            hybridCandidateSource,
+            modeReport,
+            prepared,
+            status: loaded && prepared.actualSamples >= ${targetSamples} ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+      const diagnosticReport = await evaluate(cdp, `(() => {
+        return (async () => {
+          ${visualSetupExpression}
+          const isHybridVisualAb = ${isHybridVisualAb ? 'true' : 'false'};
+          let loaded = null;
+          let hybridCandidateSource = 'runtime_pointer_package';
+          if (isHybridVisualAb) {
+            loaded = window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb();
+            hybridCandidateSource = 'fresh_scene_capture_in_memory_runtime';
+          } else {
+            loaded = await window.loadR7310C1IronDoorPlanarReflectionRuntimePackage();
+          }
+          const modeReport = window.setR7310C1IronDoorPlanarReflectionMode(1);
+          const prepared = await r7310IronDoorVisualPrepareCommon(
+            ${JSON.stringify(acceptanceCameraState)},
+            ${targetSamples},
+            ${args.timeoutMs},
+            ${JSON.stringify(diagnosticArtifactKey)},
+            ${JSON.stringify(diagnosticDebugMode)}
+          );
+          return {
+            version: ${JSON.stringify(isHybridVisualAb ? 'r7-3-10-iron-door-hybrid-reflection-visual-ab' : 'r7-3-10-iron-door-planar-reflection-visual-ab')},
+            role: ${JSON.stringify(isHybridVisualAb ? 'main_plate_mask_debug' : 'planar_uv_debug')},
+            targetSamples: ${targetSamples},
+            cameraState: ${JSON.stringify(acceptanceCameraState)},
+            loaded: !!loaded,
+            hybridCandidateSource,
+            modeReport,
+            prepared,
+            status: loaded && prepared.actualSamples >= ${targetSamples} ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+      const extraDebugSpecs = isHybridVisualAb
+        ? [
+          {
+            role: 'planar_radiance_debug',
+            artifactKey: 'r7310-iron-door-visual-ab-planar-radiance',
+            debugMode: 'planar-radiance',
+            screenshotName: `planar-radiance-spp${targetSamples}.png`
+          },
+          {
+            role: 'iron_door_hit_color_debug',
+            artifactKey: 'r7310-iron-door-visual-ab-iron-door-hit-color',
+            debugMode: 'iron-door-hit-color',
+            screenshotName: `iron-door-hit-color-spp${targetSamples}.png`
+          },
+          {
+            role: 'planar_times_hit_color_debug',
+            artifactKey: 'r7310-iron-door-visual-ab-planar-times-hit-color',
+            debugMode: 'planar-times-hit-color',
+            screenshotName: `planar-times-hit-color-spp${targetSamples}.png`
+          }
+        ]
+        : [];
+      const extraDebugReports = [];
+      for (const debugSpec of extraDebugSpecs) {
+        const debugReport = await evaluate(cdp, `(() => {
+          return (async () => {
+            ${visualSetupExpression}
+            if (typeof window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb !== 'function') {
+              throw new Error('R7-3.10 iron door hybrid visual A/B missing fresh scene capture installer for debug view');
+            }
+            const loaded = window.installR7310C1IronDoorPlanarReflectionCaptureArtifactsForVisualAb();
+            const modeReport = window.setR7310C1IronDoorPlanarReflectionMode(1);
+            const prepared = await r7310IronDoorVisualPrepareCommon(
+              ${JSON.stringify(acceptanceCameraState)},
+              ${targetSamples},
+              ${args.timeoutMs},
+              ${JSON.stringify(debugSpec.artifactKey)},
+              ${JSON.stringify(debugSpec.debugMode)}
+            );
+            return {
+              version: 'r7-3-10-iron-door-hybrid-reflection-debug-view',
+              role: ${JSON.stringify(debugSpec.role)},
+              debugMode: ${JSON.stringify(debugSpec.debugMode)},
+              targetSamples: ${targetSamples},
+              cameraState: ${JSON.stringify(acceptanceCameraState)},
+              loaded: !!loaded,
+              hybridCandidateSource: 'fresh_scene_capture_in_memory_runtime',
+              modeReport,
+              prepared,
+              status: loaded && prepared.actualSamples >= ${targetSamples} ? 'pass' : 'fail'
+            };
+          })();
+        })()`, {
+          awaitPromise: true,
+          timeoutMs: args.timeoutMs + 120000
+        });
+        assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+        extraDebugReports.push({
+          spec: debugSpec,
+          report: debugReport
+        });
+      }
+      const liveScreenshotPath = path.join(visualDir, `live-reference-spp${targetSamples}.png`);
+      const candidateScreenshotName = isHybridVisualAb
+        ? `hybrid-candidate-spp${targetSamples}.png`
+        : `planar-candidate-spp${targetSamples}.png`;
+      const diagnosticScreenshotName = isHybridVisualAb
+        ? `main-plate-mask-spp${targetSamples}.png`
+        : `planar-uv-debug-spp${targetSamples}.png`;
+      const candidateScreenshotPath = path.join(visualDir, candidateScreenshotName);
+      const diagnosticScreenshotPath = path.join(visualDir, diagnosticScreenshotName);
+      const liveBuffer = await readBrowserFloatArtifactBuffer(cdp, 'window.__r7310IronDoorVisualAbArtifacts["r7310-iron-door-visual-ab-live-reference"]', 32 * 1024 * 1024);
+      const candidateBuffer = await readBrowserFloatArtifactBuffer(cdp, `window.__r7310IronDoorVisualAbArtifacts[${JSON.stringify(candidateArtifactKey)}]`, 32 * 1024 * 1024);
+      const diagnosticBuffer = await readBrowserFloatArtifactBuffer(cdp, `window.__r7310IronDoorVisualAbArtifacts[${JSON.stringify(diagnosticArtifactKey)}]`, 32 * 1024 * 1024);
+      const livePixels = bufferToFloat32Array(liveBuffer);
+      const candidatePixels = bufferToFloat32Array(candidateBuffer);
+      const diagnosticPixels = bufferToFloat32Array(diagnosticBuffer);
+      const visualMetrics = computeR7310IronDoorVisualAbMetrics({
+        livePixels,
+        candidatePixels,
+        maskPixels: diagnosticPixels,
+        mainPlateMaskRequired: isHybridVisualAb,
+        width: liveReport.prepared.readbackWidth,
+        height: liveReport.prepared.readbackHeight
+      });
+      let freshSceneCapturePackage = null;
+      if (isHybridVisualAb) {
+        const freshPlanarBuffer = await readBrowserFloatArtifactBuffer(
+          cdp,
+          'window.getR7310C1IronDoorPlanarReflectionCaptureArtifacts().planarReflection',
+          4 * 1024 * 1024
+        );
+        const freshPlanarReport = candidateReport.hybridFreshCaptureReport;
+        if (!freshPlanarReport ||
+          freshPlanarReport.runnerStatus !== 'scene_capture' ||
+          freshPlanarReport.captureStatus !== 'path_traced_planar_reflection_capture_complete' ||
+          freshPlanarReport.sourceKind !== 'home_studio_runtime_scene_capture') {
+          throw new Error(`R7-3.10 iron door hybrid visual A/B fresh capture report failed contract: ${JSON.stringify(freshPlanarReport)}`);
+        }
+        const freshPackageDir = path.join(visualDir, 'fresh-planar-capture-package');
+        const freshPointer = writeR7310IronDoorPlanarReflectionPackage({
+          report: freshPlanarReport,
+          planarBuffer: freshPlanarBuffer,
+          packageDir: freshPackageDir,
+          updateRuntimePointer: false
+        });
+        freshSceneCapturePackage = {
+          packageDir: freshPointer.packageDir,
+          package: path.join(freshPointer.packageDir, freshPointer.artifacts.package),
+          preview: path.join(freshPointer.packageDir, freshPointer.artifacts.preview),
+          validationStatus: freshPointer.validationStatus,
+          captureKind: freshPointer.captureKind,
+          projectionKind: freshPointer.projection
+        };
+      }
+      writeR7310IronDoorProbePreviewPng(
+        liveScreenshotPath,
+        livePixels,
+        liveReport.prepared.readbackWidth,
+        liveReport.prepared.readbackHeight
+      );
+      writeR7310IronDoorProbePreviewPng(
+        candidateScreenshotPath,
+        candidatePixels,
+        candidateReport.prepared.readbackWidth,
+        candidateReport.prepared.readbackHeight
+      );
+      writeR7310IronDoorProbePreviewPng(
+        diagnosticScreenshotPath,
+        diagnosticPixels,
+        diagnosticReport.prepared.readbackWidth,
+        diagnosticReport.prepared.readbackHeight
+      );
+      const extraDiagnosticViews = [];
+      for (const debugEntry of extraDebugReports) {
+        const debugBuffer = await readBrowserFloatArtifactBuffer(
+          cdp,
+          `window.__r7310IronDoorVisualAbArtifacts[${JSON.stringify(debugEntry.spec.artifactKey)}]`,
+          32 * 1024 * 1024
+        );
+        const debugPixels = bufferToFloat32Array(debugBuffer);
+        const debugScreenshotPath = path.join(visualDir, debugEntry.spec.screenshotName);
+        writeR7310IronDoorProbePreviewPng(
+          debugScreenshotPath,
+          debugPixels,
+          debugEntry.report.prepared.readbackWidth,
+          debugEntry.report.prepared.readbackHeight
+        );
+        extraDiagnosticViews.push({
+          role: debugEntry.spec.role,
+          debugMode: debugEntry.spec.debugMode,
+          artifactKey: debugEntry.spec.artifactKey,
+          stats: statsForR7310FramePixels(
+            debugEntry.spec.artifactKey,
+            debugPixels,
+            debugEntry.report.prepared.readbackWidth,
+            debugEntry.report.prepared.readbackHeight
+          ),
+          report: debugEntry.report,
+          screenshot: path.basename(debugScreenshotPath)
+        });
+      }
+      const receiverMask = {
+        kind: 'main_flat_door_plate_only',
+        debugMode: 'hybrid-mask',
+        shaderFunction: 'r7310C1IronDoorMainFlatPlateMask'
+      };
+      const replacementScope = {
+        planarCandidateRegions: ['full_flat_door_photo_plane'],
+        liveFallbackRegions: [],
+        farFieldProbeRole: 'optional_low_frequency_only'
+      };
+	      const acceptanceGates = {
+	        fix7ReferenceUrl: 'http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7',
+	        sameCameraExposureSppRequired: true,
+	        roiMeanLumaRatio: { min: 0.75, max: 1.25 },
+	        meanAbsRgbDiff: { max: 12 },
+	        reflectionContentParityRequired: true,
+	        freeNavigationViewDependentReflectionRequired: true,
+	        mainPlateMaskPixelCount: { min: visualMetrics.mainPlateMetrics ? visualMetrics.mainPlateMetrics.minMainPlateMaskPixels : null },
+        mainPlateMeanLumaRatio: { min: 0.75, max: 1.25 },
+        mainPlateMeanAbsRgbDiff: { max: 12 },
+        reflectionContentPosition: {
+          featureKind: 'warm_reflection_content_inside_main_plate_roi',
+          centerDistanceNormalized: { max: 0.12 },
+          bboxIou: { min: 0.15 },
+          scoreRatio: { min: 0.25, max: 4.0 }
+        },
+        console404Allowed: false,
+        shaderValidationErrorAllowed: false,
+        webglContextLostAllowed: false
+      };
+      const roughMetalModelDiagnostic = {
+        version: 'r7-3-10-iron-door-rough-metal-model-diagnostic-v1',
+        fix7LiveBranch: {
+          kind: 'stochastic_path_traced_metal_bounce',
+          metalness: 1.0,
+          roughness: 0.3,
+          roughnessMixExpression: 'ironR * ironR',
+          roughnessMixAtReference: 0.09,
+          directionExpression: 'normalize(mix(reflect(rayDirection, nl), randomCosWeightedDirectionInHemisphere(nl), ironR * ironR))',
+          continuesPath: true
+        },
+	        planarCandidateBranch: {
+	          kind: 'terminal_projective_texture_resolve',
+	          metalness: 1.0,
+	          roughness: 0.3,
+	          roughnessArgumentPassed: true,
+	          roughnessAffectsUvOrLod: false,
+	          usesCurrentViewRayDirection: false,
+	          usesVisiblePositionOnlyForUv: true,
+	          viewDependentDuringFreeNavigation: false,
+	          directionExpression: 'r7310C1IronDoorPlanarReflectionRadiance(x, ironR)',
+	          continuesPath: false
+	        },
+	        projectionDiagnostic: candidateReport.prepared.planarProjectionDiagnostics,
+	        currentMismatchRisk: 'planar_candidate_resolves_a_projected_texture_while_fix7_live_follows_a_rough_metal_bounce',
+	        freeNavigationMismatchRisk: 'fixed_acceptance_camera_projected_texture_can_keep_old_reflection_composition_during_navigation'
+	      };
+      const runtimeFatalEventCounts = collectR7310IronDoorProbeRuntimeFatalEventCounts(cdp, stderr);
+      const fatalEventGatePass = runtimeFatalEventCounts.console404 === 0 &&
+        runtimeFatalEventCounts.shaderValidationError === 0 &&
+        runtimeFatalEventCounts.webglContextLost === 0;
+      const externalValidation = buildR7310IronDoorExternalVisualValidationContract({
+        visualDir,
+        liveScreenshotPath,
+        candidateScreenshotPath,
+        diagnosticScreenshotPath,
+        targetSamples,
+        width: liveReport.prepared.readbackWidth,
+        height: liveReport.prepared.readbackHeight,
+        isHybridVisualAb
+      });
+      const externalValidationGatePass =
+        externalValidation.openImageIoDiff.status === 'pass' &&
+        externalValidation.webglReadback.status === 'pass';
+      const evidenceCaptured = liveReport.status === 'pass' &&
+        candidateReport.status === 'pass' &&
+        diagnosticReport.status === 'pass';
+	      const freeNavigationViewDependentReflectionGate = {
+	        required: true,
+	        status: 'fail',
+	        observedFailure: 'view_dependent_reflection_parallax_mismatch_against_fix7',
+	        reason: 'current planar branch samples receiver visiblePosition through a fixed acceptance-camera projection instead of the current view ray direction'
+	      };
+	      const freeNavigationGatePass = freeNavigationViewDependentReflectionGate.status === 'pass';
+	      const candidateAcceptanceGatePass = evidenceCaptured &&
+	        visualMetrics.status === 'candidate_pending_human_visual_review' &&
+	        fatalEventGatePass &&
+	        externalValidationGatePass &&
+	        freeNavigationGatePass;
+      const candidateFailureReason = candidateAcceptanceGatePass
+        ? null
+        : (!evidenceCaptured
+          ? 'failed_to_capture_evidence'
+          : (!fatalEventGatePass
+            ? 'runtime_fatal_event_gate_failed'
+	            : (!externalValidationGatePass
+	              ? 'external_visual_validation_failed'
+	              : (!freeNavigationGatePass
+	                ? 'view_dependent_reflection_parallax_mismatch_against_fix7'
+	                : 'visual_ab_metrics_failed'))));
+      const pointerPath = path.join(
+        repoRoot,
+        isHybridVisualAb
+          ? 'docs/data/r7-3-10-c1-iron-door-hybrid-reflection-runtime-package.json'
+          : 'docs/data/r7-3-10-c1-iron-door-planar-reflection-runtime-package.json'
+      );
+      const stagedAcceptanceGate = isHybridVisualAb
+        ? resolveR7310IronDoorHybridStagedAcceptanceGate(targetSamples)
+        : null;
+      const stagedAcceptance = isHybridVisualAb
+        ? buildR7310IronDoorHybridStagedAcceptance({
+          previousStagedAcceptance: JSON.parse(fs.readFileSync(pointerPath, 'utf8')).stagedAcceptance,
+          stagedAcceptanceGate,
+          gatePassed: candidateAcceptanceGatePass,
+          visualDir
+        })
+        : null;
+      const stagedAcceptanceComplete = stagedAcceptance?.stagedAcceptanceComplete === true;
+      const visualValidationStatus = candidateAcceptanceGatePass
+        ? (isHybridVisualAb && !stagedAcceptanceComplete
+          ? 'candidate_pending_staged_acceptance'
+          : 'candidate_pending_human_visual_review')
+        : 'failed_candidate';
+      const visualReport = {
+        version: isHybridVisualAb ? 'r7-3-10-iron-door-hybrid-reflection-visual-ab' : 'r7-3-10-iron-door-planar-reflection-visual-ab',
+        status: evidenceCaptured ? 'evidence_captured' : 'failed_to_capture_evidence',
+        validationStatus: visualValidationStatus,
+        failureReason: candidateFailureReason,
+        evidenceKind: 'deterministic_float32_readback_preview',
+        candidateKind: isHybridVisualAb ? 'hybrid_planar_reflection_resolve' : 'planar_reflection_candidate',
+        reflectionCaptureSamples: hybridReflectionCaptureSamples,
+        runtimeFatalEventCounts,
+        ...(isHybridVisualAb
+          ? {
+            stagedAcceptanceGate,
+            stagedAcceptance,
+            stagedAcceptanceComplete
+          }
+          : {}),
+        ...(isHybridVisualAb
+          ? { hybridCandidateSource: 'fresh_scene_capture_in_memory_runtime' }
+          : { hybridCandidateSource: 'runtime_pointer_package' }),
+        freshSceneCapturePackage,
+        targetSamples,
+        acceptanceCameraState,
+        receiverMask,
+        replacementScope,
+	        acceptanceGates,
+	        roughMetalModelDiagnostic,
+	        freeNavigationViewDependentReflectionGate,
+	        humanVisualReviewRequired: true,
+        metrics: visualMetrics,
+        externalValidation,
+        liveReference: {
+          report: liveReport,
+          screenshot: path.basename(liveScreenshotPath)
+        },
+        planarCandidate: {
+          report: candidateReport,
+          screenshot: path.basename(candidateScreenshotPath)
+        },
+        planarUvDebug: {
+          report: diagnosticReport,
+          screenshot: path.basename(diagnosticScreenshotPath)
+        },
+        hybridCandidate: {
+          report: candidateReport,
+          screenshot: path.basename(candidateScreenshotPath)
+        },
+        mainPlateMask: {
+          report: diagnosticReport,
+          screenshot: path.basename(diagnosticScreenshotPath)
+        },
+        diagnosticViews: extraDiagnosticViews,
+        acceptanceGate: {
+          console404: {
+            status: runtimeFatalEventCounts.console404 === 0 ? 'pass' : 'fail',
+            count: runtimeFatalEventCounts.console404,
+            allowed: false
+          },
+          shaderValidationError: {
+            status: runtimeFatalEventCounts.shaderValidationError === 0 ? 'pass' : 'fail',
+            count: runtimeFatalEventCounts.shaderValidationError,
+            allowed: false
+          },
+          webglContextLost: {
+            status: runtimeFatalEventCounts.webglContextLost === 0 ? 'pass' : 'fail',
+            count: runtimeFatalEventCounts.webglContextLost,
+            allowed: false
+          },
+          fatalEventGatePass,
+          evidenceCaptured,
+          mainPlateMask: visualMetrics.mainPlateMetrics
+            ? {
+              status: visualMetrics.mainPlateMetrics.gates.maskCoveragePass &&
+                visualMetrics.mainPlateMetrics.gates.lumaRatioPass &&
+                visualMetrics.mainPlateMetrics.gates.meanAbsRgbDiffPass
+                ? 'pass'
+                : 'fail',
+              mainPlateMaskPixelCount: visualMetrics.mainPlateMetrics.mainPlateMaskPixelCount,
+              minMainPlateMaskPixels: visualMetrics.mainPlateMetrics.minMainPlateMaskPixels,
+              mainPlateMeanLumaRatio: visualMetrics.mainPlateMetrics.mainPlateMeanLumaRatio,
+              meanAbsRgbDiff: visualMetrics.mainPlateMetrics.meanAbsRgbDiff,
+              gates: visualMetrics.mainPlateMetrics.gates
+            }
+            : null,
+          reflectionContentPosition: visualMetrics.reflectionContentPositionMetrics
+            ? {
+              status: visualMetrics.reflectionContentPositionMetrics.status,
+              featureKind: visualMetrics.reflectionContentPositionMetrics.featureKind,
+              comparison: visualMetrics.reflectionContentPositionMetrics.comparison,
+              gates: visualMetrics.reflectionContentPositionMetrics.gates
+            }
+            : null,
+          overallPass: candidateAcceptanceGatePass,
+          visualStatus: visualMetrics.status
+        },
+        referenceUrl: `http://localhost:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7`,
+        candidateUrl: candidateAcceptanceGatePass && (!isHybridVisualAb || stagedAcceptanceComplete)
+          ? `http://localhost:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-contract-v2`
+          : null
+      };
+      fs.writeFileSync(path.join(visualDir, 'visual-ab-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
+      const updatedPointer = isHybridVisualAb
+        ? updateR7310IronDoorHybridReflectionContractFromVisualAb({ visualReport, visualDir, pointerPath })
+        : updateR7310IronDoorPlanarReflectionPointerFromVisualAb({ visualReport, visualDir, pointerPath });
+      console.log(isHybridVisualAb
+        ? 'R7-3.10 iron door hybrid reflection visual A/B helper completed'
+        : 'R7-3.10 iron door planar reflection visual A/B helper completed');
+      console.log(`status: ${visualReport.status}`);
+      console.log(`validationStatus: ${visualReport.validationStatus}`);
+      console.log(`pointerValidationStatus: ${updatedPointer.validationStatus}`);
+      console.log(`targetSamples: ${targetSamples}`);
+      console.log(`liveReference: ${path.relative(repoRoot, liveScreenshotPath)}`);
+      console.log(`${isHybridVisualAb ? 'hybridCandidate' : 'planarCandidate'}: ${path.relative(repoRoot, candidateScreenshotPath)}`);
+      console.log(`${isHybridVisualAb ? 'mainPlateMask' : 'planarUvDebug'}: ${path.relative(repoRoot, diagnosticScreenshotPath)}`);
+      for (const debugView of extraDiagnosticViews) {
+        console.log(`${debugView.debugMode}: ${path.relative(repoRoot, path.join(visualDir, debugView.screenshot))}`);
+      }
+      console.log(`report: ${path.relative(repoRoot, path.join(visualDir, 'visual-ab-report.json'))}`);
+      console.log(`package: ${path.relative(repoRoot, visualDir)}`);
+      if (visualReport.validationStatus === 'failed_candidate') process.exitCode = 1;
+      if (visualReport.status !== 'evidence_captured') process.exitCode = 1;
+      completed = true;
+      return;
+    }
+    if (args.r7310IronDoorReflectionProbeRuntimeTest) {
+      console.error('[r7310-runner] running iron door reflection probe runtime smoke');
+      const report = await evaluate(cdp, `(() => {
+        return (async () => {
+          const before = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const loaded = await window.loadR7310C1IronDoorReflectionProbeRuntimePackage();
+          const afterLoad = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const modeSet = window.setR7310C1IronDoorReflectionProbeMode(1);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const afterMode = window.reportR7310C1FullRoomDiffuseRuntimeConfig();
+          const checks = {
+            loadedTruthy: !!loaded,
+            readyAfterLoad: afterLoad.ironDoorReflectionProbeReady === true,
+            modeAfterSet: afterMode.ironDoorReflectionProbeMode === 1,
+            uniformModeAfterSet: afterMode.ironDoorReflectionProbeUniformMode === 1,
+            uniformReadyAfterSet: afterMode.ironDoorReflectionProbeUniformReady === 1,
+            packageDir: typeof afterMode.ironDoorReflectionProbePackageDir === 'string' && afterMode.ironDoorReflectionProbePackageDir.includes('.omc/r7-3-10-iron-door-reflection-probe/'),
+            captureStatus: afterMode.ironDoorReflectionProbeCaptureStatus === 'path_traced_cubemap_capture_complete',
+            runnerStatus: afterMode.ironDoorReflectionProbeRunnerStatus === 'scene_capture',
+            validationStatus: afterMode.ironDoorReflectionProbeValidationStatus === 'scene_capture_candidate',
+            projection: afterMode.ironDoorReflectionProbeProjection === 'box',
+            roughness: Math.abs(Number(afterMode.ironDoorReflectionProbeRoughness) - 0.3) < 0.0001,
+            faceCount: afterMode.ironDoorReflectionProbeRuntimeFaceCount === 6,
+            faceSlots: !!afterMode.ironDoorReflectionProbeFaceSlots &&
+              afterMode.ironDoorReflectionProbeFaceSlots['+X'] === 24 &&
+              afterMode.ironDoorReflectionProbeFaceSlots['-X'] === 25 &&
+              afterMode.ironDoorReflectionProbeFaceSlots['+Y'] === 26 &&
+              afterMode.ironDoorReflectionProbeFaceSlots['-Y'] === 27 &&
+              afterMode.ironDoorReflectionProbeFaceSlots['+Z'] === 28 &&
+              afterMode.ironDoorReflectionProbeFaceSlots['-Z'] === 29,
+            noRuntimeError: afterMode.ironDoorReflectionProbeError === null
+          };
+          const failed = Object.entries(checks).filter(([, value]) => !value).map(([key]) => key);
+          return {
+            version: 'r7-3-10-iron-door-reflection-probe-runtime-smoke',
+            before,
+            afterLoad,
+            modeSet,
+            afterMode,
+            checks,
+            failed,
+            status: failed.length === 0 ? 'pass' : 'fail'
+          };
+        })();
+      })()`, {
+        awaitPromise: true,
+        timeoutMs: args.timeoutMs + 120000
+      });
+      assertNoR7310IronDoorProbeRuntimeFatalEvents(cdp, stderr);
+      const packageDir = r7310WorkPath('r7-3-10-iron-door-reflection-probe-runtime-smoke', timestampForPath());
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(path.join(packageDir, 'runtime-smoke-report.json'), `${JSON.stringify(report, null, 2)}\n`);
+      console.log('R7-3.10 iron door reflection probe runtime smoke completed');
+      console.log(`status: ${report.status}`);
+      console.log(`probeReady: ${report.afterMode.ironDoorReflectionProbeReady}`);
+      console.log(`captureStatus: ${report.afterMode.ironDoorReflectionProbeCaptureStatus}`);
+      console.log(`runnerStatus: ${report.afterMode.ironDoorReflectionProbeRunnerStatus}`);
+      console.log(`package: ${path.relative(repoRoot, packageDir)}`);
+      if (report.status !== 'pass') process.exitCode = 1;
+      completed = true;
+      return;
+    }
     if (args.cameraPoseInfoTest) {
       console.error('[r738-runner] running R7-3.10 camera pose info helper');
       const report = await evaluate(cdp, `(() => {
@@ -2104,7 +4755,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: 30000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-camera-pose-info', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-camera-pose-info', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'camera-pose-info-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 camera pose info test completed');
@@ -2191,7 +4842,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-ne-furniture-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-ne-furniture-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 northeast furniture runtime test completed');
@@ -2222,6 +4873,7 @@ async function main() {
           if (!ceilingButton) throw new Error('btn-r7310-ceiling-diffuse missing');
           if (!structuralButton) throw new Error('btn-r7310-structural-diffuse missing');
           await window.waitForR7310C1FullRoomDiffuseRuntimeReady(${args.timeoutMs});
+          await window.waitForR7310C1XatlasRuntimeReady(${args.timeoutMs});
           const initial = {
             floorText: floorButton.textContent,
             northText: northButton.textContent,
@@ -2415,6 +5067,10 @@ async function main() {
               initial.report.southWallEnabled === true &&
               initial.report.ceilingEnabled === true &&
               initial.report.structuralEnabled === true &&
+			  initial.report.mainSurfaceEnabled === true &&
+			  initial.report.xatlasRuntime.structuralActive === true &&
+			  initial.report.xatlasRuntime.structuralDirectIncluded === true &&
+			  initial.report.xatlasRuntime.uniformStructuralDirectIncluded === 1 &&
               initial.report.sproutPasteApplied === false &&
               initial.report.sproutPasteUniformMode === 0 &&
               before.floorText === '地板烘焙：關' &&
@@ -2560,6 +5216,10 @@ async function main() {
               afterStructuralOn.structuralText === '樑柱烘焙：開' &&
               afterStructuralOn.report.structuralEnabled === true &&
               afterStructuralOn.report.uniformStructuralMode === 1 &&
+			  afterStructuralOn.report.mainSurfaceEnabled === true &&
+			  afterStructuralOn.report.xatlasRuntime.structuralActive === true &&
+			  afterStructuralOn.report.xatlasRuntime.structuralDirectIncluded === true &&
+			  afterStructuralOn.report.xatlasRuntime.uniformStructuralDirectIncluded === 1 &&
               afterWestOn.report.sproutPasteApplied === false &&
               afterWestOn.report.sproutPasteUniformMode === 0 &&
               afterEastOn.report.sproutPasteApplied === false &&
@@ -2594,7 +5254,10 @@ async function main() {
               afterAllOff.southText === '南牆烘焙：關' &&
               afterAllOff.ceilingText === '天花板烘焙：關' &&
               afterAllOff.structuralText === '樑柱烘焙：關' &&
-              afterAllOff.report.enabled === false &&
+			  afterAllOff.report.mainSurfaceEnabled === false &&
+			  afterAllOff.report.xatlasRuntime.structuralActive === false &&
+			  afterAllOff.report.xatlasRuntime.structuralDirectIncluded === false &&
+			  afterAllOff.report.xatlasRuntime.uniformStructuralDirectIncluded === 0 &&
               afterAllOff.report.uniformFloorMode === 0 &&
               afterAllOff.report.uniformNorthWallMode === 0 &&
               afterAllOff.report.uniformEastWallMode === 0 &&
@@ -2612,7 +5275,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-ui-toggle', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-ui-toggle', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'ui-toggle-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 full-room diffuse UI toggle test completed');
@@ -2862,7 +5525,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 120000
       });
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-beam-under-shadow-probe', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-beam-under-shadow-probe', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const screenshots = [];
       for (const cameraCase of cameraCases) {
@@ -3641,7 +6304,7 @@ async function main() {
         entries: finalEntries,
         status: finalEntries.some((entry) => entry.renderCompare.status === 'pass') ? 'pass' : 'needs-more-sampling'
       };
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-north-beam-gap-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       const reportPath = path.join(packageDir, 'normal-fidelity-step-a-report.json');
       fs.writeFileSync(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`);
@@ -4085,7 +6748,7 @@ async function main() {
         })),
         status: report.status
       };
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-north-beam-gap-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'red-live-compare-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 north-wall red LIVE-vs-baked phase-1 probe completed');
@@ -4966,7 +7629,7 @@ async function main() {
         }),
         status: liveCompareReport.status
       };
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-north-beam-gap-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-north-beam-gap-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'red-blue-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 north-wall / beam red-blue hybrid probe completed');
@@ -5159,7 +7822,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 240000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-cutaway-geometry-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-cutaway-geometry-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'cutaway-geometry-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 cutaway geometry probe completed');
@@ -5358,7 +8021,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 240000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-hybrid-owner-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-hybrid-owner-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'hybrid-owner-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 hybrid owner probe completed');
@@ -5469,7 +8132,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 120000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-probe-sample-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 runtime probe sample test completed');
@@ -5558,7 +8221,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 120000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-8-sprout-paste-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-8-sprout-paste-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'sprout-paste-probe-sample-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.8 C1 sprout-paste readback probe test completed');
@@ -5617,7 +8280,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 120000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-h5-black-line-probe', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-h5-black-line-probe', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'h5-black-line-probe-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 H5 black-line probe test completed');
@@ -5673,7 +8336,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-window-front-edge-visual', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-south-window-front-edge-visual', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify(visualReport, null, 2)}\n`);
       fs.writeFileSync(path.join(visualDir, 'south-window-front-edge.png'), base64ToBuffer(screenshot.data));
@@ -5688,7 +8351,7 @@ async function main() {
     }
     if (args.southRevealCornerVisualTest) {
       console.error('[r738-runner] running R7-3.10 south window reveal-corner visual helper');
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-reveal-corner-visual', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-south-reveal-corner-visual', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const views = [
         {
@@ -5838,7 +8501,7 @@ async function main() {
     }
     if (args.southWindowSwColumnContinuityProbeTest) {
       console.error('[r738-runner] running R7-3.10 Phase 2B south-window / southwest-column continuity probe');
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-window-sw-column-continuity', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-south-window-sw-column-continuity', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const cameraState = args.cameraState || {
         name: 'r7310_phase2b_south_window_sw_column_continuity',
@@ -6230,7 +8893,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-north-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-se-column-north-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-se-column-north-shadow-live-match',
@@ -6355,7 +9018,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-sw-column-north-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-sw-column-north-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-sw-column-north-shadow-live-match',
@@ -6479,7 +9142,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-west-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-se-column-west-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-se-column-west-shadow-live-match',
@@ -6603,7 +9266,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-south-wall-ac-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-south-wall-ac-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-south-wall-ac-shadow-live-match',
@@ -6633,7 +9296,7 @@ async function main() {
     }
     if (args.seColumnShadowVisualTest) {
       console.error('[r738-runner] running R7-3.10 southeast column shadow visual helper');
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-se-column-shadow-visual', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-se-column-shadow-visual', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const views = [
         {
@@ -6911,7 +9574,7 @@ async function main() {
 	        timeoutMs: args.timeoutMs + 60000
 	      });
 	      const offScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-	      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-east-wall-shadow-visual', timestampForPath());
+	      const visualDir = r7310WorkPath('r7-3-10-east-wall-shadow-visual', timestampForPath());
 	      fs.mkdirSync(visualDir, { recursive: true });
 	      fs.writeFileSync(path.join(visualDir, 'visual-report.json'), `${JSON.stringify({ ...visualReport, eastOffReport, structuralOffReport, allBakesOffReport }, null, 2)}\n`);
 	      fs.writeFileSync(path.join(visualDir, 'east-wall-shadow-same-view.png'), base64ToBuffer(screenshot.data));
@@ -7043,7 +9706,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-east-wall-beam-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-east-wall-beam-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-east-wall-beam-shadow-live-match',
@@ -7074,7 +9737,7 @@ async function main() {
         fov: 55,
         forward: { x: -0.798283, y: 0.348528, z: 0.491195 }
       };
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-west-wall-mosaic-diagnostic', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-west-wall-mosaic-diagnostic', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const targetSamples = args.targetSamples || 1;
       const waitForWestWallMosaicSamplesExpression = `
@@ -7242,7 +9905,7 @@ async function main() {
         { x: 0.25, y: 0.25 },
         { x: 0.75, y: 0.75 }
       ];
-      const probePackageDir = path.join(repoRoot, '.omc', 'r7-3-10-west-join-sanity-probe', timestampForPath());
+      const probePackageDir = r7310WorkPath('r7-3-10-west-join-sanity-probe', timestampForPath());
       fs.mkdirSync(probePackageDir, { recursive: true });
       const probeResult = await evaluate(cdp, `(() => {
         return (async () => {
@@ -7463,7 +10126,7 @@ async function main() {
       const baselineZMax = 3.056;
       const overrideZMax = args.westJoinD1OverrideZMax;
       const anchorPixel = { x: 489, y: 560 };
-      const d1PackageDir = path.join(repoRoot, '.omc', 'r7-3-10-west-join-d1-gate', timestampForPath());
+      const d1PackageDir = r7310WorkPath('r7-3-10-west-join-d1-gate', timestampForPath());
       fs.mkdirSync(d1PackageDir, { recursive: true });
       const prepareScenarioExpression = (label, zMax) => `(() => {
         return (async () => {
@@ -7768,7 +10431,7 @@ async function main() {
         timeoutMs: args.timeoutMs + 60000
       });
       const bakeScreenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const visualDir = path.join(repoRoot, '.omc', 'r7-3-10-west-wall-beam-shadow-live-match', timestampForPath());
+      const visualDir = r7310WorkPath('r7-3-10-west-wall-beam-shadow-live-match', timestampForPath());
       fs.mkdirSync(visualDir, { recursive: true });
       const visualReport = {
         version: 'r7-3-10-west-wall-beam-shadow-live-match',
@@ -7797,7 +10460,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 full-room diffuse runtime short-circuit test completed');
@@ -7817,7 +10480,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 north wall diffuse runtime short-circuit test completed');
@@ -7837,7 +10500,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 east wall diffuse runtime short-circuit test completed');
@@ -7857,7 +10520,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 west wall diffuse runtime short-circuit test completed');
@@ -7877,7 +10540,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 south wall diffuse runtime short-circuit test completed');
@@ -7899,7 +10562,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       console.log('R7-3.10 C1 ceiling diffuse runtime short-circuit test completed');
@@ -7963,7 +10626,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: args.timeoutMs + 60000
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-10-full-room-diffuse-runtime', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-10-full-room-diffuse-runtime', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, 'runtime-report.json'), `${JSON.stringify(report, null, 2)}\n`);
       fs.writeFileSync(path.join(packageDir, 'runtime-world-report.json'), `${JSON.stringify(worldReport, null, 2)}\n`);
@@ -8021,7 +10684,7 @@ async function main() {
             numberFits: number && numberTextWidth !== null ? number.clientWidth >= Math.ceil(numberTextWidth) + 10 : false,
             controlsColumn: controls ? window.getComputedStyle(controls).flexDirection : null
           };
-          window.setFloorRoughness(1.0);
+          window.setFloorRoughness(0.1);
           await new Promise((resolve) => setTimeout(resolve, 50));
           return {
             initialReport,
@@ -8038,12 +10701,12 @@ async function main() {
         awaitPromise: true,
         timeoutMs: Math.min(args.timeoutMs, 60000)
       });
-      const floorRoughnessDir = path.join(repoRoot, '.omc', 'r7-3-8-c1-floor-roughness', timestampForPath());
+      const floorRoughnessDir = r7310WorkPath('r7-3-8-c1-floor-roughness', timestampForPath());
       fs.mkdirSync(floorRoughnessDir, { recursive: true });
       const floorRoughnessValidation = {
-        status: floorRoughnessReport.initialReport.value === 1.0 &&
-          floorRoughnessReport.initialRangeValue === 1.0 &&
-          floorRoughnessReport.initialNumberValue === 1.0 &&
+        status: floorRoughnessReport.initialReport.value === 0.1 &&
+          floorRoughnessReport.initialRangeValue === 0.1 &&
+          floorRoughnessReport.initialNumberValue === 0.1 &&
           floorRoughnessReport.changedReport.value === 0.25 &&
           floorRoughnessReport.changedRangeValue === 0.25 &&
           floorRoughnessReport.changedNumberValue === 0.25 &&
@@ -8051,7 +10714,7 @@ async function main() {
           floorRoughnessReport.layout.numberFits === true &&
           floorRoughnessReport.layout.rangeClientWidth >= 120 &&
           floorRoughnessReport.layout.controlsColumn === 'column' &&
-          floorRoughnessReport.finalReport.value === 1.0 &&
+          floorRoughnessReport.finalReport.value === 0.1 &&
           floorRoughnessReport.finalReport.pureDiffuseAtOne === true
           ? 'pass'
           : 'fail',
@@ -8157,7 +10820,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: Math.min(args.timeoutMs, 60000) + 30000
       });
-      const snapshotUiDir = path.join(repoRoot, '.omc', 'r7-3-8-c1-snapshot-ui', timestampForPath());
+      const snapshotUiDir = r7310WorkPath('r7-3-8-c1-snapshot-ui', timestampForPath());
       fs.mkdirSync(snapshotUiDir, { recursive: true });
       const {
         beforeStepReport,
@@ -8225,7 +10888,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: Math.min(args.timeoutMs, 60000) + 30000
       });
-      const keyboardIdleDir = path.join(repoRoot, '.omc', 'r7-3-8-c1-keyboard-idle', timestampForPath());
+      const keyboardIdleDir = r7310WorkPath('r7-3-8-c1-keyboard-idle', timestampForPath());
       fs.mkdirSync(keyboardIdleDir, { recursive: true });
       const { beforeReport, idleKeyReport } = keyboardIdleReport;
       const keyboardIdleValidation = {
@@ -8282,7 +10945,7 @@ async function main() {
         awaitPromise: true,
         timeoutMs: Math.min(args.timeoutMs, 60000) + 30000
       });
-      const hibernationDir = path.join(repoRoot, '.omc', 'r7-3-8-c1-hibernation', timestampForPath());
+      const hibernationDir = r7310WorkPath('r7-3-8-c1-hibernation', timestampForPath());
       fs.mkdirSync(hibernationDir, { recursive: true });
       const hibernationValidation = {
         status: hibernationReport.sleeping &&
@@ -8330,7 +10993,7 @@ async function main() {
       const roughnessMatchedReport = reflectionPreviewReport.roughnessMatched;
       const mirrorRoughnessReport = reflectionPreviewReport.mirrorRoughness;
       const roughnessOneReport = reflectionPreviewReport.roughnessOne;
-      const previewDir = path.join(repoRoot, '.omc', 'r7-3-9-c1-accurate-reflection-preview', timestampForPath());
+      const previewDir = r7310WorkPath('r7-3-9-c1-accurate-reflection-preview', timestampForPath());
       fs.mkdirSync(previewDir, { recursive: true });
 	      const previewValidation = {
 	        status: initialReport.ready &&
@@ -8383,7 +11046,7 @@ async function main() {
       if (validationReport.actualSamples !== 1000) {
         throw new Error('R7-3.9 Config 1 current-view validation must end at exactly 1000 spp');
       }
-      const currentViewDir = path.join(repoRoot, '.omc', 'r7-3-9-config1-current-view-reflection', timestampForPath());
+      const currentViewDir = r7310WorkPath('r7-3-9-config1-current-view-reflection', timestampForPath());
       fs.mkdirSync(currentViewDir, { recursive: true });
       const validation = {
         status: validationReport.status,
@@ -8420,7 +11083,7 @@ async function main() {
         timeoutMs: Math.min(args.timeoutMs, 60000) + 30000
       });
       const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-      const previewDir = path.join(repoRoot, '.omc', 'r7-3-8-c1-bake-paste-preview', timestampForPath());
+      const previewDir = r7310WorkPath('r7-3-8-c1-bake-paste-preview', timestampForPath());
       fs.mkdirSync(previewDir, { recursive: true });
       const previewValidation = {
         status: previewReport.ready &&
@@ -8508,7 +11171,7 @@ async function main() {
         directionBuffer,
         texelBuffer
       });
-      const packageDir = path.join(repoRoot, '.omc', 'r7-3-9-c1-accurate-reflection-bake', timestampForPath());
+      const packageDir = r7310WorkPath('r7-3-9-c1-accurate-reflection-bake', timestampForPath());
       fs.mkdirSync(packageDir, { recursive: true });
       const manifest = buildR739Manifest({ report: payload.report, packageDir });
       const validationReport = {
@@ -8601,14 +11264,15 @@ async function main() {
 	      'south-window-left-reveal-shadow': 'reportR7310C1SouthWindowLeftRevealShadowBakeAfterSamples',
 	      'south-window-right-reveal-shadow': 'reportR7310C1SouthWindowRightRevealShadowBakeAfterSamples',
 	      'south-window-bottom-reveal-shadow': 'reportR7310C1SouthWindowBottomRevealShadowBakeAfterSamples',
-	      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples',
-	      'south-window-top-reveal-depth-h2': 'reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples',
-	      'full-floor-xatlas': 'reportR7310C1FloorXatlasBakeAfterSamples',
-	      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples'
-	    };
+		      'south-window-top-reveal-shadow': 'reportR7310C1SouthWindowTopRevealShadowBakeAfterSamples',
+		      'south-window-top-reveal-depth-h2': 'reportR7310C1SouthWindowTopRevealDepthH2BakeAfterSamples',
+		      'full-floor-xatlas': 'reportR7310C1FloorXatlasBakeAfterSamples',
+		      'iron-door-reveal': 'reportR7310C1IronDoorRevealBakeAfterSamples',
+		      'iron-door-body': 'reportR7310C1IronDoorBodyBakeAfterSamples'
+		    };
 	    const r7310CaptureHelper = r7310CaptureHelpers[args.r7310Surface] || 'reportR7310C1FloorDiffuseBakeAfterSamples';
 	    const captureHelper = args.xatlasBake ? 'reportR7310C1XatlasBakeAfterSamples' : (args.fullRoomDiffuseBake ? r7310CaptureHelper : 'reportR738C1BakeCaptureAfterSamples');
-	    const rectangularR7310Bake = args.xatlasBake || args.atlasWidth !== null || args.atlasHeight !== null;
+	    const rectangularR7310Bake = args.xatlasBake || args.atlasWidth !== null || args.atlasHeight !== null || args.r7310Surface === 'iron-door-body';
 	    const r7310FullRoomCaptureCameraOptions = {
 	      cameraState: args.cameraState,
 	      northWallCamera: args.cameraState ? false : args.r7310Surface === 'north-wall',
@@ -8616,7 +11280,8 @@ async function main() {
 	      westWallCamera: args.cameraState ? false : args.r7310Surface === 'west-wall',
 	      southWallCamera: args.cameraState ? false : args.r7310Surface === 'south-wall',
 	      ceilingCamera: args.cameraState ? false : args.r7310Surface === 'ceiling',
-	      structuralCamera: args.cameraState ? false : args.r7310Surface === 'structural-beams-columns'
+	      structuralCamera: args.cameraState ? false : (args.r7310Surface === 'structural-beams-columns' || args.r7310Surface === 'structural-beams-columns-xatlas'),
+	      floorCamera: args.cameraState ? false : (args.r7310Surface === 'floor' || args.r7310Surface === 'full-floor-xatlas')
 	    };
 	    const expression = `(() => {
 	      function f32ToBase64(arr) {
@@ -8634,7 +11299,7 @@ async function main() {
 	        window.__r7310BakeOnlyNoBorrow = ${useBakeOnlyNoBorrowShader ? 'true' : 'false'};
 	        window.__r71BlueNoiseRequested = ${args.r71BlueNoise ? 'true' : 'false'};
         if (window.__r71BlueNoiseRequested && typeof window.setR71BlueNoiseSamplingEnabled === 'function') window.setR71BlueNoiseSamplingEnabled(true);
-        window.__r7310BakeDiagnosticsOptions = {
+	        window.__r7310BakeDiagnosticsOptions = {
 	          enabled: ${args.r7310BakeDiagnostics ? 'true' : 'false'},
 	          submissionBoundaryMode: '${args.r7310BakeSubmissionBoundary}',
 	          submissionEverySamples: ${args.r7310BakeSubmissionEverySamples},
@@ -8642,12 +11307,24 @@ async function main() {
 	          tileWidth: ${args.r7310BakeTileWidth || 0},
 	          tileHeight: ${args.r7310BakeTileHeight || 0}
 	        };
+	        if (typeof window.waitForR738BakeSceneRenderable !== 'function')
+	          throw new Error('R7-3.10 bake scene renderable wait helper missing');
 	        const xatlasBakeProbeLevel = ${args.xatlasBakeProbeLevel === null ? 'null' : args.xatlasBakeProbeLevel};
 	        if (xatlasBakeProbeLevel !== null) {
 	          if (typeof pathTracingUniforms === 'undefined' || !pathTracingUniforms.uR7310C1RuntimeProbeMode)
 	            throw new Error('R7-3.10 xatlas bake probe uniform missing');
 	          pathTracingUniforms.uR7310C1RuntimeProbeMode.value = xatlasBakeProbeLevel;
 	        }
+	        await window.waitForR738BakeSceneRenderable(${args.timeoutMs}, {
+	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
+	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
+	          eastWallCamera: ${r7310FullRoomCaptureCameraOptions.eastWallCamera ? 'true' : 'false'},
+	          westWallCamera: ${r7310FullRoomCaptureCameraOptions.westWallCamera ? 'true' : 'false'},
+	          southWallCamera: ${r7310FullRoomCaptureCameraOptions.southWallCamera ? 'true' : 'false'},
+	          ceilingCamera: ${r7310FullRoomCaptureCameraOptions.ceilingCamera ? 'true' : 'false'},
+	          structuralCamera: ${r7310FullRoomCaptureCameraOptions.structuralCamera ? 'true' : 'false'},
+	          floorCamera: ${r7310FullRoomCaptureCameraOptions.floorCamera ? 'true' : 'false'}
+	        });
 	        const report = await window.${captureHelper}(${args.targetSamples || args.samples}, ${args.timeoutMs}, {
 	          targetAtlasResolution: ${args.atlasResolution},
 	          targetAtlasWidth: ${args.atlasWidth === null ? 'undefined' : args.atlasWidth},
@@ -8657,6 +11334,11 @@ async function main() {
 	          northeastFurnitureMode: '${args.r7310NeFurniture}',
 	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
 	          xatlasFullRadianceBake: ${args.xatlasFullRadianceBake ? 'true' : 'false'},
+		          xatlasSurfaceName: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'central_desk' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'structural_beams_columns' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'south_window_reveals' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'west_wall_switch' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'east_wall' : undefined)))))},
+		          xatlasBatch: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'central_desk_full_radiance' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'structural_beams_columns_full_radiance' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'south_window_reveals_full_radiance' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'west_wall_switch_full_radiance' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'east_wall_full_radiance' : undefined)))))},
+		          xatlasTargetId: ${args.r7310Surface === 'central-desk-xatlas' ? 1100 : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 1200 : (args.r7310Surface === 'south-window-reveals-xatlas' ? 1300 : (args.r7310Surface === 'west-wall-switch-xatlas' ? 1400 : (args.r7310Surface === 'full-east-wall-xatlas' ? 1003 : 'undefined'))))},
+		          xatlasMapping: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'xatlas_texel_worldpos_furniture_static' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'xatlas_texel_worldpos_structural_static' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'xatlas_texel_worldpos_south_window_reveals_static' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'xatlas_texel_worldpos_west_wall_switch_static' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'xatlas_texel_worldpos_east_wall_static' : undefined)))))},
+	          fullRadianceBake: ${args.fullRadianceBake ? 'true' : 'false'},
 	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
 	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
 	          eastWallCamera: ${r7310FullRoomCaptureCameraOptions.eastWallCamera ? 'true' : 'false'},
@@ -8664,7 +11346,13 @@ async function main() {
 	          southWallCamera: ${r7310FullRoomCaptureCameraOptions.southWallCamera ? 'true' : 'false'},
 	          ceilingCamera: ${r7310FullRoomCaptureCameraOptions.ceilingCamera ? 'true' : 'false'},
 	          structuralCamera: ${r7310FullRoomCaptureCameraOptions.structuralCamera ? 'true' : 'false'},
-	          bakeDiagnosticsOptions: window.__r7310BakeDiagnosticsOptions
+	          floorCamera: ${r7310FullRoomCaptureCameraOptions.floorCamera ? 'true' : 'false'},
+	          bakeDiagnosticsOptions: window.__r7310BakeDiagnosticsOptions,
+	          submissionBoundaryMode: '${args.r7310BakeSubmissionBoundary}',
+	          submissionEverySamples: ${args.r7310BakeSubmissionEverySamples},
+	          submissionLogLimit: ${args.r7310BakeSubmissionLogLimit},
+	          tileWidth: ${args.r7310BakeTileWidth || 0},
+	          tileHeight: ${args.r7310BakeTileHeight || 0}
 	        });
 	        const bakeDiagnostics = report && (report.bakeDiagnostics || (report.atlasSummary && report.atlasSummary.bakeDiagnostics)) || null;
 	        const transferMetadata = ${rectangularR7310Bake ? 'false' : 'true'};
@@ -8695,33 +11383,110 @@ async function main() {
     const metadataBuffer = (args.xatlasBake || rectangularR7310Bake)
       ? await readBrowserFloatArtifactBuffer(cdp, 'window.getR738C1BakeCaptureArtifacts().texelMetadata')
       : base64ToBuffer(payload.metadataBase64);
-    const xatlasValidityMask = args.xatlasBake
+        const xatlasValidityMask = args.xatlasBake
       ? loadR7310C1XatlasValidityMask(
           args,
           payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
           payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
-        )
-      : null;
-    const xatlasAlphaPolicy = args.xatlasBake && xatlasValidityMask
+            )
+          : null;
+        const xatlasDilationSource = args.xatlasBake
+          ? loadR7310C1XatlasDilationSource(
+              args,
+              payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+              payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
+            )
+          : null;
+        const xatlasPreparedMeshSource = args.xatlasBake
+          ? loadR7310C1XatlasPreparedMesh(args)
+          : null;
+        const xatlasGeometricEdgeExtrapolation = xatlasPreparedMeshSource
+          ? applyR7310C1XatlasGeometricEdgeExtrapolation({
+              atlasBuffer,
+              metadataBuffer,
+              width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+              height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+              trianglePieceIds: xatlasPreparedMeshSource.mesh.triangleMetadata.map((entry) => entry.pieceId),
+              maxDistanceLimitTexels: args.xatlasAlphaDilationLimit
+            })
+          : null;
+        if (xatlasGeometricEdgeExtrapolation)
+          atlasBuffer = xatlasGeometricEdgeExtrapolation.atlasBuffer;
+        const xatlasAlphaPolicy = args.xatlasBake && xatlasValidityMask
       ? applyR7310C1XatlasAlphaPolicy({
           atlasBuffer,
           metadataBuffer,
           validityMask: xatlasValidityMask,
           width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
           height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
-          maxDistanceLimitTexels: args.xatlasAlphaDilationLimit,
-          maskRowMapping: args.xatlasValidityMaskRowMapping
+              maxDistanceLimitTexels: args.xatlasAlphaDilationLimit,
+              maskRowMapping: args.xatlasValidityMaskRowMapping,
+              preserveVisibleExactBlack: false
+            })
+          : null;
+        if (xatlasAlphaPolicy) atlasBuffer = xatlasAlphaPolicy.atlasBuffer;
+        const xatlasChartGutterDilation = args.xatlasBake && xatlasDilationSource
+          ? applyR7310C1XatlasChartGutterDilation({
+              atlasBuffer,
+              dilationSource: xatlasDilationSource,
+              width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+              height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+              maxDistanceLimitTexels: args.xatlasAlphaDilationLimit,
+              rowMapping: args.xatlasValidityMaskRowMapping
+            })
+          : null;
+        if (xatlasChartGutterDilation) atlasBuffer = xatlasChartGutterDilation.atlasBuffer;
+    const centralDeskGeometricEdgeExtrapolation = args.r7310Surface === 'central-desk-xatlas'
+      ? applyR7310C1CentralDeskGeometricEdgeExtrapolation({
+          atlasBuffer,
+          metadataBuffer,
+          width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+          maxDistanceLimitTexels: args.xatlasAlphaDilationLimit
         })
       : null;
-    if (xatlasAlphaPolicy) atlasBuffer = xatlasAlphaPolicy.atlasBuffer;
+    if (centralDeskGeometricEdgeExtrapolation)
+      atlasBuffer = centralDeskGeometricEdgeExtrapolation.atlasBuffer;
+    const xatlasBakedSeamRadianceGate = xatlasPreparedMeshSource
+      ? evaluateBakedSeamRadianceGate({
+          atlasBuffer,
+          metadataBuffer,
+          width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+          mesh: xatlasPreparedMeshSource.mesh,
+          edgeReport: JSON.parse(fs.readFileSync(path.join(
+            repoRoot,
+            'docs/data/r7-3-10-full-room-black-edge-report.json'
+          ), 'utf8')),
+          packageAtlasGroup: payload.report.surfaceName || args.r7310Surface
+        })
+      : null;
+	    const xatlasSurfaceExpectedValidTexelRatio = ['structural-beams-columns-xatlas', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-east-wall-xatlas'].includes(args.r7310Surface) && xatlasValidityMask
+      ? r7310C1XatlasValidityMaskRatio(
+          xatlasValidityMask.maskBuffer,
+          payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+          payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
+        )
+      : null;
     const validation = validatePayload({
       report: payload.report,
       validationReport: payload.validationReport,
       atlasBuffer,
       metadataBuffer,
-      smokeTest: args.smokeTest
+      smokeTest: args.smokeTest,
+	      expectedValidTexelRatio: xatlasSurfaceExpectedValidTexelRatio
     });
-	    const packageRoot = args.xatlasBake ? 'r7-3-10-xatlas-bake-spike' : (args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture');
+	    const packageRoot = args.r7310Surface === 'central-desk-xatlas'
+	      ? 'r7-3-10-central-desk-xatlas-bake'
+		      : (args.r7310Surface === 'structural-beams-columns-xatlas'
+		        ? 'r7-3-10-structural-xatlas-bake'
+		        : (args.r7310Surface === 'south-window-reveals-xatlas'
+		          ? 'r7-3-10-south-window-reveals-xatlas-bake'
+		          : (args.r7310Surface === 'west-wall-switch-xatlas'
+		            ? 'r7-3-10-west-wall-switch-xatlas-bake'
+		            : (args.r7310Surface === 'full-east-wall-xatlas'
+		              ? 'r7-3-10-full-east-wall-xatlas-bake'
+		              : (args.xatlasBake ? 'r7-3-10-xatlas-bake-spike' : (args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture'))))));
 	    const formalR7310Bake = args.fullRoomDiffuseBake &&
 	      args.atlasResolution === 1024 &&
 	      (args.targetSamples || args.samples) >= 1000 &&
@@ -8730,7 +11495,7 @@ async function main() {
 	      !args.throwawayPackage;
 	    const separatedR7310Bake = args.r7310SeparatedIrradianceBake === true;
 	    const formalPackageDir = formalR7310Bake ? r7310FormalPackageDirForSurface(payload.report.surfaceName, payload.report.northeastFurnitureMode || args.r7310NeFurniture, { separatedIrradianceBake: separatedR7310Bake }) : null;
-	    const packageDir = formalPackageDir || path.join(repoRoot, '.omc', packageRoot, timestampForPath());
+	    const packageDir = formalPackageDir || r7310WorkPath(packageRoot, timestampForPath());
     fs.mkdirSync(packageDir, { recursive: true });
     const manifest = buildManifest({ report: payload.report, packageDir, smokeTest: args.smokeTest });
     if (xatlasAlphaPolicy && xatlasAlphaPolicy.report) {
@@ -8739,6 +11504,44 @@ async function main() {
         enabled: true,
         maskPath: xatlasAlphaPolicy.report.maskPath,
         decisionSource: xatlasAlphaPolicy.report.policy.decisionSource
+      };
+    }
+    if (xatlasChartGutterDilation && xatlasChartGutterDilation.report) {
+      manifest.artifacts.xatlasChartGutterReport = 'xatlas-chart-gutter-report.json';
+      manifest.xatlasChartGutterDilation = {
+        enabled: true,
+        sourcePath: xatlasChartGutterDilation.report.sourcePath,
+        sourceScope: xatlasChartGutterDilation.report.policy.sourceScope,
+        targetScope: xatlasChartGutterDilation.report.policy.targetScope,
+        maxDistanceLimitTexels: xatlasChartGutterDilation.report.policy.maxDistanceLimitTexels
+      };
+    }
+    if (xatlasGeometricEdgeExtrapolation && xatlasGeometricEdgeExtrapolation.report) {
+      manifest.artifacts.xatlasGeometricEdgeReport = 'xatlas-geometric-edge-report.json';
+      manifest.xatlasGeometricEdgeExtrapolation = {
+        enabled: true,
+        preparedMeshPath: path.relative(repoRoot, xatlasPreparedMeshSource.meshPath),
+        sourceScope: xatlasGeometricEdgeExtrapolation.report.policy.sourceScope,
+        targetScope: xatlasGeometricEdgeExtrapolation.report.policy.targetScope
+      };
+    }
+    if (xatlasBakedSeamRadianceGate) {
+      manifest.artifacts.bakedSeamRadianceReport = 'baked-seam-radiance-report.json';
+      manifest.bakedSeamRadianceGate = {
+        enabled: true,
+        method: xatlasBakedSeamRadianceGate.method,
+        edgeInventory: 'docs/data/r7-3-10-full-room-black-edge-report.json',
+        evaluatedEdges: xatlasBakedSeamRadianceGate.counts.evaluatedEdges,
+        evaluatedSides: xatlasBakedSeamRadianceGate.counts.evaluatedSides
+      };
+    }
+    if (centralDeskGeometricEdgeExtrapolation && centralDeskGeometricEdgeExtrapolation.report) {
+      manifest.artifacts.centralDeskGeometricEdgeReport = 'central-desk-geometric-edge-report.json';
+      manifest.centralDeskGeometricEdgeExtrapolation = {
+        enabled: true,
+        sourceScope: centralDeskGeometricEdgeExtrapolation.report.policy.sourceScope,
+        targetScope: centralDeskGeometricEdgeExtrapolation.report.policy.targetScope,
+        maxDistanceLimitTexels: centralDeskGeometricEdgeExtrapolation.report.policy.maxDistanceLimitTexels
       };
     }
     const bakeDiagnostics = payload.bakeDiagnostics || null;
@@ -8785,6 +11588,58 @@ async function main() {
       if (!currentChecks.includes(checkName))
         validationReport.runnerFailedChecks = [...currentChecks, checkName];
     };
+    if (xatlasPreparedMeshSource) {
+      if (!xatlasGeometricEdgeExtrapolation || !xatlasGeometricEdgeExtrapolation.report)
+        markRunnerFailedCheck('xatlas-geometric-edge-extrapolation-missing');
+      else {
+        const geometricCounts = xatlasGeometricEdgeExtrapolation.report.counts || {};
+        if ((geometricCounts.targetTexels || 0) <= 0 ||
+          (geometricCounts.unrepairedTexels || 0) > 0 ||
+          (geometricCounts.sourceExactBlackTexels || 0) > 0 ||
+          (geometricCounts.sourcePieceMismatchTexels || 0) > 0)
+          markRunnerFailedCheck('xatlas-geometric-edge-extrapolation-incomplete');
+      }
+      if (!xatlasAlphaPolicy || !xatlasAlphaPolicy.report)
+        markRunnerFailedCheck('xatlas-edge-dilation-missing');
+      else {
+        const edgeCounts = xatlasAlphaPolicy.report.counts || {};
+        if ((edgeCounts.unrepairedVisibleExactBlackTexels || 0) > 0 ||
+          (edgeCounts.alphaOneExactBlackTexels || 0) > 0)
+          markRunnerFailedCheck('xatlas-visible-black-edge-texels');
+      }
+      if (!xatlasChartGutterDilation || !xatlasChartGutterDilation.report)
+        markRunnerFailedCheck('xatlas-chart-gutter-dilation-missing');
+      else {
+        const gutterCounts = xatlasChartGutterDilation.report.counts || {};
+        if ((gutterCounts.targetTexels || 0) <= 0 ||
+          (gutterCounts.unrepairedTexels || 0) > 0 ||
+          (gutterCounts.sourceExactBlackTexels || 0) > 0)
+          markRunnerFailedCheck('xatlas-chart-gutter-dilation-incomplete');
+      }
+      if (!xatlasBakedSeamRadianceGate)
+        markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-missing');
+      else if (xatlasBakedSeamRadianceGate.status !== 'PASS')
+        markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-failed');
+    }
+    if (args.r7310Surface === 'central-desk-xatlas') {
+      if (!xatlasAlphaPolicy || !xatlasAlphaPolicy.report)
+        markRunnerFailedCheck('central-desk-xatlas-edge-dilation-missing');
+      else {
+        const edgeCounts = xatlasAlphaPolicy.report.counts || {};
+        if ((edgeCounts.unrepairedVisibleExactBlackTexels || 0) > 0 ||
+          (edgeCounts.alphaOneExactBlackTexels || 0) > 0)
+          markRunnerFailedCheck('central-desk-xatlas-visible-black-edge-texels');
+      }
+      if (!centralDeskGeometricEdgeExtrapolation || !centralDeskGeometricEdgeExtrapolation.report)
+        markRunnerFailedCheck('central-desk-xatlas-geometric-edge-extrapolation-missing');
+      else {
+        const geometricEdgeCounts = centralDeskGeometricEdgeExtrapolation.report.counts || {};
+        if ((geometricEdgeCounts.targetTexels || 0) <= 0 ||
+          (geometricEdgeCounts.unrepairedTexels || 0) > 0 ||
+          (geometricEdgeCounts.sourceExactBlackTexels || 0) > 0)
+          markRunnerFailedCheck('central-desk-xatlas-geometric-edge-extrapolation-incomplete');
+      }
+    }
     // R7-3.10 bug#2 Phase C2（CODEX 第 6 點）：GPU 提交/讀回耗時純屬效能診斷，不擋正確性判定。
     // 僅記錄到 runnerDiagnostics（保留監控），不設 status/runnerStatus fail。
     // 真故障（context lost / incomplete samples / timeout）仍走 markRunnerFailedCheck 阻斷。
@@ -8820,6 +11675,14 @@ async function main() {
       fs.writeFileSync(path.join(packageDir, 'bake-diagnostics.json'), `${JSON.stringify(bakeDiagnostics, null, 2)}\n`);
     if (xatlasAlphaPolicy && xatlasAlphaPolicy.report)
       fs.writeFileSync(path.join(packageDir, 'xatlas-c2c-alpha-report.json'), `${JSON.stringify(xatlasAlphaPolicy.report, null, 2)}\n`);
+    if (xatlasChartGutterDilation && xatlasChartGutterDilation.report)
+      fs.writeFileSync(path.join(packageDir, 'xatlas-chart-gutter-report.json'), `${JSON.stringify(xatlasChartGutterDilation.report, null, 2)}\n`);
+    if (xatlasGeometricEdgeExtrapolation && xatlasGeometricEdgeExtrapolation.report)
+      fs.writeFileSync(path.join(packageDir, 'xatlas-geometric-edge-report.json'), `${JSON.stringify(xatlasGeometricEdgeExtrapolation.report, null, 2)}\n`);
+    if (xatlasBakedSeamRadianceGate)
+      fs.writeFileSync(path.join(packageDir, 'baked-seam-radiance-report.json'), `${JSON.stringify(xatlasBakedSeamRadianceGate, null, 2)}\n`);
+    if (centralDeskGeometricEdgeExtrapolation && centralDeskGeometricEdgeExtrapolation.report)
+      fs.writeFileSync(path.join(packageDir, 'central-desk-geometric-edge-report.json'), `${JSON.stringify(centralDeskGeometricEdgeExtrapolation.report, null, 2)}\n`);
     const diagnosticEvents = cdp.events
       .filter((event) => {
         if (event.method === 'Runtime.exceptionThrown') return true;
@@ -8881,7 +11744,9 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error && error.stack ? error.stack : String(error));
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((error) => {
+    console.error(error && error.stack ? error.stack : String(error));
+    process.exit(1);
+  });
+}

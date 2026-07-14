@@ -1,0 +1,22 @@
+{
+  "config": 1,
+  "batch": "south_window_top_reveal_depth_h2",
+  "surfaceTargetCount": 1,
+  "coveredSurfaceNames": [
+    "south_window_top_reveal_depth"
+  ],
+  "missingSurfaceNames": [],
+  "validTexelRatioBySurface": {
+    "south_window_top_reveal_depth": 1
+  },
+  "dilationAppliedBySurface": {
+    "south_window_top_reveal_depth": false
+  },
+  "atlasPathBySurface": {
+    "south_window_top_reveal_depth": "atlas-patch-000-rgba-f32.bin"
+  },
+  "allMajorSurfacesCovered": false,
+  "allStaticVisibleSurfacesAccountedFor": false,
+  "allStaticVisibleSurfacesCovered": false,
+  "finalC1Coverage": false
+}

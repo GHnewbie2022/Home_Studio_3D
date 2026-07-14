@@ -1,0 +1,2095 @@
+{
+  "schema": "r7-3-10-full-room-black-edge-report-v1",
+  "status": "PASS",
+  "method": "formal-xatlas-axis-aligned-rectangle-adjacency",
+  "source": {
+    "paramTableVersion": "aa519b969d041752",
+    "formalSurfaceIds": [
+      "central_desk_back",
+      "central_desk_front",
+      "central_desk_left",
+      "central_desk_right",
+      "central_desk_top",
+      "east_beam_inner_x__full",
+      "east_beam_under_y__full",
+      "east_wall",
+      "se_column_inner_x__front_lower",
+      "se_column_inner_x__upper",
+      "se_column_north_z__east_lower",
+      "se_column_north_z__west_full",
+      "south_wall",
+      "south_window_bottom_reveal__full",
+      "south_window_left_reveal__full",
+      "south_window_right_reveal__full",
+      "south_window_top_reveal_depth",
+      "sw_column_inner_x__full",
+      "sw_column_north_z__full",
+      "west_beam_inner_x__full",
+      "west_beam_under_y__full",
+      "west_threshold_front",
+      "west_threshold_top",
+      "west_wall_open",
+      "west_wall_switch_button__full",
+      "west_wall_switch_button_bottom__full",
+      "west_wall_switch_button_north__full",
+      "west_wall_switch_button_south__full",
+      "west_wall_switch_button_top__full",
+      "west_wall_switch_plate__full",
+      "west_wall_switch_plate_bottom__full",
+      "west_wall_switch_plate_north__full",
+      "west_wall_switch_plate_south__full",
+      "west_wall_switch_plate_top__full"
+    ],
+    "positionToleranceM": 0.012
+  },
+  "sourceFingerprint": "9ec3400d69ebe55f01822bbb1475e97448030fc851d9dc24db6f7fd0a774cd51",
+  "counts": {
+    "formalSurfaces": 34,
+    "sharedEdges": 68,
+    "orthogonalEdges": 62,
+    "aNarrowProbeCandidates": 62,
+    "boundANarrowEdges": 4
+  },
+  "edges": [
+    {
+      "edgeId": "central_desk_back|central_desk_left:y:0:0.757:{\"z\":0.945,\"x\":-0.6}",
+      "pairKey": "central_desk_back|central_desk_left",
+      "surfaces": [
+        "central_desk_back",
+        "central_desk_left"
+      ],
+      "semanticSurfaces": [
+        "central_desk_back",
+        "central_desk_left"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.757,
+        "constants": {
+          "z": 0.945,
+          "x": -0.6
+        }
+      },
+      "lengthM": 0.757,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_back|central_desk_right:y:0:0.757:{\"z\":0.945,\"x\":0.6}",
+      "pairKey": "central_desk_back|central_desk_right",
+      "surfaces": [
+        "central_desk_back",
+        "central_desk_right"
+      ],
+      "semanticSurfaces": [
+        "central_desk_back",
+        "central_desk_right"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.757,
+        "constants": {
+          "z": 0.945,
+          "x": 0.6
+        }
+      },
+      "lengthM": 0.757,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_back|central_desk_top:x:-0.6:0.6:{\"y\":0.757,\"z\":0.945}",
+      "pairKey": "central_desk_back|central_desk_top",
+      "surfaces": [
+        "central_desk_back",
+        "central_desk_top"
+      ],
+      "semanticSurfaces": [
+        "central_desk_back",
+        "central_desk_top"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -0.6,
+        "max": 0.6,
+        "constants": {
+          "y": 0.757,
+          "z": 0.945
+        }
+      },
+      "lengthM": 1.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_front|central_desk_left:y:0:0.757:{\"z\":0.405,\"x\":-0.6}",
+      "pairKey": "central_desk_front|central_desk_left",
+      "surfaces": [
+        "central_desk_front",
+        "central_desk_left"
+      ],
+      "semanticSurfaces": [
+        "central_desk_front",
+        "central_desk_left"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.757,
+        "constants": {
+          "z": 0.405,
+          "x": -0.6
+        }
+      },
+      "lengthM": 0.757,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_front|central_desk_right:y:0:0.757:{\"z\":0.405,\"x\":0.6}",
+      "pairKey": "central_desk_front|central_desk_right",
+      "surfaces": [
+        "central_desk_front",
+        "central_desk_right"
+      ],
+      "semanticSurfaces": [
+        "central_desk_front",
+        "central_desk_right"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.757,
+        "constants": {
+          "z": 0.405,
+          "x": 0.6
+        }
+      },
+      "lengthM": 0.757,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_front|central_desk_top:x:-0.6:0.6:{\"y\":0.757,\"z\":0.405}",
+      "pairKey": "central_desk_front|central_desk_top",
+      "surfaces": [
+        "central_desk_front",
+        "central_desk_top"
+      ],
+      "semanticSurfaces": [
+        "central_desk_front",
+        "central_desk_top"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -0.6,
+        "max": 0.6,
+        "constants": {
+          "y": 0.757,
+          "z": 0.405
+        }
+      },
+      "lengthM": 1.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_left|central_desk_top:z:0.405:0.945:{\"y\":0.757,\"x\":-0.6}",
+      "pairKey": "central_desk_left|central_desk_top",
+      "surfaces": [
+        "central_desk_left",
+        "central_desk_top"
+      ],
+      "semanticSurfaces": [
+        "central_desk_left",
+        "central_desk_top"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 0.405,
+        "max": 0.945,
+        "constants": {
+          "y": 0.757,
+          "x": -0.6
+        }
+      },
+      "lengthM": 0.54,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "central_desk_right|central_desk_top:z:0.405:0.945:{\"y\":0.757,\"x\":0.6}",
+      "pairKey": "central_desk_right|central_desk_top",
+      "surfaces": [
+        "central_desk_right",
+        "central_desk_top"
+      ],
+      "semanticSurfaces": [
+        "central_desk_right",
+        "central_desk_top"
+      ],
+      "atlasGroups": [
+        "furniture",
+        "furniture"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 0.405,
+        "max": 0.945,
+        "constants": {
+          "y": 0.757,
+          "x": 0.6
+        }
+      },
+      "lengthM": 0.54,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "east_beam_inner_x__full|east_beam_under_y__full:z:-1.874:2.49:{\"x\":1.85,\"y\":2.515}",
+      "pairKey": "east_beam_inner_x__full|east_beam_under_y__full",
+      "surfaces": [
+        "east_beam_inner_x__full",
+        "east_beam_under_y__full"
+      ],
+      "semanticSurfaces": [
+        "east_beam_inner_x",
+        "east_beam_under_y"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": 2.49,
+        "constants": {
+          "x": 1.85,
+          "y": 2.515
+        }
+      },
+      "lengthM": 4.364,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM"
+    },
+    {
+      "edgeId": "east_beam_inner_x__full|se_column_north_z__west_full:y:2.515:2.905:{\"x\":1.85,\"z\":2.49}",
+      "pairKey": "east_beam_inner_x__full|se_column_north_z__west_full",
+      "surfaces": [
+        "east_beam_inner_x__full",
+        "se_column_north_z__west_full"
+      ],
+      "semanticSurfaces": [
+        "east_beam_inner_x",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 2.515,
+        "max": 2.905,
+        "constants": {
+          "x": 1.85,
+          "z": 2.49
+        }
+      },
+      "lengthM": 0.39,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM"
+    },
+    {
+      "edgeId": "east_beam_under_y__full|east_wall:z:-1.874:2.49:{\"x\":1.91,\"y\":2.515}",
+      "pairKey": "east_beam_under_y__full|east_wall",
+      "surfaces": [
+        "east_beam_under_y__full",
+        "east_wall"
+      ],
+      "semanticSurfaces": [
+        "east_beam_under_y",
+        "east_wall"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": 2.49,
+        "constants": {
+          "x": 1.91,
+          "y": 2.515
+        }
+      },
+      "lengthM": 4.364,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM"
+    },
+    {
+      "edgeId": "east_beam_under_y__full|se_column_north_z__east_lower:x:1.85:1.91:{\"y\":2.515,\"z\":2.49}",
+      "pairKey": "east_beam_under_y__full|se_column_north_z__east_lower",
+      "surfaces": [
+        "east_beam_under_y__full",
+        "se_column_north_z__east_lower"
+      ],
+      "semanticSurfaces": [
+        "east_beam_under_y",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": 1.85,
+        "max": 1.91,
+        "constants": {
+          "y": 2.515,
+          "z": 2.49
+        }
+      },
+      "lengthM": 0.06,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "east_wall|se_column_north_z__east_lower:y:0:2.515:{\"x\":1.91,\"z\":2.49}",
+      "pairKey": "east_wall|se_column_north_z__east_lower",
+      "surfaces": [
+        "east_wall",
+        "se_column_north_z__east_lower"
+      ],
+      "semanticSurfaces": [
+        "east_wall",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.515,
+        "constants": {
+          "x": 1.91,
+          "z": 2.49
+        }
+      },
+      "lengthM": 2.515,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM"
+    },
+    {
+      "edgeId": "east_wall|south_wall:y:0:2.905:{\"z\":3.06,\"x\":1.91}",
+      "pairKey": "east_wall|south_wall",
+      "surfaces": [
+        "east_wall",
+        "south_wall"
+      ],
+      "semanticSurfaces": [
+        "east_wall",
+        "south_wall"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": 1.91
+        }
+      },
+      "lengthM": 2.905,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "se_column_inner_x__front_lower|se_column_inner_x__upper:z:2.49:2.73:{\"x\":1.78,\"y\":2.04}",
+      "pairKey": "se_column_inner_x__front_lower|se_column_inner_x__upper",
+      "surfaces": [
+        "se_column_inner_x__front_lower",
+        "se_column_inner_x__upper"
+      ],
+      "semanticSurfaces": [
+        "se_column_inner_x",
+        "se_column_inner_x"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "z",
+        "min": 2.49,
+        "max": 2.73,
+        "constants": {
+          "x": 1.78,
+          "y": 2.04
+        }
+      },
+      "lengthM": 0.24,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "se_column_inner_x__front_lower|se_column_north_z__west_full:y:0:2.04:{\"x\":1.78,\"z\":2.49}",
+      "pairKey": "se_column_inner_x__front_lower|se_column_north_z__west_full",
+      "surfaces": [
+        "se_column_inner_x__front_lower",
+        "se_column_north_z__west_full"
+      ],
+      "semanticSurfaces": [
+        "se_column_inner_x",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.04,
+        "constants": {
+          "x": 1.78,
+          "z": 2.49
+        }
+      },
+      "lengthM": 2.04,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "se_column_inner_x__upper|se_column_north_z__west_full:y:2.04:2.905:{\"x\":1.78,\"z\":2.49}",
+      "pairKey": "se_column_inner_x__upper|se_column_north_z__west_full",
+      "surfaces": [
+        "se_column_inner_x__upper",
+        "se_column_north_z__west_full"
+      ],
+      "semanticSurfaces": [
+        "se_column_inner_x",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 2.04,
+        "max": 2.905,
+        "constants": {
+          "x": 1.78,
+          "z": 2.49
+        }
+      },
+      "lengthM": 0.865,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "se_column_inner_x__upper|south_wall:y:2.04:2.905:{\"z\":3.06,\"x\":1.78}",
+      "pairKey": "se_column_inner_x__upper|south_wall",
+      "surfaces": [
+        "se_column_inner_x__upper",
+        "south_wall"
+      ],
+      "semanticSurfaces": [
+        "se_column_inner_x",
+        "south_wall"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 2.04,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": 1.78
+        }
+      },
+      "lengthM": 0.865,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "se_column_north_z__east_lower|se_column_north_z__west_full:y:0:2.515:{\"z\":2.49,\"x\":1.85}",
+      "pairKey": "se_column_north_z__east_lower|se_column_north_z__west_full",
+      "surfaces": [
+        "se_column_north_z__east_lower",
+        "se_column_north_z__west_full"
+      ],
+      "semanticSurfaces": [
+        "se_column_north_z",
+        "se_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.515,
+        "constants": {
+          "z": 2.49,
+          "x": 1.85
+        }
+      },
+      "lengthM": 2.515,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|south_window_bottom_reveal__full:x:-1.75:0.69:{\"z\":3.06,\"y\":1.04}",
+      "pairKey": "south_wall|south_window_bottom_reveal__full",
+      "surfaces": [
+        "south_wall",
+        "south_window_bottom_reveal__full"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "south_window_bottom_reveal"
+      ],
+      "atlasGroups": [
+        "shell",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.75,
+        "max": 0.69,
+        "constants": {
+          "z": 3.06,
+          "y": 1.04
+        }
+      },
+      "lengthM": 2.44,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|south_window_left_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":-1.75}",
+      "pairKey": "south_wall|south_window_left_reveal__full",
+      "surfaces": [
+        "south_wall",
+        "south_window_left_reveal__full"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "south_window_left_reveal"
+      ],
+      "atlasGroups": [
+        "shell",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": -1.75
+        }
+      },
+      "lengthM": 1.865,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|south_window_right_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":0.69}",
+      "pairKey": "south_wall|south_window_right_reveal__full",
+      "surfaces": [
+        "south_wall",
+        "south_window_right_reveal__full"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "south_window_right_reveal"
+      ],
+      "atlasGroups": [
+        "shell",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": 0.69
+        }
+      },
+      "lengthM": 1.865,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|south_window_top_reveal_depth:x:-1.75:0.69:{\"z\":3.06,\"y\":2.905}",
+      "pairKey": "south_wall|south_window_top_reveal_depth",
+      "surfaces": [
+        "south_wall",
+        "south_window_top_reveal_depth"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "south_window_top_reveal_depth"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.75,
+        "max": 0.69,
+        "constants": {
+          "z": 3.06,
+          "y": 2.905
+        }
+      },
+      "lengthM": 2.44,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|sw_column_inner_x__full:y:0.77:2.905:{\"z\":3.06,\"x\":-1.75}",
+      "pairKey": "south_wall|sw_column_inner_x__full",
+      "surfaces": [
+        "south_wall",
+        "sw_column_inner_x__full"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "sw_column_inner_x"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": -1.75
+        }
+      },
+      "lengthM": 2.135,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_wall|west_wall_open:y:0:2.905:{\"z\":3.06,\"x\":-1.91}",
+      "pairKey": "south_wall|west_wall_open",
+      "surfaces": [
+        "south_wall",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "south_wall",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": -1.91
+        }
+      },
+      "lengthM": 2.905,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_left_reveal__full:z:3.056:3.256:{\"x\":-1.75,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_left_reveal__full",
+      "surfaces": [
+        "south_window_bottom_reveal__full",
+        "south_window_left_reveal__full"
+      ],
+      "semanticSurfaces": [
+        "south_window_bottom_reveal",
+        "south_window_left_reveal"
+      ],
+      "atlasGroups": [
+        "south_window_reveals",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": -1.75,
+          "y": 1.04
+        }
+      },
+      "lengthM": 0.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_right_reveal__full:z:3.056:3.256:{\"x\":0.69,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_right_reveal__full",
+      "surfaces": [
+        "south_window_bottom_reveal__full",
+        "south_window_right_reveal__full"
+      ],
+      "semanticSurfaces": [
+        "south_window_bottom_reveal",
+        "south_window_right_reveal"
+      ],
+      "atlasGroups": [
+        "south_window_reveals",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": 0.69,
+          "y": 1.04
+        }
+      },
+      "lengthM": 0.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_window_left_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":-1.75}",
+      "pairKey": "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "surfaces": [
+        "south_window_left_reveal__full",
+        "south_window_top_reveal_depth"
+      ],
+      "semanticSurfaces": [
+        "south_window_left_reveal",
+        "south_window_top_reveal_depth"
+      ],
+      "atlasGroups": [
+        "shell",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": -1.75
+        }
+      },
+      "lengthM": 0.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_window_left_reveal__full|sw_column_inner_x__full:y:1.04:2.905:{\"x\":-1.75,\"z\":3.056}",
+      "pairKey": "south_window_left_reveal__full|sw_column_inner_x__full",
+      "surfaces": [
+        "south_window_left_reveal__full",
+        "sw_column_inner_x__full"
+      ],
+      "semanticSurfaces": [
+        "south_window_left_reveal",
+        "sw_column_inner_x"
+      ],
+      "atlasGroups": [
+        "south_window_reveals",
+        "structural"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "x": -1.75,
+          "z": 3.056
+        }
+      },
+      "lengthM": 1.865,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "south_window_right_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":0.69}",
+      "pairKey": "south_window_right_reveal__full|south_window_top_reveal_depth",
+      "surfaces": [
+        "south_window_right_reveal__full",
+        "south_window_top_reveal_depth"
+      ],
+      "semanticSurfaces": [
+        "south_window_right_reveal",
+        "south_window_top_reveal_depth"
+      ],
+      "atlasGroups": [
+        "shell",
+        "south_window_reveals"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": 0.69
+        }
+      },
+      "lengthM": 0.2,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "sw_column_inner_x__full|sw_column_north_z__full:y:0.77:2.525:{\"x\":-1.75,\"z\":2.846}",
+      "pairKey": "sw_column_inner_x__full|sw_column_north_z__full",
+      "surfaces": [
+        "sw_column_inner_x__full",
+        "sw_column_north_z__full"
+      ],
+      "semanticSurfaces": [
+        "sw_column_inner_x",
+        "sw_column_north_z"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.525,
+        "constants": {
+          "x": -1.75,
+          "z": 2.846
+        }
+      },
+      "lengthM": 1.755,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "sw_column_inner_x__full|west_beam_inner_x__full:y:2.525:2.905:{\"x\":-1.75,\"z\":2.847}",
+      "pairKey": "sw_column_inner_x__full|west_beam_inner_x__full",
+      "surfaces": [
+        "sw_column_inner_x__full",
+        "west_beam_inner_x__full"
+      ],
+      "semanticSurfaces": [
+        "sw_column_inner_x",
+        "west_beam_inner_x"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "y",
+        "min": 2.525,
+        "max": 2.905,
+        "constants": {
+          "x": -1.75,
+          "z": 2.847
+        }
+      },
+      "lengthM": 0.38,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "sw_column_north_z__full|west_beam_under_y__full:x:-1.91:-1.75:{\"y\":2.525,\"z\":2.846}",
+      "pairKey": "sw_column_north_z__full|west_beam_under_y__full",
+      "surfaces": [
+        "sw_column_north_z__full",
+        "west_beam_under_y__full"
+      ],
+      "semanticSurfaces": [
+        "sw_column_north_z",
+        "west_beam_under_y"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.75,
+        "constants": {
+          "y": 2.525,
+          "z": 2.846
+        }
+      },
+      "lengthM": 0.16,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "sw_column_north_z__full|west_wall_open:y:0.77:2.525:{\"x\":-1.91,\"z\":2.846}",
+      "pairKey": "sw_column_north_z__full|west_wall_open",
+      "surfaces": [
+        "sw_column_north_z__full",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "sw_column_north_z",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.525,
+        "constants": {
+          "x": -1.91,
+          "z": 2.846
+        }
+      },
+      "lengthM": 1.755,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_beam_inner_x__full|west_beam_under_y__full:z:-1.874:2.846:{\"x\":-1.75,\"y\":2.525}",
+      "pairKey": "west_beam_inner_x__full|west_beam_under_y__full",
+      "surfaces": [
+        "west_beam_inner_x__full",
+        "west_beam_under_y__full"
+      ],
+      "semanticSurfaces": [
+        "west_beam_inner_x",
+        "west_beam_under_y"
+      ],
+      "atlasGroups": [
+        "structural",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": 2.846,
+        "constants": {
+          "x": -1.75,
+          "y": 2.525
+        }
+      },
+      "lengthM": 4.72,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_beam_under_y__full|west_wall_open:z:-1.874:2.846:{\"x\":-1.91,\"y\":2.525}",
+      "pairKey": "west_beam_under_y__full|west_wall_open",
+      "surfaces": [
+        "west_beam_under_y__full",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "west_beam_under_y",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "structural"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": 2.846,
+        "constants": {
+          "x": -1.91,
+          "y": 2.525
+        }
+      },
+      "lengthM": 4.72,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_threshold_front|west_threshold_top:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0.09}",
+      "pairKey": "west_threshold_front|west_threshold_top",
+      "surfaces": [
+        "west_threshold_front",
+        "west_threshold_top"
+      ],
+      "semanticSurfaces": [
+        "west_threshold_front",
+        "west_threshold_top"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": -0.984,
+        "constants": {
+          "x": -1.91,
+          "y": 0.09
+        }
+      },
+      "lengthM": 0.89,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_threshold_front|west_wall_open:y:0:0.09:{\"x\":-1.91,\"z\":-1.874}",
+      "pairKey": "west_threshold_front|west_wall_open",
+      "surfaces": [
+        "west_threshold_front",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "west_threshold_front",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.09,
+        "constants": {
+          "x": -1.91,
+          "z": -1.874
+        }
+      },
+      "lengthM": 0.09,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_threshold_front|west_wall_open:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0}",
+      "pairKey": "west_threshold_front|west_wall_open",
+      "surfaces": [
+        "west_threshold_front",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "west_threshold_front",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "coplanar-shared-boundary",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": -0.984,
+        "constants": {
+          "x": -1.91,
+          "y": 0
+        }
+      },
+      "lengthM": 0.89,
+      "normalDot": 1,
+      "requiresANarrowProbe": false,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_threshold_top|west_wall_open:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0.09}",
+      "pairKey": "west_threshold_top|west_wall_open",
+      "surfaces": [
+        "west_threshold_top",
+        "west_wall_open"
+      ],
+      "semanticSurfaces": [
+        "west_threshold_top",
+        "west_wall_open"
+      ],
+      "atlasGroups": [
+        "shell",
+        "shell"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -1.874,
+        "max": -0.984,
+        "constants": {
+          "x": -1.91,
+          "y": 0.09
+        }
+      },
+      "lengthM": 0.89,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_button_bottom__full:z:-0.076:0.018:{\"x\":-1.91,\"y\":1.161}",
+      "pairKey": "west_wall_open|west_wall_switch_button_bottom__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_bottom__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_bottom"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.91,
+          "y": 1.161
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_button_north__full:y:1.161:1.205:{\"x\":-1.91,\"z\":-0.076}",
+      "pairKey": "west_wall_open|west_wall_switch_button_north__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_north"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.91,
+          "z": -0.076
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_button_south__full:y:1.161:1.205:{\"x\":-1.91,\"z\":0.018}",
+      "pairKey": "west_wall_open|west_wall_switch_button_south__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_south"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.91,
+          "z": 0.018
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_button_top__full:z:-0.076:0.018:{\"x\":-1.91,\"y\":1.205}",
+      "pairKey": "west_wall_open|west_wall_switch_button_top__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_button_top"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.91,
+          "y": 1.205
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_plate_bottom__full:z:-0.089:0.031:{\"x\":-1.91,\"y\":1.148}",
+      "pairKey": "west_wall_open|west_wall_switch_plate_bottom__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_bottom__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_bottom"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.089,
+        "max": 0.031,
+        "constants": {
+          "x": -1.91,
+          "y": 1.148
+        }
+      },
+      "lengthM": 0.12,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_plate_north__full:y:1.148:1.218:{\"x\":-1.91,\"z\":-0.089}",
+      "pairKey": "west_wall_open|west_wall_switch_plate_north__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_north"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.148,
+        "max": 1.218,
+        "constants": {
+          "x": -1.91,
+          "z": -0.089
+        }
+      },
+      "lengthM": 0.07,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_plate_south__full:y:1.148:1.218:{\"x\":-1.91,\"z\":0.031}",
+      "pairKey": "west_wall_open|west_wall_switch_plate_south__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_south"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.148,
+        "max": 1.218,
+        "constants": {
+          "x": -1.91,
+          "z": 0.031
+        }
+      },
+      "lengthM": 0.07,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_open|west_wall_switch_plate_top__full:z:-0.089:0.031:{\"x\":-1.91,\"y\":1.218}",
+      "pairKey": "west_wall_open|west_wall_switch_plate_top__full",
+      "surfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_open",
+        "west_wall_switch_plate_top"
+      ],
+      "atlasGroups": [
+        "shell",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.089,
+        "max": 0.031,
+        "constants": {
+          "x": -1.91,
+          "y": 1.218
+        }
+      },
+      "lengthM": 0.12,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button__full|west_wall_switch_button_bottom__full:z:-0.076:0.018:{\"x\":-1.898,\"y\":1.161}",
+      "pairKey": "west_wall_switch_button__full|west_wall_switch_button_bottom__full",
+      "surfaces": [
+        "west_wall_switch_button__full",
+        "west_wall_switch_button_bottom__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button",
+        "west_wall_switch_button_bottom"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.898,
+          "y": 1.161
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button__full|west_wall_switch_button_north__full:y:1.161:1.205:{\"x\":-1.898,\"z\":-0.076}",
+      "pairKey": "west_wall_switch_button__full|west_wall_switch_button_north__full",
+      "surfaces": [
+        "west_wall_switch_button__full",
+        "west_wall_switch_button_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button",
+        "west_wall_switch_button_north"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.898,
+          "z": -0.076
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button__full|west_wall_switch_button_south__full:y:1.161:1.205:{\"x\":-1.898,\"z\":0.018}",
+      "pairKey": "west_wall_switch_button__full|west_wall_switch_button_south__full",
+      "surfaces": [
+        "west_wall_switch_button__full",
+        "west_wall_switch_button_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button",
+        "west_wall_switch_button_south"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.898,
+          "z": 0.018
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button__full|west_wall_switch_button_top__full:z:-0.076:0.018:{\"x\":-1.898,\"y\":1.205}",
+      "pairKey": "west_wall_switch_button__full|west_wall_switch_button_top__full",
+      "surfaces": [
+        "west_wall_switch_button__full",
+        "west_wall_switch_button_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button",
+        "west_wall_switch_button_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.898,
+          "y": 1.205
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_button_north__full:x:-1.9:-1.898:{\"y\":1.161,\"z\":-0.076}",
+      "pairKey": "west_wall_switch_button_bottom__full|west_wall_switch_button_north__full",
+      "surfaces": [
+        "west_wall_switch_button_bottom__full",
+        "west_wall_switch_button_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_bottom",
+        "west_wall_switch_button_north"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.9,
+        "max": -1.898,
+        "constants": {
+          "y": 1.161,
+          "z": -0.076
+        }
+      },
+      "lengthM": 0.002,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_button_south__full:x:-1.9:-1.898:{\"y\":1.161,\"z\":0.018}",
+      "pairKey": "west_wall_switch_button_bottom__full|west_wall_switch_button_south__full",
+      "surfaces": [
+        "west_wall_switch_button_bottom__full",
+        "west_wall_switch_button_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_bottom",
+        "west_wall_switch_button_south"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.9,
+        "max": -1.898,
+        "constants": {
+          "y": 1.161,
+          "z": 0.018
+        }
+      },
+      "lengthM": 0.002,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_plate__full:z:-0.076:0.018:{\"x\":-1.9,\"y\":1.161}",
+      "pairKey": "west_wall_switch_button_bottom__full|west_wall_switch_plate__full",
+      "surfaces": [
+        "west_wall_switch_button_bottom__full",
+        "west_wall_switch_plate__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_bottom",
+        "west_wall_switch_plate"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.9,
+          "y": 1.161
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_north__full|west_wall_switch_button_top__full:x:-1.9:-1.898:{\"y\":1.205,\"z\":-0.076}",
+      "pairKey": "west_wall_switch_button_north__full|west_wall_switch_button_top__full",
+      "surfaces": [
+        "west_wall_switch_button_north__full",
+        "west_wall_switch_button_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_north",
+        "west_wall_switch_button_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.9,
+        "max": -1.898,
+        "constants": {
+          "y": 1.205,
+          "z": -0.076
+        }
+      },
+      "lengthM": 0.002,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_north__full|west_wall_switch_plate__full:y:1.161:1.205:{\"x\":-1.9,\"z\":-0.076}",
+      "pairKey": "west_wall_switch_button_north__full|west_wall_switch_plate__full",
+      "surfaces": [
+        "west_wall_switch_button_north__full",
+        "west_wall_switch_plate__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_north",
+        "west_wall_switch_plate"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.9,
+          "z": -0.076
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_south__full|west_wall_switch_button_top__full:x:-1.9:-1.898:{\"y\":1.205,\"z\":0.018}",
+      "pairKey": "west_wall_switch_button_south__full|west_wall_switch_button_top__full",
+      "surfaces": [
+        "west_wall_switch_button_south__full",
+        "west_wall_switch_button_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_south",
+        "west_wall_switch_button_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.9,
+        "max": -1.898,
+        "constants": {
+          "y": 1.205,
+          "z": 0.018
+        }
+      },
+      "lengthM": 0.002,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_south__full|west_wall_switch_plate__full:y:1.161:1.205:{\"x\":-1.9,\"z\":0.018}",
+      "pairKey": "west_wall_switch_button_south__full|west_wall_switch_plate__full",
+      "surfaces": [
+        "west_wall_switch_button_south__full",
+        "west_wall_switch_plate__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_south",
+        "west_wall_switch_plate"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.161,
+        "max": 1.205,
+        "constants": {
+          "x": -1.9,
+          "z": 0.018
+        }
+      },
+      "lengthM": 0.044,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_button_top__full|west_wall_switch_plate__full:z:-0.076:0.018:{\"x\":-1.9,\"y\":1.205}",
+      "pairKey": "west_wall_switch_button_top__full|west_wall_switch_plate__full",
+      "surfaces": [
+        "west_wall_switch_button_top__full",
+        "west_wall_switch_plate__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_button_top",
+        "west_wall_switch_plate"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.076,
+        "max": 0.018,
+        "constants": {
+          "x": -1.9,
+          "y": 1.205
+        }
+      },
+      "lengthM": 0.094,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_bottom__full:z:-0.089:0.031:{\"x\":-1.9,\"y\":1.148}",
+      "pairKey": "west_wall_switch_plate__full|west_wall_switch_plate_bottom__full",
+      "surfaces": [
+        "west_wall_switch_plate__full",
+        "west_wall_switch_plate_bottom__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate",
+        "west_wall_switch_plate_bottom"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.089,
+        "max": 0.031,
+        "constants": {
+          "x": -1.9,
+          "y": 1.148
+        }
+      },
+      "lengthM": 0.12,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_north__full:y:1.148:1.218:{\"x\":-1.9,\"z\":-0.089}",
+      "pairKey": "west_wall_switch_plate__full|west_wall_switch_plate_north__full",
+      "surfaces": [
+        "west_wall_switch_plate__full",
+        "west_wall_switch_plate_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate",
+        "west_wall_switch_plate_north"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.148,
+        "max": 1.218,
+        "constants": {
+          "x": -1.9,
+          "z": -0.089
+        }
+      },
+      "lengthM": 0.07,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_south__full:y:1.148:1.218:{\"x\":-1.9,\"z\":0.031}",
+      "pairKey": "west_wall_switch_plate__full|west_wall_switch_plate_south__full",
+      "surfaces": [
+        "west_wall_switch_plate__full",
+        "west_wall_switch_plate_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate",
+        "west_wall_switch_plate_south"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "y",
+        "min": 1.148,
+        "max": 1.218,
+        "constants": {
+          "x": -1.9,
+          "z": 0.031
+        }
+      },
+      "lengthM": 0.07,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_top__full:z:-0.089:0.031:{\"x\":-1.9,\"y\":1.218}",
+      "pairKey": "west_wall_switch_plate__full|west_wall_switch_plate_top__full",
+      "surfaces": [
+        "west_wall_switch_plate__full",
+        "west_wall_switch_plate_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate",
+        "west_wall_switch_plate_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "z",
+        "min": -0.089,
+        "max": 0.031,
+        "constants": {
+          "x": -1.9,
+          "y": 1.218
+        }
+      },
+      "lengthM": 0.12,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_north__full:x:-1.91:-1.9:{\"y\":1.148,\"z\":-0.089}",
+      "pairKey": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_north__full",
+      "surfaces": [
+        "west_wall_switch_plate_bottom__full",
+        "west_wall_switch_plate_north__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate_bottom",
+        "west_wall_switch_plate_north"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.9,
+        "constants": {
+          "y": 1.148,
+          "z": -0.089
+        }
+      },
+      "lengthM": 0.01,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_south__full:x:-1.91:-1.9:{\"y\":1.148,\"z\":0.031}",
+      "pairKey": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_south__full",
+      "surfaces": [
+        "west_wall_switch_plate_bottom__full",
+        "west_wall_switch_plate_south__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate_bottom",
+        "west_wall_switch_plate_south"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.9,
+        "constants": {
+          "y": 1.148,
+          "z": 0.031
+        }
+      },
+      "lengthM": 0.01,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate_north__full|west_wall_switch_plate_top__full:x:-1.91:-1.9:{\"y\":1.218,\"z\":-0.089}",
+      "pairKey": "west_wall_switch_plate_north__full|west_wall_switch_plate_top__full",
+      "surfaces": [
+        "west_wall_switch_plate_north__full",
+        "west_wall_switch_plate_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate_north",
+        "west_wall_switch_plate_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.9,
+        "constants": {
+          "y": 1.218,
+          "z": -0.089
+        }
+      },
+      "lengthM": 0.01,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    },
+    {
+      "edgeId": "west_wall_switch_plate_south__full|west_wall_switch_plate_top__full:x:-1.91:-1.9:{\"y\":1.218,\"z\":0.031}",
+      "pairKey": "west_wall_switch_plate_south__full|west_wall_switch_plate_top__full",
+      "surfaces": [
+        "west_wall_switch_plate_south__full",
+        "west_wall_switch_plate_top__full"
+      ],
+      "semanticSurfaces": [
+        "west_wall_switch_plate_south",
+        "west_wall_switch_plate_top"
+      ],
+      "atlasGroups": [
+        "west_wall_switch",
+        "west_wall_switch"
+      ],
+      "kind": "orthogonal-plane-contact",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.9,
+        "constants": {
+          "y": 1.218,
+          "z": 0.031
+        }
+      },
+      "lengthM": 0.01,
+      "normalDot": 0,
+      "requiresANarrowProbe": true,
+      "aNarrowShaderSymbol": null
+    }
+  ]
+}

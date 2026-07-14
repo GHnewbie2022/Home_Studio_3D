@@ -49,7 +49,7 @@ const exclusionFields = exclusions.map((e) => ({
   // undefined 欄位由 JSON.stringify 自動省略，故 AABB 條目序列化不變（hash 只因新增 rotatedBox 條目而變）。
   shape: e.shape, bounds: e.bounds, xRects: e.xRects,
   centerXZ: e.centerXZ, halfXZ: e.halfXZ, rotY: e.rotY,
-  margin: e.margin, policy: e.policy, enabled: e.enabled,
+  margin: e.margin, contactContinuity: e.contactContinuity, policy: e.policy, enabled: e.enabled,
 }));
 const EXCLUSION_VERSION = createHash('sha256').update(JSON.stringify(exclusionFields)).digest('hex').slice(0, 16);
 
@@ -279,6 +279,13 @@ function exclMarginExpand(b, margin) {
   return b;
 }
 function exclInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
+function exclPreservesContactBand(e, worldX, worldZ, b) {
+  const cc = e.contactContinuity;
+  if (!cc || cc.mode !== 'preserve_visible_full_bake_band') return false;
+  const band = Number(cc.bandMeters) || 0;
+  if (!(band > 0) || !b || !b.x || !b.z) return false;
+  return worldX <= b.x[0] + band || worldX >= b.x[1] - band || worldZ <= b.z[0] + band || worldZ >= b.z[1] - band;
+}
 // isFloorOccluded(worldX, worldZ, configId, furnitureMode) — true where a solid-geometry footprint covers the floor.
 export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
   for (const e of FLOOR_OCCLUSION_EXCLUSIONS) {
@@ -297,6 +304,7 @@ export function isFloorOccluded(worldX, worldZ, configId, furnitureMode) {
     const b = exclMarginExpand(e.bounds, e.margin);
     if (Array.isArray(e.xRects)) { if (!e.xRects.some((r) => exclInRange(worldX, r)) || !exclInRange(worldZ, b.z)) continue; }
     else if (!exclInRange(worldX, b.x) || !exclInRange(worldZ, b.z)) continue;
+    if (exclPreservesContactBand(e, worldX, worldZ, b)) continue;
     return true;
   }
   return false;
@@ -312,6 +320,13 @@ function emitFloorOcclusionInit() {
 \tvar R7310_FLOOR_OCCLUSION_EXCLUSIONS = ${JSON.stringify(exclusionFields)};
 \tfunction r7310FloorOcclusionInRange(v, r) { return r != null && v >= r[0] && v <= r[1]; }
 \tfunction r7310FloorOcclusionMarginExpand(b, margin) { return b; } // Step-B margin; first re-bake meters=0 (no-op)
+\tfunction r7310FloorOcclusionPreservesContactBand(e, worldX, worldZ, b) {
+\t\tvar cc = e.contactContinuity;
+\t\tif (!cc || cc.mode !== 'preserve_visible_full_bake_band') return false;
+\t\tvar band = Number(cc.bandMeters) || 0;
+\t\tif (!(band > 0) || !b || !b.x || !b.z) return false;
+\t\treturn worldX <= b.x[0] + band || worldX >= b.x[1] - band || worldZ <= b.z[0] + band || worldZ >= b.z[1] - band;
+\t}
 \tfunction r7310C1FloorOccluderExcluded(worldX, worldZ, configId, furnitureMode) {
 \t\tfor (var i = 0; i < R7310_FLOOR_OCCLUSION_EXCLUSIONS.length; i++) {
 \t\t\tvar e = R7310_FLOOR_OCCLUSION_EXCLUSIONS[i];
@@ -329,6 +344,7 @@ function emitFloorOcclusionInit() {
 \t\t\tvar b = r7310FloorOcclusionMarginExpand(e.bounds, e.margin);
 \t\t\tif (Array.isArray(e.xRects)) { var okX = false; for (var k = 0; k < e.xRects.length; k++) if (r7310FloorOcclusionInRange(worldX, e.xRects[k])) okX = true; if (!okX || !r7310FloorOcclusionInRange(worldZ, b.z)) continue; }
 \t\t\telse if (!r7310FloorOcclusionInRange(worldX, b.x) || !r7310FloorOcclusionInRange(worldZ, b.z)) continue;
+\t\t\tif (r7310FloorOcclusionPreservesContactBand(e, worldX, worldZ, b)) continue;
 \t\t\treturn true;
 \t\t}
 \t\treturn false;

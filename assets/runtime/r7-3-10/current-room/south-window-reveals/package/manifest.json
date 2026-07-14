@@ -1,0 +1,63 @@
+{
+  "version": "r7-3-10-xatlas-bake-c2",
+  "config": 1,
+  "northeastFurnitureMode": null,
+  "batch": "south_window_reveals_full_radiance",
+  "targetId": 1300,
+  "surfaceName": "south_window_reveals",
+  "worldBounds": null,
+  "createdAt": "2026-07-14T12:36:35.915Z",
+  "branch": "codex/r7-3-10-full-bake-remaining-surfaces",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 1953,
+  "targetAtlasWidth": 502,
+  "targetAtlasHeight": 1953,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "fullRadianceProbe": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "upscaled": false,
+  "packageDir": "assets/runtime/r7-3-10/current-room/south-window-reveals/package",
+  "artifacts": {
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
+    "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json"
+  },
+  "xatlasC2CAlphaPolicy": {
+    "enabled": true,
+    "maskPath": null,
+    "sourceMaskRetiredAfterValidation": true,
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "xatlasChartGutterDilation": {
+    "enabled": true,
+    "sourcePath": null,
+    "sourceArtifactRetiredAfterValidation": true,
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4
+  },
+  "xatlasGeometricEdgeExtrapolation": {
+    "enabled": true,
+    "preparedMeshPath": "assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-input-mesh.json",
+    "sourceScope": "same-piece-interior-valid-radiance",
+    "targetScope": "one-texel physical chart perimeter"
+  },
+  "bakedSeamRadianceGate": {
+    "enabled": true,
+    "method": "same-surface-near-edge-versus-interior-hdr-radiance",
+    "edgeInventory": "docs/data/r7-3-10-full-room-black-edge-report.json",
+    "evaluatedEdges": 8,
+    "evaluatedSides": 10
+  }
+}

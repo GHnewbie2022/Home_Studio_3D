@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const repo = path.resolve(path.dirname(__filename), '..', '..');
+const NORTH_ATLAS_W = 2325;
+const NORTH_ATLAS_H = 3377;
 
 function parseArgs(argv) {
 	const out = {
@@ -105,8 +107,28 @@ function finalizeOidnManifest(rawDir, oidnDir) {
 	return manifest;
 }
 
+function assertNorthFullBakeAdmission(manifest, validation, bakedRadianceKind) {
+	const reasons = [];
+	if (bakedRadianceKind !== 'full_diffuse_radiance') reasons.push('not_full_diffuse_radiance');
+	if (validation.status !== 'pass') reasons.push('validation_not_pass');
+	if (reasons.length) {
+		throw new Error(`north full-bake admission failed: ${reasons.join(', ')}; packageDir=${manifest.packageDir || 'unknown'}`);
+	}
+}
+
 function runtimePointer(dir, kind, prepareDir) {
 	const { manifest, validation, alphaReport } = packageRecord(dir);
+	const bakedRadianceKind = manifest.bakedRadianceKind === 'full_diffuse_radiance'
+		? 'full_diffuse_radiance'
+		: 'indirect_diffuse_radiance';
+	const directLightAlreadyIncluded = bakedRadianceKind === 'full_diffuse_radiance';
+	const addDirectLightAfterBakeLookup = !directLightAlreadyIncluded;
+	const mw = Math.trunc(Number(manifest.targetAtlasWidth) || 0);
+	const mh = Math.trunc(Number(manifest.targetAtlasHeight) || 0);
+	if (mw !== NORTH_ATLAS_W || mh !== NORTH_ATLAS_H) {
+		throw new Error(`north identity atlas size mismatch: manifest ${mw}x${mh} != spec ${NORTH_ATLAS_W}x${NORTH_ATLAS_H}`);
+	}
+	assertNorthFullBakeAdmission(manifest, validation, bakedRadianceKind);
 	const pointer = {
 		packageStatus: 'architecture_probe',
 		runtimeScope: 'c1_xatlas_full_north_wall_runtime',
@@ -118,14 +140,16 @@ function runtimePointer(dir, kind, prepareDir) {
 		requestedSamples: manifest.requestedSamples,
 		diffuseOnly: manifest.diffuseOnly === true,
 		upscaled: manifest.upscaled === true,
-		bakedRadianceKind: 'indirect_diffuse_radiance',
-		directLightAlreadyIncluded: false,
-		addDirectLightAfterBakeLookup: true,
+		bakedRadianceKind,
+		directLightAlreadyIncluded,
+		addDirectLightAfterBakeLookup,
 		multiplyAlbedoAfterBakeLookup: true,
+		bakeAlbedoFree: true,
 		uploadRowFlip: false,
 		phase2: {
 			kind,
 			prepareDir: rel(prepareDir),
+			northFullRadianceBake: directLightAlreadyIncluded,
 			normalLenAudit: 'xatlas-normal-len-audit.json',
 			fullWallValidityMaskReport: 'xatlas-bake-c2c-full-wall-validity-mask-report.json',
 			defaultRuntimePointerChanged: false,

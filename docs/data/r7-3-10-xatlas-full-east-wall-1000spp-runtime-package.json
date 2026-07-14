@@ -1,65 +1,70 @@
 {
-  "packageStatus": "architecture_probe",
+  "schema": "r7-3-10-xatlas-runtime-package-pointer-v1",
+  "packageStatus": "accepted",
   "runtimeScope": "c1_xatlas_full_east_wall_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
-  "runtimeArchitecture": "single_xatlas_full_east_wall_phase2",
-  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260615-022106",
+  "runtimeArchitecture": "multi_page_full_east_wall_lightmap",
+  "surfaceName": "east_wall",
+  "atlasGroup": "shell",
+  "configId": 1,
+  "targetId": 1003,
+  "identity": {
+    "surfaceName": "east_wall",
+    "targetId": 1003,
+    "bakeTargetId": 1003,
+    "configId": 1,
+    "atlasGroup": "shell",
+    "masterRectKey": "east",
+    "normal": [-1, 0, 0],
+    "worldBounds": {
+      "x": 1.91,
+      "y": [0, 2.905],
+      "z": [-1.874, 3.056]
+    }
+  },
   "targetAtlasWidth": 2325,
   "targetAtlasHeight": 3945,
+  "targetAtlasResolution": 3945,
   "requestedSamples": 1000,
-  "diffuseOnly": true,
+  "diffuseOnly": false,
   "upscaled": false,
-  "bakedRadianceKind": "indirect_diffuse_radiance",
-  "directLightAlreadyIncluded": false,
-  "addDirectLightAfterBakeLookup": true,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
   "multiplyAlbedoAfterBakeLookup": true,
   "bakeAlbedoFree": true,
+  "liveSpecularReflection": false,
+  "nonSquareAtlas": true,
   "uploadRowFlip": false,
-  "phase2": {
-    "kind": "raw",
-    "prepareDir": ".omc/r7-3-10-full-east-wall-xatlas-phase2/20260615-012410/xatlas-bake-full-east-wall",
-    "normalLenAudit": "xatlas-normal-len-audit.json",
-    "fullWallValidityMaskReport": "xatlas-bake-c2c-full-wall-validity-mask-report.json",
-    "defaultRuntimePointerChanged": false,
-    "runtimePackageSelection": "explicit xatlasPackage query param only"
-  },
-  "validation": {
-    "status": "fail",
-    "browserValidationStatus": "pass",
-    "runnerStatus": "fail",
-    "runnerFailedChecks": [
-      "gpu-submission-ms-over-250"
-    ],
-    "contentChecksPass": true,
-    "completedTiles": 40,
-    "minCompletedSamples": 1000,
-    "contextLostCount": 0
-  },
-  "xatlasC2CAlphaPolicy": {
-    "enabled": true,
-    "maskPath": ".omc/r7-3-10-full-east-wall-xatlas-phase2/20260615-012410/xatlas-bake-full-east-wall/xatlas-bake-c2c-full-wall-validity-mask-rgba32f.bin",
-    "decisionSource": "per-texel backface-ratio validity mask",
-    "invalidOrHiddenAlpha": 0,
-    "validVisibleAlpha": 1
-  },
-  "alphaAudit": {
-    "alphaOneTexels": 6331424,
-    "alphaZeroTexels": 2840701,
-    "alphaOneExactBlackTexels": 0,
-    "sourceBlackAlphaOneUsed": 0,
-    "maxDistanceTexels": 4,
-    "maxDistanceLimitTexels": 4
-  },
-  "redLines": {
-    "formalRadianceBake": false,
-    "defaultRuntimePointerChanged": false,
-    "d800PromotionChanged": false,
-    "commitCreated": false
-  },
+  "packageDir": "assets/runtime/r7-3-10/current-room/east/package",
   "artifacts": {
+    "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json",
     "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
-  }
+  },
+  "chartEdgeDilation": {
+    "enabled": true,
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 4,
+    "repairedVisibleExactBlackTexels": 50623,
+    "alphaOneExactBlackTexels": 0
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "223f12d456e9d06731b1e3b8cf713f52425677cdeeda8b008eadcf4c481672fe",
+    "texelMetadataPatch0Sha256": "154dc1f03a398c9fd727b8194eec95bfac1419b8b215ae9b9234629fe49c448f"
+  },
+  "validation": {
+    "status": "pass",
+    "browserValidationStatus": "pass",
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
+    "completedTiles": 40,
+    "tileCount": 40,
+    "minCompletedSamples": 1000,
+    "contextLostCount": 0
+  },
+  "note": "Formal east-wall page restored to the accepted current-room XATLAS full-radiance package after the diagnostic A NARROW bake used an incompatible albedo contract."
 }

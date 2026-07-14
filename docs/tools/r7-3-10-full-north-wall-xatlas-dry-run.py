@@ -17,7 +17,7 @@ import xatlas
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT_ROOT = REPO / ".omc/r7-3-10-full-north-wall-xatlas-dry-run"
+DEFAULT_OUT_ROOT = REPO / "assets/runtime/r7-3-10/work/r7-3-10-full-north-wall-xatlas-dry-run"
 SHADER_PATH = REPO / "shaders/Home_Studio_Fragment.glsl"
 INIT_COMMON_PATH = REPO / "js/InitCommon.js"
 

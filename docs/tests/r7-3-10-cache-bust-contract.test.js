@@ -6,7 +6,7 @@ const html = fs.readFileSync('Home_Studio.html', 'utf8');
 const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
 const homeStudio = fs.readFileSync('js/Home_Studio.js', 'utf8');
 
-const CACHE_TOKEN = 'r7310-multipage-webgl-v9';
+const CACHE_TOKEN = 'r7310-iron-door-runtime-planar-clip-sharp-v52';
 
 test('R7-3.10 runtime resources share the current cache-bust token', () => {
   assert.match(html, new RegExp(`js/InitCommon\\.js\\?v=${CACHE_TOKEN}`));

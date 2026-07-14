@@ -21,3 +21,13 @@ for (const surface of ['floor', 'northWall', 'eastWall', 'westWall', 'southWall'
 {
 	assert.match(r7310LoaderBlock, new RegExp(`markR7310C1RuntimeLoadingStepComplete\\('${surface}'\\)`));
 }
+
+const rawPageLoader = initCommon.match(/async function loadR7310C1XatlasRawLightmapPages[\s\S]*?async function loadR7310C1XatlasMasterSurface/)?.[0] || '';
+assert.match(rawPageLoader, /beginR7310C1XatlasRawLightmapPageLoadingUi\(surfaces\.length\)/);
+assert.match(rawPageLoader, /updateR7310C1XatlasRawLightmapPageLoadingUi\(0,\s*surfaces\.length,\s*'allocating-sheet'\)/);
+assert.match(rawPageLoader, /await waitHomeStudioLoadingUiPaint\(\)/);
+assert.ok(
+	rawPageLoader.indexOf('beginR7310C1XatlasRawLightmapPageLoadingUi(surfaces.length)') <
+		rawPageLoader.indexOf('new Uint16Array(R7310_C1_XATLAS_LIGHTMAP_SHEET_W * R7310_C1_XATLAS_LIGHTMAP_SHEET_H * 4)'),
+	'atlasMaster raw must show loading UI before allocating the large runtime sheet'
+);

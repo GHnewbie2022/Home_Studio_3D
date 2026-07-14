@@ -48,10 +48,12 @@ uniform vec2 uR738C1BakeTileOriginPx;
 uniform vec2 uR738C1BakeFullAtlasResolution;
 uniform sampler2D tR738C1BakeAtlasTexture;
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTexture;
+#if !defined(R7310_FORMAL_XATLAS_RAW)
 uniform sampler2D tR7310C1FullRoomDiffuseAtlasTextureNonSquare;
-// R7-3.10 C2C: xatlas runtime atlas REUSES the tR738C1BakeAtlasTexture slot to stay within
-// the Metal MAX_TEXTURE_IMAGE_UNITS(16) budget (xatlas-bake-c2-redfirst.md §37). No dedicated runtime sampler.
-// Safe because runtime-xatlas, bake (captureMode==2) and floor paste-preview are mutually exclusive.
+#endif
+uniform sampler2D tR7310C1XatlasRuntimeFloorPageTexture;
+// R7-3.10 C2C: xatlas wall runtime atlas REUSES the tR738C1BakeAtlasTexture slot.
+// Floor is the first true independent page texture; total sampler count remains at the Metal 16-TIU budget.
 uniform float uR7310C1FullRoomDiffuseMode;
 uniform float uR7310C1FullRoomDiffuseReady;
 uniform float uR7310C1FloorDiffuseMode;
@@ -110,6 +112,35 @@ uniform float uR7310C1SouthWindowTopRevealShadowResolution;
 uniform float uR7310C1IronDoorRevealMode;
 uniform float uR7310C1IronDoorRevealReady;
 uniform float uR7310C1IronDoorRevealResolution;
+uniform float uR7310C1IronDoorBodyMode;
+uniform float uR7310C1IronDoorBodyReady;
+uniform float uR7310C1IronDoorBodyDebugMode;
+uniform float uR7310C1IronDoorReflectionProbeMode;
+uniform float uR7310C1IronDoorReflectionProbeReady;
+uniform vec2 uR7310C1IronDoorReflectionProbeAtlasSize;
+uniform float uR7310C1IronDoorReflectionProbeFaceSize;
+uniform vec3 uR7310C1IronDoorReflectionProbePosition;
+uniform vec3 uR7310C1IronDoorReflectionProbeBoxMin;
+uniform vec3 uR7310C1IronDoorReflectionProbeBoxMax;
+uniform float uR7310C1IronDoorRuntimePlanarReflectionMode;
+uniform float uR7310C1IronDoorRuntimePlanarReflectionReady;
+uniform vec2 uR7310C1IronDoorRuntimePlanarReflectionTextureSize;
+uniform mat4 uR7310C1IronDoorRuntimePlanarReflectionTextureMatrix;
+uniform float uR7310C1IronDoorRuntimePlanarReflectionSourcePass;
+uniform float uR7310C1IronDoorRuntimePlanarReflectionSourceOneOverSampleCounter;
+uniform float uR7310C1IronDoorPlanarReflectionMode;
+uniform float uR7310C1IronDoorPlanarReflectionReady;
+uniform vec2 uR7310C1IronDoorPlanarReflectionAtlasSize;
+uniform vec3 uR7310C1IronDoorPlanarReflectionCameraPosition;
+uniform vec3 uR7310C1IronDoorPlanarReflectionCameraForward;
+uniform vec3 uR7310C1IronDoorPlanarReflectionCameraRight;
+uniform vec3 uR7310C1IronDoorPlanarReflectionCameraUp;
+uniform float uR7310C1IronDoorPlanarReflectionCameraFovScale;
+uniform float uR7310C1IronDoorPlanarReflectionCameraAspect;
+uniform float uR7310C1IronDoorPlanarReflectionCaptureExcludeDoor;
+uniform float uR7310C1IronDoorPlanarReflectionCaptureClipPlaneMode;
+uniform vec4 uR7310C1IronDoorPlanarReflectionCaptureClipPlane;
+uniform vec2 uR7310C1IronDoorBodyAtlasSize;
 uniform float uR7310C1RuntimeProbeMode;
 uniform float uR7310C1RuntimeAtlasPatchResolution;
 uniform float uR7310C1RuntimeAtlasPatchCount;
@@ -129,21 +160,37 @@ uniform float uR7310C1XatlasRuntimeMode;
 uniform float uR7310C1XatlasRuntimeReady;
 uniform vec2 uR7310C1XatlasRuntimeAtlasSize;
 uniform vec4 uR7310C1XatlasRuntimeLightmapPageIds;
+uniform float uR7310C1XatlasRuntimeLightmapPagesMode;
+uniform vec2 uR7310C1XatlasRuntimeFloorPageSize;
 uniform float uR7310C1XatlasRuntimeSeparatedAlbedo;
 uniform float uR7310C1XatlasRuntimeFullWestWallDirectIncluded;
 uniform float uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded;
 uniform float uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullNorthWallDirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullEastWallDirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullSouthWallDirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullCeilingDirectIncluded;
+uniform float uR7310C1XatlasRuntimeDepthH2DirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullFloorDirectIncluded;
+uniform float uR7310C1XatlasRuntimeCentralDeskDirectIncluded;
+uniform float uR7310C1XatlasRuntimeStructuralDirectIncluded;
+uniform float uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded;
+uniform float uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded;
+uniform float uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo;
 uniform float uR7310C1XatlasRuntimeFullNorthWallMode;
 uniform float uR7310C1XatlasRuntimeFullEastWallMode;
 uniform float uR7310C1XatlasRuntimeFullCeilingMode;
+uniform float uR7310C1XatlasRuntimeFullFloorMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
 uniform float uR7310C1XatlasParamSurfaceCount; // R4-2A-2 param runtime：dynamic while loop 上界（uniform、非編譯期常數）
-uniform vec4 uR7310C1XatlasParamSurfaceTable[224]; // R4-2A-2：generated param table（docs/generated；最多 32 面 × 7 vec4；codegen 產、非手寫）
+uniform vec4 uR7310C1XatlasParamSurfaceTable[336]; // generated param table：最多 48 面 × 7 vec4
 // master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
 // rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
 uniform float uR7310C1XatlasRuntimeMasterMode;
 uniform float uR7310C1WestScopeProbeMode;
 uniform float uR7310C1XatlasParamWestSurfaceIndex;
+uniform float uR7310C1XatlasParamWestWallSwitchPlateIndex;
+uniform float uR7310C1XatlasParamWestWallSwitchButtonIndex;
 uniform vec4 uR7310C1XatlasRectCeiling;
 uniform vec4 uR7310C1XatlasRectNorth;
 uniform vec4 uR7310C1XatlasRectEast;
@@ -703,6 +750,10 @@ const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_TOP = 6;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_SW_COLUMN_CORNER = 7;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_IRON_THRESHOLD_TOP = 8;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_IRON_THRESHOLD_TOP_WEST_EDGE = 9;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM = 10;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM = 11;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM = 12;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM = 13;
 // R7-3.10 source.md §39-§40: confirmed bed-top coplanar bake bug line.
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN = -0.027;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX = 1.910;
@@ -715,6 +766,15 @@ const float R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_BEAM_SEAM_Y_MAX = 2.905;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_PLANE_X = 1.850;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MIN = 2.516;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SEAM_Y_MAX = 2.905;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y = 2.515;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN = -1.874;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX = 2.490;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z = 2.490;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN = 0.0;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX = 2.905;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X = 1.850;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN = 2.515;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MAX = 2.905;
 
 // 東牆 bed-top 接觸邊（床東面 x=1.91 與東牆共面、床頂 y=0.28、z 為床深度範圍）
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X = 1.910;
@@ -1176,6 +1236,16 @@ bool r7310C1BakeSurfacePoint(int patchId, vec2 texelUv, out vec3 position, out v
 		objectID = 0.0;
 		return true;
 	}
+	if (patchId == 230001)
+	{
+		float z = mix(-0.984, -1.874, uv.x);
+		float y = mix(0.09, 2.04, uv.y);
+		position = vec3(-1.96, y, z);
+		normal = vec3(1.0, 0.0, 0.0);
+		hitType = IRON_DOOR;
+		objectID = 0.0;
+		return true;
+	}
 	position = vec3(0.0);
 	normal = vec3(0.0, 1.0, 0.0);
 	hitType = 0;
@@ -1298,6 +1368,42 @@ bool r7310C1XatlasRuntimeSampleValidLinear(vec2 atlasUv, out vec3 radiance)
 		return true;
 	}
 	vec4 nearest = r7310C1XatlasRuntimeSampleTexel(floor(pixel + vec2(0.5)));
+	if (nearest.a > 0.5)
+	{
+		radiance = max(nearest.rgb, vec3(0.0));
+		return true;
+	}
+	radiance = vec3(0.0);
+	return false;
+}
+vec4 r7310C1XatlasRuntimeSampleFloorPageTexel(vec2 pixelCoord)
+{
+	ivec2 pageSize = ivec2(max(uR7310C1XatlasRuntimeFloorPageSize, vec2(1.0)));
+	ivec2 pixel = ivec2(clamp(floor(pixelCoord + vec2(0.5)), vec2(0.0), vec2(pageSize) - vec2(1.0)));
+	return texelFetch(tR7310C1XatlasRuntimeFloorPageTexture, pixel, 0);
+}
+bool r7310C1XatlasRuntimeSampleValidLinearFloorPage(vec2 pageUv, out vec3 radiance)
+{
+	vec2 pageSize = max(uR7310C1XatlasRuntimeFloorPageSize, vec2(1.0));
+	vec2 pixel = clamp(pageUv * pageSize - vec2(0.5), vec2(0.0), pageSize - vec2(1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), pageSize - vec2(1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1XatlasRuntimeSampleFloorPageTexel(p0);
+	vec4 c10 = r7310C1XatlasRuntimeSampleFloorPageTexel(vec2(p1.x, p0.y));
+	vec4 c01 = r7310C1XatlasRuntimeSampleFloorPageTexel(vec2(p0.x, p1.y));
+	vec4 c11 = r7310C1XatlasRuntimeSampleFloorPageTexel(p1);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+	{
+		radiance = max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+		return true;
+	}
+	vec4 nearest = r7310C1XatlasRuntimeSampleFloorPageTexel(floor(pixel + vec2(0.5)));
 	if (nearest.a > 0.5)
 	{
 		radiance = max(nearest.rgb, vec3(0.0));
@@ -1478,7 +1584,19 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x <= -1.90 && bmax.x >= -2.11 &&
 		bmin.y >= 0.079 && bmax.y <= 0.105 &&
 		bmin.z >= -1.875 && bmax.z <= -0.983;
-	return westThresholdFront || westThresholdTop;
+	bool centralDesk =
+		bmin.x >= -0.611 && bmax.x <= 0.611 &&
+		bmin.y >= -0.001 && bmax.y <= 0.768 &&
+		bmin.z >= 0.394 && bmax.z <= 0.956;
+	bool structural =
+		((bmin.x >= -1.93 && bmax.x <= -1.73) || (bmin.x >= 1.76 && bmax.x <= 1.93)) &&
+		bmin.y >= -0.011 && bmax.y <= 2.916 &&
+		bmin.z >= -1.875 && bmax.z <= 3.057;
+	bool westWallSwitch =
+		bmin.x >= -1.902 && bmax.x <= -1.897 &&
+		bmin.y >= 1.147 && bmax.y <= 1.219 &&
+		bmin.z >= -0.090 && bmax.z <= 0.032;
+	return westThresholdFront || westThresholdTop || centralDesk || structural || westWallSwitch;
 }
 bool r7310C1XatlasParamSurfaceUv(int sid, float visibleObjectID, vec3 n, vec3 p, out vec2 atlasUv)
 {
@@ -1518,7 +1636,7 @@ bool r7310C1XatlasParamWestSurfaceActive()
 	int b = int(uR7310C1XatlasParamWestSurfaceIndex) * 7;
 	return uR7310C1XatlasParamSurfaceTable[b + 1].w > 0.5;
 }
-// === GENERATED: surface-owner BEGIN  (registry 2c3cea8a5a1892a2) ===
+// === GENERATED: surface-owner BEGIN  (registry bfebcab598756c9b) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -1527,10 +1645,20 @@ const int R7310_OWNER_SOUTH_WALL = 2;
 const int R7310_OWNER_SOUTH_WALL_DEPTH_TOP = 3;
 const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH = 4;
 const int R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT = 5;
-const int R7310_OWNER_FLOOR_OPEN = 6;
-const int R7310_OWNER_WEST_WALL_OPEN = 7;
-const int R7310_OWNER_WEST_THRESHOLD_FRONT = 8;
-const int R7310_OWNER_WEST_THRESHOLD_TOP = 9;
+const int R7310_OWNER_SOUTH_WINDOW_LEFT_REVEAL = 6;
+const int R7310_OWNER_SOUTH_WINDOW_RIGHT_REVEAL = 7;
+const int R7310_OWNER_SOUTH_WINDOW_BOTTOM_REVEAL = 8;
+const int R7310_OWNER_FLOOR_OPEN = 9;
+const int R7310_OWNER_CENTRAL_DESK_TOP = 10;
+const int R7310_OWNER_CENTRAL_DESK_FRONT = 11;
+const int R7310_OWNER_CENTRAL_DESK_BACK = 12;
+const int R7310_OWNER_CENTRAL_DESK_LEFT = 13;
+const int R7310_OWNER_CENTRAL_DESK_RIGHT = 14;
+const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 15;
+const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 16;
+const int R7310_OWNER_WEST_WALL_OPEN = 17;
+const int R7310_OWNER_WEST_THRESHOLD_FRONT = 18;
+const int R7310_OWNER_WEST_THRESHOLD_TOP = 19;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -1548,8 +1676,28 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.y * -1.0 > 0.5 && objId < 1.5 && p.y >= 2.895 && p.y <= 2.915 && p.z >= 3.056 && p.z <= 3.256 && p.x >= -1.75 && p.x <= 0.69) { if (21 > bestPrec) { bestPrec = 21; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH; } }
 	// south_window_top_reveal_front (precedence 15)
 	if (n.z * -1.0 > 0.5 && objId < 1.5 && p.y >= 1.04 && p.y <= 2.905 && p.z >= 3.05 && p.z <= 3.07 && p.x >= -1.75 && p.x <= 0.69) { if (15 > bestPrec) { bestPrec = 15; best = R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_FRONT; } }
+	// south_window_left_reveal (precedence 22)
+	if (n.x * 1.0 > 0.5 && objId < 1.5 && p.y >= 1.04 && p.y <= 2.905 && p.z >= 3.056 && p.z <= 3.256 && p.x >= -1.76 && p.x <= -1.74) { if (22 > bestPrec) { bestPrec = 22; best = R7310_OWNER_SOUTH_WINDOW_LEFT_REVEAL; } }
+	// south_window_right_reveal (precedence 22)
+	if (n.x * -1.0 > 0.5 && objId < 1.5 && p.y >= 1.04 && p.y <= 2.905 && p.z >= 3.056 && p.z <= 3.256 && p.x >= 0.68 && p.x <= 0.7) { if (22 > bestPrec) { bestPrec = 22; best = R7310_OWNER_SOUTH_WINDOW_RIGHT_REVEAL; } }
+	// south_window_bottom_reveal (precedence 22)
+	if (n.y * 1.0 > 0.5 && objId < 1.5 && p.y >= 1.03 && p.y <= 1.05 && p.z >= 3.056 && p.z <= 3.256 && p.x >= -1.75 && p.x <= 0.69) { if (22 > bestPrec) { bestPrec = 22; best = R7310_OWNER_SOUTH_WINDOW_BOTTOM_REVEAL; } }
 	// floor_open (precedence 10)
 	if (n.y * 1.0 > 0.5 && objId < 1.5 && p.y >= -0.0005 && p.y <= 0.025 && p.z >= -2.074 && p.z <= 3.256 && p.x >= -2.11 && p.x <= 2.11) { if (10 > bestPrec) { bestPrec = 10; best = R7310_OWNER_FLOOR_OPEN; } }
+	// central_desk_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 0.747 && p.y <= 0.767 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.6 && p.x <= 0.6) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_TOP; } }
+	// central_desk_front (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.395 && p.z <= 0.415 && p.x >= -0.6 && p.x <= 0.6) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_FRONT; } }
+	// central_desk_back (precedence 40)
+	if (n.z * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.935 && p.z <= 0.955 && p.x >= -0.6 && p.x <= 0.6) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_BACK; } }
+	// central_desk_left (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.61 && p.x <= -0.59) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_LEFT; } }
+	// central_desk_right (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= 0.59 && p.x <= 0.61) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_RIGHT; } }
+	// west_wall_switch_plate (precedence 50)
+	if (n.x * 1.0 > 0.5 && p.y >= 1.148 && p.y <= 1.218 && p.z >= -0.089 && p.z <= 0.031 && p.x >= -1.901 && p.x <= -1.899) { if (50 > bestPrec) { bestPrec = 50; best = R7310_OWNER_WEST_WALL_SWITCH_PLATE; } }
+	// west_wall_switch_button (precedence 51)
+	if (n.x * 1.0 > 0.5 && p.y >= 1.161 && p.y <= 1.205 && p.z >= -0.076 && p.z <= 0.018 && p.x >= -1.899 && p.x <= -1.897) { if (51 > bestPrec) { bestPrec = 51; best = R7310_OWNER_WEST_WALL_SWITCH_BUTTON; } }
 	// west_wall_open (precedence 10)
 	if (n.x * 1.0 > 0.5 && objId < 1.5 && p.y >= 0.0 && p.y <= 2.905 && p.z >= -1.874 && p.z <= 3.056 && p.x >= -1.92 && p.x <= -1.9) { if (10 > bestPrec) { bestPrec = 10; best = R7310_OWNER_WEST_WALL_OPEN; } }
 	// west_threshold_front (precedence 31)
@@ -1647,36 +1795,68 @@ vec3 r7310C1XatlasFullNorthWallTriangleProbeColor(float triangleId)
 		return vec3(0.05, 0.95, 0.25);
 	return vec3(0.35);
 }
-bool r7310C1XatlasFullFloorUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+bool r7310C1XatlasFullFloorLocalUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 localUv01)
 {
 	// R7-3.10 §13 地板 C1A shell：floor_open 非方格 3376×4264（800 texel/m）、planar XZ on +Y face；u=worldX、v=worldZ。
-	// 只在 master 模式供應 floor sub-rect；非 master 回 false（由舊 FloorHybrid 處理、不退 LIVE）。
 	if (uR7310C1XatlasRuntimeMode < 0.5 ||
 		uR7310C1XatlasRuntimeReady < 0.5 ||
-		uR7310C1XatlasRuntimeFullCeilingMode < 0.5 ||
-		uR7310C1XatlasRuntimeMasterMode < 0.5)
+		uR7310C1XatlasRuntimeFullFloorMode < 0.5)
 	{
-		atlasUv = vec2(0.0);
+		localUv01 = vec2(0.0);
 		return false;
 	}
 	// owner 必須是 floor_open（generated 述詞已含 法線+Y、objId<1.5、x[-2.11,2.11] y[-0.0005,0.025] z[-2.074,3.256] 完整地板判定）。
 	if (r7310SurfaceOwnerId(visiblePosition, visibleNormal, visibleObjectID) != R7310_OWNER_FLOOR_OPEN)
 	{
-		atlasUv = vec2(0.0);
+		localUv01 = vec2(0.0);
 		return false;
 	}
 	float u01 = clamp((visiblePosition.x + 2.11) / 4.22, 0.0, 1.0); // 貼圖橫軸＝worldX
 	float v01 = clamp((visiblePosition.z + 2.074) / 5.33, 0.0, 1.0); // 貼圖縱軸＝worldZ
-	vec2 localUv01 = vec2(u01, v01);
+	localUv01 = vec2(u01, v01);
+	return true;
+}
+bool r7310C1XatlasFullFloorUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	// Legacy/master shelf path：floor still maps into the master sub-rect when a true page is not active.
+	if (uR7310C1XatlasRuntimeMasterMode < 0.5)
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	vec2 localUv01 = vec2(0.0);
+	if (!r7310C1XatlasFullFloorLocalUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, localUv01))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
 	vec2 px = uR7310C1XatlasRectFloor.xy + localUv01 * uR7310C1XatlasRectFloor.zw;
 	atlasUv = px / max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
 	return true;
+}
+bool r7310C1XatlasFullFloorPageUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 pageUv)
+{
+	if (uR7310C1XatlasRuntimeLightmapPagesMode < 0.5)
+	{
+		pageUv = vec2(0.0);
+		return false;
+	}
+	return r7310C1XatlasFullFloorLocalUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, pageUv);
 }
 bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
 	// 非互斥：北東可同時開（堆疊貼圖）；依命中面回各自 UV（兩面法線幾何互斥，順序試即天然並存）
 	if (uR7310C1XatlasRuntimeFullEastWallMode > 0.5 &&
 		r7310C1XatlasFullEastWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	int r7310XatlasOwnerId = r7310SurfaceOwnerId(visiblePosition, visibleNormal, visibleObjectID);
+	if (r7310XatlasOwnerId == R7310_OWNER_WEST_WALL_SWITCH_PLATE &&
+		uR7310C1XatlasParamWestWallSwitchPlateIndex >= 0.0 &&
+		r7310C1XatlasParamSurfaceUv(int(uR7310C1XatlasParamWestWallSwitchPlateIndex), visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return true;
+	if (r7310XatlasOwnerId == R7310_OWNER_WEST_WALL_SWITCH_BUTTON &&
+		uR7310C1XatlasParamWestWallSwitchButtonIndex >= 0.0 &&
+		r7310C1XatlasParamSurfaceUv(int(uR7310C1XatlasParamWestWallSwitchButtonIndex), visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
 	{ vec2 r7310C1XatlasParamUv; if (r7310C1XatlasParamSampleAny(visibleObjectID, visibleNormal, visiblePosition, r7310C1XatlasParamUv)) { atlasUv = r7310C1XatlasParamUv; return true; } }
 	if (uR7310C1XatlasRuntimeFullNorthWallMode > 0.5 &&
@@ -1689,10 +1869,6 @@ bool r7310C1XatlasNorthWallUv(int visibleHitType, float visibleObjectID, vec3 vi
 	// 天花板函式以 owner gate 已排除 H2，兩者互斥，順序不衝突。
 	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
 		r7310C1XatlasFullDepthH2Uv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
-		return true;
-	// R7-3.10 §13 地板 C1A shell：floor sub-rect（owner gate=floor_open，與牆/天花板/H2 互斥、順序不衝突）。
-	if (uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
-		r7310C1XatlasFullFloorUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 		return true;
 	return r7310C1XatlasA1NorthWallUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
 }
@@ -1815,9 +1991,13 @@ bool r7310C1NonSquareAtlasSlotSupported(float patchSlot)
 }
 bool r7310C1ShouldUseNonSquareAtlas(float patchSlot)
 {
+#if defined(R7310_FORMAL_XATLAS_RAW)
+	return false;
+#else
 	return uR7310C1UseNonSquareAtlas > 0.5 &&
 		uR7310C1NonSquareAtlasReady > 0.5 &&
 		r7310C1NonSquareAtlasSlotSupported(patchSlot);
+#endif
 }
 vec4 r7310C1NonSquareAtlasUvRect(float patchSlot)
 {
@@ -1839,6 +2019,9 @@ vec2 r7310C1NonSquareAtlasFaceSizePx(float patchSlot)
 }
 vec4 r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2 pixelCoord, float patchSlot)
 {
+#if defined(R7310_FORMAL_XATLAS_RAW)
+	return r7310C1FullRoomDiffuseSamplePatchTexel(pixelCoord, patchSlot);
+#else
 	if (!r7310C1NonSquareAtlasSlotSupported(patchSlot))
 		return r7310C1FullRoomDiffuseSamplePatchTexel(pixelCoord, patchSlot);
 	vec2 atlasSize = max(vec2(1.0), uR7310C1NonSquareAtlasSizePx);
@@ -1847,6 +2030,7 @@ vec4 r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(vec2 pixelCoord, float patc
 	vec2 pixel = clamp(pixelCoord, vec2(0.0), faceSize - vec2(1.0));
 	vec2 uv = uvRect.xy + (pixel + vec2(0.5)) / atlasSize;
 	return texture(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, uv);
+#endif
 }
 vec3 r7310C1FullRoomDiffuseSamplePatchValidLinearNonSquare(vec2 atlasUv, float patchSlot)
 {
@@ -1869,6 +2053,35 @@ vec3 r7310C1FullRoomDiffuseSamplePatchValidLinearNonSquare(vec2 atlasUv, float p
 	if (weightSum > 0.000001)
 		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
 	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexelNonSquare(floor(pixel + vec2(0.5)), patchSlot);
+	return nearest.a > 0.5 ? max(nearest.rgb, vec3(0.0)) : vec3(0.0);
+}
+vec4 r7310C1FullRoomDiffuseSamplePatchTexelRect(vec2 pixelCoord, float patchSlot, vec2 patchSize)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 safeSize = clamp(floor(patchSize + vec2(0.5)), vec2(1.0), vec2(resolution));
+	vec2 pixel = clamp(pixelCoord, vec2(0.0), safeSize - vec2(1.0));
+	return r7310C1FullRoomDiffuseSamplePatchTexel(pixel, patchSlot);
+}
+vec3 r7310C1FullRoomDiffuseSamplePatchValidLinearRect(vec2 atlasUv, float patchSlot, vec2 patchSize)
+{
+	float resolution = max(1.0, uR7310C1RuntimeAtlasPatchResolution);
+	vec2 safeSize = clamp(floor(patchSize + vec2(0.5)), vec2(1.0), vec2(resolution));
+	vec2 pixel = clamp(atlasUv * safeSize - vec2(0.5), vec2(0.0), safeSize - vec2(1.0));
+	vec2 p0 = floor(pixel);
+	vec2 p1 = min(p0 + vec2(1.0), safeSize - vec2(1.0));
+	vec2 t = pixel - p0;
+	vec4 c00 = r7310C1FullRoomDiffuseSamplePatchTexelRect(p0, patchSlot, safeSize);
+	vec4 c10 = r7310C1FullRoomDiffuseSamplePatchTexelRect(vec2(p1.x, p0.y), patchSlot, safeSize);
+	vec4 c01 = r7310C1FullRoomDiffuseSamplePatchTexelRect(vec2(p0.x, p1.y), patchSlot, safeSize);
+	vec4 c11 = r7310C1FullRoomDiffuseSamplePatchTexelRect(p1, patchSlot, safeSize);
+	float w00 = (1.0 - t.x) * (1.0 - t.y) * c00.a;
+	float w10 = t.x * (1.0 - t.y) * c10.a;
+	float w01 = (1.0 - t.x) * t.y * c01.a;
+	float w11 = t.x * t.y * c11.a;
+	float weightSum = w00 + w10 + w01 + w11;
+	if (weightSum > 0.000001)
+		return max((c00.rgb * w00 + c10.rgb * w10 + c01.rgb * w01 + c11.rgb * w11) / weightSum, vec3(0.0));
+	vec4 nearest = r7310C1FullRoomDiffuseSamplePatchTexelRect(floor(pixel + vec2(0.5)), patchSlot, safeSize);
 	return nearest.a > 0.5 ? max(nearest.rgb, vec3(0.0)) : vec3(0.0);
 }
 vec3 r7310C1FullRoomDiffuseSamplePatchPixelNonSquare(vec2 pixelCoord, float patchSlot)
@@ -2032,6 +2245,31 @@ bool r7310C1RuntimeSurfaceIsWestIronThresholdTop(int visibleHitType, float visib
 		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_WALL_IRON_THRESHOLD_TOP_Z_MIN &&
 		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_WALL_IRON_THRESHOLD_TOP_Z_MAX;
 }
+bool r7310C1RuntimeSurfaceIsEastBeamUnder(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleNormal.y < -0.5 &&
+		abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= 0.006 &&
+		visiblePosition.x >= 1.849 && visiblePosition.x <= 1.911 &&
+		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN &&
+		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX;
+}
+bool r7310C1RuntimeSurfaceIsEastBeamInner(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleNormal.x < -0.5 &&
+		abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= 0.006 &&
+		visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y &&
+		visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MAX &&
+		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN &&
+		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX;
+}
+bool r7310C1RuntimeSurfaceIsSeColumnNorth(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleNormal.z < -0.5 &&
+		abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= 0.006 &&
+		visiblePosition.x >= 1.779 && visiblePosition.x <= 1.911 &&
+		visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN &&
+		visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX;
+}
 int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	int visibleHitType,
 	float visibleObjectID,
@@ -2062,6 +2300,18 @@ int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	}
 	if (r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN &&
+			visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM;
+		}
+		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN &&
+			visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX)
+		{
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM;
+		}
 		// 東牆 bed-top 接觸邊（床頂 y=0.28，沿牆深度 z 為床範圍；x 已由 east 面保證 ≈1.91）
 		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
 			visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MIN &&
@@ -2069,6 +2319,31 @@ int r7310C1XatlasBakeCoplanarConfirmedLineId(
 		{
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BED_TOP;
 		}
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
+	if (r7310C1RuntimeSurfaceIsEastBeamUnder(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM;
+		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM;
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
+	if (r7310C1RuntimeSurfaceIsEastBeamInner(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM;
+		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM;
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
+	if (r7310C1RuntimeSurfaceIsSeColumnNorth(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM;
+		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM;
 		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 	}
 	if (r7310C1RuntimeSurfaceIsWestIronThresholdTop(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
@@ -2147,6 +2422,30 @@ bool r7310C1XatlasBakeCoplanarSeamAabb(int confirmedLineId, out vec3 seamMin, ou
 		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_Z_MAX);
 		return true;
 	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM)
+	{
+		seamMin = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN);
+		seamMax = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM)
+	{
+		seamMin = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
+		seamMax = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MAX, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
+		return true;
+	}
 	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SW_COLUMN_VERTICAL_SEAM)
 	{
 		seamMin = vec3(-1.91, R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_WALL_SW_COLUMN_SEAM_Y_MIN, R7310_C1_XATLAS_BAKE_CONFIRMED_WEST_WALL_SW_COLUMN_SEAM_PLANE_Z);
@@ -2206,6 +2505,30 @@ bool r7310C1XatlasBakeCoplanarNeighborAabb(int confirmedLineId, out vec3 neighbo
 		// 鄰體＝床（東面 x=1.91 與東牆共面、頂 y=0.28、深度 z[-1.874,-0.314]）
 		neighborMin = vec3(-0.027, 0.0, -1.874);
 		neighborMax = vec3(1.910, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_Y, -0.314);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM)
+	{
+		neighborMin = vec3(1.850, 2.515, -1.874);
+		neighborMax = vec3(2.110, 2.905, 3.056);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM)
+	{
+		neighborMin = vec3(1.780, 0.0, 2.490);
+		neighborMax = vec3(1.910, 2.905, 3.056);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM)
+	{
+		neighborMin = vec3(1.850, 2.515, -1.874);
+		neighborMax = vec3(2.110, 2.905, 3.056);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM)
+	{
+		neighborMin = vec3(1.780, 0.0, 2.490);
+		neighborMax = vec3(1.910, 2.905, 3.056);
 		return true;
 	}
 	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SW_COLUMN_VERTICAL_SEAM)
@@ -3091,16 +3414,20 @@ bool r7310C1EastBeamInnerShadowIndirectBakeFirstHit(int bounceIndex, int diffuse
 		bounceIndex == 0 &&
 		diffuseIndex == 0;
 }
-bool r7310C1RuntimeSurfaceIsEastBeamUnderShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+bool r7310C1XatlasBakeSurfaceIsEastBeamUnder(vec3 visibleNormal, vec3 visiblePosition)
 {
-	return visibleObjectID < 1.5 &&
-		visibleNormal.y < -0.5 &&
+	return visibleNormal.y < -0.5 &&
 		visiblePosition.y >= 2.505 &&
 		visiblePosition.y <= 2.525 &&
 		visiblePosition.x >= 1.85 &&
 		visiblePosition.x <= 1.91 &&
 		visiblePosition.z >= -1.874 &&
 		visiblePosition.z <= 2.49;
+}
+bool r7310C1RuntimeSurfaceIsEastBeamUnderShadow(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		r7310C1XatlasBakeSurfaceIsEastBeamUnder(visibleNormal, visiblePosition);
 }
 bool r7310C1EastBeamUnderShadowDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
 {
@@ -3361,6 +3688,280 @@ vec3 r7310C1SouthWindowTopRevealShadowHybridRadiance(int visibleHitType, float v
 		return vec3(0.0);
 	return r7310C1SouthWindowRevealShadowSampleValidLinear(atlasUv, max(1.0, uR7310C1SouthWindowTopRevealShadowResolution), 21.0);
 }
+bool r7310C1RuntimeSurfaceIsIronDoorBody(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleHitType == IRON_DOOR;
+}
+bool r7310C1IronDoorBodyDiffuseUv(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition, out vec2 atlasUv)
+{
+	if (!r7310C1RuntimeSurfaceIsIronDoorBody(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		atlasUv = vec2(0.0);
+		return false;
+	}
+	float u = clamp((-0.984 - visiblePosition.z) / 0.890, 0.0, 1.0);
+	float v = clamp((visiblePosition.y - 0.09) / 1.950, 0.0, 1.0);
+	atlasUv = vec2(u, v);
+	return true;
+}
+bool r7310C1IronDoorMainFlatPlateMask(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	// full_flat_door_photo_plane: the iron door is one flat photo-textured metal plane.
+	vec2 atlasUv = vec2(0.0);
+	if (visibleHitType != IRON_DOOR ||
+		abs(visibleNormal.x) < 0.9 ||
+		!r7310C1IronDoorBodyDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return false;
+	return true;
+}
+bool r7310C1IronDoorBodyHybridActive(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	return uR738C1BakeCaptureMode == 0 &&
+		uR7310C1IronDoorBodyMode > 0.5 &&
+		uR7310C1IronDoorBodyReady > 0.5 &&
+		r7310C1IronDoorBodyDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv);
+}
+vec3 r7310C1IronDoorBodyHybridRadiance(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	vec2 atlasUv = vec2(0.0);
+	if (!r7310C1IronDoorBodyDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
+		return vec3(0.0);
+	return r7310C1FullRoomDiffuseSamplePatchValidLinearRect(atlasUv, 23.0, uR7310C1IronDoorBodyAtlasSize);
+}
+float r7310C1IronDoorNonZeroSign(float v)
+{
+	return v < 0.0 ? -1.0 : 1.0;
+}
+vec3 r7310C1IronDoorSafeDirection(vec3 direction)
+{
+	vec3 d = normalize(direction);
+	return vec3(
+		abs(d.x) < 0.0001 ? 0.0001 * r7310C1IronDoorNonZeroSign(d.x) : d.x,
+		abs(d.y) < 0.0001 ? 0.0001 * r7310C1IronDoorNonZeroSign(d.y) : d.y,
+		abs(d.z) < 0.0001 ? 0.0001 * r7310C1IronDoorNonZeroSign(d.z) : d.z
+	);
+}
+vec3 r7310C1IronDoorBoxProjectedProbeDirection(vec3 origin, vec3 direction)
+{
+	vec3 d = r7310C1IronDoorSafeDirection(direction);
+	vec3 tMin = (uR7310C1IronDoorReflectionProbeBoxMin - origin) / d;
+	vec3 tMax = (uR7310C1IronDoorReflectionProbeBoxMax - origin) / d;
+	vec3 tBox = mix(tMin, tMax, step(vec3(0.0), d));
+	float t = min(min(tBox.x, tBox.y), tBox.z);
+	vec3 hitPosition = origin + d * max(t, 0.0);
+	return normalize(hitPosition - uR7310C1IronDoorReflectionProbePosition);
+}
+void r7310C1IronDoorProbeFaceUv(vec3 direction, out float faceIndex, out vec2 uv)
+{
+	vec3 d = normalize(direction);
+	vec3 ad = abs(d);
+	faceIndex = 0.0;
+	uv = vec2(0.5);
+	if (ad.x >= ad.y && ad.x >= ad.z)
+	{
+		if (d.x > 0.0)
+		{
+			faceIndex = 0.0;
+			uv = vec2(-d.z, d.y) / ad.x;
+		}
+		else
+		{
+			faceIndex = 1.0;
+			uv = vec2(d.z, d.y) / ad.x;
+		}
+	}
+	else if (ad.y >= ad.z)
+	{
+		if (d.y > 0.0)
+		{
+			faceIndex = 2.0;
+			uv = vec2(d.x, -d.z) / ad.y;
+		}
+		else
+		{
+			faceIndex = 3.0;
+			uv = vec2(d.x, d.z) / ad.y;
+		}
+	}
+	else
+	{
+		if (d.z > 0.0)
+		{
+			faceIndex = 4.0;
+			uv = vec2(d.x, d.y) / ad.z;
+		}
+		else
+		{
+			faceIndex = 5.0;
+			uv = vec2(-d.x, d.y) / ad.z;
+		}
+	}
+	uv = clamp(uv * 0.5 + 0.5, vec2(0.001), vec2(0.999));
+}
+vec3 r7310C1IronDoorCapturedProbeRadiance(vec3 origin, vec3 direction, float roughness)
+{
+	vec3 probeDirection = r7310C1IronDoorBoxProjectedProbeDirection(origin, direction);
+	float faceIndex = 0.0;
+	vec2 atlasUv = vec2(0.5);
+	r7310C1IronDoorProbeFaceUv(probeDirection, faceIndex, atlasUv);
+	float patchSlot = 24.0 + faceIndex;
+	vec3 radiance = r7310C1FullRoomDiffuseSamplePatchValidLinearRect(atlasUv, patchSlot, uR7310C1IronDoorReflectionProbeAtlasSize);
+	return max(radiance, vec3(0.0));
+}
+bool r7310C1IronDoorRuntimePlanarReflectionSourcePassActive()
+{
+	return uR7310C1IronDoorRuntimePlanarReflectionSourcePass > 0.5;
+}
+bool r7310C1RuntimeFirstHitBakeAllowed(int bounces)
+{
+	return bounces == 0 && uR7310C1XatlasBakeMode < 0.5;
+}
+bool r7310C1IronDoorRuntimePlanarReflectionUv(vec3 visiblePosition, out vec2 planarUv)
+{
+	vec4 projected = uR7310C1IronDoorRuntimePlanarReflectionTextureMatrix * vec4(visiblePosition, 1.0);
+	if (projected.w <= 0.0001)
+	{
+		planarUv = vec2(0.5);
+		return false;
+	}
+	planarUv = projected.xy / projected.w;
+	return all(greaterThanEqual(planarUv, vec2(0.0))) &&
+		all(lessThanEqual(planarUv, vec2(1.0)));
+}
+float r7310C1IronDoorRuntimePlanarReflectionMaterialRoughness(float surfaceRoughness, float scaledRoughness)
+{
+	return clamp(scaledRoughness, 0.0, 1.0);
+}
+float r7310C1IronDoorRuntimePlanarReflectionMaxMipLod()
+{
+	return clamp(log2(max(1.0, uR7310C1IronDoorRuntimePlanarReflectionTextureSize.y)), 0.0, 12.0);
+}
+vec3 r7310C1IronDoorRuntimePlanarReflectionSample(vec2 planarUv)
+{
+#if defined(R7310_FORMAL_XATLAS_RAW)
+	return texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv, vec2(0.0), vec2(1.0))).rgb;
+#else
+	return texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv, vec2(0.0), vec2(1.0))).rgb;
+#endif
+}
+vec3 r7310C1IronDoorRuntimePlanarReflectionSamplePrefiltered(vec3 visiblePosition, vec3 viewRayDirection, vec3 visibleNormal, float roughness)
+{
+	vec2 planarUv = vec2(0.5);
+	if (!r7310C1IronDoorRuntimePlanarReflectionUv(visiblePosition, planarUv))
+		return vec3(0.0);
+	float roughnessWeight = clamp(roughness * roughness, 0.0, 1.0);
+	vec2 texelFootprint = 1.0 / max(uR7310C1IronDoorRuntimePlanarReflectionTextureSize, vec2(1.0));
+	vec2 roughnessFootprint = texelFootprint * mix(0.0, 96.0, roughnessWeight);
+#if defined(R7310_FORMAL_XATLAS_RAW)
+	vec3 radiance =
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv, vec2(0.0), vec2(1.0))).rgb * 0.28 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2( 1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2(-1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2( 0.0,  1.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2( 0.0, -1.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2( 0.7071,  0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2(-0.7071,  0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2( 0.7071, -0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * vec2(-0.7071, -0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * 2.0 * vec2(-1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 0.0,  1.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTexture, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 0.0, -1.0), vec2(0.0), vec2(1.0))).rgb * 0.035;
+#else
+	vec3 radiance =
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv, vec2(0.0), vec2(1.0))).rgb * 0.28 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2( 1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2(-1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2( 0.0,  1.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2( 0.0, -1.0), vec2(0.0), vec2(1.0))).rgb * 0.10 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2( 0.7071,  0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2(-0.7071,  0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2( 0.7071, -0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * vec2(-0.7071, -0.7071), vec2(0.0), vec2(1.0))).rgb * 0.045 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * 2.0 * vec2(-1.0,  0.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 0.0,  1.0), vec2(0.0), vec2(1.0))).rgb * 0.035 +
+		texture2D(tR7310C1FullRoomDiffuseAtlasTextureNonSquare, clamp(planarUv + roughnessFootprint * 2.0 * vec2( 0.0, -1.0), vec2(0.0), vec2(1.0))).rgb * 0.035;
+#endif
+	return max(radiance * uR7310C1IronDoorRuntimePlanarReflectionSourceOneOverSampleCounter, vec3(0.0));
+}
+vec3 r7310C1IronDoorRuntimePlanarReflectionEnvBrdfApprox(vec3 specularColor, float roughness, float noV)
+{
+	const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);
+	const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+	vec4 r = roughness * c0 + c1;
+	float a004 = min(r.x * r.x, exp2(-9.28 * noV)) * r.x + r.y;
+	vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
+	return specularColor * ab.x + ab.y;
+}
+vec3 r7310C1IronDoorRuntimePlanarReflectionSpecularWeight(vec3 baseColor, vec3 viewRayDirection, vec3 visibleNormal, float roughness)
+{
+	return max(baseColor, vec3(0.0));
+}
+vec3 r7310C1IronDoorRuntimePlanarReflectionRadiance(vec3 visiblePosition, vec3 viewRayDirection, vec3 visibleNormal, float roughness)
+{
+	vec2 planarUv = vec2(0.5);
+	if (!r7310C1IronDoorRuntimePlanarReflectionUv(visiblePosition, planarUv))
+		return vec3(0.0);
+	return r7310C1IronDoorRuntimePlanarReflectionSamplePrefiltered(visiblePosition, viewRayDirection, visibleNormal, roughness);
+}
+bool r7310C1IronDoorPlanarReflectionUv(vec3 visiblePosition, out vec2 atlasUv)
+{
+	vec3 toPoint = visiblePosition - uR7310C1IronDoorPlanarReflectionCameraPosition;
+	vec3 cameraForward = normalize(uR7310C1IronDoorPlanarReflectionCameraForward);
+	vec3 cameraRight = normalize(uR7310C1IronDoorPlanarReflectionCameraRight);
+	vec3 cameraUp = normalize(uR7310C1IronDoorPlanarReflectionCameraUp);
+	float depth = dot(toPoint, cameraForward);
+	if (depth <= 0.0001)
+	{
+		atlasUv = vec2(0.5);
+		return false;
+	}
+	float sx = dot(toPoint, cameraRight) /
+		(depth * max(0.0001, uR7310C1IronDoorPlanarReflectionCameraFovScale) * max(0.0001, uR7310C1IronDoorPlanarReflectionCameraAspect));
+	float sy = dot(toPoint, cameraUp) /
+		(depth * max(0.0001, uR7310C1IronDoorPlanarReflectionCameraFovScale));
+	atlasUv = vec2(sx * 0.5 + 0.5, sy * 0.5 + 0.5);
+	return all(greaterThanEqual(atlasUv, vec2(0.0))) &&
+		all(lessThanEqual(atlasUv, vec2(1.0)));
+}
+vec3 r7310C1IronDoorPlanarReflectionRadiance(vec3 visiblePosition, float roughness)
+{
+	vec2 atlasUv = vec2(0.5);
+	if (!r7310C1IronDoorPlanarReflectionUv(visiblePosition, atlasUv))
+		return vec3(0.0);
+	vec3 radiance = r7310C1FullRoomDiffuseSamplePatchValidLinearRect(atlasUv, 24.0, uR7310C1IronDoorPlanarReflectionAtlasSize);
+	return max(radiance, vec3(0.0));
+}
+
+bool r7310C1IronDoorRuntimePlanarReflectionClipSeed(out vec3 sourceDoorPosition, out vec3 sourceDoorNormal)
+{
+	sourceDoorPosition = rayOrigin;
+	sourceDoorNormal = vec3(1.0, 0.0, 0.0);
+	if (uR7310C1IronDoorPlanarReflectionCaptureClipPlaneMode < 0.5)
+		return true;
+	vec3 clipNormal = normalize(uR7310C1IronDoorPlanarReflectionCaptureClipPlane.xyz);
+	float clipConstant = uR7310C1IronDoorPlanarReflectionCaptureClipPlane.w;
+	float denom = dot(clipNormal, rayDirection);
+	if (abs(denom) < 0.000001)
+		return false;
+	float tClip = (clipConstant - dot(clipNormal, rayOrigin)) / denom;
+	if (tClip <= 0.0)
+		return false;
+	sourceDoorPosition = rayOrigin + rayDirection * tClip;
+	sourceDoorNormal = clipNormal;
+	rayOrigin = sourceDoorPosition + clipNormal * max(uEPS_intersect * 8.0, 0.0005);
+	return true;
+}
+
+bool r7310C1IronDoorPlanarReflectionApplyCaptureClipPlane()
+{
+	vec3 sourceDoorPosition;
+	vec3 sourceDoorNormal;
+	return r7310C1IronDoorRuntimePlanarReflectionClipSeed(sourceDoorPosition, sourceDoorNormal);
+}
+
 // R7-3.10 iron-door opening reveal (OPUS 2026-05-26) — ONE combined dedicated surface (atlas slot 22, target 1023).
 // The iron door (box26 x[-2.00,-1.96]) is recessed 5cm behind the west wall inner face (x=-1.91), so the opening
 // has 4 reveal/jamb faces inside the recess x[-1.96,-1.91]. All 4 are currently live: top/bottom/south-jamb have no
@@ -4044,6 +4645,7 @@ bool r7310C1FullRoomDiffuseShortCircuit(int visibleHitType, float visibleObjectI
 	}
 	float structuralIslandId = r7310C1StructuralBeamColumnIslandId(visibleHitType, visibleObjectID, visibleNormal, visiblePosition);
 	if (uR7310C1StructuralDiffuseMode > 0.5 &&
+		uR7310C1XatlasRuntimeStructuralDirectIncluded < 0.5 &&
 		structuralIslandId > 0.5 &&
 		r7310C1StructuralBeamColumnDiffuseUv(visibleHitType, visibleObjectID, visibleNormal, visiblePosition, atlasUv))
 	{
@@ -5508,14 +6110,14 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	// R7-3.10 Phase 2 H7' / sprout-paste-inside-guard probe：
 	// 用來量測 inside-floor 視角是否仍把 R7-3.8 paste 套用；實際 guard 採 camera-y 條件。
 	int firstVisibleIsRayExiting = FALSE;
-	vec3 misBsdfBounceNl = vec3(0.0);
-	vec3 misBsdfBounceOrigin = vec3(0.0);
-	float misPBsdfStashed = 0.0;
-
-	for (int bounces = 0; bounces < 14; bounces++)
-	{
-		if (bounces >= int(uMaxBounces)) { reachedMaxBounces = true; break; } // R2-UI：runtime 動態上限；R6 LGG-r15：標記為 max-bounce 強制中斷供 terminal ambient 用
-		primaryRay = bounces == 0 ? 1 : 0; // R2-13 僅首次 primary ray 套用 X-ray 剔除
+	bool r7310FloorFullRadianceBakeFirstHit = false;
+		vec3 misBsdfBounceNl = vec3(0.0);
+		vec3 misBsdfBounceOrigin = vec3(0.0);
+		float misPBsdfStashed = 0.0;
+			for (int bounces = 0; bounces < 14; bounces++)
+		{
+			if (bounces >= int(uMaxBounces)) { reachedMaxBounces = true; break; } // R2-UI：runtime 動態上限；R6 LGG-r15：標記為 max-bounce 強制中斷供 terminal ambient 用
+			primaryRay = bounces == 0 ? 1 : 0;
 		previousIntersecType = hitType;
 
 		t = SceneIntersect();
@@ -5594,9 +6196,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
     nl = dot(n, rayDirection) < 0.0 ? n : -n;
 		x = rayOrigin + rayDirection * t;
 
-		if (bounces == 0)
-		{
-			objectID = hitObjectID;
+				if (bounces == 0)
+				{
+					objectID = hitObjectID;
 			firstVisibleHitType = hitType;
 			firstVisibleObjectID = hitObjectID;
 			firstVisibleNormal = nl;
@@ -5604,6 +6206,16 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			// R7-3.10 Phase 2 H7' probe：把 BVH 命中的 isRayExiting 升級到 firstVisible* 體系。
 			// 此值僅作 probe 證據，不作 guard 條件。
 			firstVisibleIsRayExiting = hitIsRayExiting;
+			r7310FloorFullRadianceBakeFirstHit =
+				uR738C1BakeCaptureMode == 2 &&
+				uR738C1BakePatchId == 1001 &&
+				uR7310C1XatlasBakeFullRadianceMode > 0.5 &&
+				cloudVisibleSurfaceIsFloor(firstVisibleHitType, firstVisibleObjectID, firstVisibleNormal, firstVisiblePosition);
+			if (r7310FloorFullRadianceBakeFirstHit)
+			{
+				bounceIsSpecular = FALSE;
+				misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0;
+			}
 			// R4-2C Phase A（CODEX 2026-06-21）：移除 west threshold bake early break（門檻帶 bounce0 中斷→烤黑）。
 			// 門檻帶 y[0,0.091]&z[-1.875,-0.983] 屬 west 有效覆蓋，應正常採光、不再 break。
 #if defined(R7310_INCLUDE_DEBUG_PROBES)
@@ -6106,32 +6718,163 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 		if (hitType == IRON_DOOR)
 		{
-			// 鐵門：roughness 0.3, metalness 1.0（金屬光澤反射）
-			vec3 aN = abs(hitNormal);
-			if (aN.x > 0.5)
-			{
-				vec3 hp = rayOrigin + rayDirection * t;
-				vec3 ctr = (hitBoxMin + hitBoxMax) * 0.5;
-				vec3 hs = (hitBoxMax - hitBoxMin) * 0.5;
-				vec3 lp = hp - ctr;
-				vec2 uv = vec2(-lp.z / hs.z * 0.5 + 0.5, lp.y / hs.y * 0.5 + 0.5);
-				hitColor = pow(texture(uIronDoorTex, uv).rgb, vec3(2.2));
-			}
-			// R2-18 fix10：改為機率分支（rand() < ironM），消除 0.5 硬閾值，金屬度呈平滑漸變
-			float ironM = clamp(hitMetalness * uIronDoorMetalnessScale, 0.0, 1.0);
-			float ironR = clamp(hitRoughness * uIronDoorRoughnessScale, 0.0, 1.0);
-			if (!r739C1ReflectionReferenceDisablesTarget(hitType, hitObjectID, nl, x) && rand() < ironM) {
-				mask *= hitColor;
-				vec3 reflDir = reflect(rayDirection, nl);
-				vec3 diffDir = randomCosWeightedDirectionInHemisphere(nl);
-				rayDirection = normalize(mix(reflDir, diffDir, ironR * ironR));
-				rayOrigin = x + nl * uEPS_intersect;
-				continue;
-			}
-			// 漫射 fallback（uIronDoorMetalnessScale 拉低時）
+				// 鐵門：維持舊 live 金屬分支；bake 只替代 fallback 光照。
+			bool r7310IronDoorDiffuseLightBake = uR738C1BakeCaptureMode == 2 && uR738C1BakePatchId == 230001 && uR738C1BakeDiffuseOnlyMode > 0.5;
+				if (uR7310C1IronDoorPlanarReflectionCaptureExcludeDoor > 0.5)
+				{
+					rayOrigin = x + rayDirection * 0.12;
+					continue;
+				}
+				vec3 aN = abs(hitNormal);
+				if (aN.x > 0.5)
+				{
+					vec3 hp = rayOrigin + rayDirection * t;
+					vec3 ctr = (hitBoxMin + hitBoxMax) * 0.5;
+					vec3 hs = (hitBoxMax - hitBoxMin) * 0.5;
+					vec3 lp = hp - ctr;
+					vec2 uv = vec2(-lp.z / hs.z * 0.5 + 0.5, lp.y / hs.y * 0.5 + 0.5);
+					hitColor = pow(texture(uIronDoorTex, uv).rgb, vec3(2.2));
+				}
+				float ironM = clamp(hitMetalness * uIronDoorMetalnessScale, 0.0, 1.0);
+				float ironR = clamp(hitRoughness * uIronDoorRoughnessScale, 0.0, 1.0);
+				float r7310IronDoorRuntimePlanarRoughness = ironR;
+				bool r7310IronDoorBodyHybrid = r7310C1IronDoorBodyHybridActive(hitType, hitObjectID, nl, x);
+				bool r7310IronDoorMainFlatPlateCandidate = r7310C1IronDoorMainFlatPlateMask(hitType, hitObjectID, nl, x);
+				vec3 r7310IronDoorBodyBakedRadiance = r7310IronDoorBodyHybrid ? r7310C1IronDoorBodyHybridRadiance(hitType, hitObjectID, nl, x) : vec3(0.0);
+				bool r7310IronDoorRuntimePlanarDebugReady =
+					uR7310C1IronDoorRuntimePlanarReflectionMode > 0.5 &&
+					uR7310C1IronDoorRuntimePlanarReflectionReady > 0.5 &&
+					r7310IronDoorBodyHybrid &&
+					r7310IronDoorMainFlatPlateCandidate;
+				bool r7310IronDoorCapturedPlanarDebugReady =
+					uR7310C1IronDoorPlanarReflectionMode > 0.5 &&
+					uR7310C1IronDoorPlanarReflectionReady > 0.5 &&
+					r7310IronDoorBodyHybrid &&
+					r7310IronDoorMainFlatPlateCandidate;
+				bool r7310IronDoorBodyBakeOnlyDebug = r7310IronDoorBodyHybrid &&
+					uR7310C1IronDoorBodyDebugMode > 0.5 &&
+					uR7310C1IronDoorBodyDebugMode < 1.5;
+				if (uR7310C1IronDoorBodyDebugMode > 2.5 &&
+					uR7310C1IronDoorBodyDebugMode < 3.5)
+				{
+					bool r7310IronDoorBodyDebugHit = r7310C1RuntimeSurfaceIsIronDoorBody(hitType, hitObjectID, nl, x);
+					accumCol += mask * (r7310IronDoorBodyDebugHit ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 1.0));
+					break;
+				}
+				if (uR7310C1IronDoorBodyDebugMode > 3.5 &&
+					uR7310C1IronDoorBodyDebugMode < 4.5)
+				{
+					vec2 r7310IronDoorPlanarDebugUv = vec2(0.5);
+					bool r7310IronDoorPlanarDebugValid = r7310IronDoorRuntimePlanarDebugReady
+						? r7310C1IronDoorRuntimePlanarReflectionUv(x, r7310IronDoorPlanarDebugUv)
+						: r7310C1IronDoorPlanarReflectionUv(x, r7310IronDoorPlanarDebugUv);
+					accumCol += mask * (r7310IronDoorPlanarDebugValid
+						? vec3(r7310IronDoorPlanarDebugUv, 0.25)
+						: vec3(1.0, 0.0, 1.0));
+					break;
+				}
+				if (uR7310C1IronDoorBodyDebugMode > 4.5 &&
+					uR7310C1IronDoorBodyDebugMode < 5.5)
+				{
+					accumCol += mask * (r7310IronDoorMainFlatPlateCandidate
+						? vec3(0.0, 1.0, 0.35)
+						: vec3(0.35, 0.05, 0.85));
+					break;
+				}
+				if (uR7310C1IronDoorBodyDebugMode > 5.5 &&
+					uR7310C1IronDoorBodyDebugMode < 6.5)
+				{
+					vec3 r7310IronDoorPlanarDebugRadiance = r7310IronDoorRuntimePlanarDebugReady
+						? r7310C1IronDoorRuntimePlanarReflectionRadiance(x, rayDirection, nl, r7310IronDoorRuntimePlanarRoughness)
+						: (r7310IronDoorCapturedPlanarDebugReady
+							? r7310C1IronDoorPlanarReflectionRadiance(x, ironR)
+							: vec3(1.0, 0.0, 1.0));
+					accumCol += mask * r7310IronDoorPlanarDebugRadiance;
+					break;
+				}
+				if (uR7310C1IronDoorBodyDebugMode > 6.5 &&
+					uR7310C1IronDoorBodyDebugMode < 7.5)
+				{
+					accumCol += mask * hitColor;
+					break;
+				}
+				if (uR7310C1IronDoorBodyDebugMode > 7.5 &&
+					uR7310C1IronDoorBodyDebugMode < 8.5)
+				{
+					vec3 r7310IronDoorPlanarProductDebugRadiance =
+						r7310IronDoorRuntimePlanarDebugReady
+							? r7310C1IronDoorRuntimePlanarReflectionRadiance(x, rayDirection, nl, r7310IronDoorRuntimePlanarRoughness)
+							: (r7310IronDoorCapturedPlanarDebugReady
+								? r7310C1IronDoorPlanarReflectionRadiance(x, ironR)
+								: vec3(1.0, 0.0, 1.0));
+					vec3 r7310IronDoorPlanarProductDebugSpecularWeight =
+						r7310IronDoorRuntimePlanarDebugReady
+							? r7310C1IronDoorRuntimePlanarReflectionSpecularWeight(hitColor, rayDirection, nl, r7310IronDoorRuntimePlanarRoughness)
+							: hitColor;
+					accumCol += mask * r7310IronDoorPlanarProductDebugRadiance * r7310IronDoorPlanarProductDebugSpecularWeight * ironM;
+					break;
+				}
+				if (uR7310C1IronDoorRuntimePlanarReflectionMode > 0.5 &&
+					uR7310C1IronDoorRuntimePlanarReflectionReady > 0.5 &&
+					r7310IronDoorBodyHybrid &&
+					r7310IronDoorMainFlatPlateCandidate &&
+					!r7310IronDoorDiffuseLightBake &&
+					!r7310IronDoorBodyBakeOnlyDebug)
+				{
+					vec3 r7310IronDoorRuntimePlanarRadiance = r7310C1IronDoorRuntimePlanarReflectionRadiance(x, rayDirection, nl, r7310IronDoorRuntimePlanarRoughness);
+					vec3 r7310IronDoorRuntimePlanarSpecularWeight = r7310C1IronDoorRuntimePlanarReflectionSpecularWeight(hitColor, rayDirection, nl, r7310IronDoorRuntimePlanarRoughness);
+					vec3 r7310IronDoorRuntimePlanarBase = r7310IronDoorRuntimePlanarRadiance * r7310IronDoorRuntimePlanarSpecularWeight * ironM;
+					vec3 r7310IronDoorRuntimePlanarDiffuse = r7310IronDoorBodyBakedRadiance * hitColor * (1.0 - ironM);
+					accumCol += mask * (r7310IronDoorRuntimePlanarBase + r7310IronDoorRuntimePlanarDiffuse);
+					break;
+				}
+				if (uR7310C1IronDoorPlanarReflectionMode > 0.5 &&
+					uR7310C1IronDoorPlanarReflectionReady > 0.5 &&
+					r7310IronDoorBodyHybrid &&
+					r7310IronDoorMainFlatPlateCandidate &&
+					!r7310IronDoorDiffuseLightBake &&
+					!r7310IronDoorBodyBakeOnlyDebug)
+				{
+					vec3 r7310IronDoorPlanarRadiance = r7310C1IronDoorPlanarReflectionRadiance(x, ironR);
+					vec3 r7310IronDoorPlanarBase = r7310IronDoorPlanarRadiance * hitColor * ironM;
+					vec3 r7310IronDoorPlanarDiffuse = r7310IronDoorBodyBakedRadiance * hitColor * (1.0 - ironM);
+					accumCol += mask * (r7310IronDoorPlanarBase + r7310IronDoorPlanarDiffuse);
+					break;
+				}
+				if (uR7310C1IronDoorReflectionProbeMode > 0.5 &&
+					uR7310C1IronDoorReflectionProbeReady > 0.5 &&
+					r7310IronDoorBodyHybrid &&
+					r7310IronDoorMainFlatPlateCandidate &&
+					!r7310IronDoorDiffuseLightBake &&
+					!r7310IronDoorBodyBakeOnlyDebug)
+				{
+					vec3 r7310IronDoorProbeRadiance = r7310C1IronDoorCapturedProbeRadiance(x, reflect(rayDirection, nl), ironR);
+					vec3 r7310IronDoorProbeBase = r7310IronDoorProbeRadiance * hitColor * ironM;
+					vec3 r7310IronDoorProbeDiffuse = r7310IronDoorBodyBakedRadiance * hitColor * (1.0 - ironM);
+					accumCol += mask * (r7310IronDoorProbeBase + r7310IronDoorProbeDiffuse);
+					break;
+				}
+				if (!r7310IronDoorDiffuseLightBake &&
+					!r7310IronDoorBodyBakeOnlyDebug &&
+					!r739C1ReflectionReferenceDisablesTarget(hitType, hitObjectID, nl, x) &&
+						rand() < ironM) {
+						mask *= hitColor;
+					vec3 reflDir = reflect(rayDirection, nl);
+					vec3 diffDir = randomCosWeightedDirectionInHemisphere(nl);
+					rayDirection = normalize(mix(reflDir, diffDir, ironR * ironR));
+					rayOrigin = x + nl * uEPS_intersect;
+					continue;
+				}
+				if (r7310IronDoorBodyHybrid && uR7310C1IronDoorBodyDebugMode < 1.5)
+				{
+						accumCol += mask * r7310IronDoorBodyBakedRadiance * hitColor;
+					break;
+				}
+			// 漫射 fallback（bake capture 或 runtime package 未啟用時）
 			diffuseCount++;
-			mask *= hitColor;
-						bounceIsSpecular = FALSE;
+			if (!(uR7310C1SeparatedBakeMode > 0.5 && r7310IronDoorDiffuseLightBake))
+					mask *= hitColor;
+			bounceIsSpecular = FALSE;
 			misWPrimaryNeeLast = 0.0; misPBsdfNeeLast = 0.0; lastNeePickedIdx = -1; misBsdfBounceNl = vec3(0.0); misBsdfBounceOrigin = vec3(0.0); misPBsdfStashed = 0.0; // R3-6 R4: SPEC→DIFF state-clear
 			rayOrigin = x + nl * uEPS_intersect;
 			if (float(diffuseCount) < uMaxBounces) {
@@ -6658,13 +7401,27 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				bool isFloor = (hitObjectID < 1.5 && hitNormal.y > 0.5 && hitBoxMax.y < 0.1);
 				// R4-2C Phase A（CODEX 2026-06-21）：移除 west threshold bake early break（bounce1 中斷→烤黑）。
 				bool r738DiffuseOnlyActive = (uR738C1BakeCaptureMode == 2 && uR738C1BakeDiffuseOnlyMode > 0.5);
+				bool r7310FloorLiveSpecularActive = uR738C1BakeCaptureMode != 2 ||
+					uR7310C1XatlasBakeFullRadianceMode < 0.5;
+				vec2 r7310FloorLiveSpecularPageUv = vec2(0.0);
+				vec3 r7310FloorLiveSpecularPageRadiance = vec3(0.0);
+				bool r7310FloorLiveSpecularPageMapped = isFloor &&
+					uR7310C1XatlasRuntimeFullFloorMode > 0.5 &&
+					r7310C1XatlasFullFloorPageUv(hitType, hitObjectID, nl, x, r7310FloorLiveSpecularPageUv);
+				bool r7310FloorLiveSpecularPageValid = r7310FloorLiveSpecularPageMapped &&
+					r7310C1XatlasRuntimeSampleValidLinearFloorPage(r7310FloorLiveSpecularPageUv, r7310FloorLiveSpecularPageRadiance);
+				bool r7310FloorLiveSpecularAllowed = true;
+				if (isFloor && uR7310C1XatlasRuntimeFullFloorMode > 0.5)
+				{
+					r7310FloorLiveSpecularAllowed = r7310FloorLiveSpecularPageMapped && r7310FloorLiveSpecularPageValid;
+				}
 			int r739TargetId = r739C1ReflectionTargetId(hitType, hitObjectID, nl, x);
 			float r739EffectiveFloorRoughness = r739C1CurrentViewFloorRoughness(r739TargetId, x);
 			bool r739ReferenceDisabled = r739C1ReflectionReferenceDisablesTarget(hitType, hitObjectID, nl, x);
 			bool r739ReflectionOnlyTarget = uR739C1ReflectionReferenceMode > 0.5 &&
 				uR739C1ReflectionReferenceMode < 1.5 &&
 				r739C1AccurateReflectionReplacesTarget(r739TargetId, x);
-			if (isFloor && r739ReflectionOnlyTarget) {
+			if (isFloor && !r7310FloorFullRadianceBakeFirstHit && r7310FloorLiveSpecularActive && r7310FloorLiveSpecularAllowed && r739ReflectionOnlyTarget) {
 				if (r739EffectiveFloorRoughness < 0.999) {
 					float cosI = max(0.0, dot(-rayDirection, nl));
 					float F = 0.04 + 0.96 * pow(1.0 - cosI, 5.0);
@@ -6678,7 +7435,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 				break;
 			}
-			if (isFloor && !r738DiffuseOnlyActive && !r739ReferenceDisabled && r739EffectiveFloorRoughness < 0.999) {
+			if (isFloor && !r7310FloorFullRadianceBakeFirstHit && r7310FloorLiveSpecularActive && r7310FloorLiveSpecularAllowed && !r738DiffuseOnlyActive && !r739ReferenceDisabled && r739EffectiveFloorRoughness < 0.999) {
 				float cosI = max(0.0, dot(-rayDirection, nl));
 				float F = 0.04 + 0.96 * pow(1.0 - cosI, 5.0);
 				if (rand() < F) {
@@ -6690,7 +7447,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				}
 			}
 			// R2-18 Step 4 金屬路徑切分：per-box hitMetalness 驅動，mix 權重 = roughness²
-			if (!r739ReferenceDisabled && rand() < hitMetalness) {
+			if (!r7310FloorFullRadianceBakeFirstHit && !r739ReferenceDisabled && rand() < hitMetalness) {
 				mask *= hitColor;
 				vec3 reflDir = reflect(rayDirection, nl);
 				vec3 diffDir = randomCosWeightedDirectionInHemisphere(nl);
@@ -6699,51 +7456,51 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				continue;
 			}
 			vec3 r7310BakedRadiance = vec3(0.0);
-			bool r7310FloorHybridFirstHit = bounces == 0 &&
+			bool r7310FloorHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				hitIsRayExiting != TRUE &&
 				r7310C1FloorHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310CeilingHybridFirstHit = bounces == 0 &&
+			bool r7310CeilingHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				hitIsRayExiting != TRUE &&
 				r7310C1CeilingHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310NorthWallHybridFirstHit = bounces == 0 &&
+			bool r7310NorthWallHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1NorthWallHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SeColumnNorthHybridFirstHit = bounces == 0 &&
+			bool r7310SeColumnNorthHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SeColumnNorthShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SeColumnWestHybridFirstHit = bounces == 0 &&
+			bool r7310SeColumnWestHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SeColumnWestShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SouthWallAcHybridFirstHit = bounces == 0 &&
+			bool r7310SouthWallAcHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SouthWallAcShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310EastWallBeamHybridFirstHit = bounces == 0 &&
+			bool r7310EastWallBeamHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1EastWallBeamShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310EastWallHybridFirstHit = bounces == 0 &&
+			bool r7310EastWallHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1EastWallHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SwColumnNorthHybridFirstHit = bounces == 0 &&
+			bool r7310SwColumnNorthHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SwColumnNorthShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310WestWallBeamHybridFirstHit = bounces == 0 &&
+			bool r7310WestWallBeamHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1WestWallBeamShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310WestWallHybridFirstHit = bounces == 0 &&
+			bool r7310WestWallHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				!r7310WestWallBeamHybridFirstHit &&
 				r7310C1WestWallHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SwColumnInnerShadowHybridFirstHit = bounces == 0 &&
+			bool r7310SwColumnInnerShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SwColumnInnerShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310WestBeamInnerShadowHybridFirstHit = bounces == 0 &&
+			bool r7310WestBeamInnerShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				!r7310SwColumnInnerShadowHybridFirstHit &&
 				r7310C1WestBeamInnerShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310WestBeamUnderShadowHybridFirstHit = bounces == 0 &&
+			bool r7310WestBeamUnderShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1WestBeamUnderShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310EastBeamInnerShadowHybridFirstHit = bounces == 0 &&
+			bool r7310EastBeamInnerShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1EastBeamInnerShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310EastBeamUnderShadowHybridFirstHit = bounces == 0 &&
+			bool r7310EastBeamUnderShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1EastBeamUnderShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SouthWindowLeftRevealShadowHybridFirstHit = bounces == 0 &&
+			bool r7310SouthWindowLeftRevealShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SouthWindowLeftRevealShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SouthWindowRightRevealShadowHybridFirstHit = bounces == 0 &&
+			bool r7310SouthWindowRightRevealShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SouthWindowRightRevealShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SouthWindowBottomRevealShadowHybridFirstHit = bounces == 0 &&
+			bool r7310SouthWindowBottomRevealShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SouthWindowBottomRevealShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310SouthWindowTopRevealShadowHybridFirstHit = bounces == 0 &&
+			bool r7310SouthWindowTopRevealShadowHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1SouthWindowTopRevealShadowHybridActive(hitType, hitObjectID, nl, x);
-			bool r7310IronDoorRevealHybridFirstHit = bounces == 0 &&
+			bool r7310IronDoorRevealHybridFirstHit = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 				r7310C1IronDoorRevealHybridActive(hitType, hitObjectID, nl, x);
 			bool r7310DedicatedCeilingHybridFirstHit =
 				r7310SeColumnNorthHybridFirstHit ||
@@ -6814,36 +7571,201 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					bounces == 0 &&
 					diffuseCount == 0;
 				vec2 r7310XatlasRuntimeAtlasUv = vec2(0.0);
-				vec3 r7310XatlasRuntimeRadiance = vec3(0.0);
-				bool r7310XatlasRuntimeMapped = bounces == 0 &&
+				vec3 r7310XatlasRuntimeSheetRadiance = vec3(0.0);
+				bool r7310XatlasRuntimeSheetMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 					hitIsRayExiting != TRUE &&
 					r7310C1XatlasNorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeAtlasUv);
-				bool r7310XatlasRuntimeFirstHit = r7310XatlasRuntimeMapped &&
-					r7310C1XatlasRuntimeSampleValidLinear(r7310XatlasRuntimeAtlasUv, r7310XatlasRuntimeRadiance);
-				vec2 r7310XatlasRuntimeWestAtlasUv = vec2(0.0);
-				bool r7310XatlasRuntimeWestMapped = bounces == 0 &&
+				bool r7310XatlasRuntimeSheetFirstHit = r7310XatlasRuntimeSheetMapped &&
+					r7310C1XatlasRuntimeSampleValidLinear(r7310XatlasRuntimeAtlasUv, r7310XatlasRuntimeSheetRadiance);
+				vec2 r7310XatlasRuntimeFloorPageUv = vec2(0.0);
+				vec3 r7310XatlasRuntimeFloorPageRadiance = vec3(0.0);
+				bool r7310XatlasRuntimeFloorPageMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 					hitIsRayExiting != TRUE &&
+					uR7310C1XatlasRuntimeFullFloorMode > 0.5 &&
+					r7310C1XatlasFullFloorPageUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeFloorPageUv);
+				bool r7310XatlasRuntimeFloorPageFirstHit = r7310XatlasRuntimeFloorPageMapped &&
+					r7310C1XatlasRuntimeSampleValidLinearFloorPage(r7310XatlasRuntimeFloorPageUv, r7310XatlasRuntimeFloorPageRadiance);
+				vec3 r7310XatlasRuntimeRadiance = r7310XatlasRuntimeFloorPageFirstHit
+					? r7310XatlasRuntimeFloorPageRadiance
+					: r7310XatlasRuntimeSheetRadiance;
+				bool r7310XatlasRuntimeMapped = r7310XatlasRuntimeSheetMapped || r7310XatlasRuntimeFloorPageMapped;
+				bool r7310XatlasRuntimeFirstHit = r7310XatlasRuntimeSheetFirstHit || r7310XatlasRuntimeFloorPageFirstHit;
+				vec2 r7310XatlasRuntimeNorthAtlasUv = vec2(0.0);
+				bool r7310XatlasRuntimeNorthMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+					hitIsRayExiting != TRUE &&
+					uR7310C1XatlasRuntimeFullNorthWallMode > 0.5 &&
+					r7310C1XatlasFullNorthWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeNorthAtlasUv);
+				bool r7310XatlasRuntimeNorthFirstHit = r7310XatlasRuntimeFirstHit &&
+					r7310XatlasRuntimeNorthMapped;
+				vec2 r7310XatlasRuntimeEastAtlasUv = vec2(0.0);
+				bool r7310XatlasRuntimeEastMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+					hitIsRayExiting != TRUE &&
+					uR7310C1XatlasRuntimeFullEastWallMode > 0.5 &&
+					r7310C1XatlasFullEastWallUv(hitType, hitObjectID, nl, x, r7310XatlasRuntimeEastAtlasUv);
+				bool r7310XatlasRuntimeEastFirstHit = r7310XatlasRuntimeFirstHit &&
+					r7310XatlasRuntimeEastMapped;
+				int r7310XatlasRuntimeOwnerId = r7310SurfaceOwnerId(x, nl, hitObjectID);
+				vec2 r7310XatlasRuntimeWestAtlasUv = vec2(0.0);
+				bool r7310XatlasRuntimeWestMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+					hitIsRayExiting != TRUE &&
+					r7310XatlasRuntimeOwnerId == R7310_OWNER_WEST_WALL_OPEN &&
 					uR7310C1XatlasParamWestSurfaceIndex >= 0.0 &&
 					r7310C1XatlasParamSurfaceUv(int(uR7310C1XatlasParamWestSurfaceIndex), hitObjectID, nl, x, r7310XatlasRuntimeWestAtlasUv);
-				int r7310XatlasRuntimeOwnerId = r7310SurfaceOwnerId(x, nl, hitObjectID);
 				bool r7310XatlasRuntimeWestFirstHit = r7310XatlasRuntimeFirstHit &&
 					r7310XatlasRuntimeWestMapped;
-				bool r7310XatlasRuntimeWestThresholdTopMapped = bounces == 0 &&
+				bool r7310XatlasRuntimeWestThresholdTopMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 					hitIsRayExiting != TRUE &&
 					r7310XatlasRuntimeOwnerId == R7310_OWNER_WEST_THRESHOLD_TOP;
 				bool r7310XatlasRuntimeWestThresholdTopFirstHit = r7310XatlasRuntimeFirstHit &&
 					r7310XatlasRuntimeWestThresholdTopMapped;
-				bool r7310XatlasRuntimeWestThresholdFrontMapped = bounces == 0 &&
+				bool r7310XatlasRuntimeWestThresholdFrontMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 					hitIsRayExiting != TRUE &&
 					r7310XatlasRuntimeOwnerId == R7310_OWNER_WEST_THRESHOLD_FRONT;
-				bool r7310XatlasRuntimeWestThresholdFrontFirstHit = r7310XatlasRuntimeFirstHit &&
-					r7310XatlasRuntimeWestThresholdFrontMapped;
-				bool r7310XatlasRuntimeFullBakeWestClaimed =
-					(uR7310C1XatlasRuntimeFullWestWallDirectIncluded > 0.5 && r7310XatlasRuntimeWestMapped) ||
-					(uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded > 0.5 && r7310XatlasRuntimeWestThresholdTopMapped) ||
-					(uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded > 0.5 && r7310XatlasRuntimeWestThresholdFrontMapped);
+					bool r7310XatlasRuntimeWestThresholdFrontFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeWestThresholdFrontMapped;
+					bool r7310XatlasRuntimeSouthMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_SOUTH_WALL;
+					bool r7310XatlasRuntimeSouthFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeSouthMapped;
+					bool r7310XatlasRuntimeCeilingMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_CEILING_OPEN;
+					bool r7310XatlasRuntimeCeilingFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeCeilingMapped;
+					bool r7310XatlasRuntimeDepthH2Mapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						uR7310C1XatlasRuntimeFullCeilingMode > 0.5 &&
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_SOUTH_WINDOW_TOP_REVEAL_DEPTH;
+					bool r7310XatlasRuntimeDepthH2FirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeDepthH2Mapped;
+					vec2 r7310XatlasRuntimeFloorAtlasUv = vec2(0.0);
+					bool r7310XatlasRuntimeFloorMapped = r7310XatlasRuntimeFloorPageMapped;
+					bool r7310XatlasRuntimeFloorFirstHit = r7310XatlasRuntimeFloorPageFirstHit;
+					bool r7310XatlasRuntimeCentralDeskMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						(r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_TOP ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_FRONT ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_BACK ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_LEFT ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_RIGHT);
+					bool r7310XatlasRuntimeCentralDeskFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeCentralDeskMapped;
+					float r7310XatlasRuntimeStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
+					bool r7310XatlasRuntimeStructuralMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						r7310XatlasRuntimeStructuralIslandId > 0.5;
+					bool r7310XatlasRuntimeStructuralFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeStructuralMapped;
+					bool r7310XatlasRuntimeSouthWindowRevealsMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						(r7310XatlasRuntimeOwnerId == R7310_OWNER_SOUTH_WINDOW_LEFT_REVEAL ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_SOUTH_WINDOW_RIGHT_REVEAL ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_SOUTH_WINDOW_BOTTOM_REVEAL);
+					bool r7310XatlasRuntimeSouthWindowRevealsFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeSouthWindowRevealsMapped;
+					bool r7310XatlasRuntimeWestWallSwitchMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						(r7310XatlasRuntimeOwnerId == R7310_OWNER_WEST_WALL_SWITCH_PLATE ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_WEST_WALL_SWITCH_BUTTON);
+					bool r7310XatlasRuntimeWestWallSwitchFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeWestWallSwitchMapped;
+					bool r7310XatlasRuntimeFullBakeWestClaimed =
+						(uR7310C1XatlasRuntimeFullWestWallDirectIncluded > 0.5 && r7310XatlasRuntimeWestMapped) ||
+						(uR7310C1XatlasRuntimeWestThresholdTopDirectIncluded > 0.5 && r7310XatlasRuntimeWestThresholdTopMapped) ||
+						(uR7310C1XatlasRuntimeWestThresholdFrontDirectIncluded > 0.5 && r7310XatlasRuntimeWestThresholdFrontMapped);
+					bool r7310XatlasRuntimeFullBakeNorthClaimed =
+						uR7310C1XatlasRuntimeFullNorthWallDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeNorthMapped;
+					bool r7310XatlasRuntimeFullBakeEastClaimed =
+						uR7310C1XatlasRuntimeFullEastWallDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeEastMapped;
+					bool r7310XatlasRuntimeFullBakeSouthClaimed =
+						uR7310C1XatlasRuntimeFullSouthWallDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeSouthMapped;
+					bool r7310XatlasRuntimeFullBakeCeilingClaimed =
+						uR7310C1XatlasRuntimeFullCeilingDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeCeilingMapped;
+					bool r7310XatlasRuntimeFullBakeDepthH2Claimed =
+						uR7310C1XatlasRuntimeDepthH2DirectIncluded > 0.5 &&
+						r7310XatlasRuntimeDepthH2Mapped;
+					bool r7310XatlasRuntimeFullBakeFloorClaimed =
+						uR7310C1XatlasRuntimeFullFloorDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeFloorMapped;
+					bool r7310XatlasRuntimeFullBakeCentralDeskClaimed =
+						uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeCentralDeskMapped;
+					bool r7310XatlasRuntimeFullBakeStructuralClaimed =
+						uR7310C1XatlasRuntimeStructuralDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeStructuralMapped;
+					bool r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed =
+						uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeSouthWindowRevealsMapped;
+					bool r7310XatlasRuntimeFullBakeWestWallSwitchClaimed =
+						uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeWestWallSwitchMapped;
+					bool r7310XatlasRuntimeFullBakeRouteMissIsDebugError =
+						(r7310XatlasRuntimeFullBakeWestClaimed ||
+						r7310XatlasRuntimeFullBakeNorthClaimed ||
+						r7310XatlasRuntimeFullBakeEastClaimed ||
+						r7310XatlasRuntimeFullBakeSouthClaimed ||
+						r7310XatlasRuntimeFullBakeCeilingClaimed ||
+						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
+						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeStructuralClaimed ||
+						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
+						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed) &&
+						!r7310XatlasRuntimeFirstHit;
+					bool r7310XatlasRuntimeFloorFootprintHoleFallsBackToLive =
+						r7310XatlasRuntimeFullBakeFloorClaimed &&
+						!r7310XatlasRuntimeFloorFirstHit;
 #if defined(R7310_INCLUDE_DEBUG_PROBES)
 				float r7310C1RuntimeProbeMode = uR7310C1RuntimeProbeMode;
+				if (bounces == 0 &&
+					r7310C1RuntimeProbeMode > 66.5 &&
+					r7310C1RuntimeProbeMode < 69.5)
+				{
+					bool r7310XatlasRuntimeAnyClaimed =
+						r7310XatlasRuntimeFullBakeWestClaimed ||
+						r7310XatlasRuntimeFullBakeNorthClaimed ||
+						r7310XatlasRuntimeFullBakeEastClaimed ||
+						r7310XatlasRuntimeFullBakeSouthClaimed ||
+						r7310XatlasRuntimeFullBakeCeilingClaimed ||
+						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
+						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeStructuralClaimed ||
+						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
+						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed;
+					if (r7310C1RuntimeProbeMode < 67.5)
+					{
+						accumCol = vec3(
+							r7310XatlasRuntimeSheetMapped ? 1.0 : 0.0,
+							r7310XatlasRuntimeSheetFirstHit ? 1.0 : 0.0,
+							r7310XatlasRuntimeAnyClaimed ? 1.0 : 0.0
+						);
+					}
+					else if (r7310C1RuntimeProbeMode < 68.5)
+					{
+						float nearestAlpha = 0.0;
+						if (r7310XatlasRuntimeSheetMapped)
+						{
+							vec2 atlasSize = max(uR7310C1XatlasRuntimeAtlasSize, vec2(1.0));
+							vec2 atlasPixel = r7310XatlasRuntimeAtlasUv * atlasSize - vec2(0.5);
+							nearestAlpha = r7310C1XatlasRuntimeSampleTexel(floor(atlasPixel + vec2(0.5))).a;
+						}
+						accumCol = vec3(nearestAlpha, r7310XatlasRuntimeAtlasUv);
+					}
+					else
+					{
+						accumCol = vec3(
+							clamp(float(r7310XatlasRuntimeOwnerId) / 255.0, 0.0, 1.0),
+							clamp(r7310XatlasRuntimeStructuralIslandId / 255.0, 0.0, 1.0),
+							clamp(hitObjectID / 255.0, 0.0, 1.0)
+						);
+					}
+					break;
+				}
 				if (bounces == 1 &&
 					uR7310C1XatlasBakeMode > 0.5 &&
 					r7310C1RuntimeProbeMode > 56.5 &&
@@ -7634,14 +8556,17 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					break;
 				}
 #endif
-					if (r7310XatlasRuntimeFullBakeWestClaimed && !r7310XatlasRuntimeFirstHit)
-					{
-						accumCol = vec3(1.0, 0.0, 1.0);
-						break;
+						if (r7310XatlasRuntimeFullBakeRouteMissIsDebugError)
+						{
+							accumCol = vec3(1.0, 0.0, 1.0);
+							break;
 					}
 					if (r7310XatlasRuntimeFirstHit)
 					{
-						accumCol += mask * (uR7310C1XatlasRuntimeSeparatedAlbedo > 0.5
+						float r7310XatlasRuntimeSurfaceSeparatedAlbedo = r7310XatlasRuntimeFloorFirstHit
+							? uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo
+							: uR7310C1XatlasRuntimeSeparatedAlbedo;
+						accumCol += mask * (r7310XatlasRuntimeSurfaceSeparatedAlbedo > 0.5
 							? r7310XatlasRuntimeRadiance * hitColor
 							: r7310XatlasRuntimeRadiance);
 						if (uR7310C1XatlasRuntimeFullWestWallDirectIncluded > 0.5 &&
@@ -7660,8 +8585,58 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						{
 							break;
 						}
-						// Indirect XATLAS packages continue to the shared direct-light path.
-					}
+							if (uR7310C1XatlasRuntimeFullNorthWallDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeNorthFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeFullEastWallDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeEastFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeFullSouthWallDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeSouthFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeFullCeilingDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeCeilingFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeDepthH2DirectIncluded > 0.5 &&
+								r7310XatlasRuntimeDepthH2FirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeFullFloorDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeFloorFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeCentralDeskFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeStructuralDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeStructuralFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeSouthWindowRevealsFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeWestWallSwitchFirstHit)
+							{
+								break;
+							}
+							// Indirect XATLAS packages continue to the shared direct-light path.
+						}
 				if (r7310FloorHybridFirstHit && !r7310XatlasRuntimeMapped)
 					accumCol += mask * r7310C1FloorHybridRadiance(hitType, hitObjectID, nl, x);
 			if (r7310CeilingHybridFirstHit && !r7310XatlasRuntimeMapped)
@@ -7757,7 +8732,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 #endif
 					if (!r7310XatlasRuntimeMapped &&
 							!(r7310FloorHybridFirstHit || r7310CeilingHybridFirstHit || r7310NorthWallHybridFirstHit || r7310EastWallHybridFirstHit || r7310SeColumnNorthHybridFirstHit || r7310SeColumnWestHybridFirstHit || r7310SouthWallAcHybridFirstHit || r7310EastWallBeamHybridFirstHit || r7310SwColumnNorthHybridFirstHit || r7310WestWallHybridFirstHit || r7310WestWallBeamHybridFirstHit || r7310SwColumnInnerShadowHybridFirstHit || r7310WestBeamInnerShadowHybridFirstHit || r7310WestBeamUnderShadowHybridFirstHit || r7310EastBeamInnerShadowHybridFirstHit || r7310EastBeamUnderShadowHybridFirstHit || r7310SouthWindowLeftRevealShadowHybridFirstHit || r7310SouthWindowRightRevealShadowHybridFirstHit || r7310SouthWindowBottomRevealShadowHybridFirstHit || r7310SouthWindowTopRevealShadowHybridFirstHit || r7310IronDoorRevealHybridFirstHit) &&
-					bounces == 0 &&
+					r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 					r7310C1FullRoomDiffuseShortCircuit(hitType, hitObjectID, nl, x, hitIsRayExiting, hitColor, r7310BakedRadiance))
 			{
 #if defined(R7310_INCLUDE_DEBUG_PROBES)
@@ -7902,7 +8877,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				misBsdfBounceNl = nl; misBsdfBounceOrigin = x; misPBsdfStashed = cosWeightedPdf(diffuseBounceRayDirection, nl); // R3-6 Phase-3: cache BSDF-bounce state for MIS indirect-hit
 				willNeedDiffuseBounceRay = TRUE;
 			}
-			if (r7310FloorIndirectBakeFirstHit && willNeedDiffuseBounceRay == TRUE)
+			if (uR738C1BakeDiffuseOnlyMode > 0.5 &&
+				r7310FloorIndirectBakeFirstHit &&
+				willNeedDiffuseBounceRay == TRUE)
 			{
 				mask = diffuseBounceMask * (indirectMultApplied ? 1.0 : uIndirectMultiplier);
 				indirectMultApplied = true;

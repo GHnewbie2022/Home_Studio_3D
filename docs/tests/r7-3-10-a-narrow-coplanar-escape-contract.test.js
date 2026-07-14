@@ -70,6 +70,10 @@ function shortLineId(lineId) {
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_SW_COLUMN_CORNER') return 'west_wall_south_desk_sw_column_corner';
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_IRON_THRESHOLD_TOP') return 'west_wall_iron_threshold_top';
 	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_IRON_THRESHOLD_TOP_WEST_EDGE') return 'west_iron_threshold_top_west_edge';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM') return 'east_wall_beam_under';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM') return 'east_wall_se_column';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM') return 'east_beam_inner_under';
+	if (lineId === 'R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM') return 'east_beam_se_column_vertical';
 	assert.fail(`unexpected confirmed line id ${lineId}`);
 }
 
@@ -223,6 +227,26 @@ const cases = [
 		id: 'west_iron_threshold_top_west_edge',
 		normal: { x: 0, y: 1, z: 0 },
 		expected: [1, 0, 0]
+	},
+	{
+		id: 'east_wall_beam_under',
+		normal: { x: -1, y: 0, z: 0 },
+		expected: [0, -1, 0]
+	},
+	{
+		id: 'east_wall_se_column',
+		normal: { x: -1, y: 0, z: 0 },
+		expected: [0, 0, -1]
+	},
+	{
+		id: 'east_beam_inner_under',
+		normal: { x: -1, y: 0, z: 0 },
+		expected: [0, -1, 0]
+	},
+	{
+		id: 'east_beam_se_column_vertical',
+		normal: { x: -1, y: 0, z: 0 },
+		expected: [0, 0, -1]
 	}
 ];
 
@@ -257,7 +281,11 @@ const expectedNeighbors = {
 	west_wall_sw_column: parseAddBoxBounds(14),
 	west_wall_south_desk_top: parseAddBoxBounds(17),
 	west_wall_iron_threshold_top: parseAddBoxBounds(10),
-	west_iron_threshold_top_west_edge: parseAddBoxBounds(10)
+	west_iron_threshold_top_west_edge: parseAddBoxBounds(10),
+	east_wall_beam_under: parseAddBoxBounds(13),
+	east_wall_se_column: parseAddBoxBounds(15),
+	east_beam_inner_under: parseAddBoxBounds(13),
+	east_beam_se_column_vertical: parseAddBoxBounds(15)
 };
 for (const [id, bounds] of Object.entries(expectedNeighbors)) {
 	const shaderCase = shaderCases.get(id);

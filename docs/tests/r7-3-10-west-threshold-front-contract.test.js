@@ -103,7 +103,7 @@ test('full-radiance bake keeps A NARROW NEE shadow origin', () => {
 test('west full-bake owner claim cannot fall back to hybrid when the sample is invalid', () => {
   assert.match(shader, /bool\s+r7310XatlasRuntimeMapped\s*=/);
   assert.match(shader, /bool\s+r7310XatlasRuntimeFullBakeWestClaimed\s*=/);
-  assert.match(shader, /r7310XatlasRuntimeFullBakeWestClaimed\s*&&\s*!r7310XatlasRuntimeFirstHit/);
+  assert.match(shader, /\(r7310XatlasRuntimeFullBakeWestClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNorthClaimed\)\s*&&\s*!r7310XatlasRuntimeFirstHit/);
   assert.match(shader, /accumCol\s*=\s*vec3\(1\.0,\s*0\.0,\s*1\.0\)/);
   assert.match(shader, /r7310FloorHybridFirstHit\s*&&\s*!r7310XatlasRuntimeMapped/);
   assert.match(shader, /r7310WestWallHybridFirstHit\s*&&\s*!r7310XatlasRuntimeMapped/);

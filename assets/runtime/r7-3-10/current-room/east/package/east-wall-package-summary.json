@@ -1,0 +1,34 @@
+{
+  "tool": "r7-3-10-full-east-wall-xatlas-package",
+  "rawDir": "assets/runtime/r7-3-10/current-room/east/package",
+  "oidnDir": null,
+  "prepareDir": null,
+  "sourcePrepareRetiredAfterValidation": true,
+  "identity": {
+    "surfaceName": "east_wall",
+    "targetId": 1003,
+    "bakeTargetId": 1003,
+    "configId": 1,
+    "atlasGroup": "shell",
+    "masterRectKey": "east",
+    "normal": [
+      -1,
+      0,
+      0
+    ],
+    "worldBounds": {
+      "x": 1.91,
+      "y": [
+        0,
+        2.905
+      ],
+      "z": [
+        -1.874,
+        3.056
+      ]
+    }
+  },
+  "wrote": {
+    "rawPointer": "docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json"
+  }
+}

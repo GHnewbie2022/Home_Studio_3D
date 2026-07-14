@@ -3,33 +3,33 @@
   "runtimeScope": "c1_xatlas_full_north_wall_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "single_xatlas_full_north_wall_phase2",
-  "packageDir": ".omc/r7-3-10-xatlas-bake-spike/20260613-100834",
+  "packageDir": "assets/runtime/r7-3-10/current-room/north/package",
   "targetAtlasWidth": 2325,
   "targetAtlasHeight": 3377,
   "requestedSamples": 1000,
   "diffuseOnly": true,
   "upscaled": false,
-  "bakedRadianceKind": "indirect_diffuse_radiance",
-  "directLightAlreadyIncluded": false,
-  "addDirectLightAfterBakeLookup": true,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
   "multiplyAlbedoAfterBakeLookup": true,
   "bakeAlbedoFree": true,
   "uploadRowFlip": false,
   "phase2": {
     "kind": "raw",
-    "prepareDir": ".omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-054400/xatlas-bake-full-north-wall",
+    "prepareDir": null,
+    "sourcePrepareRetiredAfterValidation": true,
+    "northFullRadianceBake": true,
     "normalLenAudit": "xatlas-normal-len-audit.json",
     "fullWallValidityMaskReport": "xatlas-bake-c2c-full-wall-validity-mask-report.json",
     "defaultRuntimePointerChanged": false,
     "runtimePackageSelection": "explicit xatlasPackage query param only"
   },
   "validation": {
-    "status": "fail",
+    "status": "pass",
     "browserValidationStatus": "pass",
-    "runnerStatus": "fail",
-    "runnerFailedChecks": [
-      "gpu-submission-ms-over-250"
-    ],
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
     "contentChecksPass": true,
     "completedTiles": 35,
     "minCompletedSamples": 1000,
@@ -37,18 +37,19 @@
   },
   "xatlasC2CAlphaPolicy": {
     "enabled": true,
-    "maskPath": ".omc/r7-3-10-full-north-wall-xatlas-phase2/20260612-054400/xatlas-bake-full-north-wall/xatlas-bake-c2c-full-wall-validity-mask-rgba32f.bin",
+    "maskPath": null,
+    "sourceMaskRetiredAfterValidation": true,
     "decisionSource": "per-texel backface-ratio validity mask",
     "invalidOrHiddenAlpha": 0,
     "validVisibleAlpha": 1
   },
   "alphaAudit": {
-    "alphaOneTexels": 6487857,
-    "alphaZeroTexels": 1363668,
+    "alphaOneTexels": 6428791,
+    "alphaZeroTexels": 1422734,
     "alphaOneExactBlackTexels": 0,
     "sourceBlackAlphaOneUsed": 0,
-    "maxDistanceTexels": 4,
-    "maxDistanceLimitTexels": 4
+    "maxDistanceTexels": 0,
+    "maxDistanceLimitTexels": null
   },
   "redLines": {
     "formalRadianceBake": false,

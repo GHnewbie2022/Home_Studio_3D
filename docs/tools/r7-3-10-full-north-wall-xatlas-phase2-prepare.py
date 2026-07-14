@@ -16,7 +16,7 @@ import xatlas
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT_ROOT = REPO / ".omc/r7-3-10-full-north-wall-xatlas-phase2"
+DEFAULT_OUT_ROOT = REPO / "assets/runtime/r7-3-10/work/r7-3-10-full-north-wall-xatlas-phase2"
 PHASE = "r7-3-10-phase2-full-north-wall-xatlas-c1"
 TARGET_DENSITY_M = 0.00125
 TARGET_TEXELS_PER_METER = 800

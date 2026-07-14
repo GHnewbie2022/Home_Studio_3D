@@ -32,6 +32,12 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..');
 const REGISTRY_PATH = resolve(REPO, 'docs/data/r7-3-10-surface-owner-registry.json');
 const AXIS_SPEC_PATH = resolve(REPO, 'docs/tools/r7-3-10-surface-axis-spec.json');
+const STRUCTURAL_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/structural/structural-xatlas-dry-run-uv.json');
+const STRUCTURAL_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/structural/structural-xatlas-input-mesh.json');
+const SOUTH_WINDOW_REVEALS_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-dry-run-uv.json');
+const SOUTH_WINDOW_REVEALS_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-input-mesh.json');
+const WEST_WALL_SWITCH_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-dry-run-uv.json');
+const WEST_WALL_SWITCH_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-input-mesh.json');
 const OUT_DIR = resolve(REPO, 'docs/generated');
 const OUT_PATH = resolve(OUT_DIR, 'r7-3-10-xatlas-param-table.generated.json');
 
@@ -139,7 +145,7 @@ function buildEntry(spec) {
     vScale,
     vMixLo,
     vMixHi,
-    rect: [0, 0, rectW, rectH], // rect.x/rect.y（atlas pack 位置）此階段未排版 → 0,0；rect.z/rect.w=寬高
+    rect: spec.rectOverride || [0, 0, rectW, rectH], // rect.x/rect.y 可由 multi-page runtime 填入 page 內 chart offset
     modeId: spec.modeId,
     specialExclusionId: spec.specialExclusionId,
     representative: !!spec.representative,
@@ -228,6 +234,141 @@ function entryFromRegistryBounds(surfaceId, opts = {}) {
   });
 }
 
+function entryFromCentralDeskChart(surfaceId, opts) {
+  const reg = registrySurfaces.find((s) => s.surfaceId === surfaceId);
+  if (!reg) throw new Error(`registry 缺面：${surfaceId}`);
+  const g = reg.normalGate;
+  const fixedAxis = AXIS_IDX[g.axis];
+  const normal = [0, 0, 0];
+  normal[fixedAxis] = g.sign;
+  const bounds = {
+    0: reg.x || [ROOM.MIN_X, ROOM.MAX_X],
+    1: reg.y || [ROOM.WALL_Y0, ROOM.WALL_Y1],
+    2: reg.z || [ROOM.MIN_Z, ROOM.MAX_Z],
+  };
+  const bboxMin = [bounds[0][0], bounds[1][0], bounds[2][0]];
+  const bboxMax = [bounds[0][1], bounds[1][1], bounds[2][1]];
+  const pageW = 1663;
+  const pageH = 1576;
+  // The bake upload flips texture rows. Convert the chart bounds and vertical
+  // direction to the coordinates sampled by the runtime texture.
+  const uvMin = [opts.uvMin[0], 1 - opts.uvMax[1]];
+  const uvMax = [opts.uvMax[0], 1 - opts.uvMin[1]];
+  const rect = [
+    r6(uvMin[0] * pageW),
+    r6(uvMin[1] * pageH),
+    r6((uvMax[0] - uvMin[0]) * pageW),
+    r6((uvMax[1] - uvMin[1]) * pageH),
+  ];
+  return buildEntry({
+    surfaceId,
+    atlasGroup: 'furniture',
+    normal,
+    bboxMin,
+    bboxMax,
+    fixedAxis,
+    uAxis: opts.uAxis,
+    vAxis: opts.vAxis,
+    uMin: bboxMin[opts.uAxis],
+    uMax: bboxMax[opts.uAxis],
+    uFlip: opts.uFlip,
+    uInset: true,
+    vMin: bboxMin[opts.vAxis],
+    vMax: bboxMax[opts.vAxis],
+    vFlip: !opts.vFlip,
+    vInset: true,
+    atlasW: rect[2],
+    atlasH: rect[3],
+    rectOverride: rect,
+    modeId: MODE_MASTER,
+    specialExclusionId: EXCL_NONE,
+    representative: false,
+    hasTruth: true,
+    truthSource: 'central-desk-xatlas-chart',
+  });
+}
+
+function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource) {
+  const uvReport = JSON.parse(readFileSync(uvPath, 'utf8'));
+  const mesh = JSON.parse(readFileSync(meshPath, 'utf8'));
+  const pageW = uvReport.atlas.width;
+  const pageH = uvReport.atlas.height;
+  const groups = new Map();
+  for (const triangle of uvReport.triangles) {
+    if (!groups.has(triangle.pieceId)) groups.set(triangle.pieceId, []);
+    groups.get(triangle.pieceId).push(triangle);
+  }
+  return [...groups.entries()].map(([pieceId, triangles]) => {
+    const samples = [];
+    for (const triangle of triangles) {
+      triangle.sourceIndices.forEach((sourceIndex, index) => {
+        samples.push({ p: mesh.positions[sourceIndex], uv: triangle.uv[index] });
+      });
+    }
+    const meta = mesh.triangleMetadata[triangles[0].triangleId];
+    const fixedAxis = AXIS_IDX[meta.faceAxis];
+    const freeAxes = [0, 1, 2].filter((axis) => axis !== fixedAxis);
+    const bboxMin = [0, 1, 2].map((axis) => Math.min(...samples.map((sample) => sample.p[axis])));
+    const bboxMax = [0, 1, 2].map((axis) => Math.max(...samples.map((sample) => sample.p[axis])));
+    bboxMin[fixedAxis] -= 0.01;
+    bboxMax[fixedAxis] += 0.01;
+    const uvMin = [0, 1].map((axis) => Math.min(...samples.map((sample) => sample.uv[axis])));
+    const uvMax = [0, 1].map((axis) => Math.max(...samples.map((sample) => sample.uv[axis])));
+    const slope = (worldAxis, uvAxis) => {
+      const lo = samples.reduce((best, sample) => sample.p[worldAxis] < best.p[worldAxis] ? sample : best, samples[0]);
+      const hi = samples.reduce((best, sample) => sample.p[worldAxis] > best.p[worldAxis] ? sample : best, samples[0]);
+      const worldDelta = hi.p[worldAxis] - lo.p[worldAxis];
+      return Math.abs(worldDelta) > 1e-9 ? (hi.uv[uvAxis] - lo.uv[uvAxis]) / worldDelta : 0;
+    };
+    const uAxis = Math.abs(slope(freeAxes[0], 0)) >= Math.abs(slope(freeAxes[1], 0)) ? freeAxes[0] : freeAxes[1];
+    const vAxis = freeAxes.find((axis) => axis !== uAxis);
+    const runtimeUvMin = [uvMin[0], 1 - uvMax[1]];
+    const runtimeUvMax = [uvMax[0], 1 - uvMin[1]];
+    const rect = [
+      r6(runtimeUvMin[0] * pageW),
+      r6(runtimeUvMin[1] * pageH),
+      r6((runtimeUvMax[0] - runtimeUvMin[0]) * pageW),
+      r6((runtimeUvMax[1] - runtimeUvMin[1]) * pageH),
+    ];
+    const entry = buildEntry({
+      surfaceId: pieceId,
+      atlasGroup,
+      normal: [0, 1, 2].map((axis) => axis === fixedAxis ? Number(meta.faceSign) : 0),
+      bboxMin, bboxMax,
+      fixedAxis, uAxis, vAxis,
+      uMin: bboxMin[uAxis], uMax: bboxMax[uAxis], uFlip: slope(uAxis, 0) < 0, uInset: true,
+      vMin: bboxMin[vAxis], vMax: bboxMax[vAxis], vFlip: slope(vAxis, 1) > 0, vInset: true,
+      atlasW: rect[2], atlasH: rect[3], rectOverride: rect,
+      modeId: MODE_MASTER, specialExclusionId: EXCL_NONE,
+      representative: false, hasTruth: true, truthSource,
+    });
+    entry.semanticSurfaceId = meta.surfaceHint;
+    return entry;
+  });
+}
+
+function structuralEntriesFromChart() {
+  return entriesFromChart(STRUCTURAL_UV_PATH, STRUCTURAL_MESH_PATH, 'structural', 'structural-xatlas-chart');
+}
+
+function southWindowRevealEntriesFromChart() {
+  return entriesFromChart(
+    SOUTH_WINDOW_REVEALS_UV_PATH,
+    SOUTH_WINDOW_REVEALS_MESH_PATH,
+    'south_window_reveals',
+    'south-window-reveals-xatlas-chart'
+  );
+}
+
+function westWallSwitchEntriesFromChart() {
+  return entriesFromChart(
+    WEST_WALL_SWITCH_UV_PATH,
+    WEST_WALL_SWITCH_MESH_PATH,
+    'west_wall_switch',
+    'west-wall-switch-xatlas-chart'
+  );
+}
+
 // representative 合成面（房間幾何 worst-case，無真值 → hasTruth=false）
 function representativeEntry(spec) {
   return buildEntry({ ...spec, representative: true, hasTruth: false, truthSource: null });
@@ -247,6 +388,50 @@ baseEntries.push(entryFromAxisSpec('west_wall_open'));   // west（flip 已由 R
 baseEntries.push(entryFromAxisSpec('west_threshold_top')); // west threshold top（box 10 y+，獨立 baked owner）
 baseEntries.push(entryFromAxisSpec('east_wall'));
 baseEntries.push(entryFromAxisSpec('south_window_top_reveal_depth')); // depth_h2（無 inset 原生 planar）
+
+baseEntries.push(entryFromCentralDeskChart('central_desk_top', {
+  uvMin: [0.0003006614570040256, 0.6151649951934814],
+  uvMax: [0.578171968460083, 0.8892766237258911],
+  uAxis: AXIS_IDX.x,
+  vAxis: AXIS_IDX.z,
+  uFlip: true,
+  vFlip: true,
+}));
+baseEntries.push(entryFromCentralDeskChart('central_desk_front', {
+  uvMin: [0.0003006614570040256, 0.00031725887674838305],
+  uvMax: [0.36470234394073486, 0.609454333782196],
+  uAxis: AXIS_IDX.y,
+  vAxis: AXIS_IDX.x,
+  uFlip: true,
+  vFlip: false,
+}));
+baseEntries.push(entryFromCentralDeskChart('central_desk_back', {
+  uvMin: [0.3701142370700836, 0.00031725887674838305],
+  uvMax: [0.734515905380249, 0.609454333782196],
+  uAxis: AXIS_IDX.y,
+  vAxis: AXIS_IDX.x,
+  uFlip: true,
+  vFlip: true,
+}));
+baseEntries.push(entryFromCentralDeskChart('central_desk_left', {
+  uvMin: [0.7399278283119202, 0.00031725887674838305],
+  uvMax: [0.9996993541717529, 0.38483503460884094],
+  uAxis: AXIS_IDX.z,
+  vAxis: AXIS_IDX.y,
+  uFlip: true,
+  vFlip: true,
+}));
+baseEntries.push(entryFromCentralDeskChart('central_desk_right', {
+  uvMin: [0.5835838913917542, 0.6151649951934814],
+  uvMax: [0.8433553576469421, 0.9996827244758606],
+  uAxis: AXIS_IDX.z,
+  vAxis: AXIS_IDX.y,
+  uFlip: true,
+  vFlip: false,
+}));
+baseEntries.push(...structuralEntriesFromChart());
+baseEntries.push(...southWindowRevealEntriesFromChart());
+baseEntries.push(...westWallSwitchEntriesFromChart());
 
 // (3) representative 樑/柱/reveals/C2A 代表面（房間幾何程式化合成 plausible bbox/rect）
 

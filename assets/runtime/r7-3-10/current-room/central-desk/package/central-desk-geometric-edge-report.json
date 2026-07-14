@@ -1,0 +1,27 @@
+{
+  "schema": "r7-3-10-central-desk-geometric-edge-extrapolation-v1",
+  "atlas": {
+    "width": 1663,
+    "height": 1576
+  },
+  "policy": {
+    "sourceScope": "same-face-interior-valid-radiance",
+    "targetScope": "central-desk-geometric-chart-edge",
+    "edgeCoordinateTolerance": 0.000001,
+    "maxDistanceLimitTexels": 4
+  },
+  "counts": {
+    "targetTexels": 13202,
+    "repairedTexels": 13202,
+    "unrepairedTexels": 0,
+    "sourceExactBlackTexels": 0
+  },
+  "maxDistanceTexels": 1,
+  "repairedByFaceCode": {
+    "0": 2076,
+    "1": 2076,
+    "3": 2786,
+    "4": 3132,
+    "5": 3132
+  }
+}

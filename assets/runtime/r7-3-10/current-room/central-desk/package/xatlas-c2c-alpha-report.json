@@ -1,0 +1,141 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": null,
+  "sourceMaskRetiredAfterValidation": true,
+  "atlas": {
+    "width": 1663,
+    "height": 1576
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "counts": {
+    "totalTexels": 2620888,
+    "alphaOneTexels": 2108862,
+    "alphaZeroTexels": 512026,
+    "metadataInvalidTexels": 512026,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 2939,
+    "repairedVisibleExactBlackTexels": 2939,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 2939,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {
+      "2": 1441,
+      "4": 961,
+      "8": 536,
+      "9": 1
+    },
+    "maxDistanceTexels": 2
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 208274,
+      "alphaOneTexels": 208274,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 2.0622475522912866
+    },
+    "1": {
+      "texels": 208272,
+      "alphaOneTexels": 208272,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 2.108214190296214
+    },
+    "2": {
+      "texels": 291667,
+      "alphaOneTexels": 291667,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6243044924233595
+    },
+    "3": {
+      "texels": 291660,
+      "alphaOneTexels": 291660,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6298347303070019
+    },
+    "4": {
+      "texels": 291667,
+      "alphaOneTexels": 291667,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.411045082670636
+    },
+    "5": {
+      "texels": 291660,
+      "alphaOneTexels": 291660,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4216944895252089
+    },
+    "6": {
+      "texels": 131419,
+      "alphaOneTexels": 131419,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5473178354638908
+    },
+    "7": {
+      "texels": 131412,
+      "alphaOneTexels": 131412,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6320351963355711
+    },
+    "8": {
+      "texels": 131419,
+      "alphaOneTexels": 131419,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5766264346371657
+    },
+    "9": {
+      "texels": 131412,
+      "alphaOneTexels": 131412,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6341164246263968
+    },
+    "-1": {
+      "texels": 512026,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 512026,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

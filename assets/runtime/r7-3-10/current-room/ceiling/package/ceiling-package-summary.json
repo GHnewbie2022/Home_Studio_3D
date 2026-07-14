@@ -1,0 +1,10 @@
+{
+  "tool": "r7-3-10-full-ceiling-xatlas-package",
+  "rawDir": "assets/runtime/r7-3-10/current-room/ceiling/package",
+  "oidnDir": null,
+  "prepareDir": null,
+  "sourcePrepareRetiredAfterValidation": true,
+  "wrote": {
+    "rawPointer": "docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json"
+  }
+}

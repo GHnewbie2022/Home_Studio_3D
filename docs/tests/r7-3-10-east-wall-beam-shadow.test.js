@@ -30,8 +30,8 @@ assert.match(
 
 assert.doesNotMatch(homeStudio, /pathTracingUniforms\.tR7310C1EastWallBeamShadowTexture/);
 assert.match(homeStudio, /uR7310C1EastWallBeamShadowMode/);
-assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 23\.0 \}/);
-assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*23/);
+assert.match(homeStudio, /uR7310C1RuntimeAtlasPatchCount = \{ value: 30\.0 \}/);
+assert.match(initCommon, /R7310_C1_RUNTIME_ATLAS_PATCH_COUNT\s*=\s*30/);
 assert.match(initCommon, /uR7310C1RuntimeAtlasPatchCount\.value = R7310_C1_RUNTIME_ATLAS_PATCH_COUNT/);
 
 assert.doesNotMatch(shader, /uniform sampler2D tR7310C1EastWallBeamShadowTexture/);

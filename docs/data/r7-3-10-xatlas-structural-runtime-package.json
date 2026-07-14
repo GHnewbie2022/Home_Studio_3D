@@ -1,0 +1,62 @@
+{
+  "schema": "r7-3-10-xatlas-runtime-package-pointer-v1",
+  "packageStatus": "accepted",
+  "runtimeScope": "c1_xatlas_structural_runtime",
+  "runtimeArchitecture": "multi_page_structural_lightmap",
+  "surfaceName": "structural_beams_columns",
+  "atlasGroup": "structural",
+  "configId": 1,
+  "targetId": 1200,
+  "targetAtlasWidth": 1526,
+  "targetAtlasHeight": 3779,
+  "targetAtlasResolution": 3779,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "nonSquareAtlas": true,
+  "packageDir": "assets/runtime/r7-3-10/current-room/structural/package",
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
+    "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json"
+  },
+  "chartEdgeDilation": {
+    "enabled": true,
+    "fillMode": "same-piece-interior-geometric-edge-extrapolation-plus-chart-gutter",
+    "maxDistanceLimitTexels": 4,
+    "actualMaxDistanceTexels": 4,
+    "repairedVisibleExactBlackTexels": 52298,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "occluderCuts": [
+    "sw_column_inner_x/south_drawers",
+    "sw_column_north_z/south_drawers",
+    "se_column_inner_x/bookshelf",
+    "se_column_north_z/east_beam"
+  ],
+  "artifactHashes": {
+    "atlasPatch0Sha256": "0e855583bd0e62261a0c72713d0ad0ed4854619f6510d70b1b9067e1ebd15dbd",
+    "texelMetadataPatch0Sha256": "2299ebaa6fcec50af3e71245ebc747af7ee98bc91ea458258f025265a4374fd6"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "runnerFailedChecks": [],
+    "contextLostCount": 0,
+    "completedTiles": 24,
+    "tileCount": 24,
+    "minCompletedSamples": 1000
+  },
+  "note": "Structural beams and columns full-radiance XATLAS lightmap. Every physical chart perimeter copies radiance only from the same piece interior before alpha and chart-gutter processing; the baked seam gate passes all 29 structural sides."
+}

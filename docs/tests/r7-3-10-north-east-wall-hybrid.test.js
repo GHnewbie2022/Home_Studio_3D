@@ -58,10 +58,25 @@ for (const surface of surfaces) {
   assert.match(shader, new RegExp(`vec3 r7310C1${surface.name}HybridRadiance`));
   assert.match(shader, new RegExp(`bool r7310C1${surface.name}IndirectBakeFirstHit`));
   assert.match(shader, new RegExp(`r7310C1${surface.name}IndirectBakeFirstHit\\(bounces, diffuseCount\\)`));
-  assert.match(shader, new RegExp(`if \\(r7310${surface.name}HybridFirstHit\\)[\\s\\S]{0,180}r7310C1${surface.name}HybridRadiance`));
   assert.match(initCommon, new RegExp(`runtimeArchitecture !== '${surface.runtimeArchitecture}'`));
   assert.match(runner, new RegExp(surface.runtimeArchitecture));
 }
+
+const finalHybridAddStart = shader.indexOf('if (r7310FloorHybridFirstHit && !r7310XatlasRuntimeMapped)');
+assert.notEqual(finalHybridAddStart, -1, 'final hybrid add block must start with the xatlas-mapped floor guard');
+const finalHybridAddEnd = shader.indexOf('if (r7310SeColumnNorthHybridFirstHit)', finalHybridAddStart);
+assert.ok(finalHybridAddEnd > finalHybridAddStart, 'final hybrid add block must include north/east before SE-column additions');
+const finalHybridAddBlock = shader.slice(finalHybridAddStart, finalHybridAddEnd);
+assert.match(
+  finalHybridAddBlock,
+  /if\s*\(\s*r7310NorthWallHybridFirstHit\s*&&\s*!r7310XatlasRuntimeMapped\s*\)[\s\S]{0,120}r7310C1NorthWallHybridRadiance/,
+  'north hybrid final add must yield to an already mapped xatlas route'
+);
+assert.match(
+  finalHybridAddBlock,
+  /if\s*\(\s*r7310EastWallHybridFirstHit\s*&&\s*!r7310XatlasRuntimeMapped\s*\)[\s\S]{0,120}r7310C1EastWallHybridRadiance/,
+  'east hybrid final add must yield to an already mapped xatlas route'
+);
 
 assert.match(shader, /bool r7310NorthWallHybridFirstHit\s*=\s*bounces == 0[\s\S]{0,160}r7310C1NorthWallHybridActive/);
 assert.match(shader, /bool r7310EastWallHybridFirstHit\s*=\s*bounces == 0 &&\s*r7310C1EastWallHybridActive/);

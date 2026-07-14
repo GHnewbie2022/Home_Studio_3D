@@ -13,21 +13,9 @@
 textures/*.bak-pre-padding-fix
 
 # Local generated artifacts and bake/probe outputs.
-# Keep .omc local by default; allowlist reviewed promotion evidence packages.
-.omc/*
-!.omc/r7-3-10-xatlas-bake-spike/
-.omc/r7-3-10-xatlas-bake-spike/*
-!.omc/r7-3-10-xatlas-bake-spike/20260611-115310/
-!.omc/r7-3-10-xatlas-bake-spike/20260611-115310/**
-!.omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta/
-!.omc/r7-3-10-xatlas-bake-spike/20260611-115310-oidn-rt-high-beta/**
-!.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/
-.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/*
-!.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/
-!.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/**
-!.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/claude-verify-tri2021/
-!.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/claude-verify-tri2021/**
-.omc/r7-3-10-xatlas-a1-west-beam-hard-edge-fix/20260611-full4x/xatlas-bake-full4x/xatlas-bake-c2c-validity-mask-full4x-r16-rgba32f.bin
+# Current bake/probe work output belongs under assets/runtime/r7-3-10/work.
+.omc/
+assets/runtime/r7-3-10/work/
 
 # Editor
 .vscode/

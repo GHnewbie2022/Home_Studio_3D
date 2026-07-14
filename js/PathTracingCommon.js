@@ -3301,7 +3301,12 @@ void main( void )
 	// point on aperture to focal point
 	vec3 finalRayDir = normalize(focalPoint - randomAperturePos);
 
-	rayOrigin = cameraPosition + randomAperturePos;
+#if defined(R7310_RUNTIME_PLANAR_SOURCE_UCAMPOS)
+	vec3 r7310PathTracingCameraPosition = uR7310C1IronDoorRuntimePlanarReflectionSourcePass > 0.5 ? uCamPos : cameraPosition;
+#else
+	vec3 r7310PathTracingCameraPosition = cameraPosition;
+#endif
+	rayOrigin = r7310PathTracingCameraPosition + randomAperturePos;
 	rayOrigin += !uUseOrthographicCamera ? vec3(0) : 
 		     (camRight * pixelPos.x * uULen * 100.0) + (camUp * pixelPos.y * uVLen * 100.0);
 					     

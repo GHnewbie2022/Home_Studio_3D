@@ -7,7 +7,7 @@ A1 取法：以北牆面（z=-1.874，surface 1002）為平面，找「貼住北
 掃描器從 sceneBoxes 自動辨識這些結構 box，不靠人手指定 box index。
 
 只讀 contact-edge-source.json 算幾何；不改 shader/bake/runtime。
-用法：python3 r7-3-10-contact-edge-scan.py --source <source.json> --edge a1 --out <out.json>
+用法：python3 r7-3-10-contact-edge-scan.py --source <source.json> --edge a1|b1|b2 --out <out.json>
 """
 import argparse
 import json
@@ -90,25 +90,90 @@ def scan_a1(src):
     }
 
 
+def east_wall(src):
+    return next(s for s in src["surfaces"] if s["targetId"] == 1003)["worldBounds"]
+
+
+def structural_box(src, index):
+    return next(b for b in src["boxes"] if b["index"] == index)
+
+
+def scan_b1(src):
+    wall = east_wall(src)
+    beam = structural_box(src, 29)
+    wall_x = wall["x"]
+    if not (beam["min"][0] < wall_x + EPS and beam["max"][0] > wall_x - EPS):
+        raise ValueError("east beam does not meet the east-wall plane")
+    band = {
+        "x": wall_x,
+        "zMin": max(wall["zMin"], beam["min"][2]),
+        "zMax": min(2.49, wall["zMax"], beam["max"][2]),
+        "yMin": max(wall["yMin"], beam["min"][1]),
+        "yMax": min(wall["yMax"], beam["max"][1]),
+    }
+    return {
+        "edge": "b1",
+        "method": "python-aabb-plane-contact",
+        "contactBand": band,
+        "sides": [
+            {"role": "east_wall", "targetId": 1003, "faceNormal": "-X", "faceX": wall_x},
+            {"role": "east_beam", "boxIndex": beam["index"], "faceNormal": "-Y/+contact", "faceX": wall_x},
+        ],
+        "note": "East-wall/east-beam handoff band derived from the main-room wall plane and scene box 29.",
+    }
+
+
+def scan_b2(src):
+    wall = east_wall(src)
+    column = structural_box(src, 31)
+    wall_x = wall["x"]
+    if abs(column["max"][0] - wall_x) > EPS:
+        raise ValueError("SE column does not terminate on the east-wall plane")
+    band = {
+        "x": wall_x,
+        "zMin": max(2.49, wall["zMin"], column["min"][2]),
+        "zMax": min(wall["zMax"], column["max"][2]),
+        "yMin": max(wall["yMin"], column["min"][1]),
+        "yMax": min(wall["yMax"], column["max"][1]),
+    }
+    return {
+        "edge": "b2",
+        "method": "python-aabb-plane-contact",
+        "contactBand": band,
+        "sides": [
+            {"role": "east_wall", "targetId": 1003, "faceNormal": "-X", "faceX": wall_x},
+            {"role": "se_column", "boxIndex": column["index"], "faceNormal": "-Z/-X", "faceX": wall_x},
+        ],
+        "note": "East-wall/SE-column handoff band derived from the main-room wall plane and scene box 31.",
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", required=True)
     ap.add_argument("--edge", default="a1")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
-    if args.edge != "a1":
-        print("only --edge a1 supported in this spike", file=sys.stderr)
-        sys.exit(2)
     src = load(args.source)
-    out = scan_a1(src)
+    if args.edge == "a1":
+        out = scan_a1(src)
+    elif args.edge == "b1":
+        out = scan_b1(src)
+    elif args.edge == "b2":
+        out = scan_b2(src)
+    else:
+        print("supported edges: a1, b1, b2", file=sys.stderr)
+        sys.exit(2)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
     band = out["contactBand"]
-    gate = out["gateInvalidRegionWest"]
     print("WROTE", args.out)
     print("contactBand", json.dumps(band))
-    print("gateWest   ", json.dumps(gate))
     print("sides      ", json.dumps(out["sides"]))
+    if args.edge != "a1":
+        return
+    gate = out["gateInvalidRegionWest"]
+    print("gateWest   ", json.dumps(gate))
     ok = (abs(out["bandVsGateDelta"]["xMin"]) < MAG_TOL and abs(out["bandVsGateDelta"]["xMax"]) < MAG_TOL
           and abs(out["bandVsGateDelta"]["yMin"]) < MAG_TOL and abs(out["bandVsGateDelta"]["yMax"]) < MAG_TOL)
     print("CHECK band in beam-gap west magnitude (tol %.3f): %s" % (MAG_TOL, "PASS" if ok else "FAIL"))

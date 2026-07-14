@@ -1,0 +1,22 @@
+{
+  "config": 1,
+  "batch": "floor_open",
+  "surfaceTargetCount": 1,
+  "coveredSurfaceNames": [
+    "floor_open"
+  ],
+  "missingSurfaceNames": [],
+  "validTexelRatioBySurface": {
+    "floor_open": 0.6214029836479553
+  },
+  "dilationAppliedBySurface": {
+    "floor_open": false
+  },
+  "atlasPathBySurface": {
+    "floor_open": "atlas-patch-000-rgba-f32.bin"
+  },
+  "allMajorSurfacesCovered": false,
+  "allStaticVisibleSurfacesAccountedFor": false,
+  "allStaticVisibleSurfacesCovered": false,
+  "finalC1Coverage": false
+}

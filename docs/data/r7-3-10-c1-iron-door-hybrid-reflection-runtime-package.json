@@ -1,0 +1,401 @@
+{
+  "version": "r7-3-10-iron-door-hybrid-reflection-contract-v1",
+  "packageStatus": "hybrid_reflection_contract",
+  "validationStatus": "failed_candidate",
+  "target": "iron_door_body",
+  "targetId": 230002,
+  "surfaceName": "c1_iron_door_body_hybrid_reflection_candidate",
+  "runtimeScope": "c1_iron_door_body_hybrid_reflection_candidate",
+  "referenceMode": "light_bake_live_reflection_fix7",
+  "currentModeCandidate": "hybrid_planar_reflection_candidate",
+  "currentMode": "hybrid_planar_reflection_candidate",
+  "captureKind": "hybrid_planar_or_live_reflection_resolve",
+  "projectionKind": "receiver_plane_masked_planar_full_photo_plane",
+  "packageDir": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package",
+  "selfCaptureExcluded": true,
+  "captureClipPlaneEnabled": true,
+  "prefilterKind": "roughness_0_3_planar_prefilter_required",
+  "reflectionCaptureSamples": 1,
+  "metalness": 1,
+  "roughness": 0.3,
+  "receiverMask": {
+    "kind": "main_flat_door_plate_only",
+    "debugMode": "hybrid-mask",
+    "shaderFunction": "r7310C1IronDoorMainFlatPlateMask"
+  },
+  "replacementScope": {
+    "planarCandidateRegions": [
+      "full_flat_door_photo_plane"
+    ],
+    "liveFallbackRegions": [],
+    "farFieldProbeRole": "optional_low_frequency_only"
+  },
+  "captureRequirements": {
+    "selfCaptureExcluded": true,
+    "captureClipPlaneEnabled": true,
+    "receiverPlaneMasked": true,
+    "roughnessPrefilterRequired": true,
+    "manualBrightnessCompensationAllowed": false
+  },
+  "acceptanceGates": {
+    "fix7ReferenceUrl": "http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-body-fix7",
+    "sameCameraExposureSppRequired": true,
+    "roiMeanLumaRatio": {
+      "min": 0.75,
+      "max": 1.25
+    },
+    "meanAbsRgbDiff": {
+      "max": 12
+    },
+    "reflectionContentParityRequired": true,
+    "freeNavigationViewDependentReflectionRequired": true,
+    "mainPlateMaskPixelCount": {
+      "min": 1843
+    },
+    "mainPlateMeanLumaRatio": {
+      "min": 0.75,
+      "max": 1.25
+    },
+    "mainPlateMeanAbsRgbDiff": {
+      "max": 12
+    },
+    "reflectionContentPosition": {
+      "featureKind": "warm_reflection_content_inside_main_plate_roi",
+      "centerDistanceNormalized": {
+        "max": 0.12
+      },
+      "bboxIou": {
+        "min": 0.15
+      },
+      "scoreRatio": {
+        "min": 0.25,
+        "max": 4
+      }
+    },
+    "console404Allowed": false,
+    "shaderValidationErrorAllowed": false,
+    "webglContextLostAllowed": false
+  },
+  "acceptanceCameraState": {
+    "position": {
+      "x": -0.82323,
+      "y": 1.411762,
+      "z": -0.457741
+    },
+    "yaw": 1.270399,
+    "pitch": -0.147,
+    "fov": 77,
+    "forward": {
+      "x": -0.944917,
+      "y": -0.146471,
+      "z": -0.292708
+    }
+  },
+  "visualAbRunner": "--r7310-iron-door-hybrid-reflection-visual-ab-test",
+  "humanVisualReviewRequired": true,
+  "reportContract": [
+    "currentMode",
+    "packageDir",
+    "captureKind",
+    "projectionKind",
+    "selfCaptureExcluded",
+    "captureClipPlaneEnabled",
+    "prefilterKind",
+    "validationStatus"
+  ],
+  "stopConditions": [
+    "face_seam_or_spatial_split",
+    "self_capture_receiver_visible",
+    "manual_brightness_compensation",
+    "reflection_position_mismatch_against_fix7",
+    "reflection_content_image_mismatch_against_fix7",
+    "view_dependent_reflection_parallax_mismatch_against_fix7",
+    "visual_diff_metric_failed_against_fix7",
+    "webgl_context_lost",
+    "shader_validation_error",
+    "console_404"
+  ],
+  "notes": [
+    "Contract only. It must not be treated as accepted runtime output.",
+    "The first implementation candidate must keep FIX7 unchanged and replace the full flat iron-door photo plane after numeric A/B gate passes.",
+    "As of 2026-06-25, the only formal staged gate is noise_gate_1_spp.",
+    "2026-06-26 user review showed the captured planar texture is fixed to the acceptance-camera composition during free navigation."
+  ],
+  "freeNavigationCounterexample": {
+    "status": "failed_candidate",
+    "failure": "view_dependent_reflection_parallax_mismatch_against_fix7",
+    "observedByUser": true,
+    "cameraState": {
+      "position": {
+        "x": -1.42582,
+        "y": 1.174882,
+        "z": -1.620883
+      },
+      "yaw": 2.072396,
+      "pitch": -0.062482,
+      "fov": 77,
+      "forward": {
+        "x": -0.875103,
+        "y": -0.062441,
+        "z": 0.479891
+      }
+    },
+    "expectedBehavior": "reflected content changes with viewer position and ray direction",
+    "observedBehavior": "wood-door reflection remains from the fixed acceptance-camera composition",
+    "rootCause": "single_receiver_plane_projective_texture_uses_visible_position_not_current_view_ray_direction"
+  },
+  "stagedAcceptance": {
+    "metricContract": "main_plate_metric_v1",
+    "requiredGateIds": [
+      "noise_gate_1_spp"
+    ],
+    "completedGateIds": [],
+    "missingGateIds": [
+      "noise_gate_1_spp"
+    ],
+    "stagedAcceptanceComplete": false,
+    "lastGate": {
+      "id": "noise_gate_1_spp",
+      "targetSamples": 1
+    },
+    "gateEvidence": []
+  },
+  "recommendedNextCandidate": "hybrid_planar_reflection_resolve",
+  "visualAcceptanceEvidence": {
+    "candidateKind": "hybrid_planar_reflection_resolve",
+    "runnerStatus": "evidence_captured",
+    "packageDir": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package",
+    "hybridCandidateSource": "fresh_scene_capture_in_memory_runtime",
+    "reflectionCaptureSamples": 1,
+    "freshSceneCapturePackage": {
+      "packageDir": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/fresh-planar-capture-package",
+      "package": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/fresh-planar-capture-package/iron-door-planar-reflection-package.json",
+      "preview": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/fresh-planar-capture-package/iron-door-planar-reflection-preview.png",
+      "validationStatus": "candidate_pending_visual_acceptance",
+      "captureKind": "mirrored_camera_planar_capture",
+      "projectionKind": "single_receiver_plane"
+    },
+    "liveReference": "live-reference-spp1.png",
+    "hybridCandidate": "hybrid-candidate-spp1.png",
+    "mainPlateMask": "main-plate-mask-spp1.png",
+    "metrics": {
+      "version": "r7-3-10-iron-door-planar-reflection-visual-ab-metrics",
+      "roi": {
+        "xMin": 689,
+        "xMax": 931,
+        "yMin": 40,
+        "yMax": 641
+      },
+      "liveMeanLuma": 0.1073802343253032,
+      "candidateMeanLuma": 0.1417194536895744,
+      "roiMeanLumaRatio": 1.3197908775300506,
+      "meanAbsRgbDiff": 0.05238905809116494,
+      "mainPlateMetrics": {
+        "mainPlateMaskPixelCount": 166920,
+        "minMainPlateMaskPixels": 1843,
+        "liveMeanLuma": 0.0722149791697761,
+        "candidateMeanLuma": 0.11374459404034304,
+        "mainPlateMeanLumaRatio": 1.5750831108450725,
+        "meanAbsRgbDiff": 0.062292755865703486,
+        "gates": {
+          "maskCoveragePass": true,
+          "lumaRatioPass": false,
+          "meanAbsRgbDiffPass": true
+        }
+      },
+      "reflectionContentPositionMetrics": {
+        "version": "r7-3-10-iron-door-reflection-content-position-metrics-v1",
+        "featureKind": "warm_reflection_content_inside_main_plate_roi",
+        "topFraction": 0.08,
+        "roi": {
+          "xMin": 689,
+          "xMax": 931,
+          "yMin": 40,
+          "yMax": 641
+        },
+        "minFeaturePixels": 656,
+        "live": {
+          "mainPlateRoiMaskPixelCount": 131311,
+          "selectedCount": 10504,
+          "selectedTargetCount": 10504,
+          "thresholdScore": 0.0006743498197347876,
+          "scoreSum": 17.514232874050943,
+          "areaFraction": 0.07999329835276557,
+          "centroid": {
+            "x": 805.9592274269128,
+            "y": 445.74580455672213
+          },
+          "bbox": {
+            "xMin": 701,
+            "yMin": 41,
+            "xMax": 930,
+            "yMax": 640
+          }
+        },
+        "candidate": {
+          "mainPlateRoiMaskPixelCount": 131311,
+          "selectedCount": 10504,
+          "selectedTargetCount": 10504,
+          "thresholdScore": 0.001953249191463171,
+          "scoreSum": 35.15197300494308,
+          "areaFraction": 0.07999329835276557,
+          "centroid": {
+            "x": 780.0282554208236,
+            "y": 428.5617448575347
+          },
+          "bbox": {
+            "xMin": 717,
+            "yMin": 55,
+            "xMax": 920,
+            "yMax": 630
+          }
+        },
+        "comparison": {
+          "centerDistancePx": 31.10799281415982,
+          "centerDistanceNormalized": 0.048014109416400566,
+          "bboxIou": 0.8514782608695652,
+          "scoreRatio": 2.0070518222367695
+        },
+        "gates": {
+          "liveFeatureDetectedPass": true,
+          "candidateFeatureDetectedPass": true,
+          "centerDistancePass": true,
+          "bboxIouPass": true,
+          "scoreRatioPass": true
+        },
+        "contentPositionGatePass": true,
+        "status": "pass"
+      },
+      "gates": {
+        "lumaRatioPass": false,
+        "meanAbsRgbDiffPass": true,
+        "mainPlateGatePass": false,
+        "contentPositionGatePass": true
+      },
+      "status": "candidate_rejected_by_visual_ab_metrics"
+    },
+    "runtimeFatalEventCounts": {
+      "webglContextLost": 0,
+      "shaderValidationError": 0,
+      "console404": 0
+    },
+    "acceptanceGate": {
+      "console404": {
+        "status": "pass",
+        "count": 0,
+        "allowed": false
+      },
+      "shaderValidationError": {
+        "status": "pass",
+        "count": 0,
+        "allowed": false
+      },
+      "webglContextLost": {
+        "status": "pass",
+        "count": 0,
+        "allowed": false
+      },
+      "fatalEventGatePass": true,
+      "evidenceCaptured": true,
+      "mainPlateMask": {
+        "status": "fail",
+        "mainPlateMaskPixelCount": 166920,
+        "minMainPlateMaskPixels": 1843,
+        "mainPlateMeanLumaRatio": 1.5750831108450725,
+        "meanAbsRgbDiff": 0.062292755865703486,
+        "gates": {
+          "maskCoveragePass": true,
+          "lumaRatioPass": false,
+          "meanAbsRgbDiffPass": true
+        }
+      },
+      "reflectionContentPosition": {
+        "status": "pass",
+        "featureKind": "warm_reflection_content_inside_main_plate_roi",
+        "comparison": {
+          "centerDistancePx": 31.10799281415982,
+          "centerDistanceNormalized": 0.048014109416400566,
+          "bboxIou": 0.8514782608695652,
+          "scoreRatio": 2.0070518222367695
+        },
+        "gates": {
+          "liveFeatureDetectedPass": true,
+          "candidateFeatureDetectedPass": true,
+          "centerDistancePass": true,
+          "bboxIouPass": true,
+          "scoreRatioPass": true
+        }
+      },
+      "overallPass": false,
+      "visualStatus": "candidate_rejected_by_visual_ab_metrics"
+    },
+    "externalValidation": {
+      "version": "external_visual_tool_bridge_v1",
+      "status": "fail",
+      "requiredForAcceptance": true,
+      "targetSamples": 1,
+      "fixedAcceptanceCamera": true,
+      "candidateKind": "hybrid_planar_reflection_resolve",
+      "imageArtifacts": {
+        "liveReferencePng": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/live-reference-spp1.png",
+        "candidatePng": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/hybrid-candidate-spp1.png",
+        "diagnosticPng": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/main-plate-mask-spp1.png",
+        "width": 1280,
+        "height": 720
+      },
+      "webglReadback": {
+        "status": "pass",
+        "source": "float32_framebuffer_readback_before_png_preview",
+        "normalizedBySamples": false,
+        "artifacts": [
+          "r7310-iron-door-visual-ab-live-reference",
+          "r7310-iron-door-visual-ab-hybrid-candidate",
+          "r7310-iron-door-visual-ab-main-plate-mask"
+        ]
+      },
+      "openImageIoDiff": {
+        "tool": "oiiotool",
+        "source": "OpenImageIO",
+        "requiredForAcceptance": true,
+        "available": true,
+        "status": "fail",
+        "exitCode": 1,
+        "signal": null,
+        "command": "oiiotool assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/live-reference-spp1.png assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/hybrid-candidate-spp1.png --fail 0.004 --failpercent 1 --hardfail 0.008 --diff --absdiff -o assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/openimageio-diff-spp1.tif",
+        "diffImage": "assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/openimageio-diff-spp1.tif",
+        "stdout": "Computing diff of \"assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/live-reference-spp1.png\" vs \"assets/runtime/r7-3-10/current-room/iron-door-hybrid-reflection/package/hybrid-candidate-spp1.png\"\n  Mean error = 0.0125223\n  RMS error = 0.0369107\n  Peak SNR = 28.657\n  Max error  = 0.49803924560546875 @ (1186, 187, R)  values are 0, 0, 0 vs 0.49803925, 0.24313727, 0.054901965\n  166297 pixels (18%) over 1e-06\n  165335 pixels (17.9%) over 0.004\nFAILURE\n",
+        "stderr": ""
+      },
+      "playwrightScreenshot": {
+        "tool": "@playwright/test",
+        "status": "declared_optional_not_run",
+        "role": "fixed-environment screenshot golden comparison"
+      },
+      "spectorJsFrameCapture": {
+        "tool": "spectorjs",
+        "status": "declared_optional_not_run",
+        "role": "WebGL frame command and texture-slot inspection"
+      }
+    },
+    "stagedAcceptance": {
+      "metricContract": "main_plate_metric_v1",
+      "requiredGateIds": [
+        "noise_gate_1_spp"
+      ],
+      "completedGateIds": [],
+      "missingGateIds": [
+        "noise_gate_1_spp"
+      ],
+      "stagedAcceptanceComplete": false,
+      "lastGate": {
+        "id": "noise_gate_1_spp",
+        "targetSamples": 1
+      },
+      "gateEvidence": []
+    },
+    "stagedGateEvidence": [],
+    "humanVisualReviewRequired": true
+  },
+  "primaryVisualFailure": "view_dependent_reflection_parallax_mismatch_against_fix7",
+  "failureReason": "view_dependent_reflection_parallax_mismatch_against_fix7"
+}
