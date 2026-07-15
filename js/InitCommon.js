@@ -12361,7 +12361,10 @@ async function captureR7310C1SouthWindowTopRevealShadowAtlas(targetSamples, time
 		floorWorldBounds: R7310_C1_FLOOR_WORLD_BOUNDS,
 		// R7-3.10 全域 albedo-free 契約：把 separated 宣告續傳到 DirectSurfaceTexelPatch（設 uR7310C1SeparatedBakeMode），
 		// 使 H2 patchId 1022 烤時跳過 mask*=hitColor → albedo-free。此處不傳即斷鏈、回到雙乘色。
-		separatedIrradianceBake: options.separatedIrradianceBake === true
+		separatedIrradianceBake: options.separatedIrradianceBake === true,
+		// H2 full bake 必須把命令列的 full-radiance 模式一路傳到實際 capture，
+		// 讓 shader、atlasSummary 與正式 manifest 對同一份資料語意負責。
+		fullRadianceBake: options.fullRadianceBake === true
 	});
 }
 window.captureR7310C1SouthWindowTopRevealShadowAtlas = captureR7310C1SouthWindowTopRevealShadowAtlas;

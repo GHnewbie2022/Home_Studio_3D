@@ -1,0 +1,100 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": "assets/runtime/r7-3-10/work/r7-3-10-south-window-reveals-xatlas/prepare/xatlas-bake-tri-valid-rgba32f.bin",
+  "atlas": {
+    "width": 502,
+    "height": 1953
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask",
+    "preserveVisibleExactBlack": false
+  },
+  "counts": {
+    "totalTexels": 980406,
+    "alphaOneTexels": 800118,
+    "alphaZeroTexels": 180288,
+    "metadataInvalidTexels": 180288,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 0,
+    "repairedVisibleExactBlackTexels": 0,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 0,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {},
+    "maxDistanceTexels": 0
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 120934,
+      "alphaOneTexels": 120934,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.31859817299185167
+    },
+    "1": {
+      "texels": 120932,
+      "alphaOneTexels": 120932,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.2593635728969819
+    },
+    "2": {
+      "texels": 120934,
+      "alphaOneTexels": 120934,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.3271807283690193
+    },
+    "3": {
+      "texels": 120932,
+      "alphaOneTexels": 120932,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.23298294399694727
+    },
+    "4": {
+      "texels": 158194,
+      "alphaOneTexels": 158194,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.33750290706578584
+    },
+    "5": {
+      "texels": 158192,
+      "alphaOneTexels": 158192,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.3390045153547951
+    },
+    "-1": {
+      "texels": 180288,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 180288,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

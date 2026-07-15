@@ -1,5 +1,5 @@
 {
-  "schema": "r7-3-10-full-room-black-edge-report-v1",
+  "schema": "r7-3-10-full-room-black-edge-report-v2",
   "status": "PASS",
   "method": "formal-xatlas-axis-aligned-rectangle-adjacency",
   "source": {
@@ -48,7 +48,10 @@
     "sharedEdges": 68,
     "orthogonalEdges": 62,
     "aNarrowProbeCandidates": 62,
-    "boundANarrowEdges": 4
+    "boundANarrowEdges": 6,
+    "undercoveredANarrowEdges": 0,
+    "crossAtlasEdges": 20,
+    "unclassifiedCrossAtlasEdges": 0
   },
   "edges": [
     {
@@ -79,7 +82,17 @@
       "lengthM": 0.757,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_back": 0.00125,
+        "central_desk_left": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_back|central_desk_right:y:0:0.757:{\"z\":0.945,\"x\":0.6}",
@@ -109,7 +122,17 @@
       "lengthM": 0.757,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_back": 0.00125,
+        "central_desk_right": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_back|central_desk_top:x:-0.6:0.6:{\"y\":0.757,\"z\":0.945}",
@@ -139,7 +162,17 @@
       "lengthM": 1.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_back": 0.001249,
+        "central_desk_top": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_front|central_desk_left:y:0:0.757:{\"z\":0.405,\"x\":-0.6}",
@@ -169,7 +202,17 @@
       "lengthM": 0.757,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_front": 0.00125,
+        "central_desk_left": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_front|central_desk_right:y:0:0.757:{\"z\":0.405,\"x\":0.6}",
@@ -199,7 +242,17 @@
       "lengthM": 0.757,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_front": 0.00125,
+        "central_desk_right": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_front|central_desk_top:x:-0.6:0.6:{\"y\":0.757,\"z\":0.405}",
@@ -229,7 +282,17 @@
       "lengthM": 1.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_front": 0.001249,
+        "central_desk_top": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_left|central_desk_top:z:0.405:0.945:{\"y\":0.757,\"x\":-0.6}",
@@ -259,7 +322,17 @@
       "lengthM": 0.54,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_left": 0.001249,
+        "central_desk_top": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "central_desk_right|central_desk_top:z:0.405:0.945:{\"y\":0.757,\"x\":0.6}",
@@ -289,7 +362,17 @@
       "lengthM": 0.54,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "central_desk_right": 0.001249,
+        "central_desk_top": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "east_beam_inner_x__full|east_beam_under_y__full:z:-1.874:2.49:{\"x\":1.85,\"y\":2.515}",
@@ -319,7 +402,17 @@
       "lengthM": 4.364,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM"
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM",
+      "surfaceTexelFootprintsM": {
+        "east_beam_inner_x__full": 0.00125,
+        "east_beam_under_y__full": 0.00125
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "east_beam_inner_x__full|se_column_north_z__west_full:y:2.515:2.905:{\"x\":1.85,\"z\":2.49}",
@@ -349,7 +442,17 @@
       "lengthM": 0.39,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM"
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM",
+      "surfaceTexelFootprintsM": {
+        "east_beam_inner_x__full": 0.00125,
+        "se_column_north_z__west_full": 0.001228
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "east_beam_under_y__full|east_wall:z:-1.874:2.49:{\"x\":1.91,\"y\":2.515}",
@@ -379,7 +482,17 @@
       "lengthM": 4.364,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM"
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM",
+      "surfaceTexelFootprintsM": {
+        "east_beam_under_y__full": 0.00125,
+        "east_wall": 0.001249
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": true,
+      "protectionKind": "a-narrow-bake-ray-origin"
     },
     {
       "edgeId": "east_beam_under_y__full|se_column_north_z__east_lower:x:1.85:1.91:{\"y\":2.515,\"z\":2.49}",
@@ -409,7 +522,17 @@
       "lengthM": 0.06,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "east_beam_under_y__full": 0.00125,
+        "se_column_north_z__east_lower": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "east_wall|se_column_north_z__east_lower:y:0:2.515:{\"x\":1.91,\"z\":2.49}",
@@ -439,7 +562,17 @@
       "lengthM": 2.515,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM"
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM",
+      "surfaceTexelFootprintsM": {
+        "east_wall": 0.00125,
+        "se_column_north_z__east_lower": 0.00125
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": true,
+      "protectionKind": "a-narrow-bake-ray-origin"
     },
     {
       "edgeId": "east_wall|south_wall:y:0:2.905:{\"z\":3.06,\"x\":1.91}",
@@ -469,7 +602,17 @@
       "lengthM": 2.905,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "east_wall": 0.00125,
+        "south_wall": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "se_column_inner_x__front_lower|se_column_inner_x__upper:z:2.49:2.73:{\"x\":1.78,\"y\":2.04}",
@@ -499,7 +642,17 @@
       "lengthM": 0.24,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "se_column_inner_x__front_lower": 0.00125,
+        "se_column_inner_x__upper": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "se_column_inner_x__front_lower|se_column_north_z__west_full:y:0:2.04:{\"x\":1.78,\"z\":2.49}",
@@ -529,7 +682,17 @@
       "lengthM": 2.04,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "se_column_inner_x__front_lower": 0.00125,
+        "se_column_north_z__west_full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "se_column_inner_x__upper|se_column_north_z__west_full:y:2.04:2.905:{\"x\":1.78,\"z\":2.49}",
@@ -559,7 +722,17 @@
       "lengthM": 0.865,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "se_column_inner_x__upper": 0.001249,
+        "se_column_north_z__west_full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "se_column_inner_x__upper|south_wall:y:2.04:2.905:{\"z\":3.06,\"x\":1.78}",
@@ -589,7 +762,17 @@
       "lengthM": 0.865,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "se_column_inner_x__upper": 0.001249,
+        "south_wall": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "se_column_north_z__east_lower|se_column_north_z__west_full:y:0:2.515:{\"z\":2.49,\"x\":1.85}",
@@ -619,7 +802,17 @@
       "lengthM": 2.515,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "se_column_north_z__east_lower": 0.00125,
+        "se_column_north_z__west_full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "south_wall|south_window_bottom_reveal__full:x:-1.75:0.69:{\"z\":3.06,\"y\":1.04}",
@@ -649,7 +842,17 @@
       "lengthM": 2.44,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "south_window_bottom_reveal__full": 0.001242
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "south_wall|south_window_left_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":-1.75}",
@@ -679,7 +882,17 @@
       "lengthM": 1.865,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "south_window_left_reveal__full": 0.001242
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "south_wall|south_window_right_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":0.69}",
@@ -709,7 +922,17 @@
       "lengthM": 1.865,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "south_window_right_reveal__full": 0.001242
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "south_wall|south_window_top_reveal_depth:x:-1.75:0.69:{\"z\":3.06,\"y\":2.905}",
@@ -739,7 +962,17 @@
       "lengthM": 2.44,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "south_window_top_reveal_depth": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "south_wall|sw_column_inner_x__full:y:0.77:2.905:{\"z\":3.06,\"x\":-1.75}",
@@ -769,7 +1002,17 @@
       "lengthM": 2.135,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "sw_column_inner_x__full": 0.001243
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "south_wall|west_wall_open:y:0:2.905:{\"z\":3.06,\"x\":-1.91}",
@@ -799,7 +1042,17 @@
       "lengthM": 2.905,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_wall": 0.00125,
+        "west_wall_open": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "south_window_bottom_reveal__full|south_window_left_reveal__full:z:3.056:3.256:{\"x\":-1.75,\"y\":1.04}",
@@ -829,7 +1082,17 @@
       "lengthM": 0.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_window_bottom_reveal__full": 0.00125,
+        "south_window_left_reveal__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "south_window_bottom_reveal__full|south_window_right_reveal__full:z:3.056:3.256:{\"x\":0.69,\"y\":1.04}",
@@ -859,7 +1122,17 @@
       "lengthM": 0.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_window_bottom_reveal__full": 0.00125,
+        "south_window_right_reveal__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "south_window_left_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":-1.75}",
@@ -889,7 +1162,17 @@
       "lengthM": 0.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM",
+      "surfaceTexelFootprintsM": {
+        "south_window_left_reveal__full": 0.00125,
+        "south_window_top_reveal_depth": 0.00125
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": true,
+      "protectionKind": "a-narrow-bake-ray-origin"
     },
     {
       "edgeId": "south_window_left_reveal__full|sw_column_inner_x__full:y:1.04:2.905:{\"x\":-1.75,\"z\":3.056}",
@@ -919,7 +1202,17 @@
       "lengthM": 1.865,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "south_window_left_reveal__full": 0.001242,
+        "sw_column_inner_x__full": 0.001243
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "south_window_right_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":0.69}",
@@ -949,7 +1242,17 @@
       "lengthM": 0.2,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": "R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM",
+      "surfaceTexelFootprintsM": {
+        "south_window_right_reveal__full": 0.00125,
+        "south_window_top_reveal_depth": 0.00125
+      },
+      "requiredProtectionRadiusM": 0.00125,
+      "configuredProtectionRadiusM": 0.001251,
+      "protectionCoverageRatio": 1.0008,
+      "protectionCoverageStatus": "PASS",
+      "crossAtlas": true,
+      "protectionKind": "a-narrow-bake-ray-origin"
     },
     {
       "edgeId": "sw_column_inner_x__full|sw_column_north_z__full:y:0.77:2.525:{\"x\":-1.75,\"z\":2.846}",
@@ -979,7 +1282,17 @@
       "lengthM": 1.755,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "sw_column_inner_x__full": 0.001243,
+        "sw_column_north_z__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "sw_column_inner_x__full|west_beam_inner_x__full:y:2.525:2.905:{\"x\":-1.75,\"z\":2.847}",
@@ -1009,7 +1322,17 @@
       "lengthM": 0.38,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "sw_column_inner_x__full": 0.001243,
+        "west_beam_inner_x__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "sw_column_north_z__full|west_beam_under_y__full:x:-1.91:-1.75:{\"y\":2.525,\"z\":2.846}",
@@ -1039,7 +1362,17 @@
       "lengthM": 0.16,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "sw_column_north_z__full": 0.001249,
+        "west_beam_under_y__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "sw_column_north_z__full|west_wall_open:y:0.77:2.525:{\"x\":-1.91,\"z\":2.846}",
@@ -1069,7 +1402,17 @@
       "lengthM": 1.755,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "sw_column_north_z__full": 0.00125,
+        "west_wall_open": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "west_beam_inner_x__full|west_beam_under_y__full:z:-1.874:2.846:{\"x\":-1.75,\"y\":2.525}",
@@ -1099,7 +1442,17 @@
       "lengthM": 4.72,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_beam_inner_x__full": 0.00125,
+        "west_beam_under_y__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_beam_under_y__full|west_wall_open:z:-1.874:2.846:{\"x\":-1.91,\"y\":2.525}",
@@ -1129,7 +1482,17 @@
       "lengthM": 4.72,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_beam_under_y__full": 0.00125,
+        "west_wall_open": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "full-radiance-contact-gate"
     },
     {
       "edgeId": "west_threshold_front|west_threshold_top:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0.09}",
@@ -1159,7 +1522,17 @@
       "lengthM": 0.89,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_threshold_front": 0.00125,
+        "west_threshold_top": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_threshold_front|west_wall_open:y:0:0.09:{\"x\":-1.91,\"z\":-1.874}",
@@ -1189,7 +1562,17 @@
       "lengthM": 0.09,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_threshold_front": 0.00125,
+        "west_wall_open": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_threshold_front|west_wall_open:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0}",
@@ -1219,7 +1602,17 @@
       "lengthM": 0.89,
       "normalDot": 1,
       "requiresANarrowProbe": false,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_threshold_front": 0.00125,
+        "west_wall_open": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_threshold_top|west_wall_open:z:-1.874:-0.984:{\"x\":-1.91,\"y\":0.09}",
@@ -1249,7 +1642,17 @@
       "lengthM": 0.89,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_threshold_top": 0.00125,
+        "west_wall_open": 0.001249
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_button_bottom__full:z:-0.076:0.018:{\"x\":-1.91,\"y\":1.161}",
@@ -1279,7 +1682,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.001249,
+        "west_wall_switch_button_bottom__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_button_north__full:y:1.161:1.205:{\"x\":-1.91,\"z\":-0.076}",
@@ -1309,7 +1722,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.00125,
+        "west_wall_switch_button_north__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_button_south__full:y:1.161:1.205:{\"x\":-1.91,\"z\":0.018}",
@@ -1339,7 +1762,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.00125,
+        "west_wall_switch_button_south__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_button_top__full:z:-0.076:0.018:{\"x\":-1.91,\"y\":1.205}",
@@ -1369,7 +1802,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.001249,
+        "west_wall_switch_button_top__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_plate_bottom__full:z:-0.089:0.031:{\"x\":-1.91,\"y\":1.148}",
@@ -1399,7 +1842,17 @@
       "lengthM": 0.12,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.001249,
+        "west_wall_switch_plate_bottom__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_plate_north__full:y:1.148:1.218:{\"x\":-1.91,\"z\":-0.089}",
@@ -1429,7 +1882,17 @@
       "lengthM": 0.07,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.00125,
+        "west_wall_switch_plate_north__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_plate_south__full:y:1.148:1.218:{\"x\":-1.91,\"z\":0.031}",
@@ -1459,7 +1922,17 @@
       "lengthM": 0.07,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.00125,
+        "west_wall_switch_plate_south__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_open|west_wall_switch_plate_top__full:z:-0.089:0.031:{\"x\":-1.91,\"y\":1.218}",
@@ -1489,7 +1962,17 @@
       "lengthM": 0.12,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_open": 0.001249,
+        "west_wall_switch_plate_top__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": true,
+      "protectionKind": "raised-fixture-contact-full-radiance"
     },
     {
       "edgeId": "west_wall_switch_button__full|west_wall_switch_button_bottom__full:z:-0.076:0.018:{\"x\":-1.898,\"y\":1.161}",
@@ -1519,7 +2002,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button__full": 0.001222,
+        "west_wall_switch_button_bottom__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button__full|west_wall_switch_button_north__full:y:1.161:1.205:{\"x\":-1.898,\"z\":-0.076}",
@@ -1549,7 +2042,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button__full": 0.001237,
+        "west_wall_switch_button_north__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button__full|west_wall_switch_button_south__full:y:1.161:1.205:{\"x\":-1.898,\"z\":0.018}",
@@ -1579,7 +2082,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button__full": 0.001237,
+        "west_wall_switch_button_south__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button__full|west_wall_switch_button_top__full:z:-0.076:0.018:{\"x\":-1.898,\"y\":1.205}",
@@ -1609,7 +2122,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button__full": 0.001222,
+        "west_wall_switch_button_top__full": 0.001
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_button_north__full:x:-1.9:-1.898:{\"y\":1.161,\"z\":-0.076}",
@@ -1639,7 +2162,17 @@
       "lengthM": 0.002,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_bottom__full": 0.001237,
+        "west_wall_switch_button_north__full": 0.001222
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_button_south__full:x:-1.9:-1.898:{\"y\":1.161,\"z\":0.018}",
@@ -1669,7 +2202,17 @@
       "lengthM": 0.002,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_bottom__full": 0.001237,
+        "west_wall_switch_button_south__full": 0.001222
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_bottom__full|west_wall_switch_plate__full:z:-0.076:0.018:{\"x\":-1.9,\"y\":1.161}",
@@ -1699,7 +2242,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_bottom__full": 0.001,
+        "west_wall_switch_plate__full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_north__full|west_wall_switch_button_top__full:x:-1.9:-1.898:{\"y\":1.205,\"z\":-0.076}",
@@ -1729,7 +2282,17 @@
       "lengthM": 0.002,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_north__full": 0.001222,
+        "west_wall_switch_button_top__full": 0.001237
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_north__full|west_wall_switch_plate__full:y:1.161:1.205:{\"x\":-1.9,\"z\":-0.076}",
@@ -1759,7 +2322,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_north__full": 0.001,
+        "west_wall_switch_plate__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_south__full|west_wall_switch_button_top__full:x:-1.9:-1.898:{\"y\":1.205,\"z\":0.018}",
@@ -1789,7 +2362,17 @@
       "lengthM": 0.002,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_south__full": 0.001222,
+        "west_wall_switch_button_top__full": 0.001237
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_south__full|west_wall_switch_plate__full:y:1.161:1.205:{\"x\":-1.9,\"z\":0.018}",
@@ -1819,7 +2402,17 @@
       "lengthM": 0.044,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_south__full": 0.001,
+        "west_wall_switch_plate__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_button_top__full|west_wall_switch_plate__full:z:-0.076:0.018:{\"x\":-1.9,\"y\":1.205}",
@@ -1849,7 +2442,17 @@
       "lengthM": 0.094,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_button_top__full": 0.001,
+        "west_wall_switch_plate__full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_bottom__full:z:-0.089:0.031:{\"x\":-1.9,\"y\":1.148}",
@@ -1879,7 +2482,17 @@
       "lengthM": 0.12,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate__full": 0.001228,
+        "west_wall_switch_plate_bottom__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_north__full:y:1.148:1.218:{\"x\":-1.9,\"z\":-0.089}",
@@ -1909,7 +2522,17 @@
       "lengthM": 0.07,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate__full": 0.00125,
+        "west_wall_switch_plate_north__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_south__full:y:1.148:1.218:{\"x\":-1.9,\"z\":0.031}",
@@ -1939,7 +2562,17 @@
       "lengthM": 0.07,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate__full": 0.00125,
+        "west_wall_switch_plate_south__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate__full|west_wall_switch_plate_top__full:z:-0.089:0.031:{\"x\":-1.9,\"y\":1.218}",
@@ -1969,7 +2602,17 @@
       "lengthM": 0.12,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate__full": 0.001228,
+        "west_wall_switch_plate_top__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_north__full:x:-1.91:-1.9:{\"y\":1.148,\"z\":-0.089}",
@@ -1999,7 +2642,17 @@
       "lengthM": 0.01,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate_bottom__full": 0.00125,
+        "west_wall_switch_plate_north__full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate_bottom__full|west_wall_switch_plate_south__full:x:-1.91:-1.9:{\"y\":1.148,\"z\":0.031}",
@@ -2029,7 +2682,17 @@
       "lengthM": 0.01,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate_bottom__full": 0.00125,
+        "west_wall_switch_plate_south__full": 0.001228
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate_north__full|west_wall_switch_plate_top__full:x:-1.91:-1.9:{\"y\":1.218,\"z\":-0.089}",
@@ -2059,7 +2722,17 @@
       "lengthM": 0.01,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate_north__full": 0.001228,
+        "west_wall_switch_plate_top__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     },
     {
       "edgeId": "west_wall_switch_plate_south__full|west_wall_switch_plate_top__full:x:-1.91:-1.9:{\"y\":1.218,\"z\":0.031}",
@@ -2089,7 +2762,17 @@
       "lengthM": 0.01,
       "normalDot": 0,
       "requiresANarrowProbe": true,
-      "aNarrowShaderSymbol": null
+      "aNarrowShaderSymbol": null,
+      "surfaceTexelFootprintsM": {
+        "west_wall_switch_plate_south__full": 0.001228,
+        "west_wall_switch_plate_top__full": 0.00125
+      },
+      "requiredProtectionRadiusM": null,
+      "configuredProtectionRadiusM": null,
+      "protectionCoverageRatio": null,
+      "protectionCoverageStatus": null,
+      "crossAtlas": false,
+      "protectionKind": "same-atlas-chart-gutter"
     }
   ]
 }

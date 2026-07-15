@@ -1,0 +1,475 @@
+{
+  "schema": "r7-3-10-baked-seam-radiance-gate-v1",
+  "status": "PASS",
+  "method": "same-surface-near-edge-versus-interior-hdr-radiance",
+  "packageAtlasGroup": "south_window_reveals",
+  "policy": {
+    "comparisonMode": "broad-near-versus-interior",
+    "firstTexelBandMaxM": 0.0013,
+    "adjacentTexelBandMinM": 0.0013,
+    "adjacentTexelBandMaxM": 0.0038,
+    "nearBandMaxM": 0.005,
+    "interiorBandMinM": 0.015,
+    "interiorBandMaxM": 0.035,
+    "endpointInsetM": 0.004,
+    "intervalToleranceM": 0.000001,
+    "blackLumaThreshold": 0.00001,
+    "minNearSamples": 8,
+    "minInteriorSamples": 16,
+    "minMedianRatio": 0.2,
+    "minP10Ratio": 0.05,
+    "minAbsoluteDrop": 0.02
+  },
+  "counts": {
+    "packageSurfaces": 3,
+    "evaluatedEdges": 8,
+    "evaluatedSides": 10,
+    "failedSides": 0,
+    "nearTexels": 51211,
+    "interiorTexels": 116876,
+    "nearExactBlackTexels": 0
+  },
+  "failedSideKeys": [],
+  "sides": [
+    {
+      "edgeId": "south_wall|south_window_bottom_reveal__full:x:-1.75:0.69:{\"z\":3.06,\"y\":1.04}",
+      "pairKey": "south_wall|south_window_bottom_reveal__full",
+      "surfaceId": "south_window_bottom_reveal__full",
+      "line": {
+        "axis": "x",
+        "min": -1.75,
+        "max": 0.69,
+        "constants": {
+          "z": 3.06,
+          "y": 1.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 15560,
+        "interiorTexels": 31120,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.37651589,
+        "firstTexelP10": 0.3403494,
+        "adjacentTexelsMedian": 0.3767111,
+        "adjacentTexelsP10": 0.34032286,
+        "medianRatio": 0.9994818,
+        "p10Ratio": 1.00007798,
+        "medianDrop": 0.00019521,
+        "p10Drop": -0.00002654,
+        "firstTexelSamples": 3890,
+        "adjacentTexelSamples": 7780
+      },
+      "radiance": {
+        "nearMedian": 0.3764726,
+        "nearP10": 0.3402661,
+        "interiorMedian": 0.36751447,
+        "interiorP10": 0.33167303,
+        "medianRatio": 1.02437491,
+        "p10Ratio": 1.02590824,
+        "medianDrop": -0.00895813,
+        "p10Drop": -0.00859307
+      }
+    },
+    {
+      "edgeId": "south_wall|south_window_left_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":-1.75}",
+      "pairKey": "south_wall|south_window_left_reveal__full",
+      "surfaceId": "south_window_left_reveal__full",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": -1.75
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 11880,
+        "interiorTexels": 23760,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.32757714,
+        "firstTexelP10": 0.19420244,
+        "adjacentTexelsMedian": 0.32471091,
+        "adjacentTexelsP10": 0.19297565,
+        "medianRatio": 1.00882703,
+        "p10Ratio": 1.00635722,
+        "medianDrop": -0.00286623,
+        "p10Drop": -0.00122679,
+        "firstTexelSamples": 2970,
+        "adjacentTexelSamples": 5940
+      },
+      "radiance": {
+        "nearMedian": 0.3256079,
+        "nearP10": 0.19348636,
+        "interiorMedian": 0.32034087,
+        "interiorP10": 0.1923855,
+        "medianRatio": 1.01644194,
+        "p10Ratio": 1.00572217,
+        "medianDrop": -0.00526703,
+        "p10Drop": -0.00110086
+      }
+    },
+    {
+      "edgeId": "south_wall|south_window_right_reveal__full:y:1.04:2.905:{\"z\":3.06,\"x\":0.69}",
+      "pairKey": "south_wall|south_window_right_reveal__full",
+      "surfaceId": "south_window_right_reveal__full",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "z": 3.06,
+          "x": 0.69
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 11880,
+        "interiorTexels": 23760,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.31103884,
+        "firstTexelP10": 0.18999097,
+        "adjacentTexelsMedian": 0.31058691,
+        "adjacentTexelsP10": 0.18891065,
+        "medianRatio": 1.0014551,
+        "p10Ratio": 1.00571867,
+        "medianDrop": -0.00045194,
+        "p10Drop": -0.00108032,
+        "firstTexelSamples": 2970,
+        "adjacentTexelSamples": 5940
+      },
+      "radiance": {
+        "nearMedian": 0.31068659,
+        "nearP10": 0.18886312,
+        "interiorMedian": 0.30459129,
+        "interiorP10": 0.18688678,
+        "medianRatio": 1.0200114,
+        "p10Ratio": 1.01057502,
+        "medianDrop": -0.0060953,
+        "p10Drop": -0.00197633
+      }
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_left_reveal__full:z:3.056:3.256:{\"x\":-1.75,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_left_reveal__full",
+      "surfaceId": "south_window_bottom_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": -1.75,
+          "y": 1.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.34462548,
+        "firstTexelP10": 0.3211706,
+        "adjacentTexelsMedian": 0.34393716,
+        "adjacentTexelsP10": 0.31590807,
+        "medianRatio": 1.00200128,
+        "p10Ratio": 1.01665843,
+        "medianDrop": -0.00068831,
+        "p10Drop": -0.00526253,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.34434064,
+        "nearP10": 0.31791943,
+        "interiorMedian": 0.33130554,
+        "interiorP10": 0.28515912,
+        "medianRatio": 1.03934465,
+        "p10Ratio": 1.11488433,
+        "medianDrop": -0.0130351,
+        "p10Drop": -0.03276031
+      }
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_left_reveal__full:z:3.056:3.256:{\"x\":-1.75,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_left_reveal__full",
+      "surfaceId": "south_window_left_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": -1.75,
+          "y": 1.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.39683422,
+        "firstTexelP10": 0.36748923,
+        "adjacentTexelsMedian": 0.3964908,
+        "adjacentTexelsP10": 0.36836994,
+        "medianRatio": 1.00086615,
+        "p10Ratio": 0.99760917,
+        "medianDrop": -0.00034342,
+        "p10Drop": 0.00088071,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.39662907,
+        "nearP10": 0.36724201,
+        "interiorMedian": 0.3939629,
+        "interiorP10": 0.34633324,
+        "medianRatio": 1.00676757,
+        "p10Ratio": 1.06037182,
+        "medianDrop": -0.00266617,
+        "p10Drop": -0.02090877
+      }
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_right_reveal__full:z:3.056:3.256:{\"x\":0.69,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_right_reveal__full",
+      "surfaceId": "south_window_bottom_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": 0.69,
+          "y": 1.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 616,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.38523676,
+        "firstTexelP10": 0.35807413,
+        "adjacentTexelsMedian": 0.38576076,
+        "adjacentTexelsP10": 0.35554075,
+        "medianRatio": 0.99864166,
+        "p10Ratio": 1.00712541,
+        "medianDrop": 0.00052399,
+        "p10Drop": -0.00253337,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.38555356,
+        "nearP10": 0.35635264,
+        "interiorMedian": 0.37444681,
+        "interiorP10": 0.33198854,
+        "medianRatio": 1.02966177,
+        "p10Ratio": 1.07338837,
+        "medianDrop": -0.01110675,
+        "p10Drop": -0.0243641
+      }
+    },
+    {
+      "edgeId": "south_window_bottom_reveal__full|south_window_right_reveal__full:z:3.056:3.256:{\"x\":0.69,\"y\":1.04}",
+      "pairKey": "south_window_bottom_reveal__full|south_window_right_reveal__full",
+      "surfaceId": "south_window_right_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "x": 0.69,
+          "y": 1.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.44123772,
+        "firstTexelP10": 0.40633461,
+        "adjacentTexelsMedian": 0.44255442,
+        "adjacentTexelsP10": 0.39964968,
+        "medianRatio": 0.99702478,
+        "p10Ratio": 1.01672698,
+        "medianDrop": 0.00131669,
+        "p10Drop": -0.00668493,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.44136896,
+        "nearP10": 0.40377649,
+        "interiorMedian": 0.42834129,
+        "interiorP10": 0.37172417,
+        "medianRatio": 1.03041423,
+        "p10Ratio": 1.0862261,
+        "medianDrop": -0.01302767,
+        "p10Drop": -0.03205232
+      }
+    },
+    {
+      "edgeId": "south_window_left_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":-1.75}",
+      "pairKey": "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "surfaceId": "south_window_left_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": -1.75
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2310,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.1532691,
+        "firstTexelP10": 0.13851158,
+        "adjacentTexelsMedian": 0.1539189,
+        "adjacentTexelsP10": 0.1392154,
+        "medianRatio": 0.99577826,
+        "p10Ratio": 0.99494433,
+        "medianDrop": 0.00064981,
+        "p10Drop": 0.00070383,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.15330364,
+        "nearP10": 0.13926289,
+        "interiorMedian": 0.15885597,
+        "interiorP10": 0.14466343,
+        "medianRatio": 0.96504802,
+        "p10Ratio": 0.96266828,
+        "medianDrop": 0.00555233,
+        "p10Drop": 0.00540053
+      }
+    },
+    {
+      "edgeId": "south_window_left_reveal__full|sw_column_inner_x__full:y:1.04:2.905:{\"x\":-1.75,\"z\":3.056}",
+      "pairKey": "south_window_left_reveal__full|sw_column_inner_x__full",
+      "surfaceId": "south_window_left_reveal__full",
+      "line": {
+        "axis": "y",
+        "min": 1.04,
+        "max": 2.905,
+        "constants": {
+          "x": -1.75,
+          "z": 3.056
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 7425,
+        "interiorTexels": 23760,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.32690116,
+        "firstTexelP10": 0.19363698,
+        "adjacentTexelsMedian": 0.32623833,
+        "adjacentTexelsP10": 0.19357804,
+        "medianRatio": 1.00203172,
+        "p10Ratio": 1.00030449,
+        "medianDrop": -0.00066282,
+        "p10Drop": -0.00005894,
+        "firstTexelSamples": 2970,
+        "adjacentTexelSamples": 2970
+      },
+      "radiance": {
+        "nearMedian": 0.32665578,
+        "nearP10": 0.19365486,
+        "interiorMedian": 0.32128103,
+        "interiorP10": 0.19270691,
+        "medianRatio": 1.01672913,
+        "p10Ratio": 1.00491918,
+        "medianDrop": -0.00537475,
+        "p10Drop": -0.00094796
+      }
+    },
+    {
+      "edgeId": "south_window_right_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":0.69}",
+      "pairKey": "south_window_right_reveal__full|south_window_top_reveal_depth",
+      "surfaceId": "south_window_right_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": 0.69
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2310,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.15134534,
+        "firstTexelP10": 0.13779596,
+        "adjacentTexelsMedian": 0.15266613,
+        "adjacentTexelsP10": 0.13694476,
+        "medianRatio": 0.99134846,
+        "p10Ratio": 1.00621562,
+        "medianDrop": 0.0013208,
+        "p10Drop": -0.0008512,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.15205308,
+        "nearP10": 0.13779596,
+        "interiorMedian": 0.15582431,
+        "interiorP10": 0.14195025,
+        "medianRatio": 0.97579817,
+        "p10Ratio": 0.97073413,
+        "medianDrop": 0.00377123,
+        "p10Drop": 0.0041543
+      }
+    }
+  ]
+}

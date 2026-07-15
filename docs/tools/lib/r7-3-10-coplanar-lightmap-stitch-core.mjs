@@ -62,6 +62,43 @@ function sourceUv(position, spec) {
   return { u, v, outOfBounds };
 }
 
+function normalizeEdgeExtensions(edgeExtensions) {
+  return edgeExtensions.map((extension, index) => {
+    const axisIndex = AXIS_INDEX[extension.axis];
+    const value = Number(extension.value);
+    const inwardDirection = Number(extension.inwardDirection);
+    const radiusM = Number(extension.radiusM);
+    if (axisIndex === undefined) throw new Error(`edge extension ${index} has an unknown axis`);
+    if (!Number.isFinite(value)) throw new Error(`edge extension ${index} has an invalid value`);
+    if (inwardDirection !== -1 && inwardDirection !== 1)
+      throw new Error(`edge extension ${index} inwardDirection must be -1 or 1`);
+    if (!(radiusM > 0)) throw new Error(`edge extension ${index} radiusM must be positive`);
+    return {
+      pairKey: extension.pairKey || null,
+      axis: extension.axis,
+      axisIndex,
+      value,
+      inwardDirection,
+      radiusM
+    };
+  });
+}
+
+function extendSourceSamplePosition(position, edgeExtensions) {
+  const adjusted = [...position];
+  for (const extension of edgeExtensions) {
+    const coordinate = adjusted[extension.axisIndex];
+    const interiorLimit = extension.value + extension.inwardDirection * extension.radiusM;
+    if (extension.inwardDirection > 0) {
+      if (coordinate >= extension.value - 1.0e-5 && coordinate < interiorLimit)
+        adjusted[extension.axisIndex] = interiorLimit;
+    } else if (coordinate <= extension.value + 1.0e-5 && coordinate > interiorLimit) {
+      adjusted[extension.axisIndex] = interiorLimit;
+    }
+  }
+  return adjusted;
+}
+
 function bilinearRgba(atlas, width, height, u, v) {
   const x = Math.min(width - 1, Math.max(0, u * width - 0.5));
   const y = Math.min(height - 1, Math.max(0, v * height - 0.5));
@@ -113,9 +150,11 @@ export function stitchCoplanarLightmap({
   targetMetadataBuffer,
   targetWidth,
   targetHeight,
+  sourceEdgeExtensions = [],
   policy: policyOverrides = {}
 }) {
   const policy = { ...DEFAULT_POLICY, ...policyOverrides };
+  const normalizedEdgeExtensions = normalizeEdgeExtensions(sourceEdgeExtensions);
   const sourceAtlas = float32View(sourceAtlasBuffer);
   const targetAtlas = float32View(targetAtlasBuffer);
   const targetMetadata = float32View(targetMetadataBuffer);
@@ -148,7 +187,8 @@ export function stitchCoplanarLightmap({
       targetMetadata[metadataOffset + 1],
       targetMetadata[metadataOffset + 2]
     ];
-    const uv = sourceUv(position, sourceSpec);
+    const sourcePosition = extendSourceSamplePosition(position, normalizedEdgeExtensions);
+    const uv = sourceUv(sourcePosition, sourceSpec);
     if (uv.outOfBounds) {
       counts.outOfBoundsSamples += 1;
       continue;
@@ -181,6 +221,11 @@ export function stitchCoplanarLightmap({
       schema: 'r7-3-10-coplanar-lightmap-continuity-v1',
       status: after.status,
       method: 'world-space-coplanar-lightmap-stitch',
+      edgeExtensionPolicy: {
+        enabled: normalizedEdgeExtensions.length > 0,
+        method: 'world-space-nearest-valid-interior-texel-extension',
+        extensions: normalizedEdgeExtensions.map(({ axisIndex, ...extension }) => extension)
+      },
       policy,
       before,
       after

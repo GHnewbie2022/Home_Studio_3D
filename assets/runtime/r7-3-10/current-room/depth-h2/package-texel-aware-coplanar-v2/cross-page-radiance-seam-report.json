@@ -1,0 +1,137 @@
+{
+  "schema": "r7-3-10-cross-page-radiance-seam-check-v1",
+  "status": "PASS",
+  "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+  "packageAtlasGroup": "shell",
+  "policy": {
+    "comparisonMode": "first-texel-neighbor",
+    "firstTexelBandMaxM": 0.0013,
+    "adjacentTexelBandMinM": 0.0013,
+    "adjacentTexelBandMaxM": 0.0038,
+    "nearBandMaxM": 0.005,
+    "interiorBandMinM": 0.015,
+    "interiorBandMaxM": 0.035,
+    "endpointInsetM": 0.004,
+    "intervalToleranceM": 0.000001,
+    "blackLumaThreshold": 0.00001,
+    "minNearSamples": 8,
+    "minInteriorSamples": 16,
+    "minMedianRatio": 0.95,
+    "minP10Ratio": 0.8,
+    "minAbsoluteDrop": 0.005
+  },
+  "counts": {
+    "packageSurfaces": 1,
+    "evaluatedEdges": 2,
+    "evaluatedSides": 2,
+    "failedSides": 0,
+    "nearTexels": 1232,
+    "interiorTexels": 4928,
+    "nearExactBlackTexels": 0
+  },
+  "failedSideKeys": [],
+  "sides": [
+    {
+      "edgeId": "south_window_left_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":-1.75}",
+      "pairKey": "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "surfaceId": "south_window_top_reveal_depth",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": -1.75
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 616,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.15401016,
+        "firstTexelP10": 0.1450054,
+        "adjacentTexelsMedian": 0.15468404,
+        "adjacentTexelsP10": 0.14607418,
+        "medianRatio": 0.99564351,
+        "p10Ratio": 0.99268335,
+        "medianDrop": 0.00067388,
+        "p10Drop": 0.00106877,
+        "firstTexelSamples": 154,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.15513619,
+        "nearP10": 0.14610647,
+        "interiorMedian": 0.16868208,
+        "interiorP10": 0.16058885,
+        "medianRatio": 0.91969572,
+        "p10Ratio": 0.90981703,
+        "medianDrop": 0.01354589,
+        "p10Drop": 0.01448238
+      }
+    },
+    {
+      "edgeId": "south_window_right_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":0.69}",
+      "pairKey": "south_window_right_reveal__full|south_window_top_reveal_depth",
+      "surfaceId": "south_window_top_reveal_depth",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": 0.69
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 616,
+        "interiorTexels": 2464,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.16729348,
+        "firstTexelP10": 0.15291766,
+        "adjacentTexelsMedian": 0.16932348,
+        "adjacentTexelsP10": 0.15845119,
+        "medianRatio": 0.98801109,
+        "p10Ratio": 0.96507737,
+        "medianDrop": 0.00203,
+        "p10Drop": 0.00553353,
+        "firstTexelSamples": 154,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.16968041,
+        "nearP10": 0.15820276,
+        "interiorMedian": 0.19568726,
+        "interiorP10": 0.17779194,
+        "medianRatio": 0.8670999,
+        "p10Ratio": 0.88981962,
+        "medianDrop": 0.02600686,
+        "p10Drop": 0.01958918
+      }
+    }
+  ],
+  "pointer": "docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json",
+  "packageDir": "assets/runtime/r7-3-10/current-room/depth-h2/package-texel-aware-coplanar-v2",
+  "surfaceId": "south_window_top_reveal_depth",
+  "triangleIds": [
+    6
+  ],
+  "triangleMappingSource": "single-surface-package-fallback",
+  "evaluatedTriangleIds": [
+    6
+  ],
+  "requiredPairKeys": [
+    "south_window_left_reveal__full|south_window_top_reveal_depth",
+    "south_window_right_reveal__full|south_window_top_reveal_depth"
+  ]
+}

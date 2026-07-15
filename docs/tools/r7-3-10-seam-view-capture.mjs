@@ -240,6 +240,8 @@ function shotExpression(shot, minS, sampleTimeout) {
 		const set = (name, val) => { if (typeof window[name] === 'function') window[name](val); };
 		// Default the main room surfaces ON so contact zones render in context; per-shot flags override.
 		const def = (k, d) => (k in f ? f[k] : d);
+		if ('fullRoom' in f)
+			set('setR7310C1FullRoomDiffuseRuntimeEnabled', !!f.fullRoom);
 		set('setR7310C1FloorDiffuseRuntimeEnabled', def('floor', true));
 		set('setR7310C1NorthWallDiffuseRuntimeEnabled', def('north', true));
 		set('setR7310C1EastWallDiffuseRuntimeEnabled', def('east', true));
@@ -257,6 +259,19 @@ function shotExpression(shot, minS, sampleTimeout) {
 			r7310C1XatlasRuntimeWestWallSwitchActive = switchEnabled;
 			r7310C1XatlasRuntimeWestWallSwitchDirectIncluded = switchEnabled && !!r7310C1XatlasRuntimeWestWallSwitchRawDirectIncluded;
 			r7310C1SetXatlasParamWestWallSwitchEnabled(switchEnabled);
+			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+		}
+		// Diagnostic-only isolation for the retired per-reveal shadow pages. The
+		// formal south-window XATLAS page remains enabled so this identifies
+		// whether an invalid edge texel is falling through to the legacy route.
+		if ('legacySouthWindowRevealShadows' in f) {
+			const legacyEnabled = !!f.legacySouthWindowRevealShadows;
+			r7310C1SouthWindowLeftRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowRightRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowBottomRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowTopRevealShadowRuntimeEnabled = legacyEnabled;
 			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
 				updateR7310C1FullRoomDiffuseRuntimeUniforms();
 			if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
