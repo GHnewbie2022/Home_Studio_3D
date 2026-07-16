@@ -317,14 +317,29 @@ function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource, groupBySurf
     bboxMax[fixedAxis] += 0.01;
     const uvMin = [0, 1].map((axis) => Math.min(...samples.map((sample) => sample.uv[axis])));
     const uvMax = [0, 1].map((axis) => Math.max(...samples.map((sample) => sample.uv[axis])));
-    const slope = (worldAxis, uvAxis) => {
-      const lo = samples.reduce((best, sample) => sample.p[worldAxis] < best.p[worldAxis] ? sample : best, samples[0]);
-      const hi = samples.reduce((best, sample) => sample.p[worldAxis] > best.p[worldAxis] ? sample : best, samples[0]);
-      const worldDelta = hi.p[worldAxis] - lo.p[worldAxis];
-      return Math.abs(worldDelta) > 1e-9 ? (hi.uv[uvAxis] - lo.uv[uvAxis]) / worldDelta : 0;
+    const fitAxis = (worldAxis, uvAxis) => {
+      const meanWorld = samples.reduce((sum, sample) => sum + sample.p[worldAxis], 0) / samples.length;
+      const meanUv = samples.reduce((sum, sample) => sum + sample.uv[uvAxis], 0) / samples.length;
+      const variance = samples.reduce((sum, sample) => {
+        const delta = sample.p[worldAxis] - meanWorld;
+        return sum + delta * delta;
+      }, 0);
+      const covariance = samples.reduce((sum, sample) => (
+        sum + (sample.p[worldAxis] - meanWorld) * (sample.uv[uvAxis] - meanUv)
+      ), 0);
+      const slope = variance > 1e-12 ? covariance / variance : 0;
+      const intercept = meanUv - slope * meanWorld;
+      const maxError = Math.max(...samples.map((sample) => Math.abs(
+        intercept + slope * sample.p[worldAxis] - sample.uv[uvAxis]
+      )));
+      return { worldAxis, slope, maxError };
     };
-    const uAxis = Math.abs(slope(freeAxes[0], 0)) >= Math.abs(slope(freeAxes[1], 0)) ? freeAxes[0] : freeAxes[1];
+    const uFit = freeAxes
+      .map((axis) => fitAxis(axis, 0))
+      .sort((a, b) => a.maxError - b.maxError || Math.abs(b.slope) - Math.abs(a.slope))[0];
+    const uAxis = uFit.worldAxis;
     const vAxis = freeAxes.find((axis) => axis !== uAxis);
+    const vFit = fitAxis(vAxis, 1);
     const runtimeUvMin = [uvMin[0], 1 - uvMax[1]];
     const runtimeUvMax = [uvMax[0], 1 - uvMin[1]];
     const rect = [
@@ -339,12 +354,33 @@ function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource, groupBySurf
       normal: [0, 1, 2].map((axis) => axis === fixedAxis ? Number(meta.faceSign) : 0),
       bboxMin, bboxMax,
       fixedAxis, uAxis, vAxis,
-      uMin: bboxMin[uAxis], uMax: bboxMax[uAxis], uFlip: slope(uAxis, 0) < 0, uInset: true,
-      vMin: bboxMin[vAxis], vMax: bboxMax[vAxis], vFlip: slope(vAxis, 1) > 0, vInset: true,
+      uMin: bboxMin[uAxis], uMax: bboxMax[uAxis], uFlip: uFit.slope < 0, uInset: true,
+      vMin: bboxMin[vAxis], vMax: bboxMax[vAxis], vFlip: vFit.slope > 0, vInset: true,
       atlasW: rect[2], atlasH: rect[3], rectOverride: rect,
       modeId: MODE_MASTER, specialExclusionId: EXCL_NONE,
       representative: false, hasTruth: true, truthSource,
     });
+    const reprojectionErrors = samples.map((sample) => {
+      const tu = Math.max(0, Math.min(1, (sample.p[entry.uAxis] - entry.uOrigin) * entry.uScale));
+      const tv = Math.max(0, Math.min(1, (sample.p[entry.vAxis] - entry.vOrigin) * entry.vScale));
+      const localU = entry.uMixLo + (entry.uMixHi - entry.uMixLo) * tu;
+      const localV = entry.vMixLo + (entry.vMixHi - entry.vMixLo) * tv;
+      const runtimeUv = [
+        (entry.rect[0] + localU * entry.rect[2]) / pageW,
+        (entry.rect[1] + localV * entry.rect[3]) / pageH,
+      ];
+      const expectedRuntimeUv = [sample.uv[0], 1 - sample.uv[1]];
+      return Math.hypot(
+        (runtimeUv[0] - expectedRuntimeUv[0]) * pageW,
+        (runtimeUv[1] - expectedRuntimeUv[1]) * pageH
+      );
+    });
+    const chartReprojectionMaxErrorTexels = r6(Math.max(...reprojectionErrors));
+    if (chartReprojectionMaxErrorTexels > 1) {
+      throw new Error(
+        `${pieceId} chart reprojection error ${chartReprojectionMaxErrorTexels} texels exceeds one texel`
+      );
+    }
     entry.semanticSurfaceId = meta.surfaceHint;
     return entry;
   });

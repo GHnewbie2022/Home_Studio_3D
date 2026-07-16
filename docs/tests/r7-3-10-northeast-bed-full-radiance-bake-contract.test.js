@@ -10,6 +10,8 @@ const init = fs.readFileSync('js/InitCommon.js', 'utf8');
 const shader = fs.readFileSync('shaders/Home_Studio_Fragment.glsl', 'utf8');
 const owners = JSON.parse(fs.readFileSync('docs/data/r7-3-10-surface-owner-registry.json', 'utf8'));
 const paramTable = JSON.parse(fs.readFileSync('docs/generated/r7-3-10-xatlas-param-table.generated.json', 'utf8'));
+const bedUvReport = JSON.parse(fs.readFileSync('assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-dry-run-uv.json', 'utf8'));
+const bedMesh = JSON.parse(fs.readFileSync('assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-input-mesh.json', 'utf8'));
 const pointerPath = 'docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json';
 
 const requiredSurfaces = new Map([
@@ -54,6 +56,42 @@ test('runtime parameter table contains three local xatlas bed charts', () => {
 		assert.equal(entry.atlasGroup, 'northeast_bed');
 		assert.equal(entry.truthSource, 'northeast-bed-xatlas-chart');
 		assert.ok(entry.rect[2] > 1 && entry.rect[3] > 1);
+	}
+});
+
+test('bed chart parameters reproject every source vertex within one texel', () => {
+	const entries = new Map(paramTable.entries
+		.filter((entry) => requiredSurfaces.has(entry.surfaceId))
+		.map((entry) => [entry.surfaceId, entry]));
+	const pageWidth = bedUvReport.atlas.width;
+	const pageHeight = bedUvReport.atlas.height;
+
+	for (const triangle of bedUvReport.triangles) {
+		const entry = entries.get(triangle.surfaceHint);
+		assert.ok(entry, `missing chart entry for ${triangle.surfaceHint}`);
+		triangle.sourceIndices.forEach((sourceIndex, vertexIndex) => {
+			const position = bedMesh.positions[sourceIndex];
+			const sourceUv = triangle.uv[vertexIndex];
+			const tu = Math.max(0, Math.min(1,
+				(position[entry.uAxis] - entry.uOrigin) * entry.uScale));
+			const tv = Math.max(0, Math.min(1,
+				(position[entry.vAxis] - entry.vOrigin) * entry.vScale));
+			const localU = entry.uMixLo + (entry.uMixHi - entry.uMixLo) * tu;
+			const localV = entry.vMixLo + (entry.vMixHi - entry.vMixLo) * tv;
+			const runtimeUv = [
+				(entry.rect[0] + localU * entry.rect[2]) / pageWidth,
+				(entry.rect[1] + localV * entry.rect[3]) / pageHeight,
+			];
+			const expectedRuntimeUv = [sourceUv[0], 1 - sourceUv[1]];
+			const errorTexels = Math.hypot(
+				(runtimeUv[0] - expectedRuntimeUv[0]) * pageWidth,
+				(runtimeUv[1] - expectedRuntimeUv[1]) * pageHeight
+			);
+			assert.ok(
+				errorTexels <= 1,
+				`${triangle.surfaceHint} vertex ${sourceIndex} reprojection error ${errorTexels.toFixed(3)} texels exceeds one texel`
+			);
+		});
 	}
 });
 
