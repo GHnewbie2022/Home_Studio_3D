@@ -173,6 +173,8 @@ uniform float uR7310C1XatlasRuntimeFullCeilingDirectIncluded;
 uniform float uR7310C1XatlasRuntimeDepthH2DirectIncluded;
 uniform float uR7310C1XatlasRuntimeFullFloorDirectIncluded;
 uniform float uR7310C1XatlasRuntimeCentralDeskDirectIncluded;
+uniform float uR7310C1XatlasRuntimeNortheastBedDirectIncluded;
+uniform int uR7310C1NortheastFurnitureMode;
 uniform float uR7310C1XatlasRuntimeStructuralDirectIncluded;
 uniform float uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded;
 uniform float uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded;
@@ -1597,6 +1599,10 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -0.611 && bmax.x <= 0.611 &&
 		bmin.y >= -0.001 && bmax.y <= 0.768 &&
 		bmin.z >= 0.394 && bmax.z <= 0.956;
+	bool northeastBed =
+		bmin.x >= -0.038 && bmax.x <= 1.911 &&
+		bmin.y >= -0.001 && bmax.y <= 0.291 &&
+		bmin.z >= -1.875 && bmax.z <= -0.303;
 	bool structural =
 		((bmin.x >= -1.93 && bmax.x <= -1.73) || (bmin.x >= 1.76 && bmax.x <= 1.93)) &&
 		bmin.y >= -0.011 && bmax.y <= 2.916 &&
@@ -1605,7 +1611,7 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -1.902 && bmax.x <= -1.897 &&
 		bmin.y >= 1.147 && bmax.y <= 1.219 &&
 		bmin.z >= -0.090 && bmax.z <= 0.032;
-	return westThresholdFront || westThresholdTop || centralDesk || structural || westWallSwitch;
+	return westThresholdFront || westThresholdTop || centralDesk || northeastBed || structural || westWallSwitch;
 }
 bool r7310C1XatlasParamSurfaceUv(int sid, float visibleObjectID, vec3 n, vec3 p, out vec2 atlasUv)
 {
@@ -1645,7 +1651,7 @@ bool r7310C1XatlasParamWestSurfaceActive()
 	int b = int(uR7310C1XatlasParamWestSurfaceIndex) * 7;
 	return uR7310C1XatlasParamSurfaceTable[b + 1].w > 0.5;
 }
-// === GENERATED: surface-owner BEGIN  (registry bfebcab598756c9b) ===
+// === GENERATED: surface-owner BEGIN  (registry c214fc755edd7f14) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -1663,11 +1669,14 @@ const int R7310_OWNER_CENTRAL_DESK_FRONT = 11;
 const int R7310_OWNER_CENTRAL_DESK_BACK = 12;
 const int R7310_OWNER_CENTRAL_DESK_LEFT = 13;
 const int R7310_OWNER_CENTRAL_DESK_RIGHT = 14;
-const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 15;
-const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 16;
-const int R7310_OWNER_WEST_WALL_OPEN = 17;
-const int R7310_OWNER_WEST_THRESHOLD_FRONT = 18;
-const int R7310_OWNER_WEST_THRESHOLD_TOP = 19;
+const int R7310_OWNER_NORTHEAST_BED_TOP = 15;
+const int R7310_OWNER_NORTHEAST_BED_SOUTH = 16;
+const int R7310_OWNER_NORTHEAST_BED_WEST = 17;
+const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 18;
+const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 19;
+const int R7310_OWNER_WEST_WALL_OPEN = 20;
+const int R7310_OWNER_WEST_THRESHOLD_FRONT = 21;
+const int R7310_OWNER_WEST_THRESHOLD_TOP = 22;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -1703,6 +1712,12 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.61 && p.x <= -0.59) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_LEFT; } }
 	// central_desk_right (precedence 40)
 	if (n.x * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= 0.59 && p.x <= 0.61) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_RIGHT; } }
+	// northeast_bed_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 0.27 && p.y <= 0.29 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_TOP; } }
+	// northeast_bed_south (precedence 40)
+	if (n.z * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -0.324 && p.z <= -0.304 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_SOUTH; } }
+	// northeast_bed_west (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.037 && p.x <= -0.017) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_WEST; } }
 	// west_wall_switch_plate (precedence 50)
 	if (n.x * 1.0 > 0.5 && p.y >= 1.148 && p.y <= 1.218 && p.z >= -0.089 && p.z <= 0.031 && p.x >= -1.901 && p.x <= -1.899) { if (50 > bestPrec) { bestPrec = 50; best = R7310_OWNER_WEST_WALL_SWITCH_PLATE; } }
 	// west_wall_switch_button (precedence 51)
@@ -7731,6 +7746,14 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_RIGHT);
 					bool r7310XatlasRuntimeCentralDeskFirstHit = r7310XatlasRuntimeFirstHit &&
 						r7310XatlasRuntimeCentralDeskMapped;
+					bool r7310XatlasRuntimeNortheastBedMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						uR7310C1NortheastFurnitureMode == 0 &&
+						(r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_TOP ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_SOUTH ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_WEST);
+					bool r7310XatlasRuntimeNortheastBedFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeNortheastBedMapped;
 					float r7310XatlasRuntimeStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
 					bool r7310XatlasRuntimeStructuralMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 						hitIsRayExiting != TRUE &&
@@ -7775,6 +7798,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					bool r7310XatlasRuntimeFullBakeCentralDeskClaimed =
 						uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeCentralDeskMapped;
+					bool r7310XatlasRuntimeFullBakeNortheastBedClaimed =
+						uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeNortheastBedMapped;
 					bool r7310XatlasRuntimeFullBakeStructuralClaimed =
 						uR7310C1XatlasRuntimeStructuralDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeStructuralMapped;
@@ -7792,6 +7818,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeCeilingClaimed ||
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed) &&
@@ -7813,6 +7840,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeCeilingClaimed ||
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed;
@@ -8696,6 +8724,11 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 							}
 							if (uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
 								r7310XatlasRuntimeCentralDeskFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeNortheastBedFirstHit)
 							{
 								break;
 							}

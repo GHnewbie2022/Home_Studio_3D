@@ -1,0 +1,41 @@
+{
+  "version": "r7-3-10-xatlas-bake-c2",
+  "packageStatus": "accepted",
+  "runtimeScope": "c1_xatlas_northeast_bed_runtime",
+  "runtimeEnabledDefault": true,
+  "packageDir": "assets/runtime/r7-3-10/current-room/northeast-bed/package",
+  "batch": "northeast_bed_full_radiance",
+  "northeastFurnitureMode": "bed",
+  "targetId": 1500,
+  "surfaceName": "northeast_bed",
+  "requestedSamples": 1000,
+  "targetAtlasResolution": 1715,
+  "targetAtlasWidth": 1551,
+  "targetAtlasHeight": 1715,
+  "diffuseOnly": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "upscaled": false,
+  "worldBounds": null,
+  "artifacts": {
+    "manifest": "manifest.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "coverageReport": "coverage-report.json",
+    "validationReport": "validation-report.json"
+  },
+  "artifactHashes": {
+    "atlasPatch0Sha256": "2d0889715f6a957bd49b2c0006aaf8965c03ddaddef11ebdb07c53db06a88c1b",
+    "texelMetadataPatch0Sha256": "1220e84426c18a270a91b0d5b8a12d3790d56a980a74b9a1e854362cdb5e34c1"
+  },
+  "validation": {
+    "status": "pass",
+    "runnerStatus": "pass",
+    "actualSamples": 1000,
+    "validTexelRatio": 0.9651251050295775
+  },
+  "mapping": "xatlas_texel_worldpos_furniture_static",
+  "runtimeAtlasSlot": 14,
+  "runtimeArchitecture": "multi_page_furniture_lightmap"
+}

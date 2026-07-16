@@ -38,6 +38,8 @@ const SOUTH_WINDOW_REVEALS_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/sourc
 const SOUTH_WINDOW_REVEALS_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-input-mesh.json');
 const WEST_WALL_SWITCH_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-dry-run-uv.json');
 const WEST_WALL_SWITCH_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-input-mesh.json');
+const NORTHEAST_BED_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-dry-run-uv.json');
+const NORTHEAST_BED_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-input-mesh.json');
 const OUT_DIR = resolve(REPO, 'docs/generated');
 const OUT_PATH = resolve(OUT_DIR, 'r7-3-10-xatlas-param-table.generated.json');
 
@@ -288,15 +290,16 @@ function entryFromCentralDeskChart(surfaceId, opts) {
   });
 }
 
-function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource) {
+function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource, groupBySurfaceHint = false) {
   const uvReport = JSON.parse(readFileSync(uvPath, 'utf8'));
   const mesh = JSON.parse(readFileSync(meshPath, 'utf8'));
   const pageW = uvReport.atlas.width;
   const pageH = uvReport.atlas.height;
   const groups = new Map();
   for (const triangle of uvReport.triangles) {
-    if (!groups.has(triangle.pieceId)) groups.set(triangle.pieceId, []);
-    groups.get(triangle.pieceId).push(triangle);
+    const groupId = groupBySurfaceHint ? triangle.surfaceHint : triangle.pieceId;
+    if (!groups.has(groupId)) groups.set(groupId, []);
+    groups.get(groupId).push(triangle);
   }
   return [...groups.entries()].map(([pieceId, triangles]) => {
     const samples = [];
@@ -369,6 +372,16 @@ function westWallSwitchEntriesFromChart() {
   );
 }
 
+function northeastBedEntriesFromChart() {
+  return entriesFromChart(
+    NORTHEAST_BED_UV_PATH,
+    NORTHEAST_BED_MESH_PATH,
+    'northeast_bed',
+    'northeast-bed-xatlas-chart',
+    true
+  );
+}
+
 // representative 合成面（房間幾何 worst-case，無真值 → hasTruth=false）
 function representativeEntry(spec) {
   return buildEntry({ ...spec, representative: true, hasTruth: false, truthSource: null });
@@ -432,6 +445,7 @@ baseEntries.push(entryFromCentralDeskChart('central_desk_right', {
 baseEntries.push(...structuralEntriesFromChart());
 baseEntries.push(...southWindowRevealEntriesFromChart());
 baseEntries.push(...westWallSwitchEntriesFromChart());
+baseEntries.push(...northeastBedEntriesFromChart());
 
 // (3) representative 樑/柱/reveals/C2A 代表面（房間幾何程式化合成 plausible bbox/rect）
 

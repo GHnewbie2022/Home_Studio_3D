@@ -1,7 +1,7 @@
-// === GENERATED: surface-owner table  (registry bfebcab598756c9b) ===
+// === GENERATED: surface-owner table  (registry c214fc755edd7f14) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit)
-export const REGISTRY_VERSION = "bfebcab598756c9b";
+export const REGISTRY_VERSION = "c214fc755edd7f14";
 export const OWNER_IDS = {
   "ceiling_open": 1,
   "south_wall": 2,
@@ -17,11 +17,14 @@ export const OWNER_IDS = {
   "central_desk_back": 12,
   "central_desk_left": 13,
   "central_desk_right": 14,
-  "west_wall_switch_plate": 15,
-  "west_wall_switch_button": 16,
-  "west_wall_open": 17,
-  "west_threshold_front": 18,
-  "west_threshold_top": 19
+  "northeast_bed_top": 15,
+  "northeast_bed_south": 16,
+  "northeast_bed_west": 17,
+  "west_wall_switch_plate": 18,
+  "west_wall_switch_button": 19,
+  "west_wall_open": 20,
+  "west_threshold_front": 21,
+  "west_threshold_top": 22
 };
 export const SURFACES = [
   {
@@ -382,6 +385,78 @@ export const SURFACES = [
     "pendingPolicy": "baked",
     "configId": 1,
     "atlasGroup": "furniture"
+  },
+  {
+    "surfaceId": "northeast_bed_top",
+    "normalGate": {
+      "axis": "y",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "x": [
+      -0.027,
+      1.91
+    ],
+    "y": [
+      0.27,
+      0.29
+    ],
+    "z": [
+      -1.874,
+      -0.314
+    ],
+    "precedence": 40,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "northeast_bed"
+  },
+  {
+    "surfaceId": "northeast_bed_south",
+    "normalGate": {
+      "axis": "z",
+      "sign": 1,
+      "threshold": 0.5
+    },
+    "x": [
+      -0.027,
+      1.91
+    ],
+    "y": [
+      0,
+      0.28
+    ],
+    "z": [
+      -0.324,
+      -0.304
+    ],
+    "precedence": 40,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "northeast_bed"
+  },
+  {
+    "surfaceId": "northeast_bed_west",
+    "normalGate": {
+      "axis": "x",
+      "sign": -1,
+      "threshold": 0.5
+    },
+    "x": [
+      -0.037,
+      -0.017
+    ],
+    "y": [
+      0,
+      0.28
+    ],
+    "z": [
+      -1.874,
+      -0.314
+    ],
+    "precedence": 40,
+    "pendingPolicy": "baked",
+    "configId": 1,
+    "atlasGroup": "northeast_bed"
   },
   {
     "surfaceId": "west_wall_switch_plate",

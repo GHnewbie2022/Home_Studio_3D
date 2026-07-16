@@ -1,0 +1,22 @@
+{
+  "schema": "r7-3-10-xatlas-chart-gutter-dilation-report-v1",
+  "sourcePath": "assets/runtime/r7-3-10/work/r7-3-10-northeast-bed-xatlas/prepare-v1/xatlas-bake-dilation-source.bin",
+  "atlas": {
+    "width": 1551,
+    "height": 1715
+  },
+  "policy": {
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4,
+    "rowMapping": "flipped"
+  },
+  "counts": {
+    "targetTexels": 24524,
+    "repairedTexels": 24524,
+    "sourceExactBlackTexels": 0,
+    "sourceAlphaZeroTexels": 0,
+    "unrepairedTexels": 0,
+    "maxDistanceTexels": 4
+  }
+}

@@ -1,0 +1,259 @@
+{
+  "schema": "r7-3-10-northeast-bed-xatlas-output-uv-v1",
+  "result": "PASS",
+  "phase": "r7-3-10-northeast-bed-xatlas-prepare-v1",
+  "surfaceGroup": "northeast_bed",
+  "atlasGroup": "furniture",
+  "atlas": {
+    "width": 1551,
+    "height": 1715,
+    "meshCount": 1,
+    "chartCount": 3,
+    "atlasCount": 1,
+    "utilization": 0.9751312732696533,
+    "float32RgbaMiB": 40.58784484863281
+  },
+  "output": {
+    "vmappingCount": 12,
+    "vertexCount": 12,
+    "triangleCount": 6,
+    "indexCountMatchesInput": true
+  },
+  "triangles": [
+    {
+      "triangleId": 0,
+      "surfaceHint": "northeast_bed_top",
+      "sourceIndices": [
+        0,
+        1,
+        2
+      ],
+      "outIndex": [
+        0,
+        1,
+        2
+      ],
+      "uv": [
+        [
+          0.9996775984764099,
+          0.7279883623123169
+        ],
+        [
+          0.9996775984764099,
+          0.0002915451768785715
+        ],
+        [
+          0.0003223726525902748,
+          0.0002915451768785715
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.0002915451768785715
+      ],
+      "uvMax": [
+        0.9996775984764099,
+        0.7279883623123169
+      ],
+      "uvAreaAbs": 0.3636138085098304,
+      "validRange": true,
+      "nonDegenerate": true
+    },
+    {
+      "triangleId": 1,
+      "surfaceHint": "northeast_bed_top",
+      "sourceIndices": [
+        0,
+        2,
+        3
+      ],
+      "outIndex": [
+        0,
+        2,
+        3
+      ],
+      "uv": [
+        [
+          0.9996775984764099,
+          0.7279883623123169
+        ],
+        [
+          0.0003223726525902748,
+          0.0002915451768785715
+        ],
+        [
+          0.0003223726525902748,
+          0.7279883623123169
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.0002915451768785715
+      ],
+      "uvMax": [
+        0.9996775984764099,
+        0.7279883623123169
+      ],
+      "uvAreaAbs": 0.3636138085098304,
+      "validRange": true,
+      "nonDegenerate": true
+    },
+    {
+      "triangleId": 2,
+      "surfaceHint": "northeast_bed_south",
+      "sourceIndices": [
+        4,
+        5,
+        6
+      ],
+      "outIndex": [
+        8,
+        11,
+        9
+      ],
+      "uv": [
+        [
+          0.9996775984764099,
+          0.8638483881950378
+        ],
+        [
+          0.0003223726525902748,
+          0.8638483881950378
+        ],
+        [
+          0.0003223726525902748,
+          0.7332361340522766
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.7332361340522766
+      ],
+      "uvMax": [
+        0.9996775984764099,
+        0.8638483881950378
+      ],
+      "uvAreaAbs": 0.06526401936709864,
+      "validRange": true,
+      "nonDegenerate": true
+    },
+    {
+      "triangleId": 3,
+      "surfaceHint": "northeast_bed_south",
+      "sourceIndices": [
+        4,
+        6,
+        7
+      ],
+      "outIndex": [
+        8,
+        9,
+        10
+      ],
+      "uv": [
+        [
+          0.9996775984764099,
+          0.8638483881950378
+        ],
+        [
+          0.0003223726525902748,
+          0.7332361340522766
+        ],
+        [
+          0.9996775984764099,
+          0.7332361340522766
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.7332361340522766
+      ],
+      "uvMax": [
+        0.9996775984764099,
+        0.8638483881950378
+      ],
+      "uvAreaAbs": 0.06526401936709864,
+      "validRange": true,
+      "nonDegenerate": true
+    },
+    {
+      "triangleId": 4,
+      "surfaceHint": "northeast_bed_west",
+      "sourceIndices": [
+        8,
+        9,
+        10
+      ],
+      "outIndex": [
+        4,
+        7,
+        5
+      ],
+      "uv": [
+        [
+          0.804964542388916,
+          0.9997084736824036
+        ],
+        [
+          0.0003223726525902748,
+          0.9997084736824036
+        ],
+        [
+          0.0003223726525902748,
+          0.8690962195396423
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.8690962195396423
+      ],
+      "uvMax": [
+        0.804964542388916,
+        0.9997084736824036
+      ],
+      "uvAreaAbs": 0.0525480637837919,
+      "validRange": true,
+      "nonDegenerate": true
+    },
+    {
+      "triangleId": 5,
+      "surfaceHint": "northeast_bed_west",
+      "sourceIndices": [
+        8,
+        10,
+        11
+      ],
+      "outIndex": [
+        4,
+        5,
+        6
+      ],
+      "uv": [
+        [
+          0.804964542388916,
+          0.9997084736824036
+        ],
+        [
+          0.0003223726525902748,
+          0.8690962195396423
+        ],
+        [
+          0.804964542388916,
+          0.8690962195396423
+        ]
+      ],
+      "uvMin": [
+        0.0003223726525902748,
+        0.8690962195396423
+      ],
+      "uvMax": [
+        0.804964542388916,
+        0.9997084736824036
+      ],
+      "uvAreaAbs": 0.0525480637837919,
+      "validRange": true,
+      "nonDegenerate": true
+    }
+  ],
+  "furnitureMode": "bed"
+}

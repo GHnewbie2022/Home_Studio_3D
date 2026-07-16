@@ -1,0 +1,34 @@
+{
+  "schema": "r7-3-10-baked-seam-radiance-gate-v1",
+  "status": "FAIL",
+  "method": "same-surface-near-edge-versus-interior-hdr-radiance",
+  "packageAtlasGroup": "northeast_bed",
+  "policy": {
+    "comparisonMode": "broad-near-versus-interior",
+    "firstTexelBandMaxM": 0.0013,
+    "adjacentTexelBandMinM": 0.0013,
+    "adjacentTexelBandMaxM": 0.0038,
+    "nearBandMaxM": 0.005,
+    "interiorBandMinM": 0.015,
+    "interiorBandMaxM": 0.035,
+    "endpointInsetM": 0.004,
+    "intervalToleranceM": 0.000001,
+    "blackLumaThreshold": 0.00001,
+    "minNearSamples": 8,
+    "minInteriorSamples": 16,
+    "minMedianRatio": 0.2,
+    "minP10Ratio": 0.05,
+    "minAbsoluteDrop": 0.02
+  },
+  "counts": {
+    "packageSurfaces": 1,
+    "evaluatedEdges": 0,
+    "evaluatedSides": 0,
+    "failedSides": 0,
+    "nearTexels": 0,
+    "interiorTexels": 0,
+    "nearExactBlackTexels": 0
+  },
+  "failedSideKeys": [],
+  "sides": []
+}

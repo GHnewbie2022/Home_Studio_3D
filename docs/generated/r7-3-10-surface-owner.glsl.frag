@@ -1,4 +1,4 @@
-// === GENERATED: surface-owner BEGIN  (registry bfebcab598756c9b) ===
+// === GENERATED: surface-owner BEGIN  (registry c214fc755edd7f14) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -16,11 +16,14 @@ const int R7310_OWNER_CENTRAL_DESK_FRONT = 11;
 const int R7310_OWNER_CENTRAL_DESK_BACK = 12;
 const int R7310_OWNER_CENTRAL_DESK_LEFT = 13;
 const int R7310_OWNER_CENTRAL_DESK_RIGHT = 14;
-const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 15;
-const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 16;
-const int R7310_OWNER_WEST_WALL_OPEN = 17;
-const int R7310_OWNER_WEST_THRESHOLD_FRONT = 18;
-const int R7310_OWNER_WEST_THRESHOLD_TOP = 19;
+const int R7310_OWNER_NORTHEAST_BED_TOP = 15;
+const int R7310_OWNER_NORTHEAST_BED_SOUTH = 16;
+const int R7310_OWNER_NORTHEAST_BED_WEST = 17;
+const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 18;
+const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 19;
+const int R7310_OWNER_WEST_WALL_OPEN = 20;
+const int R7310_OWNER_WEST_THRESHOLD_FRONT = 21;
+const int R7310_OWNER_WEST_THRESHOLD_TOP = 22;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -56,6 +59,12 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.61 && p.x <= -0.59) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_LEFT; } }
 	// central_desk_right (precedence 40)
 	if (n.x * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= 0.59 && p.x <= 0.61) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_RIGHT; } }
+	// northeast_bed_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 0.27 && p.y <= 0.29 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_TOP; } }
+	// northeast_bed_south (precedence 40)
+	if (n.z * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -0.324 && p.z <= -0.304 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_SOUTH; } }
+	// northeast_bed_west (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.037 && p.x <= -0.017) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_WEST; } }
 	// west_wall_switch_plate (precedence 50)
 	if (n.x * 1.0 > 0.5 && p.y >= 1.148 && p.y <= 1.218 && p.z >= -0.089 && p.z <= 0.031 && p.x >= -1.901 && p.x <= -1.899) { if (50 > bestPrec) { bestPrec = 50; best = R7310_OWNER_WEST_WALL_SWITCH_PLATE; } }
 	// west_wall_switch_button (precedence 51)

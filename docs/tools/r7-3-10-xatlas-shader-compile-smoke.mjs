@@ -18,6 +18,7 @@ const viewportWidth = Number(args.width || process.env.R7310_VIEWPORT_WIDTH || 1
 const viewportHeight = Number(args.height || process.env.R7310_VIEWPORT_HEIGHT || 720);
 const minSamples = Number(args['min-samples'] || process.env.R7310_MIN_SAMPLES || 8);
 const sppCap = Number(args['spp-cap'] || process.env.R7310_SPP_CAP || 0);
+const maxMagentaRatio = Number(args['max-magenta-ratio'] || process.env.R7310_MAX_MAGENTA_RATIO || 1);
 const timeoutMs = Number(args['timeout-ms'] || process.env.R7310_TIMEOUT_MS || 180000);
 const postLoadWaitMs = Number(args['post-load-wait-ms'] || process.env.R7310_POST_LOAD_WAIT_MS || 0);
 const ironDoorCamera = args['iron-door-camera'] === 'true' || process.env.R7310_IRON_DOOR_CAMERA === 'true';
@@ -869,6 +870,7 @@ async function main() {
 		fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));
 		const classified = classifyEvents(cdp.events, chrome.stderrText);
 		const nonBlack = pageSmoke.canvas.nonBlackRatio > 0.01 && pageSmoke.canvas.lumaMax > 2;
+		const magentaWithinLimit = pageSmoke.canvas.magentaDominantRatio <= maxMagentaRatio;
 		const expectedLightingMode = expectedRuntimePlanarLightingMode();
 		const runtimePlanarSourceModeReady = !ironDoorRuntimePlanar ||
 				(pageSmoke.config.ironDoorRuntimePlanarReflectionReady === true &&
@@ -889,6 +891,7 @@ async function main() {
 		);
 		const status = pageSmoke.documentReadyState === 'complete' &&
 			nonBlack &&
+			magentaWithinLimit &&
 			classified.programInvalidCount === 0 &&
 			classified.shaderErrorCount === 0 &&
 			classified.contextLostCount === 0 &&
@@ -914,6 +917,9 @@ async function main() {
 			checks: {
 				pageLoaded: pageSmoke.documentReadyState === 'complete',
 				nonBlack,
+				magentaWithinLimit,
+				maxMagentaRatio,
+				actualMagentaRatio: pageSmoke.canvas.magentaDominantRatio,
 				programInvalidCount: classified.programInvalidCount,
 				shaderErrorCount: classified.shaderErrorCount,
 				contextLostCount: classified.contextLostCount,

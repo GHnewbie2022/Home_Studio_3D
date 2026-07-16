@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const smokeRunner = fs.readFileSync('docs/tools/r7-3-10-xatlas-shader-compile-smoke.mjs', 'utf8');
 
 assert.match(smokeRunner, /const sppCap = Number\(args\['spp-cap'\] \|\| process\.env\.R7310_SPP_CAP \|\| 0\)/);
+assert.match(smokeRunner, /const maxMagentaRatio = Number\(args\['max-magenta-ratio'\] \|\| process\.env\.R7310_MAX_MAGENTA_RATIO \|\| 1\)/);
 assert.match(smokeRunner, /const ironDoorRuntimePlanar = args\['iron-door-runtime-planar'\] === 'true' \|\| process\.env\.R7310_IRON_DOOR_RUNTIME_PLANAR === 'true'/);
 assert.match(smokeRunner, /const cameraStateJson = args\['camera-state-json'\] \|\| process\.env\.R7310_CAMERA_STATE_JSON \|\| ''/);
 assert.match(smokeRunner, /cameraState = JSON\.parse\(cameraStateJson\)/);
@@ -18,5 +19,8 @@ assert.match(smokeRunner, /renderer\.render\(screenOutputScene,\s*orthoCamera\)/
 assert.match(smokeRunner, /sppCap,\s*timeoutMs,\s*postLoadWaitMs/);
 assert.match(smokeRunner, /sppCap:\s*typeof window\.reportSppCap === 'function'/);
 assert.match(smokeRunner, /cameraPose:\s*typeof window\.reportR7310CameraPoseInfo === 'function'/);
+assert.match(smokeRunner, /const magentaWithinLimit = pageSmoke\.canvas\.magentaDominantRatio <= maxMagentaRatio/);
+assert.match(smokeRunner, /nonBlack &&\s*magentaWithinLimit &&/);
+assert.match(smokeRunner, /actualMagentaRatio: pageSmoke\.canvas\.magentaDominantRatio/);
 
 console.log('R7-3.10 shader compile smoke SPP cap contract passed');
