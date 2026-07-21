@@ -1,0 +1,545 @@
+{
+  "schema": "r7-3-10-south-fixed-furniture-xatlas-prepare-v1",
+  "result": "PASS",
+  "failures": [],
+  "phase": "r7-3-10-south-fixed-furniture-xatlas-prepare-v1",
+  "surfaceGroup": "south_fixed_furniture",
+  "atlasGroup": "south_fixed_furniture",
+  "surfaceIds": [
+    "south_system_desk_top_main",
+    "south_system_desk_top_west_arm",
+    "south_system_desk_underside",
+    "south_system_desk_north",
+    "south_system_desk_east_exposed",
+    "southwest_drawer_north_1",
+    "southwest_drawer_north_2",
+    "southwest_drawer_north_3",
+    "southwest_drawer_north_4",
+    "southwest_drawer_east_1",
+    "southwest_drawer_east_2",
+    "southwest_drawer_east_3",
+    "southwest_drawer_east_4",
+    "southeast_bookshelf_top",
+    "southeast_bookshelf_north",
+    "southeast_bookshelf_west_lower_below_outlet",
+    "southeast_bookshelf_west_lower_above_outlet",
+    "southeast_bookshelf_west_lower_north_of_outlet",
+    "southeast_bookshelf_west_lower_south_of_outlet",
+    "southeast_bookshelf_west_upper"
+  ],
+  "semanticSurfaceIds": [
+    "south_system_desk_top",
+    "south_system_desk_underside",
+    "south_system_desk_north",
+    "south_system_desk_east_exposed",
+    "southwest_drawer_north_1",
+    "southwest_drawer_north_2",
+    "southwest_drawer_north_3",
+    "southwest_drawer_north_4",
+    "southwest_drawer_east_1",
+    "southwest_drawer_east_2",
+    "southwest_drawer_east_3",
+    "southwest_drawer_east_4",
+    "southeast_bookshelf_top",
+    "southeast_bookshelf_north",
+    "southeast_bookshelf_west_lower_below_outlet",
+    "southeast_bookshelf_west_lower_above_outlet",
+    "southeast_bookshelf_west_lower_north_of_outlet",
+    "southeast_bookshelf_west_lower_south_of_outlet",
+    "southeast_bookshelf_west_upper"
+  ],
+  "sourceBoxIndices": [
+    17,
+    19,
+    21,
+    22,
+    23,
+    24
+  ],
+  "targetDensityMeters": 0.00125,
+  "targetTexelsPerMeter": 800,
+  "paddingTexels": 4,
+  "geometricEdgePolicy": "per-physical-face exact coverage and same-chart padding",
+  "fullRadianceContract": {
+    "bakedRadianceKind": "full_diffuse_radiance",
+    "directLightAlreadyIncluded": true,
+    "addDirectLightAfterBakeLookup": false
+  },
+  "packOptions": {
+    "padding": 4,
+    "texelsPerUnit": 800.0,
+    "bruteForce": true,
+    "createImage": true,
+    "resolution": 0
+  },
+  "atlas": {
+    "width": 2354,
+    "height": 2090,
+    "meshCount": 1,
+    "chartCount": 20,
+    "atlasCount": 1,
+    "utilization": 0.9611844420433044,
+    "float32RgbaMiB": 75.07110595703125
+  },
+  "normalLenStatus": "PASS",
+  "counts": {
+    "vertices": 80,
+    "triangles": 40,
+    "includedSurfaces": 20,
+    "totalTexels": 4919860,
+    "validTexels": 4565468,
+    "dilationTexels": 140494,
+    "overlapTexelsSkipped": 0,
+    "sameSurfaceSharedEdgeTexels": 49,
+    "geometricEdgeTexels": 29613,
+    "perTriangle": {
+      "0": {
+        "validTexels": 596374,
+        "surfaceHint": "south_system_desk_top_main",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "1": {
+        "validTexels": 596372,
+        "surfaceHint": "south_system_desk_top_main",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "2": {
+        "validTexels": 23496,
+        "surfaceHint": "south_system_desk_top_west_arm",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "3": {
+        "validTexels": 23864,
+        "surfaceHint": "south_system_desk_top_west_arm",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "4": {
+        "validTexels": 442503,
+        "surfaceHint": "south_system_desk_underside",
+        "faceAxis": "y",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ]
+      },
+      "5": {
+        "validTexels": 442507,
+        "surfaceHint": "south_system_desk_underside",
+        "faceAxis": "y",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ]
+      },
+      "6": {
+        "validTexels": 130152,
+        "surfaceHint": "south_system_desk_north",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "7": {
+        "validTexels": 132488,
+        "surfaceHint": "south_system_desk_north",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "8": {
+        "validTexels": 15595,
+        "surfaceHint": "south_system_desk_east_exposed",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "9": {
+        "validTexels": 15429,
+        "surfaceHint": "south_system_desk_east_exposed",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "10": {
+        "validTexels": 43111,
+        "surfaceHint": "southwest_drawer_north_1",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "11": {
+        "validTexels": 43112,
+        "surfaceHint": "southwest_drawer_north_1",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "12": {
+        "validTexels": 32549,
+        "surfaceHint": "southwest_drawer_east_1",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "13": {
+        "validTexels": 32549,
+        "surfaceHint": "southwest_drawer_east_1",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "14": {
+        "validTexels": 42412,
+        "surfaceHint": "southwest_drawer_north_2",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "15": {
+        "validTexels": 43111,
+        "surfaceHint": "southwest_drawer_north_2",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "16": {
+        "validTexels": 32549,
+        "surfaceHint": "southwest_drawer_east_2",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "17": {
+        "validTexels": 32549,
+        "surfaceHint": "southwest_drawer_east_2",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "18": {
+        "validTexels": 43112,
+        "surfaceHint": "southwest_drawer_north_3",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "19": {
+        "validTexels": 43111,
+        "surfaceHint": "southwest_drawer_north_3",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "20": {
+        "validTexels": 33087,
+        "surfaceHint": "southwest_drawer_east_3",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "21": {
+        "validTexels": 33087,
+        "surfaceHint": "southwest_drawer_east_3",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "22": {
+        "validTexels": 42411,
+        "surfaceHint": "southwest_drawer_north_4",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "23": {
+        "validTexels": 42410,
+        "surfaceHint": "southwest_drawer_north_4",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "24": {
+        "validTexels": 33087,
+        "surfaceHint": "southwest_drawer_east_4",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "25": {
+        "validTexels": 33087,
+        "surfaceHint": "southwest_drawer_east_4",
+        "faceAxis": "x",
+        "faceSign": 1,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "26": {
+        "validTexels": 79779,
+        "surfaceHint": "southeast_bookshelf_top",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "27": {
+        "validTexels": 79779,
+        "surfaceHint": "southeast_bookshelf_top",
+        "faceAxis": "y",
+        "faceSign": 1,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "28": {
+        "validTexels": 497265,
+        "surfaceHint": "southeast_bookshelf_north",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "29": {
+        "validTexels": 497232,
+        "surfaceHint": "southeast_bookshelf_north",
+        "faceAxis": "z",
+        "faceSign": -1,
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      },
+      "30": {
+        "validTexels": 37074,
+        "surfaceHint": "southeast_bookshelf_west_lower_below_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "31": {
+        "validTexels": 37050,
+        "surfaceHint": "southeast_bookshelf_west_lower_below_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "32": {
+        "validTexels": 16375,
+        "surfaceHint": "southeast_bookshelf_west_lower_above_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "33": {
+        "validTexels": 16375,
+        "surfaceHint": "southeast_bookshelf_west_lower_above_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "34": {
+        "validTexels": 6888,
+        "surfaceHint": "southeast_bookshelf_west_lower_north_of_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "35": {
+        "validTexels": 6789,
+        "surfaceHint": "southeast_bookshelf_west_lower_north_of_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "36": {
+        "validTexels": 1128,
+        "surfaceHint": "southeast_bookshelf_west_lower_south_of_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "37": {
+        "validTexels": 1200,
+        "surfaceHint": "southeast_bookshelf_west_lower_south_of_outlet",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "38": {
+        "validTexels": 132210,
+        "surfaceHint": "southeast_bookshelf_west_upper",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "39": {
+        "validTexels": 132210,
+        "surfaceHint": "southeast_bookshelf_west_upper",
+        "faceAxis": "x",
+        "faceSign": -1,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "outputs": {
+    "outDir": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture",
+    "inputMesh": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-input-mesh.json",
+    "uv": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-dry-run-uv.json",
+    "normalLenAudit": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-normal-len-audit.json",
+    "texelmap": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-bake-texelmap.bin"
+  }
+}

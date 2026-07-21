@@ -40,6 +40,8 @@ const WEST_WALL_SWITCH_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xa
 const WEST_WALL_SWITCH_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-input-mesh.json');
 const NORTHEAST_BED_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-dry-run-uv.json');
 const NORTHEAST_BED_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-input-mesh.json');
+const SOUTH_FIXED_FURNITURE_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-dry-run-uv.json');
+const SOUTH_FIXED_FURNITURE_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-input-mesh.json');
 const OUT_DIR = resolve(REPO, 'docs/generated');
 const OUT_PATH = resolve(OUT_DIR, 'r7-3-10-xatlas-param-table.generated.json');
 
@@ -68,7 +70,8 @@ const AXIS_IDX = { x: 0, y: 1, z: 2 };
 function computeRegistryVersion() {
   const machineFields = registrySurfaces.map((s) => ({
     surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
-    x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+    x: s.x, y: s.y, z: s.z, xRects: s.xRects, regions: s.regions,
+    precedence: s.precedence, pendingPolicy: s.pendingPolicy,
     configId: s.configId, atlasGroup: s.atlasGroup,
   }));
   return createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
@@ -381,7 +384,7 @@ function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource, groupBySurf
         `${pieceId} chart reprojection error ${chartReprojectionMaxErrorTexels} texels exceeds one texel`
       );
     }
-    entry.semanticSurfaceId = meta.surfaceHint;
+    entry.semanticSurfaceId = meta.semanticSurfaceId || meta.surfaceHint;
     return entry;
   });
 }
@@ -414,6 +417,16 @@ function northeastBedEntriesFromChart() {
     NORTHEAST_BED_MESH_PATH,
     'northeast_bed',
     'northeast-bed-xatlas-chart',
+    true
+  );
+}
+
+function southFixedFurnitureEntriesFromChart() {
+  return entriesFromChart(
+    SOUTH_FIXED_FURNITURE_UV_PATH,
+    SOUTH_FIXED_FURNITURE_MESH_PATH,
+    'south_fixed_furniture',
+    'south-fixed-furniture-xatlas-chart',
     true
   );
 }
@@ -482,6 +495,7 @@ baseEntries.push(...structuralEntriesFromChart());
 baseEntries.push(...southWindowRevealEntriesFromChart());
 baseEntries.push(...westWallSwitchEntriesFromChart());
 baseEntries.push(...northeastBedEntriesFromChart());
+baseEntries.push(...southFixedFurnitureEntriesFromChart());
 
 // (3) representative 樑/柱/reveals/C2A 代表面（房間幾何程式化合成 plausible bbox/rect）
 

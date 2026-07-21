@@ -25,7 +25,7 @@ test('south window side and bottom reveals require one formal full-radiance XATL
 	assert.equal(pointer.addDirectLightAfterBakeLookup, false);
 	assert.equal(pointer.multiplyAlbedoAfterBakeLookup, false);
 	assert.doesNotMatch(pointer.packageDir, /architecture_probe|c1-static-diffuse|bake-lit/i);
-	assert.equal(pointer.packageDir, 'assets/runtime/r7-3-10/current-room/south-window-reveals/package');
+	assert.equal(pointer.packageDir, 'assets/runtime/r7-3-10/current-room/south-window-reveals/package-texel-aware-v1');
 });
 
 test('west wall route is owner-first so physical switches cannot sample the wall page', () => {
@@ -71,12 +71,24 @@ test('west wall physical switch selects its owner chart before broad param fallb
 	assert.match(init, /surfaceId\s*===\s*'west_wall_switch_button__full'/);
 });
 
-test('XATLAS param table capacity includes the two west-wall switch charts', () => {
-	assert.ok(paramTable.count <= 48, `generated table has ${paramTable.count} surfaces but shader capacity is 48`);
-	assert.match(shader, /uR7310C1XatlasParamSurfaceTable\[336\]/);
+test('XATLAS param table capacity includes formal furniture charts', () => {
+	const capacityMatch = init.match(/R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY\s*=\s*(\d+)/);
+	assert.ok(capacityMatch, 'JS must declare one formal XATLAS surface-capacity constant');
+	const surfaceCapacity = Number(capacityMatch[1]);
+	assert.ok(paramTable.count <= surfaceCapacity,
+		`generated table has ${paramTable.count} surfaces but runtime capacity is ${surfaceCapacity}`);
+	assert.match(init, /R7310_C1_XATLAS_PARAM_VEC4_CAPACITY\s*=\s*R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY\s*\*\s*7/);
+	assert.match(init, /length:\s*R7310_C1_XATLAS_PARAM_VEC4_CAPACITY/);
+	assert.match(shader, new RegExp(`uR7310C1XatlasParamSurfaceTable\\[${surfaceCapacity * 7}\\]`));
 	assert.match(shader, /bool\s+westWallSwitch\s*=/);
 	assert.match(shader, /structural\s*\|\|\s*westWallSwitch/);
 	assert.match(init, /surfaceCount\s*\*\s*7\s*>\s*vecs\.length/);
+	assert.match(init, /r7310C1XatlasParamTableLoadStatus\s*=\s*'ready'/);
+	assert.match(init, /r7310C1XatlasParamTableLoadStatus\s*=\s*'error'/);
+	assert.match(init, /console\.error\('R7-3\.10 XATLAS param table load failed:'/);
+	assert.doesNotMatch(init, /catch\s*\(e\)\s*\{\s*\/\* param 表為選用；非 param 建置時忽略 \*\/\s*\}/);
+	assert.match(init, /paramTableLoadStatus:\s*r7310C1XatlasParamTableLoadStatus/);
+	assert.match(init, /paramTableSurfaceCapacity:\s*R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY/);
 });
 
 test('A NARROW contact-edge scanner covers east B1 and B2 edges', () => {

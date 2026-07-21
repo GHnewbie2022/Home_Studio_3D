@@ -27,7 +27,8 @@ test('runner exposes a bed-only xatlas full-radiance route', () => {
 	assert.match(runner, /out\.r7310Surface === 'northeast-bed-xatlas' && out\.r7310SeparatedIrradianceBake/);
 	assert.match(runner, /out\.r7310Surface === 'northeast-bed-xatlas' && out\.r7310NeFurniture !== 'bed'/);
 	assert.match(runner, /entry\.pieceId \?\? entry\.surfaceHint/);
-	assert.match(runner, /xatlasPreparedMeshSource && args\.r7310Surface !== 'northeast-bed-xatlas'/);
+	assert.match(runner, /const furnitureXatlasSurface = \['northeast-bed-xatlas', 'south-fixed-furniture-xatlas'\]\.includes\(args\.r7310Surface\)/);
+	assert.match(runner, /xatlasPreparedMeshSource && !furnitureXatlasSurface/);
 	assert.match(runner, /surfaceName === 'northeast_bed'\) return 'c1_xatlas_northeast_bed_runtime'/);
 	assert.match(runner, /pointer\.packageStatus = 'accepted'/);
 	assert.match(runner, /payload\.report\.northeastFurnitureMode = args\.r7310NeFurniture/);
@@ -131,5 +132,5 @@ test('bed runtime dispatch is gated to configuration one bed mode', () => {
 
 test('bed object hits are admitted by the parameterized xatlas route', () => {
 	assert.match(shader, /bool northeastBed\s*=/);
-	assert.match(shader, /return westThresholdFront \|\| westThresholdTop \|\| centralDesk \|\| northeastBed \|\| structural \|\| westWallSwitch;/);
+	assert.match(shader, /centralDesk\s*\|\|\s*northeastBed\s*\|\|\s*southSystemFurniture/);
 });

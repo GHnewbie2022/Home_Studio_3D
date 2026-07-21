@@ -314,3 +314,30 @@ test('chart gutter dilation copies a valid same-chart texel into prepared paddin
   assert.equal(result.report.counts.repairedTexels, 1);
   assert.equal(result.report.counts.unrepairedTexels, 0);
 });
+
+test('final atlas exact-black validation reads the fully postprocessed artifact', async () => {
+  const runner = await import('../tools/r7-3-8-c1-bake-capture-runner.mjs');
+  const width = 2;
+  const height = 1;
+  const atlasBuffer = Buffer.alloc(width * height * 4 * 4);
+  [0.5, 0.5, 0.5, 1].forEach((value, channel) =>
+    atlasBuffer.writeFloatLE(value, channel * 4));
+  [0, 0, 0, 1].forEach((value, channel) =>
+    atlasBuffer.writeFloatLE(value, (4 + channel) * 4));
+
+  const before = runner.summarizeR7310C1XatlasFinalAtlasExactBlack({
+    atlasBuffer,
+    width,
+    height
+  });
+  assert.equal(before.alphaOneExactBlackTexels, 1);
+
+  [0.25, 0.25, 0.25, 1].forEach((value, channel) =>
+    atlasBuffer.writeFloatLE(value, (4 + channel) * 4));
+  const after = runner.summarizeR7310C1XatlasFinalAtlasExactBlack({
+    atlasBuffer,
+    width,
+    height
+  });
+  assert.equal(after.alphaOneExactBlackTexels, 0);
+});

@@ -1,0 +1,7 @@
+{
+  "schema": "r7-3-10-central-desk-xatlas-normal-len-audit-v1",
+  "status": "PASS",
+  "validTexels": 4565468,
+  "badNormalTexels": 0,
+  "normalSource": "metadata face normals"
+}

@@ -1811,6 +1811,7 @@ const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xa
 const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-floor-oidn-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_CENTRAL_DESK_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-central-desk-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_NORTHEAST_BED_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_SOUTH_FIXED_FURNITURE_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_STRUCTURAL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-structural-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_SOUTH_WINDOW_REVEALS_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-south-window-reveals-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_WEST_WALL_SWITCH_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-west-wall-switch-runtime-package.json';
@@ -3223,6 +3224,9 @@ let r7310C1XatlasRuntimeCentralDeskRawDirectIncluded = false;
 let r7310C1XatlasRuntimeNortheastBedActive = false;
 let r7310C1XatlasRuntimeNortheastBedDirectIncluded = false;
 let r7310C1XatlasRuntimeNortheastBedRawDirectIncluded = false;
+let r7310C1XatlasRuntimeSouthFixedFurnitureActive = false;
+let r7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded = false;
+let r7310C1XatlasRuntimeSouthFixedFurnitureRawDirectIncluded = false;
 let r7310C1XatlasRuntimeStructuralActive = false;
 let r7310C1XatlasRuntimeStructuralDirectIncluded = false;
 let r7310C1XatlasRuntimeStructuralRawDirectIncluded = false;
@@ -3262,6 +3266,7 @@ let r7310C1XatlasLightmapPagesMode = false;
 let r7310C1XatlasLightmapPageBuffer = null;
 let r7310C1XatlasLightmapPageId = 0;
 let r7310C1XatlasLightmapPageIds = [];
+let r7310C1XatlasLoadedRawLightmapPageIds = [];
 let r7310C1XatlasRuntimeLoadState = 'idle';
 let r7310C1XatlasRuntimeLoadVariant = '';
 let r7310C1XatlasRuntimeLoadSurface = '';
@@ -4221,6 +4226,9 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeNortheastBedDirectIncluded)
 			pathTracingUniforms.uR7310C1XatlasRuntimeNortheastBedDirectIncluded.value =
 				xatlasApplied && r7310C1XatlasRuntimeNortheastBedActive && r7310C1XatlasRuntimeNortheastBedDirectIncluded ? 1.0 : 0.0;
+		if (pathTracingUniforms.uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded)
+			pathTracingUniforms.uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded.value =
+				xatlasApplied && r7310C1XatlasRuntimeSouthFixedFurnitureActive && r7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded ? 1.0 : 0.0;
 		if (pathTracingUniforms.uR7310C1NortheastFurnitureMode)
 			pathTracingUniforms.uR7310C1NortheastFurnitureMode.value = r7310C1NortheastFurnitureRuntimeMode === 'bed' ? 0 : 1;
 		if (pathTracingUniforms.uR7310C1XatlasRuntimeStructuralDirectIncluded)
@@ -6424,6 +6432,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_ID = 11;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_ID = 12;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_ID = 13;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_ID = 14;
+const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_ID = 15;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_W = R7310_C1_XATLAS_MASTER_CEILING_W;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_H = R7310_C1_XATLAS_MASTER_CEILING_H;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH_W = R7310_C1_XATLAS_MASTER_NORTH_W;
@@ -6446,6 +6455,8 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_CENTRAL_DESK_W = 1663;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_CENTRAL_DESK_H = 1576;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_W = 1551;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H = 1715;
+const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_W = 2354;
+const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H = 2090;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_W = 1526;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_H = 3779;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_W = 502;
@@ -6454,6 +6465,14 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_W = 131;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_H = 153;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_LEFT_X = 0;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X = R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_W + R7310_C1_XATLAS_MASTER_GUTTER;
+const R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W = Math.max(
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH_W,
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_W,
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_W,
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_W,
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_W,
+	R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_W
+);
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_Y = 0;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_H + R7310_C1_XATLAS_MASTER_GUTTER;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_TOP_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_H + R7310_C1_XATLAS_MASTER_GUTTER;
@@ -6467,11 +6486,12 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_H + R7310_C1_XATLAS_MASTER_GUTTER;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_H + R7310_C1_XATLAS_MASTER_GUTTER;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_H + R7310_C1_XATLAS_MASTER_GUTTER;
+const R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_Y = R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H + R7310_C1_XATLAS_MASTER_GUTTER;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_X = 0;
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_Y = 0;
-const R7310_C1_XATLAS_LIGHTMAP_SHEET_W = R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X + R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_W;
+const R7310_C1_XATLAS_LIGHTMAP_SHEET_W = R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X + R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W;
 const R7310_C1_XATLAS_LIGHTMAP_SHEET_LEFT_H = R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_H;
-const R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H = R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H;
+const R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H = R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_Y + R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H;
 const R7310_C1_XATLAS_LIGHTMAP_SHEET_H = Math.max(R7310_C1_XATLAS_LIGHTMAP_SHEET_LEFT_H, R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H);
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT = {
 	ceiling: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_LEFT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_Y, w: R7310_C1_XATLAS_MASTER_CEILING_W, h: R7310_C1_XATLAS_MASTER_CEILING_H },
@@ -6487,7 +6507,8 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT = {
 	south_window_reveals: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_LEFT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_Y, w: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_W, h: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_H },
 	west_wall_switch: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_LEFT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_Y, w: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_W, h: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_H },
 	depth_h2: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_Y, w: R7310_C1_XATLAS_MASTER_DEPTH_H2_W, h: R7310_C1_XATLAS_MASTER_DEPTH_H2_H },
-	northeast_bed: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_Y, w: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_W, h: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H }
+	northeast_bed: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_Y, w: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_W, h: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H },
+	south_fixed_furniture: { x: R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X, y: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_Y, w: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_W, h: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H }
 };
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 	pages: Object.freeze([
@@ -6635,6 +6656,17 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			format: 'rgba-f32',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'northeast_bed', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_ID, route: 'baked', rectKey: 'northeast_bed', packageFace: 'northeast_bed', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
+			])
+		}),
+		Object.freeze({
+			pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_ID,
+			pageName: 'south_fixed_furniture_raw_page',
+			autoLoad: true,
+			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_W,
+			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H,
+			format: 'rgba-f32',
+			surfaces: Object.freeze([
+				Object.freeze({ surfaceId: 'south_fixed_furniture', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_ID, route: 'baked', rectKey: 'south_fixed_furniture', packageFace: 'south_fixed_furniture', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
 		})
 	])
@@ -6785,6 +6817,8 @@ function r7310C1XatlasMasterPointerUrl(face, variant)
 		return R7310_C1_XATLAS_RUNTIME_CENTRAL_DESK_RAW_PACKAGE_URL;
 	if (face === 'northeast_bed')
 		return R7310_C1_XATLAS_RUNTIME_NORTHEAST_BED_RAW_PACKAGE_URL;
+	if (face === 'south_fixed_furniture')
+		return R7310_C1_XATLAS_RUNTIME_SOUTH_FIXED_FURNITURE_RAW_PACKAGE_URL;
 	if (face === 'structural')
 		return R7310_C1_XATLAS_RUNTIME_STRUCTURAL_RAW_PACKAGE_URL;
 	if (face === 'south_window_reveals')
@@ -6802,12 +6836,18 @@ var r7310C1XatlasParamWestThresholdTopIndex = -1;
 var r7310C1XatlasParamWestThresholdFrontIndex = -1;
 var r7310C1XatlasParamCentralDeskIndices = [];
 var r7310C1XatlasParamNortheastBedIndices = [];
+var r7310C1XatlasParamSouthFixedFurnitureIndices = [];
 var r7310C1XatlasParamStructuralIndices = [];
 var r7310C1XatlasParamSouthWindowRevealIndices = [];
 var r7310C1XatlasParamWestWallSwitchIndices = [];
 var r7310C1XatlasParamWestWallSwitchPlateIndex = -1;
 var r7310C1XatlasParamWestWallSwitchButtonIndex = -1;
 var r7310C1XatlasParamSurfaceLocalRects = [];
+var R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY = 72;
+var R7310_C1_XATLAS_PARAM_VEC4_CAPACITY = R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY * 7;
+var r7310C1XatlasParamTableLoadStatus = 'pending';
+var r7310C1XatlasParamTableLoadError = null;
+var r7310C1XatlasParamTableSurfaceCount = 0;
 function r7310C1SetXatlasParamSurfaceEnabled(surfaceIndex, rectKey, enabled)
 {
 	if (typeof pathTracingUniforms === 'undefined' || !pathTracingUniforms) return false;
@@ -6852,6 +6892,13 @@ function r7310C1SetXatlasParamNortheastBedEnabled(enabled)
 	var ok = true;
 	for (var i = 0; i < r7310C1XatlasParamNortheastBedIndices.length; i += 1)
 		ok = r7310C1SetXatlasParamSurfaceEnabled(r7310C1XatlasParamNortheastBedIndices[i], 'northeast_bed', enabled) && ok;
+	return ok;
+}
+function r7310C1SetXatlasParamSouthFixedFurnitureEnabled(enabled)
+{
+	var ok = true;
+	for (var i = 0; i < r7310C1XatlasParamSouthFixedFurnitureIndices.length; i += 1)
+		ok = r7310C1SetXatlasParamSurfaceEnabled(r7310C1XatlasParamSouthFixedFurnitureIndices[i], 'south_fixed_furniture', enabled) && ok;
 	return ok;
 }
 function r7310C1SetXatlasParamStructuralEnabled(enabled)
@@ -6917,6 +6964,10 @@ function r7310C1XatlasCentralDeskDirectIncludedForVariant()
 function r7310C1XatlasNortheastBedDirectIncludedForVariant()
 {
 	return r7310C1XatlasRuntimeNortheastBedRawDirectIncluded;
+}
+function r7310C1XatlasSouthFixedFurnitureDirectIncludedForVariant()
+{
+	return r7310C1XatlasRuntimeSouthFixedFurnitureRawDirectIncluded;
 }
 function r7310C1XatlasWestThresholdTopDirectIncludedForVariant(variant)
 {
@@ -7008,6 +7059,18 @@ function r7310C1ApplyXatlasNortheastBedToggle()
 	r7310C1SetXatlasParamNortheastBedEnabled(active);
 	return active;
 }
+function r7310C1ApplyXatlasSouthFixedFurnitureToggle()
+{
+	var r7310ConfigId = typeof currentPanelConfig === 'number' ? currentPanelConfig : 1;
+	var active = !!((r7310C1XatlasMasterMode || r7310C1XatlasLightmapPagesMode) &&
+		r7310ConfigId === 1 &&
+		r7310C1XatlasRuntimeSouthFixedFurnitureRawDirectIncluded);
+	r7310C1XatlasRuntimeSouthFixedFurnitureActive = active;
+	r7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded =
+		active && r7310C1XatlasSouthFixedFurnitureDirectIncludedForVariant();
+	r7310C1SetXatlasParamSouthFixedFurnitureEnabled(active);
+	return active;
+}
 function r7310C1ApplyXatlasStructuralToggle()
 {
 	var active = !!(r7310C1StructuralDiffuseRuntimeEnabled &&
@@ -7096,6 +7159,56 @@ function commitR7310C1XatlasMasterRuntimeTexture(reason)
 	return true;
 }
 
+function r7310C1RequiredRawLightmapPageIds()
+{
+	var r7310ConfigId = typeof currentPanelConfig === 'number' ? currentPanelConfig : 1;
+	var northeastFurnitureMode = r7310C1NortheastFurnitureRuntimeMode;
+	var capturePackageFace = r7310C1XatlasCapturePackageFace();
+	var required = [];
+	for (var pi = 0; pi < R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY.pages.length; pi += 1)
+	{
+		var page = R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY.pages[pi];
+		if (!page || page.pageId <= 0 || !page.surfaces || !page.surfaces.length) continue;
+		if (page.autoLoadWhen === 'config1-bed' &&
+			!(r7310ConfigId === 1 && northeastFurnitureMode === 'bed')) continue;
+		if (page.autoLoad === false && page.autoLoadWhen !== 'config1-bed') continue;
+		var pageRequired = false;
+		for (var si = 0; si < page.surfaces.length; si += 1)
+		{
+			if (capturePackageFace && page.surfaces[si].packageFace === capturePackageFace) continue;
+			pageRequired = true;
+			break;
+		}
+		if (pageRequired) required.push(page.pageId);
+	}
+	if (r7310C1FloorDiffuseRuntimeEnabled)
+		required.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID);
+	return required.filter(function(pageId, index, list) { return list.indexOf(pageId) === index; })
+		.sort(function(a, b) { return a - b; });
+}
+
+function r7310C1RawLightmapPageReadinessReport()
+{
+	var requiredPageIds = r7310C1RequiredRawLightmapPageIds();
+	var loadedPageIds = r7310C1XatlasLoadedRawLightmapPageIds.slice()
+		.sort(function(a, b) { return a - b; });
+	var missingPageIds = requiredPageIds.filter(function(pageId)
+	{
+		return loadedPageIds.indexOf(pageId) === -1;
+	});
+	return {
+		requiredPageIds: requiredPageIds,
+		loadedPageIds: loadedPageIds,
+		missingPageIds: missingPageIds,
+		ready: r7310C1XatlasRuntimeEnabled === true &&
+			r7310C1XatlasRuntimeReady === true &&
+			r7310C1XatlasLightmapPagesMode === true &&
+			r7310C1XatlasRuntimeLoadState === 'ready' &&
+			!r7310C1XatlasRuntimeError &&
+			missingPageIds.length === 0
+	};
+}
+
 function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 {
 	if (!r7310C1XatlasLightmapPageBuffer)
@@ -7127,6 +7240,8 @@ function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 		r7310C1XatlasLightmapPageIds.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_ID);
 	if (r7310C1XatlasRuntimeNortheastBedActive)
 		r7310C1XatlasLightmapPageIds.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_ID);
+	if (r7310C1XatlasRuntimeSouthFixedFurnitureActive)
+		r7310C1XatlasLightmapPageIds.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_ID);
 	if (r7310C1XatlasRuntimeFullFloorActive)
 		r7310C1XatlasLightmapPageIds.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID);
 	r7310C1XatlasMasterMode = false;
@@ -7142,6 +7257,7 @@ function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 		r7310C1XatlasRuntimeFullCeilingActive ||
 		r7310C1XatlasRuntimeCentralDeskActive ||
 		r7310C1XatlasRuntimeNortheastBedActive ||
+		r7310C1XatlasRuntimeSouthFixedFurnitureActive ||
 		r7310C1XatlasRuntimeStructuralActive ||
 		r7310C1XatlasRuntimeSouthWindowRevealsActive ||
 		r7310C1XatlasRuntimeWestWallSwitchActive);
@@ -7263,11 +7379,44 @@ async function loadR7310C1XatlasRuntimeFloorPageTexture(variant, options)
 	return true;
 }
 
+function r7310C1XatlasCapturePackageFace()
+{
+	try
+	{
+		var explicitFace = String(new URLSearchParams(location.search).get('r7310XatlasCapturePackageFace') || '');
+		var allowedFaces = {
+			east: true,
+			floor: true,
+			central_desk: true,
+			northeast_bed: true,
+			south_fixed_furniture: true,
+			structural_beams_columns: true,
+			south_window_reveals: true,
+			west_wall_switch: true
+		};
+		if (allowedFaces[explicitFace]) return explicitFace;
+		var key = String(new URLSearchParams(location.search).get('r7310XatlasCaptureSurface') || '');
+		var packageFaces = {
+			'full-east-wall-xatlas': 'east',
+			'full-floor-xatlas': 'floor',
+			'central-desk-xatlas': 'central_desk',
+			'northeast-bed-xatlas': 'northeast_bed',
+			'south-fixed-furniture-xatlas': 'south_fixed_furniture',
+			'structural-beams-columns-xatlas': 'structural_beams_columns',
+			'south-window-reveals-xatlas': 'south_window_reveals',
+			'west-wall-switch-xatlas': 'west_wall_switch'
+		};
+		return packageFaces[key] || '';
+	}
+	catch (error) { return ''; }
+}
+
 async function loadR7310C1XatlasRawLightmapPages(variant)
 {
 	var v = (variant === 'raw') ? 'raw' : 'raw';
 	var r7310ConfigId = typeof currentPanelConfig === 'number' ? currentPanelConfig : 1;
 	var northeastFurnitureMode = r7310C1NortheastFurnitureRuntimeMode;
+	var capturePackageFace = r7310C1XatlasCapturePackageFace();
 	var surfaces = [];
 	for (var pi = 0; pi < R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY.pages.length; pi += 1)
 	{
@@ -7277,7 +7426,10 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			!(r7310ConfigId === 1 && northeastFurnitureMode === 'bed')) continue;
 		if (page.autoLoad === false && page.autoLoadWhen !== 'config1-bed') continue;
 		for (var si = 0; si < page.surfaces.length; si += 1)
+		{
+			if (capturePackageFace && page.surfaces[si].packageFace === capturePackageFace) continue;
 			surfaces.push(page.surfaces[si]);
+		}
 	}
 	try
 	{
@@ -7303,6 +7455,7 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		var nextFullCeilingActive = false;
 		var nextCentralDeskRawDirectIncluded = false;
 		var nextNortheastBedRawDirectIncluded = false;
+		var nextSouthFixedFurnitureRawDirectIncluded = false;
 		var nextStructuralRawDirectIncluded = false;
 		var nextSouthWindowRevealsRawDirectIncluded = false;
 		var nextWestWallSwitchRawDirectIncluded = false;
@@ -7315,6 +7468,7 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		var nextFullCeilingRawDirectIncluded = false;
 		var nextDepthH2RawDirectIncluded = false;
 		var loadedPageCount = 0;
+		var loadedPageIds = [];
 		r7310C1XatlasLightmapPagesMode = false;
 		r7310C1XatlasMasterMode = false;
 		r7310C1XatlasMasterBuffer = null;
@@ -7413,6 +7567,10 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			{
 				nextNortheastBedRawDirectIncluded = pointer.directLightAlreadyIncluded === true;
 			}
+			else if (surface.packageFace === 'south_fixed_furniture')
+			{
+				nextSouthFixedFurnitureRawDirectIncluded = pointer.directLightAlreadyIncluded === true;
+			}
 			else if (surface.packageFace === 'structural')
 			{
 				nextStructuralRawDirectIncluded = pointer.directLightAlreadyIncluded === true;
@@ -7425,6 +7583,8 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			{
 				nextWestWallSwitchRawDirectIncluded = pointer.directLightAlreadyIncluded === true;
 			}
+			if (loadedPageIds.indexOf(surface.pageId) === -1)
+				loadedPageIds.push(surface.pageId);
 			loadedPageCount += 1;
 			updateR7310C1XatlasRawLightmapPageLoadingUi(loadedPageCount, surfaces.length, surface.surfaceId);
 			await waitHomeStudioLoadingUiPaint();
@@ -7457,7 +7617,10 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1XatlasRuntimeDepthH2DirectIncluded =
 			r7310C1XatlasRuntimeFullCeilingActive && r7310C1CeilingDiffuseRuntimeEnabled && r7310C1XatlasDepthH2DirectIncludedForVariant(v);
 		if (r7310C1FloorDiffuseRuntimeEnabled)
+		{
 			await loadR7310C1XatlasRuntimeFloorPageTexture(v, { deferRuntimeUpdate: true });
+			loadedPageIds.push(R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID);
+		}
 		else
 		{
 			disposeR7310C1XatlasRuntimeFloorPageTexture();
@@ -7472,9 +7635,13 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1XatlasRuntimeWestThresholdFrontRawDirectIncluded = nextWestThresholdFrontRawDirectIncluded;
 		r7310C1XatlasRuntimeCentralDeskRawDirectIncluded = nextCentralDeskRawDirectIncluded;
 		r7310C1XatlasRuntimeNortheastBedRawDirectIncluded = nextNortheastBedRawDirectIncluded;
+		r7310C1XatlasRuntimeSouthFixedFurnitureRawDirectIncluded = nextSouthFixedFurnitureRawDirectIncluded;
 		r7310C1XatlasRuntimeStructuralRawDirectIncluded = nextStructuralRawDirectIncluded;
 		r7310C1XatlasRuntimeSouthWindowRevealsRawDirectIncluded = nextSouthWindowRevealsRawDirectIncluded;
 		r7310C1XatlasRuntimeWestWallSwitchRawDirectIncluded = nextWestWallSwitchRawDirectIncluded;
+		r7310C1XatlasLoadedRawLightmapPageIds = loadedPageIds
+			.filter(function(pageId, index, list) { return list.indexOf(pageId) === index; })
+			.sort(function(a, b) { return a - b; });
 		r7310C1XatlasLightmapPageBuffer = pageBuffer;
 		r7310C1XatlasLightmapPagesMode = true;
 		r7310C1ApplyXatlasEastWallToggle();
@@ -7483,6 +7650,7 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1ApplyXatlasCeilingToggle();
 		r7310C1ApplyXatlasCentralDeskToggle();
 		r7310C1ApplyXatlasNortheastBedToggle();
+		r7310C1ApplyXatlasSouthFixedFurnitureToggle();
 		r7310C1ApplyXatlasStructuralToggle();
 		r7310C1ApplyXatlasSouthWindowRevealsToggle();
 		r7310C1ApplyXatlasWestWallSwitchToggle();
@@ -7503,6 +7671,7 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1XatlasLightmapPageBuffer = null;
 		r7310C1XatlasLightmapPageId = 0;
 		r7310C1XatlasLightmapPageIds = [];
+		r7310C1XatlasLoadedRawLightmapPageIds = [];
 		disposeR7310C1XatlasRuntimeFloorPageTexture();
 		r7310C1XatlasMasterNorthVariant = 'off';
 		r7310C1XatlasMasterEastVariant = 'off';
@@ -7537,6 +7706,9 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1XatlasRuntimeNortheastBedActive = false;
 		r7310C1XatlasRuntimeNortheastBedDirectIncluded = false;
 		r7310C1XatlasRuntimeNortheastBedRawDirectIncluded = false;
+		r7310C1XatlasRuntimeSouthFixedFurnitureActive = false;
+		r7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded = false;
+		r7310C1XatlasRuntimeSouthFixedFurnitureRawDirectIncluded = false;
 		r7310C1XatlasRuntimeStructuralActive = false;
 		r7310C1XatlasRuntimeStructuralDirectIncluded = false;
 		r7310C1XatlasRuntimeStructuralRawDirectIncluded = false;
@@ -7552,6 +7724,7 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1SetXatlasParamWestThresholdFrontEnabled(false);
 		r7310C1SetXatlasParamCentralDeskEnabled(false);
 		r7310C1SetXatlasParamNortheastBedEnabled(false);
+		r7310C1SetXatlasParamSouthFixedFurnitureEnabled(false);
 		r7310C1SetXatlasParamStructuralEnabled(false);
 		r7310C1SetXatlasParamSouthWindowRevealsEnabled(false);
 		r7310C1SetXatlasParamWestWallSwitchEnabled(false);
@@ -10774,17 +10947,19 @@ function buildR7310C1SouthWallAcShadowTexelMetadata(size)
 	return { metadata: metadata, validTexelRatio: valid / Math.max(1, size * size) };
 }
 
-// === GENERATED: surface-owner BEGIN  (registry c214fc755edd7f14) ===
+// === GENERATED: surface-owner BEGIN  (registry 65d86f861d613145) ===
 	// Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 	// Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
-	var R7310_SURFACE_OWNER_REGISTRY_VERSION = "c214fc755edd7f14";
-	var R7310_SURFACE_OWNER_SURFACES = [{"surfaceId":"ceiling_open","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[2.895,2.915],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[0,2.905],"z":[3.05,3.07],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall_depth_top","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"y":[2.895,2.915],"z":[3.056,3.256],"xRects":[[-2.11,-1.75],[0.69,2.11]],"precedence":20,"pendingPolicy":"blocker"},{"surfaceId":"south_window_top_reveal_depth","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[2.895,2.915],"z":[3.056,3.256],"precedence":21,"pendingPolicy":"baked"},{"surfaceId":"south_window_top_reveal_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.04,2.905],"z":[3.05,3.07],"precedence":15,"pendingPolicy":"baked"},{"surfaceId":"south_window_left_reveal","normalGate":{"axis":"x","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.76,-1.74],"y":[1.04,2.905],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"south_window_right_reveal","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[0.68,0.7],"y":[1.04,2.905],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"south_window_bottom_reveal","normalGate":{"axis":"y","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.03,1.05],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"floor_open","normalGate":{"axis":"y","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[-0.0005,0.025],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"central_desk_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-0.6,0.6],"y":[0.747,0.767],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-0.6,0.6],"y":[0,0.757],"z":[0.395,0.415],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_back","normalGate":{"axis":"z","sign":1,"threshold":0.5},"x":[-0.6,0.6],"y":[0,0.757],"z":[0.935,0.955],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_left","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[-0.61,-0.59],"y":[0,0.757],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_right","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[0.59,0.61],"y":[0,0.757],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"northeast_bed_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-0.027,1.91],"y":[0.27,0.29],"z":[-1.874,-0.314],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"northeast_bed_south","normalGate":{"axis":"z","sign":1,"threshold":0.5},"x":[-0.027,1.91],"y":[0,0.28],"z":[-0.324,-0.304],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"northeast_bed_west","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[-0.037,-0.017],"y":[0,0.28],"z":[-1.874,-0.314],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"west_wall_switch_plate","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.901,-1.899],"y":[1.148,1.218],"z":[-0.089,0.031],"precedence":50,"pendingPolicy":"baked","configId":1,"atlasGroup":"west_wall_switch"},{"surfaceId":"west_wall_switch_button","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.899,-1.897],"y":[1.161,1.205],"z":[-0.076,0.018],"precedence":51,"pendingPolicy":"baked","configId":1,"atlasGroup":"west_wall_switch"},{"surfaceId":"west_wall_open","normalGate":{"axis":"x","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.92,-1.9],"y":[0,2.905],"z":[-1.874,3.056],"precedence":10,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"west_threshold_front","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.92,-1.9],"y":[0,0.095],"z":[-1.874,-0.984],"precedence":31,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"west_threshold_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-2.11,-1.91],"y":[0.085,0.095],"z":[-1.874,-0.984],"precedence":30,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"}];
+	var R7310_SURFACE_OWNER_REGISTRY_VERSION = "65d86f861d613145";
+	var R7310_SURFACE_OWNER_SURFACES = [{"surfaceId":"ceiling_open","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[2.895,2.915],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[0,2.905],"z":[3.05,3.07],"precedence":10,"pendingPolicy":"baked"},{"surfaceId":"south_wall_depth_top","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"y":[2.895,2.915],"z":[3.056,3.256],"xRects":[[-2.11,-1.75],[0.69,2.11]],"precedence":20,"pendingPolicy":"blocker"},{"surfaceId":"south_window_top_reveal_depth","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[2.895,2.915],"z":[3.056,3.256],"precedence":21,"pendingPolicy":"baked"},{"surfaceId":"south_window_top_reveal_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.04,2.905],"z":[3.05,3.07],"precedence":15,"pendingPolicy":"baked"},{"surfaceId":"south_window_left_reveal","normalGate":{"axis":"x","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.76,-1.74],"y":[1.04,2.905],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"south_window_right_reveal","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[0.68,0.7],"y":[1.04,2.905],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"south_window_bottom_reveal","normalGate":{"axis":"y","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.75,0.69],"y":[1.03,1.05],"z":[3.056,3.256],"precedence":22,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_window_reveals"},{"surfaceId":"floor_open","normalGate":{"axis":"y","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-2.11,2.11],"y":[-0.0005,0.025],"z":[-2.074,3.256],"precedence":10,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"central_desk_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-0.6,0.6],"y":[0.747,0.767],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_front","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-0.6,0.6],"y":[0,0.757],"z":[0.395,0.415],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_back","normalGate":{"axis":"z","sign":1,"threshold":0.5},"x":[-0.6,0.6],"y":[0,0.757],"z":[0.935,0.955],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_left","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[-0.61,-0.59],"y":[0,0.757],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"central_desk_right","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[0.59,0.61],"y":[0,0.757],"z":[0.405,0.945],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"furniture"},{"surfaceId":"south_system_desk_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"regions":[{"x":[-1.75,1.02],"y":[0.76,0.78],"z":[2.385,3.056]},{"x":[-1.91,-1.75],"y":[0.76,0.78],"z":[2.385,2.846]}],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"south_system_desk_underside","normalGate":{"axis":"y","sign":-1,"threshold":0.5},"x":[-1.035,1.02],"y":[0.62,0.64],"z":[2.385,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"south_system_desk_north","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-1.91,1.02],"y":[0.63,0.77],"z":[2.375,2.395],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"south_system_desk_east_exposed","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[1.01,1.03],"y":[0.63,0.77],"z":[2.385,2.73],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_north_1","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-1.91,-1.035],"y":[0.0025,0.155],"z":[2.375,2.395],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_north_2","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-1.91,-1.035],"y":[0.16,0.3125],"z":[2.375,2.395],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_north_3","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-1.91,-1.035],"y":[0.3175,0.47],"z":[2.375,2.395],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_north_4","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[-1.91,-1.035],"y":[0.475,0.6275],"z":[2.375,2.395],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_east_1","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.045,-1.025],"y":[0.0025,0.155],"z":[2.385,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_east_2","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.045,-1.025],"y":[0.16,0.3125],"z":[2.385,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_east_3","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.045,-1.025],"y":[0.3175,0.47],"z":[2.385,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southwest_drawer_east_4","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.045,-1.025],"y":[0.475,0.6275],"z":[2.385,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[1.02,1.78],"y":[2.03,2.05],"z":[2.73,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_north","normalGate":{"axis":"z","sign":-1,"threshold":0.5},"x":[1.02,1.78],"y":[0,2.04],"z":[2.72,2.74],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_west_lower_below_outlet","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[1.01,1.03],"y":[0,0.355],"z":[2.73,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_west_lower_above_outlet","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[1.01,1.03],"y":[0.475,0.63],"z":[2.73,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_west_lower_north_of_outlet","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[1.01,1.03],"y":[0.355,0.475],"z":[2.73,2.906],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_west_lower_south_of_outlet","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[1.01,1.03],"y":[0.355,0.475],"z":[3.026,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"southeast_bookshelf_west_upper","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[1.01,1.03],"y":[0.77,2.04],"z":[2.73,3.056],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"south_fixed_furniture"},{"surfaceId":"northeast_bed_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-0.027,1.91],"y":[0.27,0.29],"z":[-1.874,-0.314],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"northeast_bed_south","normalGate":{"axis":"z","sign":1,"threshold":0.5},"x":[-0.027,1.91],"y":[0,0.28],"z":[-0.324,-0.304],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"northeast_bed_west","normalGate":{"axis":"x","sign":-1,"threshold":0.5},"x":[-0.037,-0.017],"y":[0,0.28],"z":[-1.874,-0.314],"precedence":40,"pendingPolicy":"baked","configId":1,"atlasGroup":"northeast_bed"},{"surfaceId":"west_wall_switch_plate","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.901,-1.899],"y":[1.148,1.218],"z":[-0.089,0.031],"precedence":50,"pendingPolicy":"baked","configId":1,"atlasGroup":"west_wall_switch"},{"surfaceId":"west_wall_switch_button","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.899,-1.897],"y":[1.161,1.205],"z":[-0.076,0.018],"precedence":51,"pendingPolicy":"baked","configId":1,"atlasGroup":"west_wall_switch"},{"surfaceId":"west_wall_open","normalGate":{"axis":"x","sign":1,"threshold":0.5},"objectIdGate":{"lt":1.5},"x":[-1.92,-1.9],"y":[0,2.905],"z":[-1.874,3.056],"precedence":10,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"west_threshold_front","normalGate":{"axis":"x","sign":1,"threshold":0.5},"x":[-1.92,-1.9],"y":[0,0.095],"z":[-1.874,-0.984],"precedence":31,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"},{"surfaceId":"west_threshold_top","normalGate":{"axis":"y","sign":1,"threshold":0.5},"x":[-2.11,-1.91],"y":[0.085,0.095],"z":[-1.874,-0.984],"precedence":30,"pendingPolicy":"baked","configId":1,"atlasGroup":"shell"}];
 	function r7310SurfaceOwnerInRange(v, r) { return r == null || (v >= r[0] && v <= r[1]); }
+	function r7310SurfaceOwnerInRegion(p, region) { var axes = ['x', 'y', 'z']; for (var i = 0; i < axes.length; i++) if (!r7310SurfaceOwnerInRange(p[axes[i]], region[axes[i]])) return false; return true; }
 	function r7310SurfaceOwnerMatches(s, sample) {
 		var g = s.normalGate;
 		if (g && !(sample.normal[g.axis] * g.sign > g.threshold)) return false;
 		if (s.objectIdGate && !(sample.objectId < s.objectIdGate.lt)) return false;
 		var p = sample.position;
+		if (Array.isArray(s.regions)) { for (var regionIndex = 0; regionIndex < s.regions.length; regionIndex++) if (r7310SurfaceOwnerInRegion(p, s.regions[regionIndex])) return true; return false; }
 		if (!r7310SurfaceOwnerInRange(p.y, s.y) || !r7310SurfaceOwnerInRange(p.z, s.z)) return false;
 		if (Array.isArray(s.xRects)) { var ok = false; for (var i = 0; i < s.xRects.length; i++) if (r7310SurfaceOwnerInRange(p.x, s.xRects[i])) ok = true; if (!ok) return false; }
 		else if (!r7310SurfaceOwnerInRange(p.x, s.x)) return false;
@@ -15964,6 +16139,7 @@ window.setR7310C1NortheastFurnitureRuntimeMode = function(mode)
 	refreshR7310C1CombinedDiffuseRuntimeTexture();
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	r7310C1ApplyXatlasNortheastBedToggle();
+	r7310C1ApplyXatlasSouthFixedFurnitureToggle();
 	if (changed && (r7310C1XatlasMasterMode || r7310C1XatlasLightmapPagesMode))
 	{
 		loadR7310C1XatlasRawLightmapPages('raw').catch(function(error)
@@ -17490,6 +17666,10 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 				xatlasRuntime: {
 					enabled: r7310C1XatlasRuntimeEnabled,
 						ready: r7310C1XatlasRuntimeReady,
+						paramTableLoadStatus: r7310C1XatlasParamTableLoadStatus,
+						paramTableLoadError: r7310C1XatlasParamTableLoadError,
+						paramTableSurfaceCount: r7310C1XatlasParamTableSurfaceCount,
+						paramTableSurfaceCapacity: R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY,
 						loadState: r7310C1XatlasRuntimeLoadState,
 						loadVariant: r7310C1XatlasRuntimeLoadVariant,
 						loadSurface: r7310C1XatlasRuntimeLoadSurface,
@@ -17534,6 +17714,7 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 							: (r7310C1XatlasMasterMode ? 'legacy_master_texture' : 'single_runtime_texture'),
 						lightmapPageId: r7310C1XatlasLightmapPageId,
 						lightmapPageIds: r7310C1XatlasLightmapPageIds.slice(),
+						lightmapPageReadiness: r7310C1RawLightmapPageReadinessReport(),
 						floorPageTextureReady: !!r7310C1XatlasRuntimeFloorPageTexture,
 						floorPageTextureSize: {
 							width: R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_W,
@@ -20480,10 +20661,14 @@ function initTHREEjs()
 	// R4-2A-2 P2: 參數化 success-path uniform array + count（在其他 pathTracingUniforms 旁註冊，material 建立前）。
 	// loop 上界 uR7310C1XatlasParamSurfaceCount（uniform，非編譯期常數）；param 表由 codegen 產（docs/generated）非手寫。
 	pathTracingUniforms.uR7310C1XatlasParamSurfaceCount = { type: "f", value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasParamSurfaceTable = { value: Array.from({ length: 336 }, function () { return new THREE.Vector4(0, 0, 0, 0); }) };
+	pathTracingUniforms.uR7310C1XatlasParamSurfaceTable = { value: Array.from({ length: R7310_C1_XATLAS_PARAM_VEC4_CAPACITY }, function () { return new THREE.Vector4(0, 0, 0, 0); }) };
 	(async function () {
 		try {
+			r7310C1XatlasParamTableLoadStatus = 'pending';
+			r7310C1XatlasParamTableLoadError = null;
+			r7310C1XatlasParamTableSurfaceCount = 0;
 			var pr = await fetch('docs/generated/r7-3-10-xatlas-param-table.generated.json?v=r7310-iron-door-runtime-planar-clip-sharp-v52', { cache: 'no-store' });
+			if (!pr.ok) throw new Error('R7-3.10 XATLAS param table HTTP ' + pr.status);
 			var pj = await pr.json();
 			var ff = pj.flatFloats || [];
 			var vecs = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value;
@@ -20505,6 +20690,9 @@ function initTHREEjs()
 				: [];
 			r7310C1XatlasParamNortheastBedIndices = Array.isArray(pj.entries)
 				? pj.entries.map(function (e, idx) { return e && e.atlasGroup === 'northeast_bed' ? idx : -1; }).filter(function (idx) { return idx >= 0; })
+				: [];
+			r7310C1XatlasParamSouthFixedFurnitureIndices = Array.isArray(pj.entries)
+				? pj.entries.map(function (e, idx) { return e && e.atlasGroup === 'south_fixed_furniture' ? idx : -1; }).filter(function (idx) { return idx >= 0; })
 				: [];
 			r7310C1XatlasParamStructuralIndices = Array.isArray(pj.entries)
 				? pj.entries.map(function (e, idx) { return e && e.atlasGroup === 'structural' ? idx : -1; }).filter(function (idx) { return idx >= 0; })
@@ -20532,6 +20720,7 @@ function initTHREEjs()
 				r7310C1ApplyXatlasCeilingToggle();
 				r7310C1ApplyXatlasCentralDeskToggle();
 				r7310C1ApplyXatlasNortheastBedToggle();
+				r7310C1ApplyXatlasSouthFixedFurnitureToggle();
 				r7310C1ApplyXatlasStructuralToggle();
 				r7310C1ApplyXatlasSouthWindowRevealsToggle();
 				r7310C1ApplyXatlasWestWallSwitchToggle();
@@ -20544,6 +20733,7 @@ function initTHREEjs()
 					r7310C1XatlasRuntimeWestThresholdFrontActive ||
 					r7310C1XatlasRuntimeCentralDeskActive ||
 					r7310C1XatlasRuntimeNortheastBedActive ||
+					r7310C1XatlasRuntimeSouthFixedFurnitureActive ||
 					r7310C1XatlasRuntimeStructuralActive ||
 					r7310C1XatlasRuntimeSouthWindowRevealsActive ||
 					r7310C1XatlasRuntimeWestWallSwitchActive);
@@ -20551,7 +20741,16 @@ function initTHREEjs()
 				resetR738MainAccumulation();
 			}
 			if (typeof pathTracingMaterial !== 'undefined' && pathTracingMaterial) pathTracingMaterial.uniformsNeedUpdate = true;
-		} catch (e) { /* param 表為選用；非 param 建置時忽略 */ }
+			r7310C1XatlasParamTableSurfaceCount = surfaceCount;
+			r7310C1XatlasParamTableLoadStatus = 'ready';
+			r7310C1XatlasParamTableLoadError = null;
+		} catch (e) {
+			r7310C1XatlasParamTableLoadStatus = 'error';
+			r7310C1XatlasParamTableLoadError = String(e && e.message ? e.message : e);
+			r7310C1XatlasParamTableSurfaceCount = 0;
+			pathTracingUniforms.uR7310C1XatlasParamSurfaceCount.value = 0.0;
+			console.error('R7-3.10 XATLAS param table load failed:', e);
+		}
 	})();
 
 	// R2-UI: 牆面反射率（牆/天花板/柱樑），預設 1.0（R2-18 fix18：使用者肉眼校準）

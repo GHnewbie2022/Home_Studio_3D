@@ -250,11 +250,16 @@ def blend(weights: tuple[float, float, float], points: list[list[float]]) -> lis
     ]
 
 
-def is_geometric_edge_sample(position: list[float], fixed_axis: str) -> bool:
+def is_geometric_edge_sample(
+    position: list[float],
+    fixed_axis: str,
+    axis_bounds: dict[str, tuple[float, float]] | None = None,
+) -> bool:
+    bounds = axis_bounds if axis_bounds is not None else AXIS_BOUNDS
     for axis, index in (("x", 0), ("y", 1), ("z", 2)):
         if axis == fixed_axis:
             continue
-        lo, hi = AXIS_BOUNDS[axis]
+        lo, hi = bounds[axis]
         if (
             abs(position[index] - lo) <= GEOMETRIC_EDGE_TOLERANCE
             or abs(position[index] - hi) <= GEOMETRIC_EDGE_TOLERANCE
@@ -315,7 +320,11 @@ def rasterize(mesh: dict[str, Any], uv_output: dict[str, Any]) -> dict[str, Any]
                 surface_hints[idx] = meta["surfaceHint"]
                 valid[idx] = True
                 count += 1
-                if is_geometric_edge_sample(position, meta["faceAxis"]):
+                if is_geometric_edge_sample(
+                    position,
+                    meta["faceAxis"],
+                    meta.get("axisBounds"),
+                ):
                     geometric_edge_texels += 1
 
         per_triangle[tid] = {
@@ -384,7 +393,11 @@ def compute_dilation(valid: list[bool], width: int, height: int, padding: int) -
     }
 
 
-def build_arrays(raster: dict[str, Any], dilation: dict[str, Any]) -> dict[str, array]:
+def build_arrays(
+    raster: dict[str, Any],
+    dilation: dict[str, Any],
+    mesh: dict[str, Any] | None = None,
+) -> dict[str, array]:
     texel_count = raster["width"] * raster["height"]
     texelmap = array("f")
     worldpos = array("f")
@@ -402,7 +415,18 @@ def build_arrays(raster: dict[str, Any], dilation: dict[str, Any]) -> dict[str, 
         worldpos.extend([pos[0], pos[1], pos[2], valid_float])
         normal.extend([nrm[0], nrm[1], nrm[2], valid_float])
         rawnormal.extend([nrm[0], nrm[1], nrm[2], valid_float])
-        tri_valid.extend([tri_id, float(SOURCE_BOX_INDEX) if ok else -1.0, float(MATERIAL_TYPE) if ok else -1.0, valid_float])
+        source_box_index = SOURCE_BOX_INDEX
+        material_type = MATERIAL_TYPE
+        if ok and mesh is not None:
+            meta = mesh["triangleMetadata"][raster["triIds"][idx]]
+            source_box_index = int(meta.get("sourceBoxIndex", source_box_index))
+            material_type = int(meta.get("materialType", material_type))
+        tri_valid.extend([
+            tri_id,
+            float(source_box_index) if ok else -1.0,
+            float(material_type) if ok else -1.0,
+            valid_float,
+        ])
         if dilation["dist"][idx] > 0 and not ok:
             dilation_src.extend([float(dilation["srcX"][idx]), float(dilation["srcY"][idx]), float(dilation["dist"][idx]), 1.0])
         else:

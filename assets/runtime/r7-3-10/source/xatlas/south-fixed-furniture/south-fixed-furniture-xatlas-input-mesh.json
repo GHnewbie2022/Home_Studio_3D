@@ -1,0 +1,1644 @@
+{
+  "schema": "r7-3-10-south-fixed-furniture-xatlas-input-mesh-v1",
+  "phase": "r7-3-10-south-fixed-furniture-xatlas-prepare-v1",
+  "surfaceGroup": "south_fixed_furniture",
+  "atlasGroup": "south_fixed_furniture",
+  "positions": [
+    [
+      -1.75,
+      0.77,
+      2.385
+    ],
+    [
+      -1.75,
+      0.77,
+      3.056
+    ],
+    [
+      1.02,
+      0.77,
+      3.056
+    ],
+    [
+      1.02,
+      0.77,
+      2.385
+    ],
+    [
+      -1.91,
+      0.77,
+      2.385
+    ],
+    [
+      -1.91,
+      0.77,
+      2.846
+    ],
+    [
+      -1.75,
+      0.77,
+      2.846
+    ],
+    [
+      -1.75,
+      0.77,
+      2.385
+    ],
+    [
+      -1.035,
+      0.63,
+      3.056
+    ],
+    [
+      -1.035,
+      0.63,
+      2.385
+    ],
+    [
+      1.02,
+      0.63,
+      2.385
+    ],
+    [
+      1.02,
+      0.63,
+      3.056
+    ],
+    [
+      1.02,
+      0.63,
+      2.385
+    ],
+    [
+      -1.91,
+      0.63,
+      2.385
+    ],
+    [
+      -1.91,
+      0.77,
+      2.385
+    ],
+    [
+      1.02,
+      0.77,
+      2.385
+    ],
+    [
+      1.02,
+      0.63,
+      2.73
+    ],
+    [
+      1.02,
+      0.63,
+      2.385
+    ],
+    [
+      1.02,
+      0.77,
+      2.385
+    ],
+    [
+      1.02,
+      0.77,
+      2.73
+    ],
+    [
+      -1.035,
+      0.0025,
+      2.385
+    ],
+    [
+      -1.91,
+      0.0025,
+      2.385
+    ],
+    [
+      -1.91,
+      0.155,
+      2.385
+    ],
+    [
+      -1.035,
+      0.155,
+      2.385
+    ],
+    [
+      -1.035,
+      0.0025,
+      3.056
+    ],
+    [
+      -1.035,
+      0.0025,
+      2.385
+    ],
+    [
+      -1.035,
+      0.155,
+      2.385
+    ],
+    [
+      -1.035,
+      0.155,
+      3.056
+    ],
+    [
+      -1.035,
+      0.16,
+      2.385
+    ],
+    [
+      -1.91,
+      0.16,
+      2.385
+    ],
+    [
+      -1.91,
+      0.3125,
+      2.385
+    ],
+    [
+      -1.035,
+      0.3125,
+      2.385
+    ],
+    [
+      -1.035,
+      0.16,
+      3.056
+    ],
+    [
+      -1.035,
+      0.16,
+      2.385
+    ],
+    [
+      -1.035,
+      0.3125,
+      2.385
+    ],
+    [
+      -1.035,
+      0.3125,
+      3.056
+    ],
+    [
+      -1.035,
+      0.3175,
+      2.385
+    ],
+    [
+      -1.91,
+      0.3175,
+      2.385
+    ],
+    [
+      -1.91,
+      0.47,
+      2.385
+    ],
+    [
+      -1.035,
+      0.47,
+      2.385
+    ],
+    [
+      -1.035,
+      0.3175,
+      3.056
+    ],
+    [
+      -1.035,
+      0.3175,
+      2.385
+    ],
+    [
+      -1.035,
+      0.47,
+      2.385
+    ],
+    [
+      -1.035,
+      0.47,
+      3.056
+    ],
+    [
+      -1.035,
+      0.475,
+      2.385
+    ],
+    [
+      -1.91,
+      0.475,
+      2.385
+    ],
+    [
+      -1.91,
+      0.6275,
+      2.385
+    ],
+    [
+      -1.035,
+      0.6275,
+      2.385
+    ],
+    [
+      -1.035,
+      0.475,
+      3.056
+    ],
+    [
+      -1.035,
+      0.475,
+      2.385
+    ],
+    [
+      -1.035,
+      0.6275,
+      2.385
+    ],
+    [
+      -1.035,
+      0.6275,
+      3.056
+    ],
+    [
+      1.02,
+      2.04,
+      2.73
+    ],
+    [
+      1.02,
+      2.04,
+      3.056
+    ],
+    [
+      1.78,
+      2.04,
+      3.056
+    ],
+    [
+      1.78,
+      2.04,
+      2.73
+    ],
+    [
+      1.78,
+      0.0,
+      2.73
+    ],
+    [
+      1.02,
+      0.0,
+      2.73
+    ],
+    [
+      1.02,
+      2.04,
+      2.73
+    ],
+    [
+      1.78,
+      2.04,
+      2.73
+    ],
+    [
+      1.02,
+      0.0,
+      2.73
+    ],
+    [
+      1.02,
+      0.0,
+      3.056
+    ],
+    [
+      1.02,
+      0.355,
+      3.056
+    ],
+    [
+      1.02,
+      0.355,
+      2.73
+    ],
+    [
+      1.02,
+      0.475,
+      2.73
+    ],
+    [
+      1.02,
+      0.475,
+      3.056
+    ],
+    [
+      1.02,
+      0.63,
+      3.056
+    ],
+    [
+      1.02,
+      0.63,
+      2.73
+    ],
+    [
+      1.02,
+      0.355,
+      2.73
+    ],
+    [
+      1.02,
+      0.355,
+      2.906
+    ],
+    [
+      1.02,
+      0.475,
+      2.906
+    ],
+    [
+      1.02,
+      0.475,
+      2.73
+    ],
+    [
+      1.02,
+      0.355,
+      3.026
+    ],
+    [
+      1.02,
+      0.355,
+      3.056
+    ],
+    [
+      1.02,
+      0.475,
+      3.056
+    ],
+    [
+      1.02,
+      0.475,
+      3.026
+    ],
+    [
+      1.02,
+      0.77,
+      2.73
+    ],
+    [
+      1.02,
+      0.77,
+      3.056
+    ],
+    [
+      1.02,
+      2.04,
+      3.056
+    ],
+    [
+      1.02,
+      2.04,
+      2.73
+    ]
+  ],
+  "indices": [
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      2,
+      3
+    ],
+    [
+      4,
+      5,
+      6
+    ],
+    [
+      4,
+      6,
+      7
+    ],
+    [
+      8,
+      9,
+      10
+    ],
+    [
+      8,
+      10,
+      11
+    ],
+    [
+      12,
+      13,
+      14
+    ],
+    [
+      12,
+      14,
+      15
+    ],
+    [
+      16,
+      17,
+      18
+    ],
+    [
+      16,
+      18,
+      19
+    ],
+    [
+      20,
+      21,
+      22
+    ],
+    [
+      20,
+      22,
+      23
+    ],
+    [
+      24,
+      25,
+      26
+    ],
+    [
+      24,
+      26,
+      27
+    ],
+    [
+      28,
+      29,
+      30
+    ],
+    [
+      28,
+      30,
+      31
+    ],
+    [
+      32,
+      33,
+      34
+    ],
+    [
+      32,
+      34,
+      35
+    ],
+    [
+      36,
+      37,
+      38
+    ],
+    [
+      36,
+      38,
+      39
+    ],
+    [
+      40,
+      41,
+      42
+    ],
+    [
+      40,
+      42,
+      43
+    ],
+    [
+      44,
+      45,
+      46
+    ],
+    [
+      44,
+      46,
+      47
+    ],
+    [
+      48,
+      49,
+      50
+    ],
+    [
+      48,
+      50,
+      51
+    ],
+    [
+      52,
+      53,
+      54
+    ],
+    [
+      52,
+      54,
+      55
+    ],
+    [
+      56,
+      57,
+      58
+    ],
+    [
+      56,
+      58,
+      59
+    ],
+    [
+      60,
+      61,
+      62
+    ],
+    [
+      60,
+      62,
+      63
+    ],
+    [
+      64,
+      65,
+      66
+    ],
+    [
+      64,
+      66,
+      67
+    ],
+    [
+      68,
+      69,
+      70
+    ],
+    [
+      68,
+      70,
+      71
+    ],
+    [
+      72,
+      73,
+      74
+    ],
+    [
+      72,
+      74,
+      75
+    ],
+    [
+      76,
+      77,
+      78
+    ],
+    [
+      76,
+      78,
+      79
+    ]
+  ],
+  "triangleMetadata": [
+    {
+      "triangleId": 0,
+      "surfaceHint": "south_system_desk_top_main",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.75,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_top"
+    },
+    {
+      "triangleId": 1,
+      "surfaceHint": "south_system_desk_top_main",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.75,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_top"
+    },
+    {
+      "triangleId": 2,
+      "surfaceHint": "south_system_desk_top_west_arm",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.75
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          2.846
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_top"
+    },
+    {
+      "triangleId": 3,
+      "surfaceHint": "south_system_desk_top_west_arm",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.75
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          2.846
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_top"
+    },
+    {
+      "triangleId": 4,
+      "surfaceHint": "south_system_desk_underside",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "faceName": "y-",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.035,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_underside"
+    },
+    {
+      "triangleId": 5,
+      "surfaceHint": "south_system_desk_underside",
+      "faceAxis": "y",
+      "faceSign": -1,
+      "faceName": "y-",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.035,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_underside"
+    },
+    {
+      "triangleId": 6,
+      "surfaceHint": "south_system_desk_north",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_north"
+    },
+    {
+      "triangleId": 7,
+      "surfaceHint": "south_system_desk_north",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_north"
+    },
+    {
+      "triangleId": 8,
+      "surfaceHint": "south_system_desk_east_exposed",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          2.73
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_east_exposed"
+    },
+    {
+      "triangleId": 9,
+      "surfaceHint": "south_system_desk_east_exposed",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 17,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          1.02
+        ],
+        "y": [
+          0.63,
+          0.77
+        ],
+        "z": [
+          2.385,
+          2.73
+        ]
+      },
+      "semanticSurfaceId": "south_system_desk_east_exposed"
+    },
+    {
+      "triangleId": 10,
+      "surfaceHint": "southwest_drawer_north_1",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 21,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.0025,
+          0.155
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_1"
+    },
+    {
+      "triangleId": 11,
+      "surfaceHint": "southwest_drawer_north_1",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 21,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.0025,
+          0.155
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_1"
+    },
+    {
+      "triangleId": 12,
+      "surfaceHint": "southwest_drawer_east_1",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 21,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.0025,
+          0.155
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_1"
+    },
+    {
+      "triangleId": 13,
+      "surfaceHint": "southwest_drawer_east_1",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 21,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.0025,
+          0.155
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_1"
+    },
+    {
+      "triangleId": 14,
+      "surfaceHint": "southwest_drawer_north_2",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 22,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.16,
+          0.3125
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_2"
+    },
+    {
+      "triangleId": 15,
+      "surfaceHint": "southwest_drawer_north_2",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 22,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.16,
+          0.3125
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_2"
+    },
+    {
+      "triangleId": 16,
+      "surfaceHint": "southwest_drawer_east_2",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 22,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.16,
+          0.3125
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_2"
+    },
+    {
+      "triangleId": 17,
+      "surfaceHint": "southwest_drawer_east_2",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 22,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.16,
+          0.3125
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_2"
+    },
+    {
+      "triangleId": 18,
+      "surfaceHint": "southwest_drawer_north_3",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 23,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.3175,
+          0.47
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_3"
+    },
+    {
+      "triangleId": 19,
+      "surfaceHint": "southwest_drawer_north_3",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 23,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.3175,
+          0.47
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_3"
+    },
+    {
+      "triangleId": 20,
+      "surfaceHint": "southwest_drawer_east_3",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 23,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.3175,
+          0.47
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_3"
+    },
+    {
+      "triangleId": 21,
+      "surfaceHint": "southwest_drawer_east_3",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 23,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.3175,
+          0.47
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_3"
+    },
+    {
+      "triangleId": 22,
+      "surfaceHint": "southwest_drawer_north_4",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 24,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.475,
+          0.6275
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_4"
+    },
+    {
+      "triangleId": 23,
+      "surfaceHint": "southwest_drawer_north_4",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 24,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.475,
+          0.6275
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_north_4"
+    },
+    {
+      "triangleId": 24,
+      "surfaceHint": "southwest_drawer_east_4",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 24,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.475,
+          0.6275
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_4"
+    },
+    {
+      "triangleId": 25,
+      "surfaceHint": "southwest_drawer_east_4",
+      "faceAxis": "x",
+      "faceSign": 1,
+      "faceName": "x+",
+      "sourceBoxIndex": 24,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          -1.91,
+          -1.035
+        ],
+        "y": [
+          0.475,
+          0.6275
+        ],
+        "z": [
+          2.385,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southwest_drawer_east_4"
+    },
+    {
+      "triangleId": 26,
+      "surfaceHint": "southeast_bookshelf_top",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_top"
+    },
+    {
+      "triangleId": 27,
+      "surfaceHint": "southeast_bookshelf_top",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_top"
+    },
+    {
+      "triangleId": 28,
+      "surfaceHint": "southeast_bookshelf_north",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_north"
+    },
+    {
+      "triangleId": 29,
+      "surfaceHint": "southeast_bookshelf_north",
+      "faceAxis": "z",
+      "faceSign": -1,
+      "faceName": "z-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_north"
+    },
+    {
+      "triangleId": 30,
+      "surfaceHint": "southeast_bookshelf_west_lower_below_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          0.355
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_below_outlet"
+    },
+    {
+      "triangleId": 31,
+      "surfaceHint": "southeast_bookshelf_west_lower_below_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.0,
+          0.355
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_below_outlet"
+    },
+    {
+      "triangleId": 32,
+      "surfaceHint": "southeast_bookshelf_west_lower_above_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.475,
+          0.63
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_above_outlet"
+    },
+    {
+      "triangleId": 33,
+      "surfaceHint": "southeast_bookshelf_west_lower_above_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.475,
+          0.63
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_above_outlet"
+    },
+    {
+      "triangleId": 34,
+      "surfaceHint": "southeast_bookshelf_west_lower_north_of_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.355,
+          0.475
+        ],
+        "z": [
+          2.73,
+          2.906
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_north_of_outlet"
+    },
+    {
+      "triangleId": 35,
+      "surfaceHint": "southeast_bookshelf_west_lower_north_of_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.355,
+          0.475
+        ],
+        "z": [
+          2.73,
+          2.906
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_north_of_outlet"
+    },
+    {
+      "triangleId": 36,
+      "surfaceHint": "southeast_bookshelf_west_lower_south_of_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.355,
+          0.475
+        ],
+        "z": [
+          3.026,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_south_of_outlet"
+    },
+    {
+      "triangleId": 37,
+      "surfaceHint": "southeast_bookshelf_west_lower_south_of_outlet",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.355,
+          0.475
+        ],
+        "z": [
+          3.026,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_lower_south_of_outlet"
+    },
+    {
+      "triangleId": 38,
+      "surfaceHint": "southeast_bookshelf_west_upper",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.77,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_upper"
+    },
+    {
+      "triangleId": 39,
+      "surfaceHint": "southeast_bookshelf_west_upper",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 19,
+      "materialType": 1,
+      "axisBounds": {
+        "x": [
+          1.02,
+          1.78
+        ],
+        "y": [
+          0.77,
+          2.04
+        ],
+        "z": [
+          2.73,
+          3.056
+        ]
+      },
+      "semanticSurfaceId": "southeast_bookshelf_west_upper"
+    }
+  ],
+  "counts": {
+    "includedSurfaces": 20,
+    "vertices": 80,
+    "triangles": 40
+  },
+  "sourceBoxIndices": [
+    17,
+    19,
+    21,
+    22,
+    23,
+    24
+  ],
+  "surfaceIds": [
+    "south_system_desk_top_main",
+    "south_system_desk_top_west_arm",
+    "south_system_desk_underside",
+    "south_system_desk_north",
+    "south_system_desk_east_exposed",
+    "southwest_drawer_north_1",
+    "southwest_drawer_north_2",
+    "southwest_drawer_north_3",
+    "southwest_drawer_north_4",
+    "southwest_drawer_east_1",
+    "southwest_drawer_east_2",
+    "southwest_drawer_east_3",
+    "southwest_drawer_east_4",
+    "southeast_bookshelf_top",
+    "southeast_bookshelf_north",
+    "southeast_bookshelf_west_lower_below_outlet",
+    "southeast_bookshelf_west_lower_above_outlet",
+    "southeast_bookshelf_west_lower_north_of_outlet",
+    "southeast_bookshelf_west_lower_south_of_outlet",
+    "southeast_bookshelf_west_upper"
+  ],
+  "semanticSurfaceIds": [
+    "south_system_desk_top",
+    "south_system_desk_underside",
+    "south_system_desk_north",
+    "south_system_desk_east_exposed",
+    "southwest_drawer_north_1",
+    "southwest_drawer_north_2",
+    "southwest_drawer_north_3",
+    "southwest_drawer_north_4",
+    "southwest_drawer_east_1",
+    "southwest_drawer_east_2",
+    "southwest_drawer_east_3",
+    "southwest_drawer_east_4",
+    "southeast_bookshelf_top",
+    "southeast_bookshelf_north",
+    "southeast_bookshelf_west_lower_below_outlet",
+    "southeast_bookshelf_west_lower_above_outlet",
+    "southeast_bookshelf_west_lower_north_of_outlet",
+    "southeast_bookshelf_west_lower_south_of_outlet",
+    "southeast_bookshelf_west_upper"
+  ],
+  "fullRadianceContract": {
+    "bakedRadianceKind": "full_diffuse_radiance",
+    "directLightAlreadyIncluded": true,
+    "addDirectLightAfterBakeLookup": false
+  },
+  "excludedOccludedFaces": [
+    "south system desk south and west faces: flush with south and west walls",
+    "south system desk top under southwest column: excluded for x=-1.91..-1.75 and z=2.846..3.056",
+    "south system desk underside above southwest drawers: excluded through x=-1.035",
+    "south system desk east face behind bookshelf: excluded above z=2.73",
+    "southwest drawer west and south faces: flush with walls",
+    "southeast bookshelf east and south faces: flush with column and south wall",
+    "southeast bookshelf west face behind desk slab: excluded for y=0.63..0.77",
+    "southeast bookshelf west face behind south outlet: excluded for y=0.355..0.475 and z=2.906..3.026",
+    "furniture undersides covered by floor contact: excluded except elevated desk underside"
+  ]
+}

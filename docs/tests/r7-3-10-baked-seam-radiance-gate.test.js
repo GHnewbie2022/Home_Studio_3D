@@ -53,6 +53,22 @@ function makeSmoothGradientFixture({ mutateFirstTexel = false } = {}) {
   return fixture;
 }
 
+function makeToleranceOnlyGapFixture() {
+  const fixture = makeSmoothGradientFixture();
+  const metadata = new Float32Array(
+    fixture.metadataBuffer.buffer,
+    fixture.metadataBuffer.byteOffset,
+    fixture.metadataBuffer.byteLength / 4
+  );
+  for (let y = 0; y < fixture.height; y += 1) {
+    for (let x = 0; x < fixture.width; x += 1) {
+      const pixel = y * fixture.width + x;
+      metadata[pixel * 12] = 0.004 + x * 0.004;
+    }
+  }
+  return fixture;
+}
+
 test('baked seam radiance gate passes a continuous same-surface edge', async () => {
   const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
   const report = gate.evaluateBakedSeamRadianceGate({
@@ -114,4 +130,22 @@ test('first-texel mode rejects a one-texel radiance cliff', async () => {
   });
   assert.equal(report.status, 'FAIL');
   assert.ok(report.sides[0].failures.includes('first-texel-median-radiance-cliff'));
+});
+
+test('first-texel mode skips a scanner tolerance match with no physical edge texel', async () => {
+  const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
+  const report = gate.evaluateBakedSeamRadianceGate({
+    ...makeToleranceOnlyGapFixture(),
+    policy: {
+      comparisonMode: 'first-texel-neighbor',
+      firstTexelBandMaxM: 0.0013,
+      endpointInsetM: 0,
+      minNearSamples: 4,
+      minInteriorSamples: 4
+    }
+  });
+  assert.equal(report.status, 'PASS');
+  assert.equal(report.counts.evaluatedSides, 0);
+  assert.equal(report.counts.skippedToleranceGapSides, 1);
+  assert.equal(report.skippedSides[0].skipReason, 'scanner-tolerance-only-gap-first-texel');
 });

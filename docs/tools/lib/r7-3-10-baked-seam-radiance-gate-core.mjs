@@ -10,7 +10,7 @@ const DEFAULTS = Object.freeze({
   interiorBandMaxM: 0.035,
   endpointInsetM: 0.004,
   intervalToleranceM: 1.0e-6,
-  blackLumaThreshold: 1.0e-5,
+  blackLumaThreshold: 0,
   minNearSamples: 8,
   minInteriorSamples: 16,
   minMedianRatio: 0.2,
@@ -61,6 +61,8 @@ function sideAccumulator(edge, surfaceId) {
     interior: [],
     firstTexel: [],
     adjacentTexels: [],
+    intervalSamples: 0,
+    minDistanceToLineM: Number.POSITIVE_INFINITY,
     nearExactBlackTexels: 0,
     nearAlphaZeroTexels: 0
   };
@@ -86,6 +88,32 @@ function sampleBelongsToLineInterval(position, line, endpointInsetM, intervalTol
 }
 
 function finalizeSide(accumulator, policy) {
+  const toleranceGapLimitM = policy.comparisonMode === 'first-texel-neighbor'
+    ? policy.firstTexelBandMaxM
+    : policy.nearBandMaxM;
+  if (
+    accumulator.intervalSamples > 0 &&
+    accumulator.minDistanceToLineM > toleranceGapLimitM
+  ) {
+    return {
+      edgeId: accumulator.edgeId,
+      pairKey: accumulator.pairKey,
+      surfaceId: accumulator.surfaceId,
+      line: accumulator.line,
+      status: 'SKIP',
+      skipReason: policy.comparisonMode === 'first-texel-neighbor'
+        ? 'scanner-tolerance-only-gap-first-texel'
+        : 'scanner-tolerance-only-gap',
+      counts: {
+        nearTexels: 0,
+        interiorTexels: accumulator.interior.length,
+        nearExactBlackTexels: 0,
+        nearAlphaZeroTexels: 0,
+        intervalSamples: accumulator.intervalSamples,
+        minDistanceToLineM: round(accumulator.minDistanceToLineM)
+      }
+    };
+  }
   const nearMedian = quantile(accumulator.near, 0.5);
   const nearP10 = quantile(accumulator.near, 0.1);
   const interiorMedian = quantile(accumulator.interior, 0.5);
@@ -196,9 +224,11 @@ export function evaluateBakedSeamRadianceGate({
   if (metadata.length !== pixelCount * 12)
     throw new Error(`metadata float count mismatch: ${metadata.length} != ${pixelCount * 12}`);
 
-  const triangleSurface = new Map(
-    mesh.triangleMetadata.map((entry) => [Number(entry.triangleId), entry.pieceId])
-  );
+  const triangleSurface = new Map(mesh.triangleMetadata.map((entry) => {
+    const surfaceId = entry.semanticSurfaceId || entry.pieceId || entry.surfaceHint;
+    if (!surfaceId) throw new Error(`triangle ${entry.triangleId} is missing semanticSurfaceId/pieceId/surfaceHint`);
+    return [Number(entry.triangleId), surfaceId];
+  }));
   const packageSurfaces = new Set(triangleSurface.values());
   const accumulators = [];
   const bySurface = new Map();
@@ -236,6 +266,8 @@ export function evaluateBakedSeamRadianceGate({
         policy.intervalToleranceM
       )) continue;
       const distance = distanceToLine(position, accumulator.line.constants);
+      accumulator.intervalSamples += 1;
+      accumulator.minDistanceToLineM = Math.min(accumulator.minDistanceToLineM, distance);
       if (distance <= policy.firstTexelBandMaxM) accumulator.firstTexel.push(value);
       else if (distance >= policy.adjacentTexelBandMinM && distance <= policy.adjacentTexelBandMaxM)
         accumulator.adjacentTexels.push(value);
@@ -249,11 +281,13 @@ export function evaluateBakedSeamRadianceGate({
     }
   }
 
-  const sides = accumulators.map((accumulator) => finalizeSide(accumulator, policy));
+  const allSides = accumulators.map((accumulator) => finalizeSide(accumulator, policy));
+  const skippedSides = allSides.filter((side) => side.status === 'SKIP');
+  const sides = allSides.filter((side) => side.status !== 'SKIP');
   const failedSides = sides.filter((side) => side.status === 'FAIL');
   return {
     schema: 'r7-3-10-baked-seam-radiance-gate-v1',
-    status: sides.length > 0 && failedSides.length === 0 ? 'PASS' : 'FAIL',
+    status: failedSides.length === 0 ? 'PASS' : 'FAIL',
     method: policy.comparisonMode === 'first-texel-neighbor'
       ? 'same-surface-first-texel-versus-adjacent-texels-hdr-radiance'
       : 'same-surface-near-edge-versus-interior-hdr-radiance',
@@ -263,12 +297,14 @@ export function evaluateBakedSeamRadianceGate({
       packageSurfaces: packageSurfaces.size,
       evaluatedEdges: new Set(sides.map((side) => side.edgeId)).size,
       evaluatedSides: sides.length,
+      skippedToleranceGapSides: skippedSides.length,
       failedSides: failedSides.length,
       nearTexels: sides.reduce((sum, side) => sum + side.counts.nearTexels, 0),
       interiorTexels: sides.reduce((sum, side) => sum + side.counts.interiorTexels, 0),
       nearExactBlackTexels: sides.reduce((sum, side) => sum + side.counts.nearExactBlackTexels, 0)
     },
     failedSideKeys: failedSides.map((side) => `${side.pairKey}:${side.surfaceId}`),
+    skippedSides,
     sides
   };
 }

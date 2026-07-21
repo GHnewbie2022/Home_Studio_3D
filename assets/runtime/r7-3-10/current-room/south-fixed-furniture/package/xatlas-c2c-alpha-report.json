@@ -1,0 +1,406 @@
+{
+  "schema": "r7-3-10-xatlas-c2c-alpha-report-v1",
+  "maskPath": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-bake-tri-valid-rgba32f.bin",
+  "atlas": {
+    "width": 2354,
+    "height": 2090
+  },
+  "policy": {
+    "validVisibleAlpha": 1,
+    "invalidOrHiddenAlpha": 0,
+    "maskRowMapping": "mask source row y maps to output row height - 1 - y",
+    "decisionSource": "per-texel backface-ratio validity mask",
+    "preserveVisibleExactBlack": false
+  },
+  "counts": {
+    "totalTexels": 4919860,
+    "alphaOneTexels": 4565468,
+    "alphaZeroTexels": 354392,
+    "metadataInvalidTexels": 354392,
+    "maskInvalidTexels": 0,
+    "visibleExactBlackTexels": 0,
+    "repairedVisibleExactBlackTexels": 0,
+    "unrepairedVisibleExactBlackTexels": 0,
+    "alphaOneExactBlackTexels": 0
+  },
+  "dilation": {
+    "fillMode": "same-triangle-fillable-capped-dilation",
+    "maxDistanceLimitTexels": 4,
+    "dilatedTexels": 0,
+    "sourceAlphaZeroUsed": 0,
+    "sourceBlackAlphaOneUsed": 0,
+    "sourceTriangleCounts": {},
+    "maxDistanceTexels": 0
+  },
+  "perTriangle": {
+    "0": {
+      "texels": 596374,
+      "alphaOneTexels": 596374,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6642272434810083
+    },
+    "1": {
+      "texels": 596372,
+      "alphaOneTexels": 596372,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7313517387739182
+    },
+    "2": {
+      "texels": 23496,
+      "alphaOneTexels": 23496,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6066707398103958
+    },
+    "3": {
+      "texels": 23864,
+      "alphaOneTexels": 23864,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6120216588726867
+    },
+    "4": {
+      "texels": 442503,
+      "alphaOneTexels": 442503,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.31284976633324063
+    },
+    "5": {
+      "texels": 442507,
+      "alphaOneTexels": 442507,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.2349909699900918
+    },
+    "6": {
+      "texels": 130152,
+      "alphaOneTexels": 130152,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.9031246527052572
+    },
+    "7": {
+      "texels": 132488,
+      "alphaOneTexels": 132488,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.9867502675863115
+    },
+    "8": {
+      "texels": 15595,
+      "alphaOneTexels": 15595,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4860513008569129
+    },
+    "9": {
+      "texels": 15429,
+      "alphaOneTexels": 15429,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.45724573769121407
+    },
+    "10": {
+      "texels": 43111,
+      "alphaOneTexels": 43111,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6696368330891364
+    },
+    "11": {
+      "texels": 43112,
+      "alphaOneTexels": 43112,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.750667131533511
+    },
+    "12": {
+      "texels": 32549,
+      "alphaOneTexels": 32549,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4433028719534873
+    },
+    "13": {
+      "texels": 32549,
+      "alphaOneTexels": 32549,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.2406606143048647
+    },
+    "14": {
+      "texels": 42412,
+      "alphaOneTexels": 42412,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7102153755438975
+    },
+    "15": {
+      "texels": 43111,
+      "alphaOneTexels": 43111,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7821812294522086
+    },
+    "16": {
+      "texels": 32549,
+      "alphaOneTexels": 32549,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.4068734292975051
+    },
+    "17": {
+      "texels": 32549,
+      "alphaOneTexels": 32549,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.20568304511499966
+    },
+    "18": {
+      "texels": 43112,
+      "alphaOneTexels": 43112,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.742244826608544
+    },
+    "19": {
+      "texels": 43111,
+      "alphaOneTexels": 43111,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.8117871408109197
+    },
+    "20": {
+      "texels": 33087,
+      "alphaOneTexels": 33087,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.34927868249531846
+    },
+    "21": {
+      "texels": 33087,
+      "alphaOneTexels": 33087,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.1686331434017491
+    },
+    "22": {
+      "texels": 42411,
+      "alphaOneTexels": 42411,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7720599634263406
+    },
+    "23": {
+      "texels": 42410,
+      "alphaOneTexels": 42410,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.8429166114725243
+    },
+    "24": {
+      "texels": 33087,
+      "alphaOneTexels": 33087,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.25003410859143554
+    },
+    "25": {
+      "texels": 33087,
+      "alphaOneTexels": 33087,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.13001576555339955
+    },
+    "26": {
+      "texels": 79779,
+      "alphaOneTexels": 79779,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.2711654765529843
+    },
+    "27": {
+      "texels": 79779,
+      "alphaOneTexels": 79779,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.24282649461775427
+    },
+    "28": {
+      "texels": 497265,
+      "alphaOneTexels": 497265,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7616696673052494
+    },
+    "29": {
+      "texels": 497232,
+      "alphaOneTexels": 497232,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.7918998668754015
+    },
+    "30": {
+      "texels": 37074,
+      "alphaOneTexels": 37074,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.13755286720819618
+    },
+    "31": {
+      "texels": 37050,
+      "alphaOneTexels": 37050,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.19490567968348615
+    },
+    "32": {
+      "texels": 16375,
+      "alphaOneTexels": 16375,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.1044761051344117
+    },
+    "33": {
+      "texels": 16375,
+      "alphaOneTexels": 16375,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.12374257918476583
+    },
+    "34": {
+      "texels": 6888,
+      "alphaOneTexels": 6888,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.1475378026503498
+    },
+    "35": {
+      "texels": 6789,
+      "alphaOneTexels": 6789,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.1587732039454068
+    },
+    "36": {
+      "texels": 1128,
+      "alphaOneTexels": 1128,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.07691447468402683
+    },
+    "37": {
+      "texels": 1200,
+      "alphaOneTexels": 1200,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.043288377427236145
+    },
+    "38": {
+      "texels": 132210,
+      "alphaOneTexels": 132210,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.6390526832973245
+    },
+    "39": {
+      "texels": 132210,
+      "alphaOneTexels": 132210,
+      "alphaZeroTexels": 0,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 100,
+      "alphaZeroPct": 0,
+      "lumaAlphaOneMean": 0.5872509562209293
+    },
+    "-1": {
+      "texels": 354392,
+      "alphaOneTexels": 0,
+      "alphaZeroTexels": 354392,
+      "rgbNonzeroAlphaZeroTexels": 0,
+      "alphaOnePct": 0,
+      "alphaZeroPct": 100,
+      "lumaAlphaOneMean": null
+    }
+  }
+}

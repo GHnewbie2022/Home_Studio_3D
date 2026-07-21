@@ -174,6 +174,7 @@ uniform float uR7310C1XatlasRuntimeDepthH2DirectIncluded;
 uniform float uR7310C1XatlasRuntimeFullFloorDirectIncluded;
 uniform float uR7310C1XatlasRuntimeCentralDeskDirectIncluded;
 uniform float uR7310C1XatlasRuntimeNortheastBedDirectIncluded;
+uniform float uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded;
 uniform int uR7310C1NortheastFurnitureMode;
 uniform float uR7310C1XatlasRuntimeStructuralDirectIncluded;
 uniform float uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded;
@@ -185,7 +186,7 @@ uniform float uR7310C1XatlasRuntimeFullCeilingMode;
 uniform float uR7310C1XatlasRuntimeFullFloorMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
 uniform float uR7310C1XatlasParamSurfaceCount; // R4-2A-2 param runtime：dynamic while loop 上界（uniform、非編譯期常數）
-uniform vec4 uR7310C1XatlasParamSurfaceTable[336]; // generated param table：最多 48 面 × 7 vec4
+uniform vec4 uR7310C1XatlasParamSurfaceTable[504]; // generated param table：最多 72 面 × 7 vec4
 // master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
 // rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
 uniform float uR7310C1XatlasRuntimeMasterMode;
@@ -1603,6 +1604,14 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -0.038 && bmax.x <= 1.911 &&
 		bmin.y >= -0.001 && bmax.y <= 0.291 &&
 		bmin.z >= -1.875 && bmax.z <= -0.303;
+	bool southSystemFurniture =
+		bmin.x >= -1.911 && bmax.x <= 1.031 &&
+		bmin.y >= -0.001 && bmax.y <= 0.781 &&
+		bmin.z >= 2.374 && bmax.z <= 3.057;
+	bool southeastBookshelf =
+		bmin.x >= 1.009 && bmax.x <= 1.781 &&
+		bmin.y >= -0.001 && bmax.y <= 2.051 &&
+		bmin.z >= 2.719 && bmax.z <= 3.057;
 	bool structural =
 		((bmin.x >= -1.93 && bmax.x <= -1.73) || (bmin.x >= 1.76 && bmax.x <= 1.93)) &&
 		bmin.y >= -0.011 && bmax.y <= 2.916 &&
@@ -1611,7 +1620,8 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -1.902 && bmax.x <= -1.897 &&
 		bmin.y >= 1.147 && bmax.y <= 1.219 &&
 		bmin.z >= -0.090 && bmax.z <= 0.032;
-	return westThresholdFront || westThresholdTop || centralDesk || northeastBed || structural || westWallSwitch;
+	return westThresholdFront || westThresholdTop || centralDesk || northeastBed ||
+		southSystemFurniture || southeastBookshelf || structural || westWallSwitch;
 }
 bool r7310C1XatlasParamSurfaceUv(int sid, float visibleObjectID, vec3 n, vec3 p, out vec2 atlasUv)
 {
@@ -1651,7 +1661,7 @@ bool r7310C1XatlasParamWestSurfaceActive()
 	int b = int(uR7310C1XatlasParamWestSurfaceIndex) * 7;
 	return uR7310C1XatlasParamSurfaceTable[b + 1].w > 0.5;
 }
-// === GENERATED: surface-owner BEGIN  (registry c214fc755edd7f14) ===
+// === GENERATED: surface-owner BEGIN  (registry 65d86f861d613145) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -1669,14 +1679,33 @@ const int R7310_OWNER_CENTRAL_DESK_FRONT = 11;
 const int R7310_OWNER_CENTRAL_DESK_BACK = 12;
 const int R7310_OWNER_CENTRAL_DESK_LEFT = 13;
 const int R7310_OWNER_CENTRAL_DESK_RIGHT = 14;
-const int R7310_OWNER_NORTHEAST_BED_TOP = 15;
-const int R7310_OWNER_NORTHEAST_BED_SOUTH = 16;
-const int R7310_OWNER_NORTHEAST_BED_WEST = 17;
-const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 18;
-const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 19;
-const int R7310_OWNER_WEST_WALL_OPEN = 20;
-const int R7310_OWNER_WEST_THRESHOLD_FRONT = 21;
-const int R7310_OWNER_WEST_THRESHOLD_TOP = 22;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_TOP = 15;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_UNDERSIDE = 16;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_NORTH = 17;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_EAST_EXPOSED = 18;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_1 = 19;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_2 = 20;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_3 = 21;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_4 = 22;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_1 = 23;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_2 = 24;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_3 = 25;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_4 = 26;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_TOP = 27;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_NORTH = 28;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_BELOW_OUTLET = 29;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_ABOVE_OUTLET = 30;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_NORTH_OF_OUTLET = 31;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_SOUTH_OF_OUTLET = 32;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER = 33;
+const int R7310_OWNER_NORTHEAST_BED_TOP = 34;
+const int R7310_OWNER_NORTHEAST_BED_SOUTH = 35;
+const int R7310_OWNER_NORTHEAST_BED_WEST = 36;
+const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 37;
+const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 38;
+const int R7310_OWNER_WEST_WALL_OPEN = 39;
+const int R7310_OWNER_WEST_THRESHOLD_FRONT = 40;
+const int R7310_OWNER_WEST_THRESHOLD_TOP = 41;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -1712,6 +1741,44 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.61 && p.x <= -0.59) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_LEFT; } }
 	// central_desk_right (precedence 40)
 	if (n.x * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= 0.59 && p.x <= 0.61) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_RIGHT; } }
+	// south_system_desk_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && ((p.x >= -1.75 && p.x <= 1.02 && p.y >= 0.76 && p.y <= 0.78 && p.z >= 2.385 && p.z <= 3.056) || (p.x >= -1.91 && p.x <= -1.75 && p.y >= 0.76 && p.y <= 0.78 && p.z >= 2.385 && p.z <= 2.846))) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_TOP; } }
+	// south_system_desk_underside (precedence 40)
+	if (n.y * -1.0 > 0.5 && p.y >= 0.62 && p.y <= 0.64 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.035 && p.x <= 1.02) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_UNDERSIDE; } }
+	// south_system_desk_north (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.63 && p.y <= 0.77 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= 1.02) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_NORTH; } }
+	// south_system_desk_east_exposed (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.63 && p.y <= 0.77 && p.z >= 2.385 && p.z <= 2.73 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_EAST_EXPOSED; } }
+	// southwest_drawer_north_1 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.0025 && p.y <= 0.155 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_1; } }
+	// southwest_drawer_north_2 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.16 && p.y <= 0.3125 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_2; } }
+	// southwest_drawer_north_3 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.3175 && p.y <= 0.47 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_3; } }
+	// southwest_drawer_north_4 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.6275 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_4; } }
+	// southwest_drawer_east_1 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.0025 && p.y <= 0.155 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_1; } }
+	// southwest_drawer_east_2 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.16 && p.y <= 0.3125 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_2; } }
+	// southwest_drawer_east_3 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.3175 && p.y <= 0.47 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_3; } }
+	// southwest_drawer_east_4 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.6275 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_4; } }
+	// southeast_bookshelf_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 2.03 && p.y <= 2.05 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.02 && p.x <= 1.78) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_TOP; } }
+	// southeast_bookshelf_north (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 2.04 && p.z >= 2.72 && p.z <= 2.74 && p.x >= 1.02 && p.x <= 1.78) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_NORTH; } }
+	// southeast_bookshelf_west_lower_below_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.355 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_BELOW_OUTLET; } }
+	// southeast_bookshelf_west_lower_above_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.63 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_ABOVE_OUTLET; } }
+	// southeast_bookshelf_west_lower_north_of_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.355 && p.y <= 0.475 && p.z >= 2.73 && p.z <= 2.906 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_NORTH_OF_OUTLET; } }
+	// southeast_bookshelf_west_lower_south_of_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.355 && p.y <= 0.475 && p.z >= 3.026 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_SOUTH_OF_OUTLET; } }
+	// southeast_bookshelf_west_upper (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.77 && p.y <= 2.04 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER; } }
 	// northeast_bed_top (precedence 40)
 	if (n.y * 1.0 > 0.5 && p.y >= 0.27 && p.y <= 0.29 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_TOP; } }
 	// northeast_bed_south (precedence 40)
@@ -7754,6 +7821,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_WEST);
 					bool r7310XatlasRuntimeNortheastBedFirstHit = r7310XatlasRuntimeFirstHit &&
 						r7310XatlasRuntimeNortheastBedMapped;
+					bool r7310XatlasRuntimeSouthFixedFurnitureMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						r7310XatlasRuntimeOwnerId >= R7310_OWNER_SOUTH_SYSTEM_DESK_TOP &&
+						r7310XatlasRuntimeOwnerId <= R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER;
+					bool r7310XatlasRuntimeSouthFixedFurnitureFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeSouthFixedFurnitureMapped;
 					float r7310XatlasRuntimeStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
 					bool r7310XatlasRuntimeStructuralMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 						hitIsRayExiting != TRUE &&
@@ -7801,6 +7874,9 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					bool r7310XatlasRuntimeFullBakeNortheastBedClaimed =
 						uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeNortheastBedMapped;
+					bool r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed =
+						uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeSouthFixedFurnitureMapped;
 					bool r7310XatlasRuntimeFullBakeStructuralClaimed =
 						uR7310C1XatlasRuntimeStructuralDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeStructuralMapped;
@@ -7819,6 +7895,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
 						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
+						r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed) &&
@@ -7841,6 +7918,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
 						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
+						r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed;
@@ -8729,6 +8807,11 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 							}
 							if (uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
 								r7310XatlasRuntimeNortheastBedFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeSouthFixedFurnitureFirstHit)
 							{
 								break;
 							}

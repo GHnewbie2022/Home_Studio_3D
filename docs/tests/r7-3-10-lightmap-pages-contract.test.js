@@ -9,6 +9,7 @@ const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
 const homeStudio = fs.readFileSync('js/Home_Studio.js', 'utf8');
 const pathTracingCommon = fs.readFileSync('js/PathTracingCommon.js', 'utf8');
 const shader = fs.readFileSync('shaders/Home_Studio_Fragment.glsl', 'utf8');
+const smokeSource = fs.readFileSync('docs/tools/r7-3-10-xatlas-shader-compile-smoke.mjs', 'utf8');
 
 function readJson(path)
 {
@@ -136,8 +137,8 @@ test('raw multi-page sheet bounds cover both page columns', () => {
 	);
 	assert.match(
 		initCommon,
-		/const\s+R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_Y\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_H\s*;/,
-		'right sheet height must include the depth_h2 page bottom'
+		/const\s+R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_Y\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H\s*;/,
+		'right sheet height must include the south furniture page bottom'
 	);
 	assert.match(
 		initCommonConst('R7310_C1_XATLAS_LIGHTMAP_SHEET_H'),
@@ -154,7 +155,9 @@ test('raw multi-page sheet bounds cover both page columns', () => {
 		'west_threshold_front',
 		'central_desk',
 		'structural',
-		'depth_h2'
+		'depth_h2',
+		'northeast_bed',
+		'south_fixed_furniture'
 	]) {
 		assert.match(
 			initCommon,
@@ -183,7 +186,20 @@ test('atlasMaster raw loads the floor as a separate runtime page texture', () =>
 	assert.doesNotMatch(rawLoader, /surface\.packageFace === 'floor'[\s\S]{0,600}r7310C1Float32RgbaToHalfInto/);
 	assert.match(rawCommit, /r7310C1XatlasRuntimeFullFloorActive[\s\S]{0,160}R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID/);
 	assert.doesNotMatch(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_W/);
-	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_W/);
+	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W\s*=\s*Math\.max\(/);
+	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W/);
+});
+
+test('formal raw smoke waits for every required lightmap page without mutating legacy modes', () => {
+	const smokePageExpression = sliceFunction(smokeSource, 'pageSmokeExpression');
+	assert.match(initCommon, /let\s+r7310C1XatlasLoadedRawLightmapPageIds\s*=\s*\[\]/);
+	assert.match(initCommon, /function\s+r7310C1RequiredRawLightmapPageIds\s*\(/);
+	assert.match(initCommon, /function\s+r7310C1RawLightmapPageReadinessReport\s*\(/);
+	assert.match(initCommon, /lightmapPageReadiness:\s*r7310C1RawLightmapPageReadinessReport\(\)/);
+	assert.match(smokeSource, /lightmapPageReadiness/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1UseNonSquareAtlas\s*\(/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1FullNorthWallXatlasPackage\s*\(/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1FullNorthWallXatlasRuntimeEnabled\s*\(/);
 });
 
 test('formal atlasMaster raw shader stays within Chrome Metal texture unit budget', () => {
@@ -501,12 +517,14 @@ test('baked route miss is visible, while intentional floor footprint holes fall 
 	assert.match(shader, /r7310XatlasRuntimeFullBakeCeilingClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeDepthH2Claimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeCentralDeskClaimed/);
+	assert.match(shader, /r7310XatlasRuntimeFullBakeNortheastBedClaimed/);
+	assert.match(shader, /r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeStructuralClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeWestWallSwitchClaimed/);
 	assert.match(
 		shader,
-		/bool\s+r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*=\s*\(\s*r7310XatlasRuntimeFullBakeWestClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNorthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeEastClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCeilingClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeDepthH2Claimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCentralDeskClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeStructuralClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeWestWallSwitchClaimed\s*\)\s*&&\s*!r7310XatlasRuntimeFirstHit\s*;/
+		/bool\s+r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*=\s*\(\s*r7310XatlasRuntimeFullBakeWestClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNorthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeEastClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCeilingClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeDepthH2Claimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCentralDeskClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNortheastBedClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeStructuralClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeWestWallSwitchClaimed\s*\)\s*&&\s*!r7310XatlasRuntimeFirstHit\s*;/
 	);
 	assert.match(shader, /bool\s+r7310XatlasRuntimeFloorFootprintHoleFallsBackToLive\s*=\s*r7310XatlasRuntimeFullBakeFloorClaimed\s*&&\s*!r7310XatlasRuntimeFloorFirstHit/);
 	assert.match(shader, /if\s*\(\s*r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*\)/);

@@ -1,0 +1,22 @@
+{
+  "schema": "r7-3-10-xatlas-chart-gutter-dilation-report-v1",
+  "sourcePath": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-bake-dilation-source.bin",
+  "atlas": {
+    "width": 2354,
+    "height": 2090
+  },
+  "policy": {
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4,
+    "rowMapping": "flipped"
+  },
+  "counts": {
+    "targetTexels": 140494,
+    "repairedTexels": 140494,
+    "sourceExactBlackTexels": 0,
+    "sourceAlphaZeroTexels": 0,
+    "unrepairedTexels": 0,
+    "maxDistanceTexels": 4
+  }
+}

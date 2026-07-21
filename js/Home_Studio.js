@@ -5627,6 +5627,7 @@ function initSceneData() {
 		pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeCentralDeskDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeNortheastBedDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1NortheastFurnitureMode = { value: 0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeStructuralDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded = { value: 0.0 };

@@ -66,12 +66,25 @@ const CROSS_ATLAS_EDGE_POLICIES = Object.freeze({
   'west_wall_open|west_wall_switch_plate_top__full': 'raised-fixture-contact-full-radiance'
 });
 
+// Furniture pages are independently packed but share the room's full-radiance
+// bake contract. Classify those page boundaries by atlas ownership so adding a
+// new drawer or shelf chart cannot silently create an unreviewed seam.
+const CROSS_ATLAS_GROUP_POLICIES = Object.freeze({
+  'northeast_bed|shell': 'full-radiance-contact-gate',
+  'shell|south_fixed_furniture': 'full-radiance-contact-gate',
+  'south_fixed_furniture|structural': 'full-radiance-contact-gate'
+});
+
 function round(value) {
   return Number(value.toFixed(6));
 }
 
 function pairKey(a, b) {
   return [a, b].sort().join('|');
+}
+
+function atlasGroupPairKey(atlasGroups) {
+  return [...new Set(atlasGroups)].sort().join('|');
 }
 
 function sha256Json(value) {
@@ -223,7 +236,8 @@ export function buildFullRoomBlackEdgeReport(paramTable, options = {}) {
     .map((edge) => {
       const crossAtlas = new Set(edge.atlasGroups).size > 1;
       let protectionKind = crossAtlas
-        ? CROSS_ATLAS_EDGE_POLICIES[edge.pairKey]
+        ? CROSS_ATLAS_EDGE_POLICIES[edge.pairKey] ||
+          CROSS_ATLAS_GROUP_POLICIES[atlasGroupPairKey(edge.atlasGroups)]
         : 'same-atlas-chart-gutter';
       if (disabledProtectionPairs.has(edge.pairKey)) protectionKind = undefined;
       return {

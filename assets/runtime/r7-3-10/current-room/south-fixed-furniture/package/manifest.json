@@ -1,0 +1,69 @@
+{
+  "version": "r7-3-10-xatlas-bake-c2",
+  "config": 1,
+  "northeastFurnitureMode": null,
+  "batch": "south_fixed_furniture_full_radiance",
+  "targetId": 1600,
+  "surfaceName": "south_fixed_furniture",
+  "worldBounds": null,
+  "createdAt": "2026-07-18T12:41:05.199Z",
+  "branch": "codex/r7-3-10-furniture-baking",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 2354,
+  "targetAtlasWidth": 2354,
+  "targetAtlasHeight": 2090,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "fullRadianceProbe": false,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "upscaled": false,
+  "packageDir": "assets/runtime/r7-3-10/current-room/south-fixed-furniture/package",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
+    "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json",
+    "xatlasFinalAtlasReport": "xatlas-final-atlas-report.json"
+  },
+  "xatlasC2CAlphaPolicy": {
+    "enabled": true,
+    "maskPath": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-bake-tri-valid-rgba32f.bin",
+    "decisionSource": "per-texel backface-ratio validity mask"
+  },
+  "xatlasChartGutterDilation": {
+    "enabled": true,
+    "sourcePath": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/xatlas-bake-dilation-source.bin",
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4
+  },
+  "xatlasGeometricEdgeExtrapolation": {
+    "enabled": true,
+    "preparedMeshPath": "assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-input-mesh.json",
+    "sourceScope": "same-piece-interior-valid-radiance",
+    "targetScope": "one-texel physical chart perimeter"
+  },
+  "bakedSeamRadianceGate": {
+    "enabled": true,
+    "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+    "edgeInventory": "docs/data/r7-3-10-full-room-black-edge-report.json",
+    "evaluatedEdges": 33,
+    "evaluatedSides": 55
+  },
+  "xatlasFinalAtlasExactBlack": {
+    "enabled": true,
+    "decisionSource": "fully-postprocessed-atlas",
+    "alphaOneExactBlackTexels": 0
+  }
+}
