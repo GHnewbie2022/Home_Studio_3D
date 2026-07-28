@@ -72,8 +72,12 @@ function pointerFor(dir, kind, prepareDir) {
 		? 'full_diffuse_radiance'
 		: 'indirect_diffuse_radiance';
 	const directLightAlreadyIncluded = bakedRadianceKind === 'full_diffuse_radiance';
+	const accepted = validation.status === 'pass'
+		&& bakedRadianceKind === 'full_diffuse_radiance'
+		&& manifest.directLightAlreadyIncluded === true
+		&& manifest.addDirectLightAfterBakeLookup === false;
 	return {
-		packageStatus: 'architecture_probe',
+		packageStatus: accepted ? 'accepted' : 'diagnostic_only',
 		runtimeScope: 'c1_xatlas_west_threshold_front_runtime',
 		runtimeTexture: 'tR7310C1XatlasRuntimeAtlasTexture',
 		runtimeArchitecture: 'master_subrect_west_threshold_front',

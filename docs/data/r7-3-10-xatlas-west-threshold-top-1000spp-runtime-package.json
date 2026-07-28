@@ -1,5 +1,5 @@
 {
-  "packageStatus": "architecture_probe",
+  "packageStatus": "accepted",
   "runtimeScope": "c1_xatlas_west_threshold_top_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "master_subrect_west_threshold_top",
@@ -60,6 +60,13 @@
   "artifacts": {
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
-    "validationReport": "validation-report.json"
+    "validationReport": "validation-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
+  },
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 911360,
+  "artifactHashes": {
+    "runtimeAtlasPatch0Sha256": "ec682e51a832d2545766fb3d4174d1f47c7004f3b5c4f2aae818435ba6170cc1"
   }
 }

@@ -34,7 +34,8 @@
     "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
     "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
     "bakedSeamRadianceReport": "baked-seam-radiance-report.json",
-    "xatlasFinalAtlasReport": "xatlas-final-atlas-report.json"
+    "xatlasFinalAtlasReport": "xatlas-final-atlas-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "validation": {
     "status": "pass",
@@ -57,6 +58,10 @@
   },
   "artifactHashes": {
     "atlasPatch0Sha256": "f10ae4e3fd132502c78126d1280377b69a2a5328ef3d9e703469e98bdf51bc9c",
-    "texelMetadataPatch0Sha256": "0bee1dd00e8c95612b631910e9e625320c0afa65a0a3ed858a44dbe2217816ce"
-  }
+    "texelMetadataPatch0Sha256": "0bee1dd00e8c95612b631910e9e625320c0afa65a0a3ed858a44dbe2217816ce",
+    "runtimeAtlasPatch0Sha256": "6c147d1dda6f0fb128d91ee4f0d63cdf433ba2ac16e9467d0ae2843fe437c7e5"
+  },
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 39358880
 }

@@ -186,7 +186,8 @@ uniform float uR7310C1XatlasRuntimeFullCeilingMode;
 uniform float uR7310C1XatlasRuntimeFullFloorMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
 uniform float uR7310C1XatlasParamSurfaceCount; // R4-2A-2 param runtime：dynamic while loop 上界（uniform、非編譯期常數）
-uniform vec4 uR7310C1XatlasParamSurfaceTable[504]; // generated param table：最多 72 面 × 7 vec4
+uniform int uR7310C1XatlasParamSurfaceTexelBase;
+uniform int uR7310C1XatlasParamDataTextureWidth;
 // master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
 // rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
 uniform float uR7310C1XatlasRuntimeMasterMode;
@@ -1623,16 +1624,23 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 	return westThresholdFront || westThresholdTop || centralDesk || northeastBed ||
 		southSystemFurniture || southeastBookshelf || structural || westWallSwitch;
 }
+vec4 r7310C1XatlasParamSurfaceTexel(int sid, int field)
+{
+	int linearTexel = uR7310C1XatlasParamSurfaceTexelBase + sid * 7 + field;
+	int textureWidth = max(uR7310C1XatlasParamDataTextureWidth, 1);
+	int texelY = linearTexel / textureWidth;
+	int texelX = linearTexel - texelY * textureWidth;
+	return texelFetch(tBoxDataTexture, ivec2(texelX, texelY), 0);
+}
 bool r7310C1XatlasParamSurfaceUv(int sid, float visibleObjectID, vec3 n, vec3 p, out vec2 atlasUv)
 {
-	int b = sid * 7;
-	vec4 nf   = uR7310C1XatlasParamSurfaceTable[b + 0];
-	vec4 bmin = uR7310C1XatlasParamSurfaceTable[b + 1];
-	vec4 bmax = uR7310C1XatlasParamSurfaceTable[b + 2];
-	vec4 umap = uR7310C1XatlasParamSurfaceTable[b + 3];
-	vec4 vmap = uR7310C1XatlasParamSurfaceTable[b + 4];
-	vec4 mixuv= uR7310C1XatlasParamSurfaceTable[b + 5];
-	vec4 rect = uR7310C1XatlasParamSurfaceTable[b + 6];
+	vec4 nf   = r7310C1XatlasParamSurfaceTexel(sid, 0);
+	vec4 bmin = r7310C1XatlasParamSurfaceTexel(sid, 1);
+	vec4 bmax = r7310C1XatlasParamSurfaceTexel(sid, 2);
+	vec4 umap = r7310C1XatlasParamSurfaceTexel(sid, 3);
+	vec4 vmap = r7310C1XatlasParamSurfaceTexel(sid, 4);
+	vec4 mixuv= r7310C1XatlasParamSurfaceTexel(sid, 5);
+	vec4 rect = r7310C1XatlasParamSurfaceTexel(sid, 6);
 	if (bmin.w < 0.5) { atlasUv = vec2(0.0); return false; }
 	if (visibleObjectID >= 1.5 && !r7310C1XatlasParamSurfaceAllowsObjectHit(nf, bmin, bmax)) { atlasUv = vec2(0.0); return false; }
 	if (dot(n, nf.xyz) < vmap.w) { atlasUv = vec2(0.0); return false; }
@@ -1658,8 +1666,7 @@ bool r7310C1XatlasParamSampleAny(float visibleObjectID, vec3 n, vec3 p, out vec2
 bool r7310C1XatlasParamWestSurfaceActive()
 {
 	if (uR7310C1XatlasParamWestSurfaceIndex < 0.0) return false;
-	int b = int(uR7310C1XatlasParamWestSurfaceIndex) * 7;
-	return uR7310C1XatlasParamSurfaceTable[b + 1].w > 0.5;
+	return r7310C1XatlasParamSurfaceTexel(int(uR7310C1XatlasParamWestSurfaceIndex), 1).w > 0.5;
 }
 // === GENERATED: surface-owner BEGIN  (registry 65d86f861d613145) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json

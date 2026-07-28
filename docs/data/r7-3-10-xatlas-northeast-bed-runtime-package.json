@@ -23,11 +23,13 @@
     "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "coverageReport": "coverage-report.json",
-    "validationReport": "validation-report.json"
+    "validationReport": "validation-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "artifactHashes": {
     "atlasPatch0Sha256": "2d0889715f6a957bd49b2c0006aaf8965c03ddaddef11ebdb07c53db06a88c1b",
-    "texelMetadataPatch0Sha256": "1220e84426c18a270a91b0d5b8a12d3790d56a980a74b9a1e854362cdb5e34c1"
+    "texelMetadataPatch0Sha256": "1220e84426c18a270a91b0d5b8a12d3790d56a980a74b9a1e854362cdb5e34c1",
+    "runtimeAtlasPatch0Sha256": "03b9f053b8ceec4bcc4123fbc7a8df4183af9c66bc7c98ff0c8dca8f7cbcbc76"
   },
   "validation": {
     "status": "pass",
@@ -37,5 +39,8 @@
   },
   "mapping": "xatlas_texel_worldpos_furniture_static",
   "runtimeAtlasSlot": 14,
-  "runtimeArchitecture": "multi_page_furniture_lightmap"
+  "runtimeArchitecture": "multi_page_furniture_lightmap",
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 21279720
 }

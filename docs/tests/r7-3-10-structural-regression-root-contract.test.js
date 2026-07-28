@@ -71,24 +71,25 @@ test('west wall physical switch selects its owner chart before broad param fallb
 	assert.match(init, /surfaceId\s*===\s*'west_wall_switch_button__full'/);
 });
 
-test('XATLAS param table capacity includes formal furniture charts', () => {
-	const capacityMatch = init.match(/R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY\s*=\s*(\d+)/);
-	assert.ok(capacityMatch, 'JS must declare one formal XATLAS surface-capacity constant');
-	const surfaceCapacity = Number(capacityMatch[1]);
-	assert.ok(paramTable.count <= surfaceCapacity,
-		`generated table has ${paramTable.count} surfaces but runtime capacity is ${surfaceCapacity}`);
-	assert.match(init, /R7310_C1_XATLAS_PARAM_VEC4_CAPACITY\s*=\s*R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY\s*\*\s*7/);
-	assert.match(init, /length:\s*R7310_C1_XATLAS_PARAM_VEC4_CAPACITY/);
-	assert.match(shader, new RegExp(`uR7310C1XatlasParamSurfaceTable\\[${surfaceCapacity * 7}\\]`));
+test('XATLAS owner table follows the generated registry without a handwritten capacity', () => {
+	assert.equal(paramTable.flatFloats.length, paramTable.count * 28,
+		'generated table must contain exactly 28 floats per owner surface');
+	assert.doesNotMatch(init, /R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY/);
+	assert.doesNotMatch(init, /R7310_C1_XATLAS_PARAM_VEC4_CAPACITY/);
+	assert.doesNotMatch(shader, /uR7310C1XatlasParamSurfaceTable\s*\[/);
+	assert.match(init, /function\s+r7310C1InstallXatlasParamTableInBoxDataTexture\s*\(/);
+	assert.match(init, /ownerRows\s*=\s*Math\.ceil\(ownerTexelCount\s*\/\s*boxTextureWidth\)/);
+	assert.match(init, /surfaceCount\s*\*\s*28\s*!==\s*ff\.length/);
+	assert.match(shader, /texelFetch\(tBoxDataTexture,\s*ivec2\(texelX,\s*texelY\),\s*0\)/);
 	assert.match(shader, /bool\s+westWallSwitch\s*=/);
 	assert.match(shader, /structural\s*\|\|\s*westWallSwitch/);
-	assert.match(init, /surfaceCount\s*\*\s*7\s*>\s*vecs\.length/);
 	assert.match(init, /r7310C1XatlasParamTableLoadStatus\s*=\s*'ready'/);
 	assert.match(init, /r7310C1XatlasParamTableLoadStatus\s*=\s*'error'/);
 	assert.match(init, /console\.error\('R7-3\.10 XATLAS param table load failed:'/);
 	assert.doesNotMatch(init, /catch\s*\(e\)\s*\{\s*\/\* param 表為選用；非 param 建置時忽略 \*\/\s*\}/);
 	assert.match(init, /paramTableLoadStatus:\s*r7310C1XatlasParamTableLoadStatus/);
-	assert.match(init, /paramTableSurfaceCapacity:\s*R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY/);
+	assert.match(init, /paramTableStorageKind:\s*'box_data_texture_rows'/);
+	assert.match(init, /paramTableTextureHeight:\s*r7310C1XatlasParamDataTextureHeight/);
 });
 
 test('A NARROW contact-edge scanner covers east B1 and B2 edges', () => {

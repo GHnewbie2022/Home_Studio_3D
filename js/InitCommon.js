@@ -122,11 +122,250 @@ let homeStudioLoadingDisplayedProgress = 0.0;
 let homeStudioLoadingTargetProgress = 0.0;
 let homeStudioLoadingFrameId = 0;
 let homeStudioLoadingHidden = false;
+let homeStudioLoadingFrameYieldPromise = null;
 let r7310C1XatlasRawLightmapPageLoadingActive = false;
 let r7310C1XatlasRawLightmapLoadingUiStartedAt = 0;
 let r7310C1XatlasRawLightmapLoadingProgressBase = 0.0;
+let r7310C1XatlasRawLightmapLoadingProgressState = null;
 let r7310C1RuntimeLoadingCompleted = Object.create(null);
 let r7310C1RuntimeBatchLoading = false; // C'-1: 載入期間抑制逐包重建 combined atlas，全部 settle 後才合批重建一次
+const HOME_STUDIO_LOADING_TIMING_VERSION = 'r7310-loading-byte-progress-v3';
+const R7310_C1_XATLAS_LOADING_STAGE_WEIGHTS = Object.freeze({
+	sheetAllocation: 0.04,
+	pointerRead: 0.08,
+	binaryRead: 0.68,
+	dataCopy: 0.14,
+	runtimeCommit: 0.06
+});
+let homeStudioLoadingTimingOrigin = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+let homeStudioLoadingTimingSequence = 0;
+let homeStudioLoadingTimingStages = [];
+let homeStudioLoadingTimingLongTasks = [];
+let homeStudioLoadingTimingActiveStages = Object.create(null);
+let homeStudioLoadingTimingFirstFrameRecorded = false;
+let homeStudioLoadingTimingRawPagesReady = false;
+let homeStudioLoadingTimingReadyFrameRecorded = false;
+let homeStudioLoadingTimingRuntimeTexturePendingUpload = false;
+let homeStudioLoadingTimingGpuTimerExtension = null;
+let homeStudioLoadingTimingGpuQuerySequence = 0;
+
+function homeStudioLoadingTimingNow()
+{
+	return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+}
+
+function beginHomeStudioLoadingStage(name, detail)
+{
+	var token = {
+		id: ++homeStudioLoadingTimingSequence,
+		name: String(name || 'unnamed'),
+		startMs: homeStudioLoadingTimingNow(),
+		progress: Math.round(Math.max(homeStudioLoadingDisplayedProgress, homeStudioLoadingTargetProgress) * 1000) / 10,
+		detail: detail || null
+	};
+	homeStudioLoadingTimingActiveStages[token.id] = token;
+	return token;
+}
+
+function endHomeStudioLoadingStage(token, detail)
+{
+	if (!token || !homeStudioLoadingTimingActiveStages[token.id])
+		return null;
+	var endMs = homeStudioLoadingTimingNow();
+	delete homeStudioLoadingTimingActiveStages[token.id];
+	var record = {
+		id: token.id,
+		name: token.name,
+		startMs: Math.round((token.startMs - homeStudioLoadingTimingOrigin) * 10) / 10,
+		endMs: Math.round((endMs - homeStudioLoadingTimingOrigin) * 10) / 10,
+		durationMs: Math.round((endMs - token.startMs) * 10) / 10,
+		progress: token.progress,
+		detail: detail || token.detail || null
+	};
+	homeStudioLoadingTimingStages.push(record);
+	if (typeof console !== 'undefined' && console.info)
+		console.info('[Home Studio loading timing]', record.name, record.durationMs + 'ms', record.detail || '');
+	return record;
+}
+
+function beginHomeStudioLoadingGpuStage(name, detail)
+{
+	if (!context || !homeStudioLoadingTimingGpuTimerExtension || typeof context.createQuery !== 'function')
+		return null;
+	try
+	{
+		var query = context.createQuery();
+		context.beginQuery(homeStudioLoadingTimingGpuTimerExtension.TIME_ELAPSED_EXT, query);
+		return {
+			id: ++homeStudioLoadingTimingGpuQuerySequence,
+			name: String(name || 'gpu-stage'),
+			query: query,
+			startMs: homeStudioLoadingTimingNow(),
+			progress: Math.round(Math.max(homeStudioLoadingDisplayedProgress, homeStudioLoadingTargetProgress) * 1000) / 10,
+			detail: detail || null
+		};
+	}
+	catch (error)
+	{
+		return null;
+	}
+}
+
+function endHomeStudioLoadingGpuStage(token)
+{
+	if (!token || !context || !homeStudioLoadingTimingGpuTimerExtension)
+		return;
+	try
+	{
+		context.endQuery(homeStudioLoadingTimingGpuTimerExtension.TIME_ELAPSED_EXT);
+	}
+	catch (error)
+	{
+		return;
+	}
+	var attempts = 0;
+	var poll = function()
+	{
+		attempts += 1;
+		if (!context || r7310HomeStudioContextLost)
+			return;
+		try
+		{
+			var available = context.getQueryParameter(token.query, context.QUERY_RESULT_AVAILABLE);
+			var disjoint = context.getParameter(homeStudioLoadingTimingGpuTimerExtension.GPU_DISJOINT_EXT);
+			if (available && !disjoint)
+			{
+				var durationNs = Number(context.getQueryParameter(token.query, context.QUERY_RESULT)) || 0;
+				var now = homeStudioLoadingTimingNow();
+				homeStudioLoadingTimingStages.push({
+					id: ++homeStudioLoadingTimingSequence,
+					name: token.name,
+					startMs: Math.round((token.startMs - homeStudioLoadingTimingOrigin) * 10) / 10,
+					endMs: Math.round((now - homeStudioLoadingTimingOrigin) * 10) / 10,
+					durationMs: Math.round((durationNs / 1000000) * 10) / 10,
+					progress: token.progress,
+					detail: Object.assign({}, token.detail || {}, { measurement: 'gpu-timer-query' })
+				});
+				context.deleteQuery(token.query);
+				return;
+			}
+			if (disjoint || attempts >= 300)
+			{
+				context.deleteQuery(token.query);
+				markHomeStudioLoadingMilestone(token.name + '-unavailable', {
+					reason: disjoint ? 'gpu-disjoint' : 'query-timeout'
+				});
+				return;
+			}
+		}
+		catch (error)
+		{
+			return;
+		}
+		setTimeout(poll, 16);
+	};
+	setTimeout(poll, 0);
+}
+
+function markHomeStudioLoadingMilestone(name, detail)
+{
+	var now = homeStudioLoadingTimingNow();
+	var record = {
+		id: ++homeStudioLoadingTimingSequence,
+		name: String(name || 'milestone'),
+		startMs: Math.round((now - homeStudioLoadingTimingOrigin) * 10) / 10,
+		endMs: Math.round((now - homeStudioLoadingTimingOrigin) * 10) / 10,
+		durationMs: 0,
+		progress: Math.round(Math.max(homeStudioLoadingDisplayedProgress, homeStudioLoadingTargetProgress) * 1000) / 10,
+		detail: detail || null
+	};
+	homeStudioLoadingTimingStages.push(record);
+	return record;
+}
+
+function reportHomeStudioLoadingTiming()
+{
+	var now = homeStudioLoadingTimingNow();
+	var active = Object.keys(homeStudioLoadingTimingActiveStages).map(function(key)
+	{
+		var token = homeStudioLoadingTimingActiveStages[key];
+		return {
+			name: token.name,
+			elapsedMs: Math.round((now - token.startMs) * 10) / 10,
+			progress: token.progress,
+			detail: token.detail || null
+		};
+	});
+	var stages = homeStudioLoadingTimingStages.slice();
+	return {
+		version: HOME_STUDIO_LOADING_TIMING_VERSION,
+		elapsedMs: Math.round((now - homeStudioLoadingTimingOrigin) * 10) / 10,
+		currentProgress: Math.round(Math.max(homeStudioLoadingDisplayedProgress, homeStudioLoadingTargetProgress) * 1000) / 10,
+		firstFrameRecorded: homeStudioLoadingTimingFirstFrameRecorded,
+		rawPagesReady: homeStudioLoadingTimingRawPagesReady,
+		readyFrameRecorded: homeStudioLoadingTimingReadyFrameRecorded,
+		rawPageProgress: r7310C1XatlasRawLightmapLoadingProgressState ? {
+			stage: r7310C1XatlasRawLightmapLoadingProgressState.stage,
+			label: r7310C1XatlasRawLightmapLoadingProgressState.label,
+			completedPointers: r7310C1XatlasRawLightmapLoadingProgressState.completedPointers,
+			totalPointers: r7310C1XatlasRawLightmapLoadingProgressState.totalPointers,
+			loadedBytes: r7310C1XatlasRawLightmapLoadingProgressState.loadedBytes,
+			totalBytes: r7310C1XatlasRawLightmapLoadingProgressState.totalBytes,
+			copiedBytes: r7310C1XatlasRawLightmapLoadingProgressState.copiedBytes,
+			totalCopyBytes: r7310C1XatlasRawLightmapLoadingProgressState.totalCopyBytes
+		} : null,
+		activeStages: active,
+		stages: stages,
+		longTasks: homeStudioLoadingTimingLongTasks.slice(),
+		slowestStages: stages.filter(function(stage) { return stage.durationMs > 0; })
+			.sort(function(a, b) { return b.durationMs - a.durationMs; }).slice(0, 20)
+	};
+}
+
+if (typeof window !== 'undefined')
+{
+	window.reportHomeStudioLoadingTiming = reportHomeStudioLoadingTiming;
+	window.resetHomeStudioLoadingTiming = function()
+	{
+		homeStudioLoadingTimingOrigin = homeStudioLoadingTimingNow();
+		homeStudioLoadingTimingSequence = 0;
+		homeStudioLoadingTimingStages = [];
+		homeStudioLoadingTimingLongTasks = [];
+		homeStudioLoadingTimingActiveStages = Object.create(null);
+		homeStudioLoadingTimingFirstFrameRecorded = false;
+		homeStudioLoadingTimingRawPagesReady = false;
+		homeStudioLoadingTimingReadyFrameRecorded = false;
+		homeStudioLoadingTimingRuntimeTexturePendingUpload = false;
+		homeStudioLoadingTimingGpuQuerySequence = 0;
+		markHomeStudioLoadingMilestone('timing-reset');
+		return reportHomeStudioLoadingTiming();
+	};
+}
+
+if (typeof PerformanceObserver !== 'undefined')
+{
+	try
+	{
+		var homeStudioLoadingLongTaskObserver = new PerformanceObserver(function(list)
+		{
+			list.getEntries().forEach(function(entry)
+			{
+				homeStudioLoadingTimingLongTasks.push({
+					startMs: Math.round((entry.startTime - homeStudioLoadingTimingOrigin) * 10) / 10,
+					durationMs: Math.round(entry.duration * 10) / 10,
+					activeStages: Object.keys(homeStudioLoadingTimingActiveStages).map(function(key)
+					{
+						return homeStudioLoadingTimingActiveStages[key].name;
+					})
+				});
+			});
+		});
+		homeStudioLoadingLongTaskObserver.observe({ entryTypes: ['longtask'] });
+	}
+	catch (error) {}
+}
+
+markHomeStudioLoadingMilestone('script-ready');
 
 function updateHomeStudioLoadingUi(targetProgress)
 {
@@ -173,20 +412,27 @@ function updateHomeStudioLoadingUi(targetProgress)
 	homeStudioLoadingFrameId = requestAnimationFrame(step);
 }
 
-function waitHomeStudioLoadingUiPaint()
+function yieldHomeStudioLoadingFrame(detail)
 {
-	return new Promise(function(resolve)
+	if (homeStudioLoadingFrameYieldPromise)
+		return homeStudioLoadingFrameYieldPromise;
+	homeStudioLoadingFrameYieldPromise = new Promise(function(resolve)
 	{
+		var timingStage = beginHomeStudioLoadingStage('loading-ui-frame-yield', detail || null);
+		var finish = function()
+		{
+			endHomeStudioLoadingStage(timingStage, detail || null);
+			homeStudioLoadingFrameYieldPromise = null;
+			resolve();
+		};
 		if (typeof requestAnimationFrame !== 'function')
 		{
-			setTimeout(resolve, 0);
+			setTimeout(finish, 0);
 			return;
 		}
-		requestAnimationFrame(function()
-		{
-			requestAnimationFrame(resolve);
-		});
+		requestAnimationFrame(finish);
 	});
+	return homeStudioLoadingFrameYieldPromise;
 }
 
 function hideHomeStudioLoadingScreen()
@@ -215,22 +461,116 @@ function hideHomeStudioLoadingScreen()
 	}, 550);
 }
 
-function beginR7310C1XatlasRawLightmapPageLoadingUi(totalPages)
+function r7310C1XatlasRawLightmapExpectedBytes(rect)
 {
+	return rect ? Math.max(0, Math.trunc(Number(rect.w) || 0) * Math.trunc(Number(rect.h) || 0) * 4 * 2) : 0;
+}
+
+function createR7310C1XatlasRawLightmapLoadingProgressPlan(surfaces, includeFloor)
+{
+	var entries = [];
+	var sourceSurfaces = Array.isArray(surfaces) ? surfaces : [];
+	for (var i = 0; i < sourceSurfaces.length; i += 1)
+	{
+		var surface = sourceSurfaces[i];
+		var rect = surface && R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT[surface.rectKey];
+		if (!surface || !rect) continue;
+		entries.push({
+			label: surface.surfaceId,
+			expectedBytes: r7310C1XatlasRawLightmapExpectedBytes(rect)
+		});
+	}
+	if (includeFloor)
+	{
+		var floorRect = R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT.floor;
+		entries.push({
+			label: 'floor',
+			expectedBytes: r7310C1XatlasRawLightmapExpectedBytes(floorRect)
+		});
+	}
+	var totalBytes = entries.reduce(function(sum, entry) { return sum + entry.expectedBytes; }, 0);
+	return {
+		entries: entries,
+		totalPointers: entries.length,
+		totalBytes: totalBytes,
+		totalCopyBytes: totalBytes
+	};
+}
+
+function beginR7310C1XatlasRawLightmapPageLoadingUi(loadingProgressPlan)
+{
+	var plan = loadingProgressPlan || {};
 	r7310C1XatlasRawLightmapLoadingUiStartedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
 	r7310C1XatlasRawLightmapPageLoadingActive = true;
 	homeStudioLoadingHidden = false;
 	r7310C1XatlasRawLightmapLoadingProgressBase = Math.max(0.02, Math.min(0.85, Math.max(homeStudioLoadingDisplayedProgress, homeStudioLoadingTargetProgress)));
-	updateHomeStudioLoadingUi(totalPages > 0 ? r7310C1XatlasRawLightmapLoadingProgressBase : 1.0);
+	r7310C1XatlasRawLightmapLoadingProgressState = {
+		stage: 'prepare',
+		label: '',
+		totalPointers: Math.max(0, Math.trunc(Number(plan.totalPointers) || 0)),
+		completedPointers: 0,
+		completedPointerLabels: Object.create(null),
+		totalBytes: Math.max(0, Number(plan.totalBytes) || 0),
+		loadedBytes: 0,
+		loadedBytesByLabel: Object.create(null),
+		totalCopyBytes: Math.max(0, Number(plan.totalCopyBytes) || 0),
+		copiedBytes: 0,
+		copiedBytesByLabel: Object.create(null),
+		sheetAllocationComplete: false,
+		runtimeCommitComplete: false,
+		fraction: 0
+	};
+	updateHomeStudioLoadingUi(plan.totalPointers > 0 ? r7310C1XatlasRawLightmapLoadingProgressBase : 1.0);
 }
 
-function updateR7310C1XatlasRawLightmapPageLoadingUi(donePages, totalPages, label)
+function updateR7310C1XatlasRawLightmapLoadingProgress(stage, detail, label)
 {
-	var safeTotal = Math.max(1, Math.trunc(Number(totalPages) || 0));
-	var safeDone = Math.max(0, Math.min(safeTotal, Number(donePages) || 0));
-	r7310C1XatlasRuntimeLoadSurface = label || r7310C1XatlasRuntimeLoadSurface || '';
+	var state = r7310C1XatlasRawLightmapLoadingProgressState;
+	if (!state) return;
+	var info = detail || {};
+	var progressLabel = String(label || info.label || '');
+	state.stage = String(stage || state.stage || '');
+	state.label = progressLabel || state.label;
+	r7310C1XatlasRuntimeLoadSurface = progressLabel || r7310C1XatlasRuntimeLoadSurface || '';
+	if (stage === 'sheet-allocation')
+		state.sheetAllocationComplete = true;
+	else if (stage === 'pointer-read' && progressLabel && !state.completedPointerLabels[progressLabel])
+	{
+		state.completedPointerLabels[progressLabel] = true;
+		state.completedPointers += 1;
+	}
+	else if (stage === 'binary-read' && progressLabel)
+	{
+		var previousLoadedBytes = Math.max(0, Number(state.loadedBytesByLabel[progressLabel]) || 0);
+		var nextLoadedBytes = Math.max(previousLoadedBytes, Number(info.loadedBytes) || 0);
+		if (Number(info.expectedBytes) > 0)
+			nextLoadedBytes = Math.min(nextLoadedBytes, Number(info.expectedBytes));
+		state.loadedBytesByLabel[progressLabel] = nextLoadedBytes;
+		state.loadedBytes += nextLoadedBytes - previousLoadedBytes;
+	}
+	else if (stage === 'data-copy' && progressLabel)
+	{
+		var previousCopiedBytes = Math.max(0, Number(state.copiedBytesByLabel[progressLabel]) || 0);
+		var nextCopiedBytes = Math.max(previousCopiedBytes, Number(info.copiedBytes || info.bytes) || 0);
+		if (Number(info.expectedBytes) > 0)
+			nextCopiedBytes = Math.min(nextCopiedBytes, Number(info.expectedBytes));
+		state.copiedBytesByLabel[progressLabel] = nextCopiedBytes;
+		state.copiedBytes += nextCopiedBytes - previousCopiedBytes;
+	}
+	else if (stage === 'runtime-commit')
+		state.runtimeCommitComplete = true;
+	var weights = R7310_C1_XATLAS_LOADING_STAGE_WEIGHTS;
+	var pointerRatio = state.totalPointers > 0 ? Math.min(1, state.completedPointers / state.totalPointers) : 1;
+	var binaryRatio = state.totalBytes > 0 ? Math.min(1, state.loadedBytes / state.totalBytes) : 1;
+	var copyRatio = state.totalCopyBytes > 0 ? Math.min(1, state.copiedBytes / state.totalCopyBytes) : 1;
+	state.fraction = Math.min(1,
+		(state.sheetAllocationComplete ? weights.sheetAllocation : 0) +
+		pointerRatio * weights.pointerRead +
+		binaryRatio * weights.binaryRead +
+		copyRatio * weights.dataCopy +
+		(state.runtimeCommitComplete ? weights.runtimeCommit : 0));
 	var progressBase = Math.max(0.02, Math.min(0.85, r7310C1XatlasRawLightmapLoadingProgressBase || 0.02));
-	var targetProgress = progressBase + (0.98 - progressBase) * (safeDone / safeTotal);
+	var targetProgress = progressBase + (0.98 - progressBase) * state.fraction;
 	updateHomeStudioLoadingUi(targetProgress);
 	var loadingRing = document.getElementById('loading-ring');
 	var loadingText = document.getElementById('loading-text');
@@ -245,6 +585,11 @@ function updateR7310C1XatlasRawLightmapPageLoadingUi(donePages, totalPages, labe
 
 function finishR7310C1XatlasRawLightmapPageLoadingUi()
 {
+	if (r7310C1XatlasRawLightmapLoadingProgressState)
+	{
+		r7310C1XatlasRawLightmapLoadingProgressState.stage = 'complete';
+		r7310C1XatlasRawLightmapLoadingProgressState.fraction = 1;
+	}
 	updateHomeStudioLoadingUi(1.0);
 	var now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
 	var elapsed = Math.max(0, now - r7310C1XatlasRawLightmapLoadingUiStartedAt);
@@ -1772,43 +2117,44 @@ function summarizeR7310StructuralIslands(atlasPixels, size)
 }
 
 const R738_C1_BAKE_ACCEPTED_PACKAGE_URL = 'docs/data/r7-3-8-c1-bake-accepted-package.json';
-const R7310_C1_FLOOR_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
-const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json';
-const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
-const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
-const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-runtime-package.json?v=r7310-b-north-east-ab-v1';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-raw-runtime-package.json';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-b-alpha-oidn-runtime-package.json';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-raw-runtime-package.json';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-y279-alpha-oidn-runtime-package.json';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_RAW_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-raw-runtime-package.json';
-const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-east-non-square-d800-bed-contact-x027-y279-alpha-oidn-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-a1-westbeam-full4x-1000spp-oidn-runtime-package.json';
+// Retired pre-current-room package slots stay null so legacy diagnostic helpers cannot fetch them.
+const R7310_C1_FLOOR_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_NORTH_WALL_DIFFUSE_RUNTIME_FALLBACK_PACKAGE_URL = null;
+const R7310_C1_EAST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_ATLAS_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_RAW_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_B_ALPHA_OIDN_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_RAW_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_Y279_ALPHA_OIDN_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_RAW_PACKAGE_URL = null;
+const R7310_C1_NON_SQUARE_D800_BED_CONTACT_X027_Y279_ALPHA_OIDN_PACKAGE_URL = null;
+const R7310_C1_XATLAS_RUNTIME_A1_C2C_PACKAGE_URL = null;
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_RAW_PACKAGE_URL = null;
+const R7310_C1_XATLAS_RUNTIME_A1_WESTBEAM_FULL4X_OIDN_PACKAGE_URL = null;
 const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json';
-// R7-3.10 圖一：北牆 OIDN 預設＝RTLightmap（西側高變異寬帶重降噪；使用者肉眼驗收通過、CODEX 簽收）。
-const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json';
+// Retired OIDN preview pointers resolve to the accepted RAW package.
+const R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_EAST_WALL_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_FULL_SOUTH_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-south-wall-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_SOUTH_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-south-wall-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_SOUTH_WALL_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_SOUTH_WALL_RAW_PACKAGE_URL;
 // R4-2C west C1A master pointer（RAW 命名照 east/north full-wall-xatlas 模板）。
 // OIDN 命名 P7 OIDN 階段依實際產物定（east 式 -oidn- 或 north 式 -oidn-rtlightmap-）；此處先設 -oidn- 預設、不阻塞 RAW。
 const R7310_C1_XATLAS_RUNTIME_FULL_WEST_WALL_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-west-wall-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_WEST_WALL_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-west-wall-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_WEST_WALL_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_WEST_WALL_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_TOP_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-west-threshold-top-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_TOP_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-west-threshold-top-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_TOP_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_TOP_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_FRONT_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-west-threshold-front-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_FRONT_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-west-threshold-front-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_FRONT_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_WEST_THRESHOLD_FRONT_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_CEILING_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_CEILING_RAW_PACKAGE_URL;
 // R7-3.10 第6步：H2 窗楣 -Y 深度面（south_window_top_reveal_depth）master sub-rect depth_h2 烤包指標。
 const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_DEPTH_H2_RAW_PACKAGE_URL;
 // R7-3.10 §13 地板 C1A shell 第一版 pointer（floor_open；非方格 3376×4264 albedo-free；OIDN=RTLightmap）。
 const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-floor-runtime-package.json';
-const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_OIDN_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-full-floor-oidn-runtime-package.json';
+const R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_FLOOR_RAW_PACKAGE_URL;
 const R7310_C1_XATLAS_RUNTIME_CENTRAL_DESK_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-central-desk-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_NORTHEAST_BED_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json';
 const R7310_C1_XATLAS_RUNTIME_SOUTH_FIXED_FURNITURE_RAW_PACKAGE_URL = 'docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json';
@@ -2054,27 +2400,27 @@ function resolveR7310C1NonSquarePackageUrl()
 
 	return url;
 }
-const R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
-const R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
-const R7310_C1_SOUTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
-const R7310_C1_CEILING_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json';
-const R7310_C1_STRUCTURAL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
-const R7310_C1_SE_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json';
-const R7310_C1_SE_COLUMN_WEST_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json';
-const R7310_C1_SOUTH_WALL_AC_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json';
-const R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json';
-const R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json';
-const R7310_C1_SW_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json';
-const R7310_C1_WEST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json';
-const R7310_C1_SW_COLUMN_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json';
-const R7310_C1_WEST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json';
-const R7310_C1_WEST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json';
-const R7310_C1_EAST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json';
-const R7310_C1_EAST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json';
-const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json';
-const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
-const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
-const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
+const R7310_C1_NORTH_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_EAST_WALL_WARDROBE_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_CEILING_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_STRUCTURAL_DIFFUSE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SE_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SE_COLUMN_WEST_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WALL_AC_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_EAST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_EAST_WALL_BEAM_SHADOW_WARDROBE_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SW_COLUMN_NORTH_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_WEST_WALL_BEAM_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SW_COLUMN_INNER_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_WEST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_WEST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_EAST_BEAM_INNER_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_EAST_BEAM_UNDER_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WINDOW_LEFT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WINDOW_RIGHT_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WINDOW_BOTTOM_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = null;
+const R7310_C1_SOUTH_WINDOW_TOP_REVEAL_SHADOW_RUNTIME_PACKAGE_URL = null;
 const R7310_C1_RUNTIME_ATLAS_GRID_COLUMNS = 6;
 const R7310_C1_RUNTIME_ATLAS_PATCH_COUNT = 30; // R7-3.10: 22 base slots + iron-door reveal/body + iron-door reflection cubemap slots 24-29.
 const R7310_C1_NON_SQUARE_ATLAS_SIZE_PX = Object.freeze({ width: 2912, height: 3432 });
@@ -2160,7 +2506,7 @@ const R7310_C1_EAST_WALL_BEAM_DEAD_ZONE = Object.freeze({
 	yMin: 2.515,
 	yMax: 2.905
 });
-const R7310_C1_WEST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-west-wall-full-room-diffuse-runtime-package.json';
+const R7310_C1_WEST_WALL_DIFFUSE_RUNTIME_PACKAGE_URL = null;
 const R7310_C1_WEST_WALL_TARGET_ID = 1004;
 const R7310_C1_WEST_WALL_SURFACE_NAME = 'c1_west_wall';
 const R7310_C1_WEST_WALL_WORLD_BOUNDS = Object.freeze({
@@ -2410,7 +2756,7 @@ const R7310_C1_IRON_DOOR_REVEAL_SURFACE_NAME = 'c1_iron_door_reveal';
 const R7310_C1_IRON_DOOR_REVEAL_ATLAS_SLOT = 22;
 const R7310_C1_IRON_DOOR_REVEAL_BAND_H = 0.25;   // MUST match shader IRON_DOOR_REVEAL_BAND_H
 const R7310_C1_IRON_DOOR_REVEAL_GUARD_V = 0.04;  // MUST match shader IRON_DOOR_REVEAL_GUARD_V
-const R7310_C1_IRON_DOOR_REVEAL_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json?v=r7310-iron-door-reveal-bakepoint-v2';
+const R7310_C1_IRON_DOOR_REVEAL_RUNTIME_PACKAGE_URL = null;
 const R7310_C1_IRON_DOOR_REVEAL_WORLD_BOUNDS = Object.freeze({
 	xMin: -1.96,
 	xMax: -1.91,
@@ -2420,7 +2766,7 @@ const R7310_C1_IRON_DOOR_REVEAL_WORLD_BOUNDS = Object.freeze({
 	zMax: -0.984
 });
 const R7310_C1_IRON_DOOR_BODY_TARGET_ID = 230001;
-const R7310_C1_IRON_DOOR_BODY_SURFACE_NAME = 'c1_iron_door_body_diffuse_light_live_specular_probe';
+const R7310_C1_IRON_DOOR_BODY_SURFACE_NAME = 'c1_iron_door_body_diffuse_light_live_specular';
 const R7310_C1_IRON_DOOR_BODY_WORLD_BOUNDS = Object.freeze({
 	xMin: -2.00,
 	xMax: -1.96,
@@ -2431,7 +2777,7 @@ const R7310_C1_IRON_DOOR_BODY_WORLD_BOUNDS = Object.freeze({
 });
 const R7310_C1_IRON_DOOR_BODY_DEFAULT_ATLAS_WIDTH = 467;
 const R7310_C1_IRON_DOOR_BODY_DEFAULT_ATLAS_HEIGHT = 1024;
-const R7310_C1_IRON_DOOR_BODY_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-iron-door-body-runtime-package.json?v=r7310-iron-door-body-room-v1';
+const R7310_C1_IRON_DOOR_BODY_RUNTIME_PACKAGE_URL = 'docs/data/r7-3-10-c1-iron-door-body-runtime-package.json?v=r7310-iron-door-body-accepted-v1';
 const R7310_C1_IRON_DOOR_BODY_RUNTIME_ATLAS_SLOT = 23;
 const R7310_C1_IRON_DOOR_REFLECTION_PROBE_TARGET_ID = 230002;
 const R7310_C1_IRON_DOOR_REFLECTION_PROBE_SURFACE_NAME = 'c1_iron_door_body_captured_local_reflection_probe';
@@ -2793,7 +3139,7 @@ const R7310_C1_XATLAS_A1_NORTH_WALL_OWNER_POLICY = Object.freeze({
 	packageRefs: Object.freeze([
 		Object.freeze({
 			id: 'a1-xatlas-runtime',
-			pointerPath: 'docs/data/r7-3-10-xatlas-a1-c2c-smoke-runtime-package.json',
+			pointerPath: null,
 			role: 'xatlas'
 		})
 	]),
@@ -4049,8 +4395,13 @@ function updateR7310C1FullRoomDiffuseRuntimeUniforms()
 	if (!pathTracingUniforms) return false;
 	var captureMode = pathTracingUniforms.uR738C1BakeCaptureMode ? pathTracingUniforms.uR738C1BakeCaptureMode.value : 0;
 	var configAllowed = r7310C1FullRoomDiffuseRuntimeConfigAllowed();
+	var floorXatlasPageReady = r7310C1XatlasRuntimeEnabled &&
+		r7310C1XatlasRuntimeReady &&
+		r7310C1XatlasLightmapPagesMode &&
+		r7310C1XatlasRuntimeFullFloorActive &&
+		!!r7310C1XatlasRuntimeFloorPageTexture;
 	var floorApplied = r7310C1FloorDiffuseRuntimeEnabled &&
-		r7310C1FullRoomDiffuseRuntimeReady &&
+		(floorXatlasPageReady || r7310C1FullRoomDiffuseRuntimeReady) &&
 		configAllowed &&
 		captureMode === 0;
 	var northWallApplied = r7310C1NorthWallDiffuseRuntimeEnabled &&
@@ -5092,8 +5443,14 @@ function createR7310C1XatlasRuntimeTexture(pixels, width, height)
 		return null;
 	var safeWidth = Math.max(1, Math.trunc(Number(width) || 1));
 	var safeHeight = Math.max(1, Math.trunc(Number(height) || 1));
-	// R4-2C：disk package 仍維持 float 原始資料；只在瀏覽器 runtime upload 前轉 half（見 r7310C1Float32RgbaToHalf 註解根因）。
-	// GLSL sampler2D 讀回仍是 float＝零 shader 改。format 維持 RGBAFormat、min/mag/wrap/flipY/mipmaps 設定皆不變。
+	var timingStage = beginHomeStudioLoadingStage('runtime-texture-create', {
+		width: safeWidth,
+		height: safeHeight,
+		bytes: pixels.byteLength,
+		sourceType: pixels instanceof Uint16Array ? 'rgba-f16' : 'rgba-f32'
+	});
+	// 正式 RAW page 直接載入離線預轉的 HalfFloat；Float32 分支只服務仍在使用的舊診斷入口。
+	// GLSL sampler2D 讀回仍是 float。format、filter、wrap、flipY 與 mipmap 設定維持一致。
 	var halfPixels = (pixels instanceof Uint16Array) ? pixels : r7310C1Float32RgbaToHalf(pixels);
 	var texture = new THREE.DataTexture(
 		halfPixels,
@@ -5109,6 +5466,13 @@ function createR7310C1XatlasRuntimeTexture(pixels, width, height)
 	texture.flipY = false;
 	texture.generateMipmaps = false;
 	texture.needsUpdate = true;
+	homeStudioLoadingTimingRuntimeTexturePendingUpload = true;
+	endHomeStudioLoadingStage(timingStage, {
+		width: safeWidth,
+		height: safeHeight,
+		bytes: halfPixels.byteLength,
+		runtimeType: 'rgba-f16'
+	});
 	return texture;
 }
 
@@ -5798,6 +6162,10 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 	if (r7310C1RuntimeBatchLoading)
 		return false; // C'-1: 載入期間不逐包重建 384MB atlas，待全部 settle 後由 loading gate 合批重建一次
 	var resolution = r7310C1RuntimeAtlasResolution();
+	var timingStage = beginHomeStudioLoadingStage('combined-atlas-build', {
+		resolution: resolution,
+		legacyFloatAtlas: true
+	});
 	var expectedLength = resolution * resolution * 4;
 	var floorPixels = r7310C1FloorDiffuseRuntimePixels instanceof Float32Array
 		? r7310C1FloorDiffuseRuntimePixels
@@ -5990,6 +6358,12 @@ function refreshR7310C1CombinedDiffuseRuntimeTexture()
 		ironDoorReflectionProbeNegZ,
 		resolution
 	);
+	if (r7310C1FullRoomDiffuseRuntimeTexture)
+		homeStudioLoadingTimingRuntimeTexturePendingUpload = true;
+	endHomeStudioLoadingStage(timingStage, {
+		resolution: resolution,
+		textureCreated: !!r7310C1FullRoomDiffuseRuntimeTexture
+	});
 	return true;
 }
 
@@ -6512,13 +6886,13 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT = {
 };
 const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 	pages: Object.freeze([
-		Object.freeze({ pageId: 0, pageName: 'stable_surfaces_placeholder', width: 1, height: 1, format: 'rgba-f32', surfaces: Object.freeze([]) }),
+		Object.freeze({ pageId: 0, pageName: 'stable_surfaces_placeholder', width: 1, height: 1, format: 'rgba-f16', surfaces: Object.freeze([]) }),
 		Object.freeze({
 			pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_ID,
 			pageName: 'ceiling_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'ceiling_open', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_CEILING_ID, route: 'baked', rectKey: 'ceiling', packageFace: 'ceiling', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6529,7 +6903,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			autoLoad: false,
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'floor_open', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID, route: 'baked', rectKey: 'floor', packageFace: 'floor', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6539,7 +6913,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'north_wall_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'north_wall_full', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTH_ID, route: 'baked', rectKey: 'north', packageFace: 'north', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6549,7 +6923,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'east_wall_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'east_wall_full', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_EAST_ID, route: 'baked', rectKey: 'east', packageFace: 'east', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6559,7 +6933,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'south_wall_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'south_wall', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_ID, route: 'baked', rectKey: 'south', packageFace: 'south', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6569,7 +6943,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'west_wall_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'west_wall_open', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_ID, route: 'baked', rectKey: 'west', packageFace: 'west', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6579,7 +6953,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'depth_h2_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'south_window_top_reveal_depth', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_ID, route: 'baked', rectKey: 'depth_h2', packageFace: 'depth_h2', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6589,7 +6963,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'west_threshold_top_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_TOP_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_TOP_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'west_threshold_top', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_TOP_ID, route: 'baked', rectKey: 'west_threshold_top', packageFace: 'west_threshold_top', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6599,7 +6973,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'west_threshold_front_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_FRONT_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_FRONT_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'west_threshold_front', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_THRESHOLD_FRONT_ID, route: 'baked', rectKey: 'west_threshold_front', packageFace: 'west_threshold_front', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6609,7 +6983,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'central_desk_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_CENTRAL_DESK_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_CENTRAL_DESK_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'central_desk', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_CENTRAL_DESK_ID, route: 'baked', rectKey: 'central_desk', packageFace: 'central_desk', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6619,7 +6993,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			pageName: 'structural_raw_page',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'structural_beams_columns', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_STRUCTURAL_ID, route: 'baked', rectKey: 'structural', packageFace: 'structural', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6630,7 +7004,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			autoLoad: true,
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'south_window_reveals', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_WINDOW_REVEALS_ID, route: 'baked', rectKey: 'south_window_reveals', packageFace: 'south_window_reveals', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6641,7 +7015,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			autoLoad: true,
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 				surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'west_wall_switch', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_WALL_SWITCH_ID, route: 'baked', rectKey: 'west_wall_switch', packageFace: 'west_wall_switch', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6653,7 +7027,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			autoLoadWhen: 'config1-bed',
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'northeast_bed', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_NORTHEAST_BED_ID, route: 'baked', rectKey: 'northeast_bed', packageFace: 'northeast_bed', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6664,7 +7038,7 @@ const R7310_C1_XATLAS_LIGHTMAP_PAGE_REGISTRY = Object.freeze({
 			autoLoad: true,
 			width: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_W,
 			height: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H,
-			format: 'rgba-f32',
+			format: 'rgba-f16',
 			surfaces: Object.freeze([
 				Object.freeze({ surfaceId: 'south_fixed_furniture', pageId: R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_ID, route: 'baked', rectKey: 'south_fixed_furniture', packageFace: 'south_fixed_furniture', fallbackPolicy: 'error_or_debug_color', radianceKind: 'full_diffuse_radiance', directLightAlreadyIncluded: true })
 			])
@@ -6843,24 +7217,100 @@ var r7310C1XatlasParamWestWallSwitchIndices = [];
 var r7310C1XatlasParamWestWallSwitchPlateIndex = -1;
 var r7310C1XatlasParamWestWallSwitchButtonIndex = -1;
 var r7310C1XatlasParamSurfaceLocalRects = [];
-var R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY = 72;
-var R7310_C1_XATLAS_PARAM_VEC4_CAPACITY = R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY * 7;
+var R7310_C1_XATLAS_PARAM_TEXELS_PER_SURFACE = 7;
+var R7310_C1_XATLAS_PARAM_FLOATS_PER_SURFACE = 28;
+var R7310_C1_XATLAS_BOX_DATA_TEXTURE_WIDTH = 512;
+var R7310_C1_XATLAS_PARAM_TEXEL_BASE = 512;
+var r7310C1XatlasParamSurfaceFlatData = new Float32Array(0);
+var r7310C1XatlasParamSurfaceDataTexture = null;
+var r7310C1XatlasParamDataTextureHeight = 1;
 var r7310C1XatlasParamTableLoadStatus = 'pending';
 var r7310C1XatlasParamTableLoadError = null;
 var r7310C1XatlasParamTableSurfaceCount = 0;
+function r7310C1XatlasParamSurfaceVec4(surfaceIndex, fieldIndex)
+{
+	var sid = Math.trunc(Number(surfaceIndex));
+	var field = Math.trunc(Number(fieldIndex));
+	if (sid < 0 || sid >= r7310C1XatlasParamTableSurfaceCount || field < 0 || field >= R7310_C1_XATLAS_PARAM_TEXELS_PER_SURFACE)
+		return null;
+	var offset = sid * R7310_C1_XATLAS_PARAM_FLOATS_PER_SURFACE + field * 4;
+	if (offset + 3 >= r7310C1XatlasParamSurfaceFlatData.length)
+		return null;
+	return [
+		r7310C1XatlasParamSurfaceFlatData[offset],
+		r7310C1XatlasParamSurfaceFlatData[offset + 1],
+		r7310C1XatlasParamSurfaceFlatData[offset + 2],
+		r7310C1XatlasParamSurfaceFlatData[offset + 3]
+	];
+}
+function r7310C1InstallXatlasParamTableInBoxDataTexture()
+{
+	if (typeof THREE === 'undefined' || typeof pathTracingUniforms === 'undefined' || !pathTracingUniforms ||
+		!pathTracingUniforms.tBoxDataTexture || !pathTracingUniforms.tBoxDataTexture.value ||
+		!r7310C1XatlasParamSurfaceFlatData.length || r7310C1XatlasParamTableSurfaceCount <= 0)
+		return false;
+	var sourceTexture = pathTracingUniforms.tBoxDataTexture.value;
+	var sourceImage = sourceTexture.image;
+	if (!sourceImage || !sourceImage.data)
+		return false;
+	var boxTextureWidth = Number(sourceImage.width) || R7310_C1_XATLAS_BOX_DATA_TEXTURE_WIDTH;
+	if (boxTextureWidth !== R7310_C1_XATLAS_BOX_DATA_TEXTURE_WIDTH)
+		throw new Error('R7-3.10 XATLAS owner storage requires the 512-texel box row');
+	var surfaceCount = r7310C1XatlasParamTableSurfaceCount;
+	var ownerTexelCount = surfaceCount * R7310_C1_XATLAS_PARAM_TEXELS_PER_SURFACE;
+	var ownerRows = Math.ceil(ownerTexelCount / boxTextureWidth);
+	var textureHeight = 1 + ownerRows;
+	var packedData = new Float32Array(boxTextureWidth * textureHeight * 4);
+	var boxRowFloatCount = boxTextureWidth * 4;
+	packedData.set(sourceImage.data.subarray(0, Math.min(sourceImage.data.length, boxRowFloatCount)), 0);
+	packedData.set(r7310C1XatlasParamSurfaceFlatData, R7310_C1_XATLAS_PARAM_TEXEL_BASE * 4);
+
+	var packedTexture = new THREE.DataTexture(packedData, boxTextureWidth, textureHeight, THREE.RGBAFormat, THREE.FloatType);
+	packedTexture.wrapS = THREE.ClampToEdgeWrapping;
+	packedTexture.wrapT = THREE.ClampToEdgeWrapping;
+	packedTexture.minFilter = THREE.NearestFilter;
+	packedTexture.magFilter = THREE.NearestFilter;
+	packedTexture.flipY = false;
+	packedTexture.generateMipmaps = false;
+	packedTexture.needsUpdate = true;
+	pathTracingUniforms.tBoxDataTexture.value = packedTexture;
+	r7310C1XatlasParamSurfaceDataTexture = packedTexture;
+	r7310C1XatlasParamDataTextureHeight = textureHeight;
+	if (pathTracingUniforms.uR7310C1XatlasParamSurfaceTexelBase)
+		pathTracingUniforms.uR7310C1XatlasParamSurfaceTexelBase.value = R7310_C1_XATLAS_PARAM_TEXEL_BASE;
+	if (pathTracingUniforms.uR7310C1XatlasParamDataTextureWidth)
+		pathTracingUniforms.uR7310C1XatlasParamDataTextureWidth.value = boxTextureWidth;
+	if (pathTracingUniforms.uR7310C1XatlasParamSurfaceCount)
+		pathTracingUniforms.uR7310C1XatlasParamSurfaceCount.value = surfaceCount;
+	if (sourceTexture !== packedTexture && typeof sourceTexture.dispose === 'function')
+		sourceTexture.dispose();
+	r7310C1XatlasParamTableLoadStatus = 'ready';
+	r7310C1XatlasParamTableLoadError = null;
+	return true;
+}
 function r7310C1SetXatlasParamSurfaceEnabled(surfaceIndex, rectKey, enabled)
 {
-	if (typeof pathTracingUniforms === 'undefined' || !pathTracingUniforms) return false;
-	var tableUniform = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable;
-	if (!tableUniform || !Array.isArray(tableUniform.value) || surfaceIndex < 0) return false;
+	if (surfaceIndex < 0 || surfaceIndex >= r7310C1XatlasParamTableSurfaceCount) return false;
 	var rect = r7310C1XatlasRuntimeRectForKey(rectKey);
 	if (!rect) return false;
-	var b = surfaceIndex * 7;
-	var vecs = tableUniform.value;
-	if (!vecs[b + 1] || !vecs[b + 6]) return false;
-	vecs[b + 1].w = enabled ? 1.0 : 0.0; // vec4#1.w = modeId（>=0.5 啟用 param 投影）
+	var surfaceFloatBase = surfaceIndex * R7310_C1_XATLAS_PARAM_FLOATS_PER_SURFACE;
+	if (surfaceFloatBase + R7310_C1_XATLAS_PARAM_FLOATS_PER_SURFACE > r7310C1XatlasParamSurfaceFlatData.length) return false;
+	r7310C1XatlasParamSurfaceFlatData[surfaceFloatBase + 7] = enabled ? 1.0 : 0.0; // vec4#1.w = modeId
 	var localRect = r7310C1XatlasParamSurfaceLocalRects[surfaceIndex] || [0, 0, 0, 0];
-	if (enabled) { vecs[b + 6].x = rect.x + localRect[0]; vecs[b + 6].y = rect.y + localRect[1]; } // vec4#6.xy = page rect + chart local offset
+	if (enabled)
+	{
+		r7310C1XatlasParamSurfaceFlatData[surfaceFloatBase + 24] = rect.x + localRect[0];
+		r7310C1XatlasParamSurfaceFlatData[surfaceFloatBase + 25] = rect.y + localRect[1];
+	}
+	if (r7310C1XatlasParamSurfaceDataTexture && r7310C1XatlasParamSurfaceDataTexture.image && r7310C1XatlasParamSurfaceDataTexture.image.data)
+	{
+		var packedFloatBase = R7310_C1_XATLAS_PARAM_TEXEL_BASE * 4 + surfaceFloatBase;
+		r7310C1XatlasParamSurfaceDataTexture.image.data.set(
+			r7310C1XatlasParamSurfaceFlatData.subarray(surfaceFloatBase, surfaceFloatBase + R7310_C1_XATLAS_PARAM_FLOATS_PER_SURFACE),
+			packedFloatBase
+		);
+		r7310C1XatlasParamSurfaceDataTexture.needsUpdate = true;
+	}
 	if (typeof pathTracingMaterial !== 'undefined' && pathTracingMaterial) pathTracingMaterial.uniformsNeedUpdate = true;
 	return true;
 }
@@ -7213,6 +7663,12 @@ function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 {
 	if (!r7310C1XatlasLightmapPageBuffer)
 		return false;
+	var timingStage = beginHomeStudioLoadingStage('runtime-page-commit', {
+		reason: reason || '',
+		width: R7310_C1_XATLAS_LIGHTMAP_SHEET_W,
+		height: R7310_C1_XATLAS_LIGHTMAP_SHEET_H,
+		bytes: r7310C1XatlasLightmapPageBuffer.byteLength
+	});
 	disposeR7310C1XatlasRuntimeDataTexture();
 	r7310C1XatlasRuntimeDataTexture = createR7310C1XatlasRuntimeTexture(
 		r7310C1XatlasLightmapPageBuffer,
@@ -7247,7 +7703,7 @@ function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 	r7310C1XatlasMasterMode = false;
 	r7310C1XatlasMasterBuffer = null;
 	r7310C1XatlasRuntimeEnabled = true;
-	r7310C1XatlasRuntimeReady = !!(r7310C1XatlasRuntimeFullNorthWallActive ||
+		r7310C1XatlasRuntimeReady = !!(r7310C1XatlasRuntimeFullNorthWallActive ||
 		r7310C1XatlasRuntimeFullEastWallActive ||
 		r7310C1XatlasRuntimeFullSouthWallActive ||
 		r7310C1XatlasRuntimeFullFloorActive ||
@@ -7264,20 +7720,40 @@ function commitR7310C1XatlasRawLightmapPageRuntimeTexture(reason)
 	updateR7310C1FullRoomDiffuseRuntimeUniforms();
 	resetR738MainAccumulation();
 	if (typeof wakeRender === 'function') wakeRender(reason || 'r7-3-10-xatlas-raw-lightmap-pages');
+	endHomeStudioLoadingStage(timingStage, {
+		reason: reason || '',
+		pageCount: r7310C1XatlasLightmapPageIds.length,
+		textureCreated: !!r7310C1XatlasRuntimeDataTexture
+	});
 	return true;
 }
 
-async function fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(url, label, donePages, totalPages)
+async function fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(url, label, expectedBytes)
 {
+	var timingStage = beginHomeStudioLoadingStage('page-binary-read', {
+		label: label,
+		url: url
+	});
 	var response = await fetch(url, { cache: 'no-store' });
 	if (!response.ok)
+	{
+		endHomeStudioLoadingStage(timingStage, { label: label, status: response.status, failed: true });
 		throw new Error('R7-3.10 xatlas raw lightmap page atlas binary not found: ' + label);
-	var expectedLength = Math.max(0, Number(response.headers.get('content-length')) || 0);
-	if (!response.body || typeof response.body.getReader !== 'function' || expectedLength <= 0)
+	}
+	var contentLength = Math.max(0, Number(response.headers.get('content-length')) || 0);
+	var progressExpectedBytes = Math.max(0, Number(expectedBytes) || contentLength);
+	if (!response.body || typeof response.body.getReader !== 'function' || contentLength <= 0)
 	{
 		var fallbackBuffer = await response.arrayBuffer();
-		updateR7310C1XatlasRawLightmapPageLoadingUi(donePages + 0.92, totalPages, label);
-		await waitHomeStudioLoadingUiPaint();
+		updateR7310C1XatlasRawLightmapLoadingProgress('binary-read', {
+			loadedBytes: fallbackBuffer.byteLength,
+			expectedBytes: progressExpectedBytes || fallbackBuffer.byteLength
+		}, label);
+		endHomeStudioLoadingStage(timingStage, {
+			label: label,
+			bytes: fallbackBuffer.byteLength,
+			streaming: false
+		});
 		return fallbackBuffer;
 	}
 	var reader = response.body.getReader();
@@ -7294,17 +7770,25 @@ async function fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(url, lab
 			continue;
 		chunks.push(chunk);
 		received += chunk.byteLength;
-		var pageProgress = Math.min(0.92, (received / expectedLength) * 0.92);
 		var now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-		if (now - lastProgressPaintAt >= 120 || pageProgress >= 0.92)
+		if (now - lastProgressPaintAt >= 120 || received >= contentLength)
 		{
-			updateR7310C1XatlasRawLightmapPageLoadingUi(donePages + pageProgress, totalPages, label);
+			updateR7310C1XatlasRawLightmapLoadingProgress('binary-read', {
+				loadedBytes: received,
+				expectedBytes: progressExpectedBytes || contentLength
+			}, label);
 			lastProgressPaintAt = now;
-			await waitHomeStudioLoadingUiPaint();
 		}
 	}
-	updateR7310C1XatlasRawLightmapPageLoadingUi(donePages + 0.92, totalPages, label);
-	await waitHomeStudioLoadingUiPaint();
+	updateR7310C1XatlasRawLightmapLoadingProgress('binary-read', {
+		loadedBytes: received,
+		expectedBytes: progressExpectedBytes || received
+	}, label);
+	var mergeStage = beginHomeStudioLoadingStage('page-binary-chunk-merge', {
+		label: label,
+		bytes: received,
+		chunks: chunks.length
+	});
 	var bytes = new Uint8Array(received);
 	var offset = 0;
 	for (var i = 0; i < chunks.length; i += 1)
@@ -7312,6 +7796,17 @@ async function fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(url, lab
 		bytes.set(chunks[i], offset);
 		offset += chunks[i].byteLength;
 	}
+	endHomeStudioLoadingStage(mergeStage, {
+		label: label,
+		bytes: received,
+		chunks: chunks.length
+	});
+	endHomeStudioLoadingStage(timingStage, {
+		label: label,
+		bytes: received,
+		streaming: true,
+		chunks: chunks.length
+	});
 	return bytes.buffer;
 }
 
@@ -7322,12 +7817,40 @@ async function loadR7310C1XatlasRuntimeFloorPageTexture(variant, options)
 	var rect = R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT.floor;
 	if (!rect)
 		throw new Error('R7-3.10 xatlas floor page rect missing');
+	var floorStage = beginHomeStudioLoadingStage('floor-page-load', {
+		variant: v,
+		width: rect.w,
+		height: rect.h
+	});
 	r7310C1XatlasRuntimeLoadSurface = 'floor_raw_page';
 	var url = r7310C1XatlasMasterPointerUrl('floor', v);
+	var pointerStage = beginHomeStudioLoadingStage('page-pointer-read', {
+		label: 'floor',
+		url: url
+	});
 	var pointerResp = await fetch(url, { cache: 'no-store' });
 	if (!pointerResp.ok)
+	{
+		endHomeStudioLoadingStage(pointerStage, { label: 'floor', status: pointerResp.status, failed: true });
+		endHomeStudioLoadingStage(floorStage, { variant: v, failed: true, step: 'pointer' });
 		throw new Error('R7-3.10 xatlas floor page pointer not found');
+	}
 	var pointer = await pointerResp.json();
+	endHomeStudioLoadingStage(pointerStage, {
+		label: 'floor',
+		status: pointerResp.status,
+		packageDir: pointer.packageDir || ''
+	});
+	updateR7310C1XatlasRawLightmapLoadingProgress('pointer-read', {
+		completedPointers: 1
+	}, 'floor');
+	if (v === 'raw' && (pointer.packageStatus !== 'accepted' ||
+		pointer.bakedRadianceKind !== 'full_diffuse_radiance' ||
+		pointer.directLightAlreadyIncluded !== true ||
+		pointer.addDirectLightAfterBakeLookup !== false))
+		throw new Error('R7-3.10 xatlas floor formal FULL BAKE contract mismatch');
+	if (v === 'raw' && pointer.runtimeAtlasFormat !== 'rgba-f16')
+		throw new Error('R7-3.10 xatlas floor formal runtime atlas must be rgba-f16');
 	var w = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
 	var h = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
 	if (w !== rect.w || h !== rect.h)
@@ -7335,19 +7858,25 @@ async function loadR7310C1XatlasRuntimeFloorPageTexture(variant, options)
 	var runtimeMultipliesAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
 	if (runtimeMultipliesAlbedo && pointer.bakeAlbedoFree !== true)
 		throw new Error('R7-3.10 xatlas floor page albedo contract mismatch');
-	var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
+	var atlasArtifact = pointer.artifacts && (v === 'raw' ? pointer.artifacts.runtimeAtlasPatch0 : pointer.artifacts.atlasPatch0);
 	if (!atlasArtifact)
 		throw new Error('R7-3.10 xatlas floor page atlas artifact missing');
-	var atlasResp = await fetch(pointer.packageDir + '/' + atlasArtifact, { cache: 'no-store' });
-	if (!atlasResp.ok)
-		throw new Error('R7-3.10 xatlas floor page atlas binary not found');
-	var atlasBuffer = await atlasResp.arrayBuffer();
-	var expectBytes = rect.w * rect.h * 4 * 4;
+	var atlasUrl = pointer.packageDir + '/' + atlasArtifact;
+	var expectBytes = rect.w * rect.h * 4 * (v === 'raw' ? 2 : 4);
+	var atlasBuffer = await fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(
+		atlasUrl,
+		'floor',
+		expectBytes
+	);
 	if (atlasBuffer.byteLength !== expectBytes)
 		throw new Error('R7-3.10 xatlas floor page atlas binary length mismatch');
-	var facePixels = new Float32Array(atlasBuffer);
+	var facePixels = (v === 'raw') ? new Uint16Array(atlasBuffer) : new Float32Array(atlasBuffer);
 	disposeR7310C1XatlasRuntimeFloorPageTexture();
 	r7310C1XatlasRuntimeFloorPageTexture = createR7310C1XatlasRuntimeTexture(facePixels, rect.w, rect.h);
+	updateR7310C1XatlasRawLightmapLoadingProgress('data-copy', {
+		copiedBytes: atlasBuffer.byteLength,
+		expectedBytes: expectBytes
+	}, 'floor');
 	r7310C1XatlasMasterFloorVariant = v;
 	r7310C1XatlasRuntimeFullFloorActive = true;
 	r7310C1XatlasRuntimeFullFloorSeparatedAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
@@ -7376,6 +7905,11 @@ async function loadR7310C1XatlasRuntimeFloorPageTexture(variant, options)
 		resetR738MainAccumulation();
 		if (typeof wakeRender === 'function') wakeRender('r7-3-10-xatlas-floor-page');
 	}
+	endHomeStudioLoadingStage(floorStage, {
+		variant: v,
+		bytes: atlasBuffer.byteLength,
+		textureCreated: !!r7310C1XatlasRuntimeFloorPageTexture
+	});
 	return true;
 }
 
@@ -7431,16 +7965,34 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			surfaces.push(page.surfaces[si]);
 		}
 	}
+	var loadingProgressPlan = createR7310C1XatlasRawLightmapLoadingProgressPlan(surfaces,
+		r7310C1FloorDiffuseRuntimeEnabled);
+	var allPagesStage = beginHomeStudioLoadingStage('raw-lightmap-pages-load', {
+		variant: v,
+		surfaceCount: surfaces.length,
+		width: R7310_C1_XATLAS_LIGHTMAP_SHEET_W,
+		height: R7310_C1_XATLAS_LIGHTMAP_SHEET_H
+	});
 	try
 	{
 		r7310C1XatlasRuntimeError = null;
 		r7310C1XatlasRuntimeLoadState = 'loading';
 		r7310C1XatlasRuntimeLoadVariant = v;
 		r7310C1XatlasRuntimeLoadSurface = 'allocating-sheet';
-		beginR7310C1XatlasRawLightmapPageLoadingUi(surfaces.length);
-		updateR7310C1XatlasRawLightmapPageLoadingUi(0, surfaces.length, 'allocating-sheet');
-		await waitHomeStudioLoadingUiPaint();
+		beginR7310C1XatlasRawLightmapPageLoadingUi(loadingProgressPlan);
+		await yieldHomeStudioLoadingFrame({ reason: 'before-sheet-allocation' });
+		var allocationStage = beginHomeStudioLoadingStage('raw-lightmap-sheet-allocation', {
+			width: R7310_C1_XATLAS_LIGHTMAP_SHEET_W,
+			height: R7310_C1_XATLAS_LIGHTMAP_SHEET_H,
+			bytes: R7310_C1_XATLAS_LIGHTMAP_SHEET_W * R7310_C1_XATLAS_LIGHTMAP_SHEET_H * 4 * 2
+		});
 		var pageBuffer = new Uint16Array(R7310_C1_XATLAS_LIGHTMAP_SHEET_W * R7310_C1_XATLAS_LIGHTMAP_SHEET_H * 4);
+		endHomeStudioLoadingStage(allocationStage, {
+			bytes: pageBuffer.byteLength
+		});
+		updateR7310C1XatlasRawLightmapLoadingProgress('sheet-allocation', {
+			bytes: pageBuffer.byteLength
+		}, 'allocating-sheet');
 		var nextMasterNorthVariant = 'off';
 		var nextMasterEastVariant = 'off';
 		var nextMasterSouthVariant = 'off';
@@ -7476,16 +8028,40 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		{
 			var surface = surfaces[i];
 			r7310C1XatlasRuntimeLoadSurface = surface.surfaceId;
-			updateR7310C1XatlasRawLightmapPageLoadingUi(loadedPageCount, surfaces.length, surface.surfaceId);
-			await waitHomeStudioLoadingUiPaint();
 			var rect = R7310_C1_XATLAS_LIGHTMAP_PAGE_RECT[surface.rectKey];
 			if (!rect)
 				throw new Error('R7-3.10 xatlas raw lightmap page rect missing: ' + surface.surfaceId);
 			var url = r7310C1XatlasMasterPointerUrl(surface.packageFace, v);
+			var pointerStage = beginHomeStudioLoadingStage('page-pointer-read', {
+				label: surface.surfaceId,
+				url: url
+			});
 			var pointerResp = await fetch(url, { cache: 'no-store' });
 			if (!pointerResp.ok)
+			{
+				endHomeStudioLoadingStage(pointerStage, {
+					label: surface.surfaceId,
+					status: pointerResp.status,
+					failed: true
+				});
 				throw new Error('R7-3.10 xatlas raw lightmap page pointer not found: ' + surface.surfaceId);
+			}
 			var pointer = await pointerResp.json();
+			endHomeStudioLoadingStage(pointerStage, {
+				label: surface.surfaceId,
+				status: pointerResp.status,
+				packageDir: pointer.packageDir || ''
+			});
+			updateR7310C1XatlasRawLightmapLoadingProgress('pointer-read', {
+				completedPointers: 1
+			}, surface.surfaceId);
+			if (pointer.packageStatus !== 'accepted' ||
+				pointer.bakedRadianceKind !== 'full_diffuse_radiance' ||
+				pointer.directLightAlreadyIncluded !== true ||
+				pointer.addDirectLightAfterBakeLookup !== false)
+				throw new Error('R7-3.10 xatlas raw lightmap page formal FULL BAKE contract mismatch: ' + surface.surfaceId);
+			if (pointer.runtimeAtlasFormat !== 'rgba-f16')
+				throw new Error('R7-3.10 xatlas raw lightmap page formal runtime atlas must be rgba-f16: ' + surface.surfaceId);
 			var w = Math.trunc(Number(pointer.targetAtlasWidth) || 0);
 			var h = Math.trunc(Number(pointer.targetAtlasHeight) || 0);
 			if (w !== rect.w || h !== rect.h)
@@ -7493,26 +8069,39 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			var runtimeMultipliesAlbedo = pointer.multiplyAlbedoAfterBakeLookup !== false;
 			if (runtimeMultipliesAlbedo && pointer.bakeAlbedoFree !== true)
 				throw new Error('R7-3.10 xatlas raw lightmap page albedo contract mismatch: ' + surface.surfaceId);
-			var atlasArtifact = pointer.artifacts && pointer.artifacts.atlasPatch0;
+			var atlasArtifact = pointer.artifacts && pointer.artifacts.runtimeAtlasPatch0;
 			if (!atlasArtifact)
 				throw new Error('R7-3.10 xatlas raw lightmap page atlas artifact missing: ' + surface.surfaceId);
+			var expectBytes = rect.w * rect.h * 4 * 2;
 			var atlasBuffer = await fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress(
 				pointer.packageDir + '/' + atlasArtifact,
 				surface.surfaceId,
-				loadedPageCount,
-				surfaces.length
+				expectBytes
 			);
 			if (surface.packageFace === 'west') assertR7310C1WestMasterIdentity(pointer);
-			var expectBytes = rect.w * rect.h * 4 * 4;
 			if (atlasBuffer.byteLength !== expectBytes)
 				throw new Error('R7-3.10 xatlas raw lightmap page atlas binary length mismatch: ' + surface.surfaceId);
-			var facePixels = new Float32Array(atlasBuffer);
+			var facePixels = new Uint16Array(atlasBuffer);
+			var copyStage = beginHomeStudioLoadingStage('page-data-copy', {
+				label: surface.surfaceId,
+				bytes: atlasBuffer.byteLength,
+				rows: rect.h
+			});
 			for (var r = 0; r < rect.h; r += 1)
 			{
 				var srcStart = r * rect.w * 4;
 				var dstStart = ((rect.y + r) * R7310_C1_XATLAS_LIGHTMAP_SHEET_W + rect.x) * 4;
-				r7310C1Float32RgbaToHalfInto(facePixels, pageBuffer, srcStart, dstStart, rect.w * 4);
+				pageBuffer.set(facePixels.subarray(srcStart, srcStart + rect.w * 4), dstStart);
 			}
+			endHomeStudioLoadingStage(copyStage, {
+				label: surface.surfaceId,
+				bytes: atlasBuffer.byteLength,
+				rows: rect.h
+			});
+			updateR7310C1XatlasRawLightmapLoadingProgress('data-copy', {
+				copiedBytes: atlasBuffer.byteLength,
+				expectedBytes: expectBytes
+			}, surface.surfaceId);
 			facePixels = null;
 			atlasBuffer = null;
 			if (surface.packageFace === 'north')
@@ -7586,8 +8175,6 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 			if (loadedPageIds.indexOf(surface.pageId) === -1)
 				loadedPageIds.push(surface.pageId);
 			loadedPageCount += 1;
-			updateR7310C1XatlasRawLightmapPageLoadingUi(loadedPageCount, surfaces.length, surface.surfaceId);
-			await waitHomeStudioLoadingUiPaint();
 		}
 		r7310C1XatlasMasterNorthVariant = nextMasterNorthVariant;
 		r7310C1XatlasMasterEastVariant = nextMasterEastVariant;
@@ -7660,11 +8247,31 @@ async function loadR7310C1XatlasRawLightmapPages(variant)
 		r7310C1XatlasRuntimeLoadSurface = '';
 		if (!commitR7310C1XatlasRawLightmapPageRuntimeTexture('r7-3-10-xatlas-raw-lightmap-pages'))
 			throw new Error('R7-3.10 xatlas raw lightmap page runtime commit failed');
+		updateR7310C1XatlasRawLightmapLoadingProgress('runtime-commit', {
+			pageCount: loadedPageIds.length
+		}, 'runtime-commit');
+		homeStudioLoadingTimingRawPagesReady = true;
 		finishR7310C1XatlasRawLightmapPageLoadingUi();
+		endHomeStudioLoadingStage(allPagesStage, {
+			variant: v,
+			surfaceCount: surfaces.length,
+			loadedPageCount: loadedPageCount,
+			loadedPageIds: r7310C1XatlasLoadedRawLightmapPageIds.slice()
+		});
+		markHomeStudioLoadingMilestone('raw-pages-ready', {
+			loadedPageCount: loadedPageCount,
+			loadedPageIds: r7310C1XatlasLoadedRawLightmapPageIds.slice()
+		});
 		return true;
 	}
 	catch (error)
 	{
+		endHomeStudioLoadingStage(allPagesStage, {
+			variant: v,
+			surfaceCount: surfaces.length,
+			failed: true,
+			error: error && error.message ? error.message : String(error)
+		});
 		r7310C1XatlasRuntimeError = error && error.message ? error.message : String(error);
 		r7310C1XatlasRuntimeLoadState = 'error';
 		r7310C1XatlasLightmapPagesMode = false;
@@ -9484,7 +10091,8 @@ async function loadR7310C1IronDoorRevealRuntimePackage()
 
 function assertR7310C1IronDoorBodyRuntimePointer(pointer)
 {
-	if (!pointer || pointer.packageStatus !== 'architecture_probe')
+	if (!pointer || pointer.packageStatus !== 'accepted' ||
+		pointer.deliveryRole !== 'accepted_hybrid_baked_diffuse_live_specular')
 		throw new Error('R7-3.10 iron door body runtime pointer failed contract');
 	if (pointer.runtimeScope !== 'c1_iron_door_body_diffuse_light_live_specular')
 		throw new Error('R7-3.10 iron door body runtime scope mismatch');
@@ -13019,7 +13627,7 @@ window.reportR7310C1IronDoorRevealBakeAfterSamples = function(targetSamples, tim
 window.reportR7310C1IronDoorBodyBakeAfterSamples = function(targetSamples, timeoutMs, options)
 {
 	return reportR7310C1DedicatedBeamColumnShadowBakeAfterSamples(targetSamples, timeoutMs, options, {
-		batch: 'iron_door_body_diffuse_light_live_specular_probe',
+		batch: 'iron_door_body_diffuse_light_live_specular',
 		targetId: R7310_C1_IRON_DOOR_BODY_TARGET_ID,
 		surfaceName: R7310_C1_IRON_DOOR_BODY_SURFACE_NAME,
 		worldBounds: R7310_C1_IRON_DOOR_BODY_WORLD_BOUNDS,
@@ -15769,31 +16377,7 @@ window.runR739C1CurrentViewReflectionValidation = async function(options)
 };
 
 window.loadR738C1BakePastePreviewPackage = loadR738C1BakePastePreviewPackage;
-window.loadR7310C1FullRoomDiffuseRuntimePackage = loadR7310C1FullRoomDiffuseRuntimePackage;
-window.loadR7310C1NorthWallDiffuseRuntimePackage = loadR7310C1NorthWallDiffuseRuntimePackage;
-window.loadR7310C1EastWallDiffuseRuntimePackage = loadR7310C1EastWallDiffuseRuntimePackage;
-window.loadR7310C1NorthWallWardrobeDiffuseRuntimePackage = loadR7310C1NorthWallWardrobeDiffuseRuntimePackage;
-window.loadR7310C1EastWallWardrobeDiffuseRuntimePackage = loadR7310C1EastWallWardrobeDiffuseRuntimePackage;
-window.loadR7310C1WestWallDiffuseRuntimePackage = loadR7310C1WestWallDiffuseRuntimePackage;
-window.loadR7310C1SouthWallDiffuseRuntimePackage = loadR7310C1SouthWallDiffuseRuntimePackage;
-window.loadR7310C1CeilingDiffuseRuntimePackage = loadR7310C1CeilingDiffuseRuntimePackage;
-window.loadR7310C1StructuralDiffuseRuntimePackage = loadR7310C1StructuralDiffuseRuntimePackage;
-window.loadR7310C1SeColumnNorthShadowRuntimePackage = loadR7310C1SeColumnNorthShadowRuntimePackage;
-window.loadR7310C1SeColumnWestShadowRuntimePackage = loadR7310C1SeColumnWestShadowRuntimePackage;
-window.loadR7310C1SouthWallAcShadowRuntimePackage = loadR7310C1SouthWallAcShadowRuntimePackage;
-window.loadR7310C1EastWallBeamShadowRuntimePackage = loadR7310C1EastWallBeamShadowRuntimePackage;
-window.loadR7310C1EastWallBeamShadowWardrobeRuntimePackage = loadR7310C1EastWallBeamShadowWardrobeRuntimePackage;
-window.loadR7310C1SwColumnNorthShadowRuntimePackage = loadR7310C1SwColumnNorthShadowRuntimePackage;
-window.loadR7310C1WestWallBeamShadowRuntimePackage = loadR7310C1WestWallBeamShadowRuntimePackage;
-window.loadR7310C1SwColumnInnerShadowRuntimePackage = loadR7310C1SwColumnInnerShadowRuntimePackage;
-window.loadR7310C1WestBeamInnerShadowRuntimePackage = loadR7310C1WestBeamInnerShadowRuntimePackage;
-window.loadR7310C1WestBeamUnderShadowRuntimePackage = loadR7310C1WestBeamUnderShadowRuntimePackage;
-window.loadR7310C1EastBeamInnerShadowRuntimePackage = loadR7310C1EastBeamInnerShadowRuntimePackage;
-window.loadR7310C1EastBeamUnderShadowRuntimePackage = loadR7310C1EastBeamUnderShadowRuntimePackage;
-window.loadR7310C1SouthWindowLeftRevealShadowRuntimePackage = loadR7310C1SouthWindowLeftRevealShadowRuntimePackage;
-window.loadR7310C1SouthWindowRightRevealShadowRuntimePackage = loadR7310C1SouthWindowRightRevealShadowRuntimePackage;
-window.loadR7310C1SouthWindowBottomRevealShadowRuntimePackage = loadR7310C1SouthWindowBottomRevealShadowRuntimePackage;
-window.loadR7310C1SouthWindowTopRevealShadowRuntimePackage = loadR7310C1SouthWindowTopRevealShadowRuntimePackage;
+window.loadR7310C1IronDoorBodyRuntimePackage = loadR7310C1IronDoorBodyRuntimePackage;
 
 window.waitForR738C1BakePastePreviewReady = async function(timeoutMs)
 {
@@ -15819,81 +16403,17 @@ window.waitForR7310C1FullRoomDiffuseRuntimeReady = async function(timeoutMs)
 	ensureR7310C1FullRoomDiffuseRuntimeLoading();
 	while (performance.now() - start < timeout)
 	{
-		var enabledReady = (!r7310C1FloorDiffuseRuntimeEnabled || r7310C1FullRoomDiffuseRuntimeReady) &&
-			(!r7310C1NorthWallDiffuseRuntimeEnabled || r7310C1NorthWallActiveDiffuseRuntimeReady()) &&
-			(!r7310C1EastWallDiffuseRuntimeEnabled || r7310C1EastWallActiveDiffuseRuntimeReady()) &&
-			(!r7310C1WestWallDiffuseRuntimeEnabled || r7310C1WestWallDiffuseRuntimeReady) &&
-			(!r7310C1SouthWallDiffuseRuntimeEnabled || r7310C1SouthWallDiffuseRuntimeReady) &&
-			(!r7310C1CeilingDiffuseRuntimeEnabled || r7310C1CeilingDiffuseRuntimeReady) &&
-			(!r7310C1StructuralDiffuseRuntimeEnabled || r7310C1StructuralDiffuseRuntimePending || r7310C1StructuralDiffuseRuntimeReady) &&
-			(!r7310C1SeColumnNorthShadowRuntimeEnabled || r7310C1SeColumnNorthShadowRuntimePending || r7310C1SeColumnNorthShadowRuntimeReady) &&
-			(!r7310C1SeColumnWestShadowRuntimeEnabled || r7310C1SeColumnWestShadowRuntimePending || r7310C1SeColumnWestShadowRuntimeReady) &&
-			(!r7310C1SouthWallAcShadowRuntimeEnabled || r7310C1SouthWallAcShadowRuntimePending || r7310C1SouthWallAcShadowRuntimeReady) &&
-			(!r7310C1EastWallBeamShadowRuntimeEnabled || r7310C1EastWallBeamShadowActiveRuntimePending() || r7310C1EastWallBeamShadowActiveRuntimeReady()) &&
-			(!r7310C1SwColumnNorthShadowRuntimeEnabled || r7310C1SwColumnNorthShadowRuntimePending || r7310C1SwColumnNorthShadowRuntimeReady) &&
-			(!r7310C1WestWallBeamShadowRuntimeEnabled || r7310C1WestWallBeamShadowRuntimeReady) &&
-			(!r7310C1SwColumnInnerShadowRuntimeEnabled || r7310C1SwColumnInnerShadowRuntimeReady) &&
-			(!r7310C1WestBeamInnerShadowRuntimeEnabled || r7310C1WestBeamInnerShadowRuntimeReady) &&
-			(!r7310C1WestBeamUnderShadowRuntimeEnabled || r7310C1WestBeamUnderShadowRuntimePending || r7310C1WestBeamUnderShadowRuntimeReady) &&
-			(!r7310C1EastBeamInnerShadowRuntimeEnabled || r7310C1EastBeamInnerShadowRuntimePending || r7310C1EastBeamInnerShadowRuntimeReady) &&
-			(!r7310C1EastBeamUnderShadowRuntimeEnabled || r7310C1EastBeamUnderShadowRuntimePending || r7310C1EastBeamUnderShadowRuntimeReady) &&
-			(!r7310C1SouthWindowLeftRevealShadowRuntimeEnabled || r7310C1SouthWindowLeftRevealShadowRuntimePending || r7310C1SouthWindowLeftRevealShadowRuntimeReady) &&
-			(!r7310C1SouthWindowRightRevealShadowRuntimeEnabled || r7310C1SouthWindowRightRevealShadowRuntimePending || r7310C1SouthWindowRightRevealShadowRuntimeReady) &&
-			(!r7310C1SouthWindowBottomRevealShadowRuntimeEnabled || r7310C1SouthWindowBottomRevealShadowRuntimePending || r7310C1SouthWindowBottomRevealShadowRuntimeReady) &&
-			(!r7310C1SouthWindowTopRevealShadowRuntimeEnabled || r7310C1SouthWindowTopRevealShadowRuntimePending || r7310C1SouthWindowTopRevealShadowRuntimeReady);
-		if (enabledReady)
+		var pageReadiness = r7310C1RawLightmapPageReadinessReport();
+		var ironDoorReady = !r7310C1IronDoorBodyRuntimeEnabled || r7310C1IronDoorBodyRuntimeReady;
+		if (pageReadiness.ready && ironDoorReady)
 			return window.reportR7310C1FullRoomDiffuseRuntimeConfig();
-		if (r7310C1FullRoomDiffuseRuntimeError)
-			throw new Error(r7310C1FullRoomDiffuseRuntimeError);
-		if (r7310C1NorthWallDiffuseRuntimeError)
-			throw new Error(r7310C1NorthWallDiffuseRuntimeError);
-		if (r7310C1EastWallDiffuseRuntimeError)
-			throw new Error(r7310C1EastWallDiffuseRuntimeError);
-		if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1NorthWallWardrobeDiffuseRuntimeError)
-			throw new Error(r7310C1NorthWallWardrobeDiffuseRuntimeError);
-		if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1EastWallWardrobeDiffuseRuntimeError)
-			throw new Error(r7310C1EastWallWardrobeDiffuseRuntimeError);
-		if (r7310C1WestWallDiffuseRuntimeError)
-			throw new Error(r7310C1WestWallDiffuseRuntimeError);
-		if (r7310C1SouthWallDiffuseRuntimeError)
-			throw new Error(r7310C1SouthWallDiffuseRuntimeError);
-		if (r7310C1CeilingDiffuseRuntimeError)
-			throw new Error(r7310C1CeilingDiffuseRuntimeError);
-		if (!r7310C1StructuralDiffuseRuntimePending && r7310C1StructuralDiffuseRuntimeError)
-			throw new Error(r7310C1StructuralDiffuseRuntimeError);
-		if (!r7310C1SeColumnNorthShadowRuntimePending && r7310C1SeColumnNorthShadowRuntimeError)
-			throw new Error(r7310C1SeColumnNorthShadowRuntimeError);
-		if (!r7310C1SeColumnWestShadowRuntimePending && r7310C1SeColumnWestShadowRuntimeError)
-			throw new Error(r7310C1SeColumnWestShadowRuntimeError);
-		if (!r7310C1SouthWallAcShadowRuntimePending && r7310C1SouthWallAcShadowRuntimeError)
-			throw new Error(r7310C1SouthWallAcShadowRuntimeError);
-		if (!r7310C1EastWallBeamShadowActiveRuntimePending() && r7310C1EastWallBeamShadowActiveRuntimeError())
-			throw new Error(r7310C1EastWallBeamShadowActiveRuntimeError());
-		if (!r7310C1SwColumnNorthShadowRuntimePending && r7310C1SwColumnNorthShadowRuntimeError)
-			throw new Error(r7310C1SwColumnNorthShadowRuntimeError);
-		if (!r7310C1WestWallBeamShadowRuntimePending && r7310C1WestWallBeamShadowRuntimeError)
-			throw new Error(r7310C1WestWallBeamShadowRuntimeError);
-		if (!r7310C1SwColumnInnerShadowRuntimePending && r7310C1SwColumnInnerShadowRuntimeError)
-			throw new Error(r7310C1SwColumnInnerShadowRuntimeError);
-		if (!r7310C1WestBeamInnerShadowRuntimePending && r7310C1WestBeamInnerShadowRuntimeError)
-			throw new Error(r7310C1WestBeamInnerShadowRuntimeError);
-		if (!r7310C1WestBeamUnderShadowRuntimePending && r7310C1WestBeamUnderShadowRuntimeError)
-			throw new Error(r7310C1WestBeamUnderShadowRuntimeError);
-		if (!r7310C1EastBeamInnerShadowRuntimePending && r7310C1EastBeamInnerShadowRuntimeError)
-			throw new Error(r7310C1EastBeamInnerShadowRuntimeError);
-		if (!r7310C1EastBeamUnderShadowRuntimePending && r7310C1EastBeamUnderShadowRuntimeError)
-			throw new Error(r7310C1EastBeamUnderShadowRuntimeError);
-		if (!r7310C1SouthWindowLeftRevealShadowRuntimePending && r7310C1SouthWindowLeftRevealShadowRuntimeError)
-			throw new Error(r7310C1SouthWindowLeftRevealShadowRuntimeError);
-		if (!r7310C1SouthWindowRightRevealShadowRuntimePending && r7310C1SouthWindowRightRevealShadowRuntimeError)
-			throw new Error(r7310C1SouthWindowRightRevealShadowRuntimeError);
-		if (!r7310C1SouthWindowBottomRevealShadowRuntimePending && r7310C1SouthWindowBottomRevealShadowRuntimeError)
-			throw new Error(r7310C1SouthWindowBottomRevealShadowRuntimeError);
-		if (!r7310C1SouthWindowTopRevealShadowRuntimePending && r7310C1SouthWindowTopRevealShadowRuntimeError)
-			throw new Error(r7310C1SouthWindowTopRevealShadowRuntimeError);
+		if (r7310C1XatlasRuntimeLoadState === 'error')
+			throw new Error(r7310C1XatlasRuntimeError || 'R7-3.10 XATLAS runtime load failed');
+		if (r7310C1IronDoorBodyRuntimeError)
+			throw new Error(r7310C1IronDoorBodyRuntimeError);
 		await new Promise(function(resolve) { setTimeout(resolve, 100); });
 	}
-	throw new Error('R7-3.10 C1 full room diffuse runtime package did not become ready');
+	throw new Error('R7-3.10 C1 formal XATLAS pages did not become ready');
 };
 
 window.waitForR7310C1XatlasRuntimeReady = async function(timeoutMs)
@@ -15952,62 +16472,10 @@ window.reportR738C1BakePastePreviewConfig = function()
 function ensureR7310C1FullRoomDiffuseRuntimeLoading()
 {
 	updateR7310C1RuntimeLoadingProgress();
-	if (r7310C1FloorDiffuseRuntimeEnabled && !r7310C1FullRoomDiffuseRuntimeReady)
-		loadR7310C1FullRoomDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1NorthWallDiffuseRuntimeEnabled && !r7310C1NorthWallDiffuseRuntimeReady)
-		loadR7310C1NorthWallDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1EastWallDiffuseRuntimeEnabled && !r7310C1EastWallDiffuseRuntimeReady)
-		loadR7310C1EastWallDiffuseRuntimePackage().catch(function() {});
-		if (!r7310C1NonSquareAtlasRuntimeReady)
-			loadR7310C1NonSquareAtlasRuntimePackage().catch(function() {});
-		if (r7310C1XatlasRuntimeEnabled && !r7310C1XatlasRuntimeReady)
-			loadR7310C1XatlasRuntimePackage().catch(function() {});
-		if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1NorthWallDiffuseRuntimeEnabled && !r7310C1NorthWallWardrobeDiffuseRuntimeReady)
-			loadR7310C1NorthWallWardrobeDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && r7310C1EastWallDiffuseRuntimeEnabled && !r7310C1EastWallWardrobeDiffuseRuntimeReady)
-		loadR7310C1EastWallWardrobeDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1WestWallDiffuseRuntimeEnabled && !r7310C1WestWallDiffuseRuntimeReady)
-		loadR7310C1WestWallDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1SouthWallDiffuseRuntimeEnabled && !r7310C1SouthWallDiffuseRuntimeReady)
-		loadR7310C1SouthWallDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1CeilingDiffuseRuntimeEnabled && !r7310C1CeilingDiffuseRuntimeReady)
-		loadR7310C1CeilingDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1StructuralDiffuseRuntimeEnabled && (r7310C1StructuralDiffuseRuntimePending || !r7310C1StructuralDiffuseRuntimeReady))
-		loadR7310C1StructuralDiffuseRuntimePackage().catch(function() {});
-	if (r7310C1SeColumnNorthShadowRuntimeEnabled && (r7310C1SeColumnNorthShadowRuntimePending || !r7310C1SeColumnNorthShadowRuntimeReady))
-		loadR7310C1SeColumnNorthShadowRuntimePackage().catch(function() {});
-	if (r7310C1SeColumnWestShadowRuntimeEnabled && (r7310C1SeColumnWestShadowRuntimePending || !r7310C1SeColumnWestShadowRuntimeReady))
-		loadR7310C1SeColumnWestShadowRuntimePackage().catch(function() {});
-	if (r7310C1SouthWallAcShadowRuntimeEnabled && (r7310C1SouthWallAcShadowRuntimePending || !r7310C1SouthWallAcShadowRuntimeReady))
-		loadR7310C1SouthWallAcShadowRuntimePackage().catch(function() {});
-	if (r7310C1EastWallBeamShadowRuntimeEnabled && r7310C1NortheastFurnitureRuntimeMode === 'wardrobe' && (r7310C1EastWallBeamShadowWardrobeRuntimePending || !r7310C1EastWallBeamShadowWardrobeRuntimeReady))
-		loadR7310C1EastWallBeamShadowWardrobeRuntimePackage().catch(function() {});
-	if (r7310C1EastWallBeamShadowRuntimeEnabled && r7310C1NortheastFurnitureRuntimeMode !== 'wardrobe' && (r7310C1EastWallBeamShadowRuntimePending || !r7310C1EastWallBeamShadowRuntimeReady))
-		loadR7310C1EastWallBeamShadowRuntimePackage().catch(function() {});
-	if (r7310C1SwColumnNorthShadowRuntimeEnabled && (r7310C1SwColumnNorthShadowRuntimePending || !r7310C1SwColumnNorthShadowRuntimeReady))
-		loadR7310C1SwColumnNorthShadowRuntimePackage().catch(function() {});
-	if (r7310C1WestWallBeamShadowRuntimeEnabled && (r7310C1WestWallBeamShadowRuntimePending || !r7310C1WestWallBeamShadowRuntimeReady))
-		loadR7310C1WestWallBeamShadowRuntimePackage().catch(function() {});
-	if (r7310C1SwColumnInnerShadowRuntimeEnabled && (r7310C1SwColumnInnerShadowRuntimePending || !r7310C1SwColumnInnerShadowRuntimeReady))
-		loadR7310C1SwColumnInnerShadowRuntimePackage().catch(function() {});
-	if (r7310C1WestBeamInnerShadowRuntimeEnabled && (r7310C1WestBeamInnerShadowRuntimePending || !r7310C1WestBeamInnerShadowRuntimeReady))
-		loadR7310C1WestBeamInnerShadowRuntimePackage().catch(function() {});
-	if (r7310C1WestBeamUnderShadowRuntimeEnabled && (r7310C1WestBeamUnderShadowRuntimePending || !r7310C1WestBeamUnderShadowRuntimeReady))
-		loadR7310C1WestBeamUnderShadowRuntimePackage().catch(function() {});
-	if (r7310C1EastBeamInnerShadowRuntimeEnabled && (r7310C1EastBeamInnerShadowRuntimePending || !r7310C1EastBeamInnerShadowRuntimeReady))
-		loadR7310C1EastBeamInnerShadowRuntimePackage().catch(function() {});
-	if (r7310C1EastBeamUnderShadowRuntimeEnabled && (r7310C1EastBeamUnderShadowRuntimePending || !r7310C1EastBeamUnderShadowRuntimeReady))
-		loadR7310C1EastBeamUnderShadowRuntimePackage().catch(function() {});
-	if (r7310C1SouthWindowLeftRevealShadowRuntimeEnabled && (r7310C1SouthWindowLeftRevealShadowRuntimePending || !r7310C1SouthWindowLeftRevealShadowRuntimeReady))
-		loadR7310C1SouthWindowLeftRevealShadowRuntimePackage().catch(function() {});
-	if (r7310C1SouthWindowRightRevealShadowRuntimeEnabled && (r7310C1SouthWindowRightRevealShadowRuntimePending || !r7310C1SouthWindowRightRevealShadowRuntimeReady))
-		loadR7310C1SouthWindowRightRevealShadowRuntimePackage().catch(function() {});
-	if (r7310C1SouthWindowBottomRevealShadowRuntimeEnabled && (r7310C1SouthWindowBottomRevealShadowRuntimePending || !r7310C1SouthWindowBottomRevealShadowRuntimeReady))
-		loadR7310C1SouthWindowBottomRevealShadowRuntimePackage().catch(function() {});
-	if (r7310C1SouthWindowTopRevealShadowRuntimeEnabled && (r7310C1SouthWindowTopRevealShadowRuntimePending || !r7310C1SouthWindowTopRevealShadowRuntimeReady))
-		loadR7310C1SouthWindowTopRevealShadowRuntimePackage().catch(function() {});
-	if (r7310C1IronDoorRevealRuntimeEnabled && (r7310C1IronDoorRevealRuntimePending || !r7310C1IronDoorRevealRuntimeReady))
-		loadR7310C1IronDoorRevealRuntimePackage().catch(function() {});
+	if (r7310C1XatlasRuntimeEnabled &&
+		r7310C1XatlasRuntimeLoadState !== 'loading' &&
+		!r7310C1RawLightmapPageReadinessReport().ready)
+		loadR7310C1XatlasRawLightmapPages('raw').catch(function() {});
 	if (r7310C1IronDoorBodyRuntimeEnabled && (r7310C1IronDoorBodyRuntimePending || !r7310C1IronDoorBodyRuntimeReady))
 		loadR7310C1IronDoorBodyRuntimePackage().catch(function() {});
 	if (!r7310C1AnyFullRoomDiffuseSurfaceEnabled())
@@ -17669,7 +18137,10 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 						paramTableLoadStatus: r7310C1XatlasParamTableLoadStatus,
 						paramTableLoadError: r7310C1XatlasParamTableLoadError,
 						paramTableSurfaceCount: r7310C1XatlasParamTableSurfaceCount,
-						paramTableSurfaceCapacity: R7310_C1_XATLAS_PARAM_SURFACE_CAPACITY,
+						paramTableStorageKind: 'box_data_texture_rows',
+						paramTableTextureWidth: R7310_C1_XATLAS_BOX_DATA_TEXTURE_WIDTH,
+						paramTableTextureHeight: r7310C1XatlasParamDataTextureHeight,
+						paramTableTexelBase: R7310_C1_XATLAS_PARAM_TEXEL_BASE,
 						loadState: r7310C1XatlasRuntimeLoadState,
 						loadVariant: r7310C1XatlasRuntimeLoadVariant,
 						loadSurface: r7310C1XatlasRuntimeLoadSurface,
@@ -17741,15 +18212,11 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 					paramWestWallSwitchIndices: r7310C1XatlasParamWestWallSwitchIndices.slice(),
 					paramWestWallSwitchEntries: (function()
 					{
-						if (!pathTracingUniforms || !pathTracingUniforms.uR7310C1XatlasParamSurfaceTable) return [];
-						var table = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value || [];
 						return r7310C1XatlasParamWestWallSwitchIndices.map(function(surfaceIndex)
 						{
-							var b = surfaceIndex * 7;
 							function vec4At(offset)
 							{
-								var value = table[b + offset];
-								return value ? [value.x, value.y, value.z, value.w] : null;
+								return r7310C1XatlasParamSurfaceVec4(surfaceIndex, offset);
 							}
 							return {
 								surfaceIndex: surfaceIndex,
@@ -17769,10 +18236,9 @@ window.reportR7310C1FullRoomDiffuseRuntimeConfig = function()
 					})(),
 					paramWestModeId: (function()
 					{
-						if (!pathTracingUniforms || !pathTracingUniforms.uR7310C1XatlasParamSurfaceTable || r7310C1XatlasParamWestIndex < 0) return null;
-						var t = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value;
-						var v = t && t[r7310C1XatlasParamWestIndex * 7 + 1];
-						return v ? v.w : null;
+						if (r7310C1XatlasParamWestIndex < 0) return null;
+						var v = r7310C1XatlasParamSurfaceVec4(r7310C1XatlasParamWestIndex, 1);
+						return v ? v[3] : null;
 					})(),
 					packageDir: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.packageDir : null,
 					runtimeScope: r7310C1XatlasRuntimePackage ? r7310C1XatlasRuntimePackage.runtimeScope : null,
@@ -20204,6 +20670,7 @@ function onWindowResize(event)
 
 function init()
 {
+	var applicationInitTimingStage = beginHomeStudioLoadingStage('application-init');
 
 	window.addEventListener('resize', onWindowResize, false);
 	window.addEventListener('orientationchange', onWindowResize, false);
@@ -20311,6 +20778,9 @@ function init()
 	}); */
 
 	// load a resource
+	var blueNoiseTimingStage = beginHomeStudioLoadingStage('blue-noise-read', {
+		url: 'textures/BlueNoise_R_128.png'
+	});
 	blueNoiseTexture = textureLoader.load(
 		// resource URL
 		'textures/BlueNoise_R_128.png',
@@ -20318,6 +20788,10 @@ function init()
 		// onLoad callback
 		function (texture)
 		{
+			endHomeStudioLoadingStage(blueNoiseTimingStage, {
+				url: 'textures/BlueNoise_R_128.png',
+				status: 'loaded'
+			});
 			texture.wrapS = THREE.RepeatWrapping;
 			texture.wrapT = THREE.RepeatWrapping;
 			texture.flipY = false;
@@ -20327,6 +20801,17 @@ function init()
 			//console.log("blue noise texture loaded");
 
 			initTHREEjs(); // boilerplate: init necessary three.js items and scene/demo-specific objects
+			endHomeStudioLoadingStage(applicationInitTimingStage, { status: 'bootstrap-dispatched' });
+		},
+		undefined,
+		function (error)
+		{
+			endHomeStudioLoadingStage(blueNoiseTimingStage, {
+				url: 'textures/BlueNoise_R_128.png',
+				status: 'error',
+				error: String(error && error.message ? error.message : error)
+			});
+			endHomeStudioLoadingStage(applicationInitTimingStage, { status: 'blue-noise-error' });
 		}
 	);
 
@@ -20339,15 +20824,19 @@ function initTHREEjs()
 {
 	if (renderer)
 		return;
+	var initThreeTimingStage = beginHomeStudioLoadingStage('three-bootstrap');
 
 	canvas = document.createElement('canvas');
 	var webgl2Context = null;
+	var webglContextTimingStage = beginHomeStudioLoadingStage('webgl-context');
 	try
 	{
 		webgl2Context = canvas.getContext('webgl2');
 	}
 	catch (webglError)
 	{
+		endHomeStudioLoadingStage(webglContextTimingStage, { status: 'error' });
+		endHomeStudioLoadingStage(initThreeTimingStage, { status: 'webgl-context-error' });
 		if (scheduleHomeStudioWebGLBootstrapRetry('webgl2_get_context_threw', webglError))
 			return;
 		handleHomeStudioWebGLUnavailable('webgl2_get_context_threw', webglError);
@@ -20355,6 +20844,8 @@ function initTHREEjs()
 	}
 	if (!webgl2Context)
 	{
+		endHomeStudioLoadingStage(webglContextTimingStage, { status: 'unavailable' });
+		endHomeStudioLoadingStage(initThreeTimingStage, { status: 'webgl-context-unavailable' });
 		if (scheduleHomeStudioWebGLBootstrapRetry('webgl2_context_unavailable'))
 			return;
 		handleHomeStudioWebGLUnavailable('webgl2_context_unavailable');
@@ -20368,16 +20859,21 @@ function initTHREEjs()
 	r7310HomeStudioWebGLBootstrapRetryCount = 0;
 	r7310HomeStudioWebGLUnavailable = false;
 	r7310HomeStudioWebGLUnavailableReason = '';
+	endHomeStudioLoadingStage(webglContextTimingStage, { status: 'ready' });
 
+	var rendererCreateTimingStage = beginHomeStudioLoadingStage('renderer-create');
 	try
 	{
 		renderer = new THREE.WebGLRenderer({ canvas: canvas, context: webgl2Context });
 	}
 	catch (rendererError)
 	{
+		endHomeStudioLoadingStage(rendererCreateTimingStage, { status: 'error' });
+		endHomeStudioLoadingStage(initThreeTimingStage, { status: 'renderer-error' });
 		handleHomeStudioWebGLUnavailable('webgl_renderer_create_failed', rendererError);
 		return;
 	}
+	endHomeStudioLoadingStage(rendererCreateTimingStage, { status: 'ready' });
 	//suggestion: set to false for production
 	renderer.debug.checkShaderErrors = true;
 	installR7310RenderFeedbackLoopAuditWrapper();
@@ -20390,10 +20886,15 @@ function initTHREEjs()
 	context = renderer.getContext();
 	if (!context)
 	{
+		endHomeStudioLoadingStage(initThreeTimingStage, { status: 'renderer-context-missing' });
 		handleHomeStudioWebGLUnavailable('webgl_renderer_context_missing');
 		return;
 	}
 	context.getExtension('EXT_color_buffer_float');
+	homeStudioLoadingTimingGpuTimerExtension = context.getExtension('EXT_disjoint_timer_query_webgl2');
+	markHomeStudioLoadingMilestone('gpu-timer-query-support', {
+		available: !!homeStudioLoadingTimingGpuTimerExtension
+	});
 	r7310RuntimeBorrowTextureDisabled = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS) <= 16;
 	installR7310SafeRenderTargetWriteWrapper();
 	installR7310WebGLFeedbackLoopAuditWrapper();
@@ -20518,6 +21019,7 @@ function initTHREEjs()
 
 
 	// setup render targets...
+	var renderTargetSetupTimingStage = beginHomeStudioLoadingStage('render-target-setup');
 	pathTracingRenderTarget = new THREE.WebGLRenderTarget(context.drawingBufferWidth, context.drawingBufferHeight, {
 		minFilter: THREE.NearestFilter,
 		magFilter: THREE.NearestFilter,
@@ -20596,11 +21098,18 @@ function initTHREEjs()
 			bloomMip[i].texture.generateMipmaps = false;
 		}
 	}
+	endHomeStudioLoadingStage(renderTargetSetupTimingStage, {
+		width: context.drawingBufferWidth,
+		height: context.drawingBufferHeight,
+		bloomMipCount: bloomMip.length
+	});
 
 
 
 	// setup scene/demo-specific objects, variables, GUI elements, and data
+	var sceneBuildTimingStage = beginHomeStudioLoadingStage('scene-build');
 	initSceneData();
+	endHomeStudioLoadingStage(sceneBuildTimingStage);
 
 
 	if ( !mouseControl )
@@ -20658,10 +21167,13 @@ function initTHREEjs()
 	pathTracingUniforms.uUseOrthographicCamera = { type: "b1", value: false };
 	pathTracingUniforms.uSceneIsDynamic = { type: "b1", value: false };
 	pathTracingUniforms.uMovementPreviewMode = { type: "f", value: 0.0 };
-	// R4-2A-2 P2: 參數化 success-path uniform array + count（在其他 pathTracingUniforms 旁註冊，material 建立前）。
-	// loop 上界 uR7310C1XatlasParamSurfaceCount（uniform，非編譯期常數）；param 表由 codegen 產（docs/generated）非手寫。
+	// R7-3.10：owner 數量由 registry 產生，資料接在既有 box texture 的後續列。
 	pathTracingUniforms.uR7310C1XatlasParamSurfaceCount = { type: "f", value: 0.0 };
-	pathTracingUniforms.uR7310C1XatlasParamSurfaceTable = { value: Array.from({ length: R7310_C1_XATLAS_PARAM_VEC4_CAPACITY }, function () { return new THREE.Vector4(0, 0, 0, 0); }) };
+	pathTracingUniforms.uR7310C1XatlasParamSurfaceTexelBase = { type: "i", value: R7310_C1_XATLAS_PARAM_TEXEL_BASE };
+	pathTracingUniforms.uR7310C1XatlasParamDataTextureWidth = { type: "i", value: R7310_C1_XATLAS_BOX_DATA_TEXTURE_WIDTH };
+	var parameterTableTimingStage = beginHomeStudioLoadingStage('parameter-table-load', {
+		url: 'docs/generated/r7-3-10-xatlas-param-table.generated.json'
+	});
 	(async function () {
 		try {
 			r7310C1XatlasParamTableLoadStatus = 'pending';
@@ -20671,12 +21183,12 @@ function initTHREEjs()
 			if (!pr.ok) throw new Error('R7-3.10 XATLAS param table HTTP ' + pr.status);
 			var pj = await pr.json();
 			var ff = pj.flatFloats || [];
-			var vecs = pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value;
 			var surfaceCount = Number(pj.count) || 0;
-			if (surfaceCount * 7 > vecs.length)
-				throw new Error('R7-3.10 XATLAS param table exceeds shader capacity: ' + surfaceCount + ' surfaces');
-			for (var vi = 0; vi < vecs.length; vi++) { var o = vi * 4; vecs[vi].set(ff[o] || 0, ff[o + 1] || 0, ff[o + 2] || 0, ff[o + 3] || 0); }
-			pathTracingUniforms.uR7310C1XatlasParamSurfaceCount.value = surfaceCount;
+			if (!Array.isArray(ff) || surfaceCount <= 0 || surfaceCount * 28 !== ff.length)
+				throw new Error('R7-3.10 XATLAS param table size mismatch: ' + surfaceCount + ' surfaces / ' + ff.length + ' floats');
+			r7310C1XatlasParamSurfaceFlatData = new Float32Array(ff);
+			r7310C1XatlasParamTableSurfaceCount = surfaceCount;
+			r7310C1XatlasParamSurfaceDataTexture = null;
 			// R4-2C：記錄 west param entry index，供 loadMasterSurface('west') 啟用 param 投影（modeId + rect.xy）。
 			if (Array.isArray(pj.entries)) r7310C1XatlasParamWestIndex = pj.entries.findIndex(function (e) { return e && e.surfaceId === 'west_wall_open'; });
 			if (Array.isArray(pj.entries)) r7310C1XatlasParamSouthIndex = pj.entries.findIndex(function (e) { return e && e.surfaceId === 'south_wall'; });
@@ -20741,14 +21253,26 @@ function initTHREEjs()
 				resetR738MainAccumulation();
 			}
 			if (typeof pathTracingMaterial !== 'undefined' && pathTracingMaterial) pathTracingMaterial.uniformsNeedUpdate = true;
-			r7310C1XatlasParamTableSurfaceCount = surfaceCount;
-			r7310C1XatlasParamTableLoadStatus = 'ready';
-			r7310C1XatlasParamTableLoadError = null;
+			if (!r7310C1InstallXatlasParamTableInBoxDataTexture())
+			{
+				r7310C1XatlasParamTableLoadStatus = 'waiting_for_box_texture';
+				r7310C1XatlasParamTableLoadError = null;
+			}
+			endHomeStudioLoadingStage(parameterTableTimingStage, {
+				status: r7310C1XatlasParamTableLoadStatus,
+				surfaceCount: r7310C1XatlasParamTableSurfaceCount
+			});
 		} catch (e) {
 			r7310C1XatlasParamTableLoadStatus = 'error';
 			r7310C1XatlasParamTableLoadError = String(e && e.message ? e.message : e);
 			r7310C1XatlasParamTableSurfaceCount = 0;
+			r7310C1XatlasParamSurfaceFlatData = new Float32Array(0);
+			r7310C1XatlasParamSurfaceDataTexture = null;
 			pathTracingUniforms.uR7310C1XatlasParamSurfaceCount.value = 0.0;
+			endHomeStudioLoadingStage(parameterTableTimingStage, {
+				status: 'error',
+				error: String(e && e.message ? e.message : e)
+			});
 			console.error('R7-3.10 XATLAS param table load failed:', e);
 		}
 	})();
@@ -20779,9 +21303,19 @@ function initTHREEjs()
 		pathTracingDefines.R7310_FORMAL_XATLAS_RAW = 1;
 
 	// load vertex and fragment shader files that are used in the pathTracing material, mesh and scene
+	var commonVertexShaderTimingStage = beginHomeStudioLoadingStage('shader-source-read', {
+		shader: 'common_PathTracing_Vertex.glsl'
+	});
+	var pathTracingShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: String(demoFragmentShaderFileName || '')
+	});
 	fileLoader.load('shaders/common_PathTracing_Vertex.glsl', function (vertexShaderText)
 	{
 		pathTracingVertexShader = vertexShaderText;
+		endHomeStudioLoadingStage(commonVertexShaderTimingStage, {
+			shader: 'common_PathTracing_Vertex.glsl',
+			bytes: vertexShaderText.length
+		});
 		flushCommonVertexShaderCallbacks();
 
 		fileLoader.load('shaders/' + demoFragmentShaderFileName, function (fragmentShaderText)
@@ -20807,6 +21341,11 @@ function initTHREEjs()
 				//   of the camera at all times. This is necessary because without it, the full-screen
 				//   triangle will fall out of view and get clipped when the camera rotates past 180 degrees.
 				worldCamera.add(pathTracingMesh);
+				endHomeStudioLoadingStage(pathTracingShaderTimingStage, {
+					shader: String(demoFragmentShaderFileName || ''),
+					bytes: fragmentShaderText.length,
+					status: 'material-ready'
+				});
 			});
 
 		});
@@ -20819,6 +21358,9 @@ function initTHREEjs()
 		tPathTracedImageTexture: { type: "t", value: pathTracingRenderTarget.texture }
 	};
 
+	var screenCopyShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: 'ScreenCopy_Fragment.glsl'
+	});
 	fileLoader.load('shaders/ScreenCopy_Fragment.glsl', function (shaderText)
 	{
 
@@ -20835,6 +21377,11 @@ function initTHREEjs()
 
 			screenCopyMesh = new THREE.Mesh(triangleGeometry, screenCopyMaterial);
 			screenCopyScene.add(screenCopyMesh);
+			endHomeStudioLoadingStage(screenCopyShaderTimingStage, {
+				shader: 'ScreenCopy_Fragment.glsl',
+				bytes: shaderText.length,
+				status: 'material-ready'
+			});
 		});
 	});
 
@@ -20888,6 +21435,9 @@ function initTHREEjs()
 		uHueB: { type: "f", value: 0.0 }          // 色相環旋轉角度（degrees），0=中性
 	};
 
+	var screenOutputShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: 'ScreenOutput_Fragment.glsl'
+	});
 fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', function (shaderText)
 	{
 
@@ -20904,6 +21454,11 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 
 			screenOutputMesh = new THREE.Mesh(triangleGeometry, screenOutputMaterial);
 			screenOutputScene.add(screenOutputMesh);
+			endHomeStudioLoadingStage(screenOutputShaderTimingStage, {
+				shader: 'ScreenOutput_Fragment.glsl',
+				bytes: shaderText.length,
+				status: 'material-ready'
+			});
 		});
 	});
 
@@ -20935,6 +21490,9 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 		tBloomTexture: { type: "t", value: bloomMip[6].texture }
 	};
 
+	var bloomBrightpassShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: 'Bloom_Brightpass_Fragment.glsl'
+	});
 	fileLoader.load('shaders/Bloom_Brightpass_Fragment.glsl', function (shaderText)
 	{
 		runAfterCommonVertexShaderReady(function ()
@@ -20947,9 +21505,17 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 			});
 			bloomBrightpassMesh = new THREE.Mesh(triangleGeometry, bloomBrightpassMaterial);
 			bloomBrightpassScene.add(bloomBrightpassMesh);
+			endHomeStudioLoadingStage(bloomBrightpassShaderTimingStage, {
+				shader: 'Bloom_Brightpass_Fragment.glsl',
+				bytes: shaderText.length,
+				status: 'material-ready'
+			});
 		});
 	});
 
+	var bloomDownsampleShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: 'Bloom_Downsample_Fragment.glsl'
+	});
 	fileLoader.load('shaders/Bloom_Downsample_Fragment.glsl', function (shaderText)
 	{
 		runAfterCommonVertexShaderReady(function ()
@@ -20962,9 +21528,17 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 			});
 			bloomDownsampleMesh = new THREE.Mesh(triangleGeometry, bloomDownsampleMaterial);
 			bloomDownsampleScene.add(bloomDownsampleMesh);
+			endHomeStudioLoadingStage(bloomDownsampleShaderTimingStage, {
+				shader: 'Bloom_Downsample_Fragment.glsl',
+				bytes: shaderText.length,
+				status: 'material-ready'
+			});
 		});
 	});
 
+	var bloomUpsampleShaderTimingStage = beginHomeStudioLoadingStage('shader-load-and-material', {
+		shader: 'Bloom_Upsample_Fragment.glsl'
+	});
 	fileLoader.load('shaders/Bloom_Upsample_Fragment.glsl', function (shaderText)
 	{
 		runAfterCommonVertexShaderReady(function ()
@@ -20980,6 +21554,11 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 			});
 			bloomUpsampleMesh = new THREE.Mesh(triangleGeometry, bloomUpsampleMaterial);
 			bloomUpsampleScene.add(bloomUpsampleMesh);
+			endHomeStudioLoadingStage(bloomUpsampleShaderTimingStage, {
+				shader: 'Bloom_Upsample_Fragment.glsl',
+				bytes: shaderText.length,
+				status: 'material-ready'
+			});
 		});
 	});
 
@@ -20989,6 +21568,7 @@ fileLoader.load('shaders/ScreenOutput_Fragment.glsl?v=r7-3-10-sprout-ab-v1', fun
 
 	// everything is set up, now we can start animating
 	scheduleHomeStudioAnimationFrame();
+	endHomeStudioLoadingStage(initThreeTimingStage, { status: 'animation-scheduled' });
 
 } // end function initTHREEjs()
 
@@ -21478,6 +22058,25 @@ function animate()
 	// RENDERING in 3 steps
 	// 到達 userSppCap 後跳過 STEP 1/2，凍結累加 buffer，只保留 STEP 3 顯示
 	var renderingStopped = samplingPausedForFrame || renderLimitWasAlreadyReached;
+	var firstPresentedFrameTimingActive = !homeStudioLoadingTimingFirstFrameRecorded && !renderingStopped;
+	var firstPresentedFrameTimingStage = firstPresentedFrameTimingActive
+		? beginHomeStudioLoadingStage('first-frame-render', { measurement: 'cpu-submit-window' })
+		: null;
+	var firstPresentedFrameGpuTimingStage = firstPresentedFrameTimingActive
+		? beginHomeStudioLoadingGpuStage('first-frame-gpu')
+		: null;
+	var firstReadyFrameTimingActive = homeStudioLoadingTimingRawPagesReady &&
+		!homeStudioLoadingTimingReadyFrameRecorded && !renderingStopped;
+	var firstReadyFrameTimingStage = firstReadyFrameTimingActive
+		? beginHomeStudioLoadingStage('first-ready-frame-render', { measurement: 'cpu-submit-window' })
+		: null;
+	var firstReadyFrameTextureUploadTimingStage = firstReadyFrameTimingActive && homeStudioLoadingTimingRuntimeTexturePendingUpload
+		? beginHomeStudioLoadingStage('runtime-texture-first-gpu-use', { measurement: 'cpu-submit-window' })
+		: null;
+	var firstReadyFrameGpuTimingStage = firstReadyFrameTimingActive
+		? beginHomeStudioLoadingGpuStage('first-ready-frame-gpu', { includesRuntimeTextureFirstUse: true })
+		: null;
+	var firstPresentedFrameRendered = false;
 	var firstFrameRecoveryWasCleared = accumulationWasClearedForThisFrame;
 	var firstFrameRecoveryPassTarget = sampleCounter;
 	var firstFrameRecoveryReason = 'normal';
@@ -21702,9 +22301,52 @@ function animate()
 		updateR7310C1FullRoomDiffuseRuntimeUniforms();
 		renderer.setRenderTarget(null);
 		renderer.render(screenOutputScene, orthoCamera);
+		firstPresentedFrameRendered = true;
 		if (!cameraIsMoving)
 			captureMovementProtectionStableFrame();
 		postProcessChanged = false;
+	}
+	if (firstPresentedFrameTimingActive)
+	{
+		endHomeStudioLoadingGpuStage(firstPresentedFrameGpuTimingStage);
+		endHomeStudioLoadingStage(firstPresentedFrameTimingStage, {
+			presented: firstPresentedFrameRendered,
+			sampleCounter: Math.round(sampleCounter)
+		});
+		if (firstPresentedFrameRendered)
+		{
+			homeStudioLoadingTimingFirstFrameRecorded = true;
+			markHomeStudioLoadingMilestone('first-frame-presented', {
+				sampleCounter: Math.round(sampleCounter)
+			});
+			setTimeout(function () {
+				var report = reportHomeStudioLoadingTiming();
+				if (report && report.slowestStages && typeof console !== 'undefined' && console.table)
+					console.table(report.slowestStages);
+			}, 0);
+		}
+	}
+	if (firstReadyFrameTimingActive)
+	{
+		endHomeStudioLoadingGpuStage(firstReadyFrameGpuTimingStage);
+		endHomeStudioLoadingStage(firstReadyFrameTimingStage, {
+			presented: firstPresentedFrameRendered,
+			sampleCounter: Math.round(sampleCounter)
+		});
+		if (firstReadyFrameTextureUploadTimingStage)
+		{
+			endHomeStudioLoadingStage(firstReadyFrameTextureUploadTimingStage, {
+				presented: firstPresentedFrameRendered
+			});
+			homeStudioLoadingTimingRuntimeTexturePendingUpload = false;
+		}
+		if (firstPresentedFrameRendered)
+		{
+			homeStudioLoadingTimingReadyFrameRecorded = true;
+			markHomeStudioLoadingMilestone('first-ready-frame-presented', {
+				sampleCounter: Math.round(sampleCounter)
+			});
+		}
 	}
 
 	stats.update();

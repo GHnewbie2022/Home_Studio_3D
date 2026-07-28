@@ -1,5 +1,5 @@
 {
-  "packageStatus": "architecture_probe",
+  "packageStatus": "accepted",
   "runtimeScope": "c1_xatlas_full_west_wall_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "single_xatlas_full_west_wall_phase2",
@@ -85,6 +85,13 @@
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json",
-    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json"
+    "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
+  },
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 73377000,
+  "artifactHashes": {
+    "runtimeAtlasPatch0Sha256": "8a12bdfa4fbfc52532969bf3e8dea52976798f16b1e41020749c8d62c9390342"
   }
 }

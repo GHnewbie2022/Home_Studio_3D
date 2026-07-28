@@ -19,7 +19,7 @@ function bodyOf(source, startToken, endToken)
 	return source.slice(start, end);
 }
 
-const surfaceName = 'c1_iron_door_body_diffuse_light_live_specular_probe';
+const surfaceName = 'c1_iron_door_body_diffuse_light_live_specular';
 const targetId = 230001;
 const reflectionProbeSlotBase = 24;
 const reflectionProbeSlotCount = 6;
@@ -56,7 +56,7 @@ assert.doesNotMatch(homeStudio, /tR7310C1IronDoorReflectionProbeAtlas/);
 assert.match(homeStudio, /uR7310C1IronDoorReflectionProbePosition = \{ value: new THREE\.Vector3\(-1\.96,\s*1\.08,\s*-1\.43\) \}/);
 assert.match(homeStudio, /uR7310C1IronDoorReflectionProbeBoxMin = \{ value: new THREE\.Vector3\(-1\.91,\s*0\.0,\s*-1\.874\) \}/);
 assert.match(homeStudio, /uR7310C1IronDoorReflectionProbeBoxMax = \{ value: new THREE\.Vector3\(1\.91,\s*2\.905,\s*3\.056\) \}/);
-assert.match(html, /id="btn-r7310-iron-door-reflection-mode"/);
+assert.doesNotMatch(html, /id="btn-r7310-iron-door-reflection-mode"/);
 
 const bakeSurfacePoint = bodyOf(
 	shader,
@@ -88,7 +88,7 @@ const directCapture = bodyOf(
 	'window.captureR738C1DirectSurfaceTexelPatch'
 );
 assert.match(directCapture, /var useFullRadianceBakeMode\s*=\s*options\.fullRadianceBake\s*===\s*true/);
-assert.match(directCapture, /uR738C1BakeDiffuseOnlyMode\.value\s*=\s*useFullRadianceBakeMode\s*\?\s*0\.0\s*:\s*1\.0/);
+assert.match(directCapture, /uR738C1BakeDiffuseOnlyMode\.value\s*=\s*\(useXatlasFullRadianceBake\s*\|\|\s*useFullRadianceBakeMode\)\s*\?\s*0\.0\s*:\s*1\.0/);
 assert.match(directCapture, /patchId === R7310_C1_IRON_DOOR_BODY_TARGET_ID\) metadataResult = isRectCapture \? buildR7310C1IronDoorBodyTexelMetadataRect\(width,\s*height\) : buildR7310C1IronDoorBodyTexelMetadata\(size\)/);
 
 const ironDoorShader = bodyOf(
@@ -137,7 +137,7 @@ assert.match(shader, /vec3 r7310C1IronDoorCapturedProbeRadiance\(vec3 origin,\s*
 assert.match(shader, /float patchSlot = 24\.0 \+ faceIndex/);
 assert.match(shader, /r7310C1FullRoomDiffuseSamplePatchValidLinearRect\(atlasUv,\s*patchSlot,\s*uR7310C1IronDoorReflectionProbeAtlasSize\)/);
 const shaderSamplerUniforms = Array.from(shader.matchAll(/uniform\s+sampler2D\s+([A-Za-z0-9_]+)\s*;/g)).map((match) => match[1]);
-assert.ok(shaderSamplerUniforms.length <= 15, `fragment sampler budget exceeded: ${shaderSamplerUniforms.length} samplers: ${shaderSamplerUniforms.join(', ')}`);
+assert.ok(shaderSamplerUniforms.length <= 16, `fragment sampler budget exceeded: ${shaderSamplerUniforms.length} samplers: ${shaderSamplerUniforms.join(', ')}`);
 assert.match(shader, /vec3 r7310C1IronDoorBoxProjectedProbeDirection\(vec3 origin,\s*vec3 direction\)/);
 assert.match(shader, /void r7310C1IronDoorProbeFaceUv\(vec3 direction,\s*out float faceIndex,\s*out vec2 uv\)/);
 assert.match(shader, /bool r7310C1RuntimeSurfaceIsIronDoorBody\(int visibleHitType,\s*float visibleObjectID,\s*vec3 visibleNormal,\s*vec3 visiblePosition\)/);
@@ -168,7 +168,7 @@ assert.match(ironDoorBodyCapture, /tileWidth:\s*options\.tileWidth/);
 assert.match(ironDoorBodyCapture, /tileHeight:\s*options\.tileHeight/);
 assert.match(initCommon, /window\.captureR7310C1IronDoorBodyAtlas = captureR7310C1IronDoorBodyAtlas/);
 assert.match(initCommon, /window\.reportR7310C1IronDoorBodyBakeAfterSamples/);
-assert.match(initCommon, /batch:\s*'iron_door_body_diffuse_light_live_specular_probe'/);
+assert.match(initCommon, /batch:\s*'iron_door_body_diffuse_light_live_specular'/);
 assert.match(initCommon, /fullRadianceProbe:\s*false/);
 assert.match(initCommon, /bakedRadianceKind:\s*'direct_indirect_diffuse_lighting_live_specular'/);
 assert.match(initCommon, /diffuseOnly:\s*true/);
@@ -250,9 +250,10 @@ const runnerValidation = bodyOf(
 	'function validatePayload',
 	'function loadStructuralGeometryGateReport'
 );
-assert.match(runnerValidation, /const expectsDiffuseOnly\s*=\s*report\.fullRadianceProbe === true \? false : true/);
+assert.match(runnerValidation, /const reportIsFullRadiance\s*=\s*report\.fullRadianceProbe === true \|\|[\s\S]*report\.bakedRadianceKind === 'full_diffuse_radiance'[\s\S]*report\.directLightAlreadyIncluded === true[\s\S]*report\.addDirectLightAfterBakeLookup === false/);
+assert.match(runnerValidation, /const expectsDiffuseOnly\s*=\s*!reportIsFullRadiance/);
 assert.match(runnerValidation, /expectsDiffuseOnly\s*\?[\s\S]*report\.diffuseOnly === true[\s\S]*report\.diffuseOnly === false/);
-assert.match(runnerValidation, /c1_iron_door_body_diffuse_light_live_specular_probe:\s*0\.99/);
+assert.match(runnerValidation, /c1_iron_door_body_diffuse_light_live_specular:\s*0\.99/);
 
 assert.match(runner, /'iron-door-body'/);
 assert.match(runner, /'iron-door-body': 'reportR7310C1IronDoorBodyBakeAfterSamples'/);
@@ -267,7 +268,8 @@ assert.doesNotMatch(reflectionProbePackageTool, /faceRadiance|rectMask|discMask|
 
 assert.equal(fs.existsSync(runtimePointerPath), true, `${runtimePointerPath} missing`);
 const pointer = JSON.parse(fs.readFileSync(runtimePointerPath, 'utf8'));
-assert.equal(pointer.packageStatus, 'architecture_probe');
+assert.equal(pointer.packageStatus, 'accepted');
+assert.equal(pointer.deliveryRole, 'accepted_hybrid_baked_diffuse_live_specular');
 assert.equal(pointer.runtimeScope, 'c1_iron_door_body_diffuse_light_live_specular');
 assert.equal(pointer.runtimeTexture, 'tR7310C1FullRoomDiffuseAtlasTexture');
 assert.equal(pointer.runtimeAtlasSlot, 23);

@@ -392,7 +392,9 @@ function atlasMasterSourceReady(config) {
 		xatlas.paramTableLoadError === null &&
 		Number.isFinite(xatlas.paramTableSurfaceCount) &&
 		xatlas.paramTableSurfaceCount > 0 &&
-		xatlas.paramTableSurfaceCount <= xatlas.paramTableSurfaceCapacity &&
+		xatlas.paramTableStorageKind === 'box_data_texture_rows' &&
+		Number.isFinite(xatlas.paramTableTextureHeight) &&
+		xatlas.paramTableTextureHeight > 1 &&
 		readiness.ready === true &&
 		Array.isArray(readiness.missingPageIds) &&
 		readiness.missingPageIds.length === 0;
@@ -502,9 +504,6 @@ function pageSmokeExpression() {
 
 		function reportXatlasProbe(probe) {
 			if (!probe || !Number.isInteger(probe.surfaceIndex) || !Array.isArray(probe.point)) return null;
-			const table = pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasParamSurfaceTable
-				? pathTracingUniforms.uR7310C1XatlasParamSurfaceTable.value
-				: null;
 			const atlasSizeUniform = pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize
 				? pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value
 				: null;
@@ -513,11 +512,12 @@ function pageSmokeExpression() {
 				: null;
 			const data = image && image.data ? image.data :
 				(typeof r7310C1XatlasLightmapPageBuffer !== 'undefined' ? r7310C1XatlasLightmapPageBuffer : null);
-			const base = probe.surfaceIndex * 7;
-			if (!table || !table[base + 6]) return { error: 'param table entry unavailable' };
-			const vectors = table.slice(base, base + 7).map(function (v) {
-				return [Number(v.x), Number(v.y), Number(v.z), Number(v.w)];
+			if (typeof r7310C1XatlasParamSurfaceVec4 !== 'function') return { error: 'param table entry unavailable' };
+			const vectors = Array.from({ length: 7 }, function (_, fieldIndex) {
+				const value = r7310C1XatlasParamSurfaceVec4(probe.surfaceIndex, fieldIndex);
+				return value ? value.map(Number) : null;
 			});
+			if (vectors.some(function (value) { return !Array.isArray(value); })) return { error: 'param table entry unavailable' };
 			const umap = vectors[3];
 			const vmap = vectors[4];
 			const mixuv = vectors[5];
@@ -604,7 +604,9 @@ function pageSmokeExpression() {
 					xatlas.paramTableLoadError === null &&
 					Number.isFinite(xatlas.paramTableSurfaceCount) &&
 					xatlas.paramTableSurfaceCount > 0 &&
-					xatlas.paramTableSurfaceCount <= xatlas.paramTableSurfaceCapacity &&
+					xatlas.paramTableStorageKind === 'box_data_texture_rows' &&
+					Number.isFinite(xatlas.paramTableTextureHeight) &&
+					xatlas.paramTableTextureHeight > 1 &&
 					readiness.ready === true &&
 					Array.isArray(readiness.missingPageIds) &&
 					readiness.missingPageIds.length === 0;

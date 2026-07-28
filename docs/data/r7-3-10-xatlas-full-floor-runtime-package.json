@@ -1,5 +1,5 @@
 {
-  "packageStatus": "architecture_probe",
+  "packageStatus": "accepted",
   "runtimeScope": "c1_xatlas_full_floor_runtime",
   "runtimeTexture": "tR7310C1XatlasRuntimeAtlasTexture",
   "runtimeArchitecture": "single_xatlas_full_floor_phase2",
@@ -29,11 +29,13 @@
     "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
-    "validationReport": "validation-report.json"
+    "validationReport": "validation-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "artifactHashes": {
     "atlasPatch0Sha256": "79d6face1f78059c21a030b8700a774fed082d3eba4fe21d611bb825b2a5fd5f",
-    "texelMetadataPatch0Sha256": "abca4b1d297df0f9f5ba6e327fadc3c45c0614e1294493358d76cd126ceb7096"
+    "texelMetadataPatch0Sha256": "abca4b1d297df0f9f5ba6e327fadc3c45c0614e1294493358d76cd126ceb7096",
+    "runtimeAtlasPatch0Sha256": "8b6a9d0f1387633886492179fc73c8d9bfc503f7689d105ecd9348febaeb6786"
   },
   "validation": {
     "status": "pass",
@@ -49,5 +51,8 @@
     "completedTiles": 63,
     "tileCount": 63
   },
-  "note": "C1 floor FULL BAKE RAW（2026-07-04）：package 20260704-033804。修正 floor full-radiance bake 期間第一個地板 hit 仍會走 specular/metal 分支的問題，避免把吸頂燈的鏡面亮斑烤進地板貼圖；KH750 維持房間 X 中央、Z 距南牆位置不變。Chrome + Metal 單一 GPU 任務重烤 full-floor-xatlas，3376x4264、1000 SPP、tile 512、fence boundary。正式狀態為 full_diffuse_radiance，directLightAlreadyIncluded=true，addDirectLightAfterBakeLookup=false，multiplyAlbedoAfterBakeLookup=false。runtime 地板 diffuse 走 FULL BAKE，反射仍走 LIVE。validation status pass、runnerStatus pass、reprojectionStatus pass、medianRelativeLumaError 約 0.195248、p90RelativeLumaError 約 0.241703、runnerFailedChecks 空、alphaExclusionWarnings 空、contextLostCount 0、63/63 tiles。"
+  "note": "C1 floor FULL BAKE RAW（2026-07-04）：package 20260704-033804。修正 floor full-radiance bake 期間第一個地板 hit 仍會走 specular/metal 分支的問題，避免把吸頂燈的鏡面亮斑烤進地板貼圖；KH750 維持房間 X 中央、Z 距南牆位置不變。Chrome + Metal 單一 GPU 任務重烤 full-floor-xatlas，3376x4264、1000 SPP、tile 512、fence boundary。正式狀態為 full_diffuse_radiance，directLightAlreadyIncluded=true，addDirectLightAfterBakeLookup=false，multiplyAlbedoAfterBakeLookup=false。runtime 地板 diffuse 走 FULL BAKE，反射仍走 LIVE。validation status pass、runnerStatus pass、reprojectionStatus pass、medianRelativeLumaError 約 0.195248、p90RelativeLumaError 約 0.241703、runnerFailedChecks 空、alphaExclusionWarnings 空、contextLostCount 0、63/63 tiles。",
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 115162112
 }

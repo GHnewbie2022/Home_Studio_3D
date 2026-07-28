@@ -1,0 +1,85 @@
+{
+  "version": "r7-3-10-xatlas-runtime-capacity-v1",
+  "scope": "formal atlasMaster=raw HalfFloat lightmap pages",
+  "formalBakeContract": "docs/data/r7-3-10-full-room-diffuse-bake-contract.json",
+  "surfaceOwnerRegistry": "docs/data/r7-3-10-surface-owner-registry.json",
+  "hardwareLimits": {
+    "source": "Chrome Metal capability probe recorded for this project",
+    "maxTextureDimension": 16384,
+    "maxFragmentSamplers": 16,
+    "bytesPerTexel": 8
+  },
+  "runtimeArchitecture": {
+    "gutterPx": 4,
+    "packedAtlasSamplerCount": 1,
+    "separatePageSamplers": 1,
+    "separateSurfaces": [
+      "floor"
+    ],
+    "deployedColumns": {
+      "left": [
+        "ceiling",
+        "south",
+        "west_threshold_top",
+        "west_threshold_front",
+        "central_desk",
+        "structural",
+        "south_window_reveals",
+        "west_wall_switch"
+      ],
+      "right": [
+        "north",
+        "east",
+        "west",
+        "depth_h2",
+        "northeast_bed",
+        "south_fixed_furniture"
+      ]
+    },
+    "futurePageSamplerPolicy": "pack_into_shared_atlas"
+  },
+  "projectBudgets": {
+    "note": "Engineering guardrails for this project. These are intentionally lower than a machine crash boundary.",
+    "maxLogicalPageCount": 32,
+    "maxGpuResidentBytes": 1073741824,
+    "maxEstimatedPeakBytes": 2415919104,
+    "estimatedPeakFormula": "2 * gpuResidentBytes + largestLogicalPageBytes"
+  },
+  "packingForecast": {
+    "candidateWidths": [
+      6623,
+      8192,
+      10240,
+      12288,
+      14336,
+      16384
+    ],
+    "typicalFurniturePage": {
+      "width": 2200,
+      "height": 2200,
+      "basis": "Rounded planning size derived from current central_desk, northeast_bed and south_fixed_furniture pages."
+    },
+    "scenarios": [
+      {
+        "id": "current",
+        "additionalPageCount": 0
+      },
+      {
+        "id": "plus_4_typical_furniture_pages",
+        "additionalPageCount": 4
+      },
+      {
+        "id": "plus_8_typical_furniture_pages",
+        "additionalPageCount": 8
+      },
+      {
+        "id": "plus_12_typical_furniture_pages",
+        "additionalPageCount": 12
+      },
+      {
+        "id": "plus_16_typical_furniture_pages",
+        "additionalPageCount": 16
+      }
+    ]
+  }
+}

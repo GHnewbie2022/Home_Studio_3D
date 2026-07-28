@@ -28,7 +28,8 @@
     "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
     "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
     "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
-    "bakedSeamRadianceReport": "baked-seam-radiance-report.json"
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "chartEdgeDilation": {
     "enabled": true,
@@ -47,7 +48,8 @@
   ],
   "artifactHashes": {
     "atlasPatch0Sha256": "0e855583bd0e62261a0c72713d0ad0ed4854619f6510d70b1b9067e1ebd15dbd",
-    "texelMetadataPatch0Sha256": "2299ebaa6fcec50af3e71245ebc747af7ee98bc91ea458258f025265a4374fd6"
+    "texelMetadataPatch0Sha256": "2299ebaa6fcec50af3e71245ebc747af7ee98bc91ea458258f025265a4374fd6",
+    "runtimeAtlasPatch0Sha256": "f62845a630379c20922608f025a50c2799f265fef003d93d3fd16f34685f3246"
   },
   "validation": {
     "status": "pass",
@@ -58,5 +60,8 @@
     "tileCount": 24,
     "minCompletedSamples": 1000
   },
-  "note": "Structural beams and columns full-radiance XATLAS lightmap. Every physical chart perimeter copies radiance only from the same piece interior before alpha and chart-gutter processing; the baked seam gate passes all 29 structural sides."
+  "note": "Structural beams and columns full-radiance XATLAS lightmap. Every physical chart perimeter copies radiance only from the same piece interior before alpha and chart-gutter processing; the baked seam gate passes all 29 structural sides.",
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 46134032
 }

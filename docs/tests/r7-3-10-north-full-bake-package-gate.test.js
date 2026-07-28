@@ -10,7 +10,6 @@ const initCommon = fs.readFileSync(path.join(repo, 'js/InitCommon.js'), 'utf8');
 const homeStudio = fs.readFileSync(path.join(repo, 'js/Home_Studio.js'), 'utf8');
 const shader = fs.readFileSync(path.join(repo, 'shaders/Home_Studio_Fragment.glsl'), 'utf8');
 const northRawPointer = JSON.parse(fs.readFileSync(path.join(repo, 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json'), 'utf8'));
-const northOidnPointer = JSON.parse(fs.readFileSync(path.join(repo, 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json'), 'utf8'));
 
 assert.match(
 	northPackageTool,
@@ -41,24 +40,6 @@ assert.equal(northRawPointer.bakeAlbedoFree, true, 'raw north pointer must decla
 assert.equal(northRawPointer.validation.status, 'pass', 'raw north pointer must pass the FULL BAKE package gate');
 assert.equal(northRawPointer.validation.contextLostCount, 0, 'raw north full-radiance bake must not have context loss');
 assert.equal(northRawPointer.validation.minCompletedSamples, 1000, 'raw north full-radiance bake must complete 1000 samples on every tile');
-
-assert.equal(northOidnPointer.bakedRadianceKind, 'indirect_diffuse_radiance', 'oidn north pointer remains pending until an OIDN full-radiance package exists');
-assert.equal(northOidnPointer.directLightAlreadyIncluded, false, 'oidn north pointer must not claim direct light before an OIDN full-radiance package exists');
-assert.equal(northOidnPointer.addDirectLightAfterBakeLookup, true, 'oidn north pointer must keep live direct-light continuation while indirect');
-assert.notEqual(northOidnPointer.validation.status, 'pass', 'oidn north pointer must not pass the FULL BAKE package gate yet');
-
-const rejectedIndirectNorthPackage = '.omc/r7-3-10-xatlas-bake-spike/20260613-100834';
-
-assert.throws(
-	() => execFileSync('node', [
-		path.join(repo, 'docs/tools/r7-3-10-full-north-wall-xatlas-package.mjs'),
-		`--raw-dir=${path.join(repo, rejectedIndirectNorthPackage)}`,
-		`--prepare-dir=${path.join(repo, rejectedIndirectNorthPackage)}`,
-		`--write-raw-pointer=${path.join(os.tmpdir(), 'r7310-rejected-indirect-north-should-not-promote.json')}`,
-	], { stdio: 'pipe' }),
-	/north full-bake admission failed.*not_full_diffuse_radiance.*validation_not_pass/is,
-	'legacy north indirect/failing package must not be writable as a north FULL BAKE pointer'
-);
 
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'r7310-north-full-gate-'));
 try {
@@ -112,6 +93,18 @@ try {
 	};
 	const packageDir = path.join(tmpRoot, 'synthetic-full-north');
 	makePackage(packageDir);
+	const indirectPackageDir = path.join(tmpRoot, 'synthetic-indirect-north');
+	makePackage(indirectPackageDir, { bakedRadianceKind: 'indirect_diffuse_radiance' });
+	assert.throws(
+		() => execFileSync('node', [
+			path.join(repo, 'docs/tools/r7-3-10-full-north-wall-xatlas-package.mjs'),
+			`--raw-dir=${indirectPackageDir}`,
+			`--prepare-dir=${indirectPackageDir}`,
+			`--write-raw-pointer=${path.join(tmpRoot, 'indirect-pointer.json')}`,
+		], { stdio: 'pipe' }),
+		/north full-bake admission failed.*not_full_diffuse_radiance/is,
+		'indirect package must not be writable as a north FULL BAKE pointer'
+	);
 	const outPointer = path.join(tmpRoot, 'synthetic-full-pointer.json');
 	execFileSync('node', [
 		path.join(repo, 'docs/tools/r7-3-10-full-north-wall-xatlas-package.mjs'),

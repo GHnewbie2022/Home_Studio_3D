@@ -1,0 +1,327 @@
+{
+  "version": "r7-3-10-xatlas-runtime-capacity-v1",
+  "generatedAt": "2026-07-26T17:06:48.555Z",
+  "status": "pass",
+  "hardwareLimits": {
+    "source": "Chrome Metal capability probe recorded for this project",
+    "maxTextureDimension": 16384,
+    "maxFragmentSamplers": 16,
+    "bytesPerTexel": 8
+  },
+  "projectBudgets": {
+    "note": "Engineering guardrails for this project. These are intentionally lower than a machine crash boundary.",
+    "maxLogicalPageCount": 32,
+    "maxGpuResidentBytes": 1073741824,
+    "maxEstimatedPeakBytes": 2415919104,
+    "estimatedPeakFormula": "2 * gpuResidentBytes + largestLogicalPageBytes"
+  },
+  "formalPages": [
+    {
+      "surface": "north",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json",
+      "width": 2325,
+      "height": 3377,
+      "bytes": 62812200,
+      "mib": 59.902,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "east",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-east-wall-1000spp-runtime-package.json",
+      "width": 2325,
+      "height": 3945,
+      "bytes": 73377000,
+      "mib": 69.978,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "south",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-south-wall-1000spp-runtime-package.json",
+      "width": 3376,
+      "height": 2324,
+      "bytes": 62766592,
+      "mib": 59.859,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "west",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-west-wall-1000spp-runtime-package.json",
+      "width": 2325,
+      "height": 3945,
+      "bytes": 73377000,
+      "mib": 69.978,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "west_threshold_top",
+      "pointerPath": "docs/data/r7-3-10-xatlas-west-threshold-top-1000spp-runtime-package.json",
+      "width": 160,
+      "height": 712,
+      "bytes": 911360,
+      "mib": 0.869,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "west_threshold_front",
+      "pointerPath": "docs/data/r7-3-10-xatlas-west-threshold-front-1000spp-runtime-package.json",
+      "width": 72,
+      "height": 712,
+      "bytes": 410112,
+      "mib": 0.391,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "ceiling",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json",
+      "width": 4265,
+      "height": 3377,
+      "bytes": 115223240,
+      "mib": 109.885,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "depth_h2",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-runtime-package.json",
+      "width": 1952,
+      "height": 160,
+      "bytes": 2498560,
+      "mib": 2.383,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "floor",
+      "pointerPath": "docs/data/r7-3-10-xatlas-full-floor-runtime-package.json",
+      "width": 3376,
+      "height": 4264,
+      "bytes": 115162112,
+      "mib": 109.827,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "central_desk",
+      "pointerPath": "docs/data/r7-3-10-xatlas-central-desk-runtime-package.json",
+      "width": 1663,
+      "height": 1576,
+      "bytes": 20967104,
+      "mib": 19.996,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "northeast_bed",
+      "pointerPath": "docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json",
+      "width": 1551,
+      "height": 1715,
+      "bytes": 21279720,
+      "mib": 20.294,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "south_fixed_furniture",
+      "pointerPath": "docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json",
+      "width": 2354,
+      "height": 2090,
+      "bytes": 39358880,
+      "mib": 37.536,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "structural",
+      "pointerPath": "docs/data/r7-3-10-xatlas-structural-runtime-package.json",
+      "width": 1526,
+      "height": 3779,
+      "bytes": 46134032,
+      "mib": 43.997,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "south_window_reveals",
+      "pointerPath": "docs/data/r7-3-10-xatlas-south-window-reveals-runtime-package.json",
+      "width": 502,
+      "height": 1953,
+      "bytes": 7843248,
+      "mib": 7.48,
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "surface": "west_wall_switch",
+      "pointerPath": "docs/data/r7-3-10-xatlas-west-wall-switch-runtime-package.json",
+      "width": 131,
+      "height": 153,
+      "bytes": 160344,
+      "mib": 0.153,
+      "status": "pass",
+      "violations": []
+    }
+  ],
+  "formalPayloadBytes": 642281504,
+  "formalPayloadMiB": 612.527,
+  "ownerRegistry": {
+    "registeredSurfaceCount": 41,
+    "forecastCompleteness": "explicit_scenarios_only",
+    "note": "Unregistered future furniture is represented by forecast scenarios; the owner registry is not treated as a complete furniture backlog."
+  },
+  "shader": {
+    "samplerCount": 16,
+    "maxFragmentSamplers": 16,
+    "samplerNames": [
+      "tPreviousTexture",
+      "tBlueNoiseTexture",
+      "tBVHTexture",
+      "tBoxDataTexture",
+      "uWinTex",
+      "u150F",
+      "u150B",
+      "uWoodDoorTex",
+      "uIronDoorTex",
+      "u750F",
+      "u750B",
+      "uGikGrayTex",
+      "uGikWhiteTex",
+      "tR738C1BakeAtlasTexture",
+      "tR7310C1FullRoomDiffuseAtlasTexture",
+      "tR7310C1XatlasRuntimeFloorPageTexture"
+    ],
+    "status": "pass"
+  },
+  "deployed": {
+    "width": 6623,
+    "height": 15252,
+    "left": {
+      "width": 4265,
+      "height": 14614
+    },
+    "right": {
+      "width": 2354,
+      "height": 15252
+    },
+    "packedBytes": 808111968,
+    "packedMiB": 770.676,
+    "separateBytes": 115162112,
+    "separateMiB": 109.827,
+    "gpuResidentBytes": 923274080,
+    "gpuResidentMiB": 880.503,
+    "status": "pass",
+    "violations": [],
+    "estimatedPeakBytes": 1961771400,
+    "estimatedPeakMiB": 1870.891
+  },
+  "scenarios": [
+    {
+      "id": "current",
+      "additionalPageCount": 0,
+      "status": "pass",
+      "violations": [],
+      "logicalPageCount": 15,
+      "packing": {
+        "width": 6598,
+        "height": 11303,
+        "packedBytes": 596617552,
+        "packedMiB": 568.979,
+        "separateBytes": 115162112,
+        "separateMiB": 109.827,
+        "gpuResidentBytes": 711779664,
+        "gpuResidentMiB": 678.806
+      },
+      "estimatedPeakBytes": 1538782568,
+      "estimatedPeakMiB": 1467.497
+    },
+    {
+      "id": "plus_4_typical_furniture_pages",
+      "additionalPageCount": 4,
+      "status": "pass",
+      "violations": [],
+      "logicalPageCount": 19,
+      "packing": {
+        "width": 16162,
+        "height": 6149,
+        "packedBytes": 795041104,
+        "packedMiB": 758.21,
+        "separateBytes": 115162112,
+        "separateMiB": 109.827,
+        "gpuResidentBytes": 910203216,
+        "gpuResidentMiB": 868.037
+      },
+      "estimatedPeakBytes": 1935629672,
+      "estimatedPeakMiB": 1845.96
+    },
+    {
+      "id": "plus_8_typical_furniture_pages",
+      "additionalPageCount": 8,
+      "status": "fail",
+      "violations": [
+        "GPU resident 1121731472 exceeds project budget 1073741824"
+      ],
+      "logicalPageCount": 23,
+      "packing": {
+        "width": 16162,
+        "height": 7785,
+        "packedBytes": 1006569360,
+        "packedMiB": 959.939,
+        "separateBytes": 115162112,
+        "separateMiB": 109.827,
+        "gpuResidentBytes": 1121731472,
+        "gpuResidentMiB": 1069.766
+      },
+      "estimatedPeakBytes": 2358686184,
+      "estimatedPeakMiB": 2249.418
+    },
+    {
+      "id": "plus_12_typical_furniture_pages",
+      "additionalPageCount": 12,
+      "status": "fail",
+      "violations": [
+        "GPU resident 1234307144 exceeds project budget 1073741824",
+        "estimated peak 2583837528 exceeds project budget 2415919104"
+      ],
+      "logicalPageCount": 27,
+      "packing": {
+        "width": 13833,
+        "height": 10113,
+        "packedBytes": 1119145032,
+        "packedMiB": 1067.3,
+        "separateBytes": 115162112,
+        "separateMiB": 109.827,
+        "gpuResidentBytes": 1234307144,
+        "gpuResidentMiB": 1177.127
+      },
+      "estimatedPeakBytes": 2583837528,
+      "estimatedPeakMiB": 2464.139
+    },
+    {
+      "id": "plus_16_typical_furniture_pages",
+      "additionalPageCount": 16,
+      "status": "fail",
+      "violations": [
+        "GPU resident 1452315224 exceeds project budget 1073741824",
+        "estimated peak 3019853688 exceeds project budget 2415919104"
+      ],
+      "logicalPageCount": 31,
+      "packing": {
+        "width": 13833,
+        "height": 12083,
+        "packedBytes": 1337153112,
+        "packedMiB": 1275.209,
+        "separateBytes": 115162112,
+        "separateMiB": 109.827,
+        "gpuResidentBytes": 1452315224,
+        "gpuResidentMiB": 1385.036
+      },
+      "estimatedPeakBytes": 3019853688,
+      "estimatedPeakMiB": 2879.957
+    }
+  ]
+}

@@ -564,6 +564,9 @@ function buildSceneBVH() {
         pathTracingUniforms.tBVHTexture = { value: bvhDataTexture };
         pathTracingUniforms.tBoxDataTexture = { value: boxDataTexture };
     }
+    if (typeof r7310C1InstallXatlasParamTableInBoxDataTexture === 'function') {
+        r7310C1InstallXatlasParamTableInBoxDataTexture();
+    }
 }
 
 function updateBoxDataTexture() {

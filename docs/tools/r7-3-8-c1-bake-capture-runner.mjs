@@ -157,9 +157,6 @@ export function parseArgs(argv) {
     beamUnderShadowProbeTest: false,
     cameraPoseInfoTest: false,
     eastWallShadowVisualTest: false,
-    northBeamGapProbeTest: false,
-    northBeamGapRedLiveProbeTest: false,
-    northWallNormalFidelityProbeTest: false,
     hybridOwnerProbe: false,
     cutawayGeometryProbe: false,
     uiToggleTest: false,
@@ -252,9 +249,6 @@ export function parseArgs(argv) {
     else if (arg === '--r7310-beam-under-shadow-probe') out.beamUnderShadowProbeTest = true;
     else if (arg === '--r7310-camera-pose-info-test') out.cameraPoseInfoTest = true;
     else if (arg === '--r7310-east-wall-shadow-visual-test') out.eastWallShadowVisualTest = true;
-    else if (arg === '--r7310-north-beam-gap-probe') out.northBeamGapProbeTest = true;
-    else if (arg === '--r7310-north-beam-gap-red-live-probe') out.northBeamGapRedLiveProbeTest = true;
-    else if (arg === '--r7310-north-wall-normal-fidelity-probe') out.northWallNormalFidelityProbeTest = true;
     else if (arg === '--r7310-hybrid-owner-probe') out.hybridOwnerProbe = true;
     else if (arg === '--r7310-cutaway-geometry-probe') out.cutawayGeometryProbe = true;
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
@@ -2614,7 +2608,7 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
 	    c1_se_column_west_shadow: 0.50,
 	    c1_ceiling: 0.83,
 	    c1_iron_door_reveal: 0.60,
-	    c1_iron_door_body_diffuse_light_live_specular_probe: 0.99,
+	    c1_iron_door_body_diffuse_light_live_specular: 0.99,
 	    c1_xatlas_a1_bake_spike: 0.70,
 	    central_desk: 0.75,
 	    floor_open: 0.618
@@ -2703,74 +2697,28 @@ function r7310RuntimeScopeForSurface(surfaceName) {
 function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
   if (surfaceName === 'northeast_bed') return 'docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json';
   if (surfaceName === 'south_fixed_furniture') return 'docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json';
-  if (surfaceName === 'c1_floor_full_room') return 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return 'docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall') return 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_east_wall') return 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_west_wall') return 'docs/data/r7-3-10-c1-west-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_south_wall') return 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_ceiling') return 'docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_structural_beams_columns') return 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_se_column_north_shadow') return 'docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json';
-  if (surfaceName === 'c1_se_column_west_shadow') return 'docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_wall_ac_shadow') return 'docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json';
-  if (surfaceName === 'c1_east_wall_beam_shadow') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json';
-  if (surfaceName === 'c1_sw_column_north_shadow') return 'docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_wall_beam_shadow') return 'docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json';
-  if (surfaceName === 'c1_sw_column_inner_shadow') return 'docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_beam_inner_shadow') return 'docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_beam_under_shadow') return 'docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_beam_inner_shadow') return 'docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_beam_under_shadow') return 'docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_left_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_iron_door_reveal') return 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json';
   return null;
 }
 
 function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
   if (surfaceName === 'northeast_bed') return path.join(repoRoot, 'assets', 'runtime', 'r7-3-10', 'current-room', 'northeast-bed', 'package');
   if (surfaceName === 'south_fixed_furniture') return path.join(repoRoot, 'assets', 'runtime', 'r7-3-10', 'current-room', 'south-fixed-furniture', 'package');
-  const root = path.join(repoRoot, 'assets', 'bakes', 'r7-3-10', 'c1-static-diffuse');
-  if (surfaceName === 'c1_floor_full_room') return path.join(root, 'floor-full-room-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'north-wall-wardrobe-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return path.join(root, 'north-wall-separated-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall') return path.join(root, 'north-wall-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-wardrobe-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall') return path.join(root, 'east-wall-1024px-1000spp');
-  if (surfaceName === 'c1_west_wall') return path.join(root, 'west-wall-iron-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_south_wall') return path.join(root, 'south-wall-window-hole-1024px-1000spp');
-  if (surfaceName === 'c1_ceiling') return path.join(root, 'ceiling-full-room-1024px-1000spp');
-  if (surfaceName === 'c1_structural_beams_columns') return path.join(root, 'structural-beams-columns-1024px-1000spp');
-  if (surfaceName === 'c1_se_column_north_shadow') return path.join(root, 'se-column-north-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_se_column_west_shadow') return path.join(root, 'se-column-west-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_wall_ac_shadow') return path.join(root, 'south-wall-ac-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-beam-shadow-wardrobe-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall_beam_shadow') return path.join(root, 'east-wall-beam-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_sw_column_north_shadow') return path.join(root, 'sw-column-north-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_wall_beam_shadow') return path.join(root, 'west-wall-beam-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_sw_column_inner_shadow') return path.join(root, 'sw-column-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_beam_inner_shadow') return path.join(root, 'west-beam-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_beam_under_shadow') return path.join(root, 'west-beam-under-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_beam_inner_shadow') return path.join(root, 'east-beam-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_beam_under_shadow') return path.join(root, 'east-beam-under-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_left_reveal_shadow') return path.join(root, 'south-window-left-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_right_reveal_shadow') return path.join(root, 'south-window-right-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return path.join(root, 'south-window-bottom-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_top_reveal_shadow') return path.join(root, 'south-window-top-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_iron_door_reveal') return path.join(root, 'iron-door-reveal-1024px-1000spp');
   return null;
 }
 
 function buildR7310RuntimePointer({ report, manifest, validationReport, artifactHashes }) {
+  const acceptedIronDoorBody = report.surfaceName === 'c1_iron_door_body_diffuse_light_live_specular';
+  const formalPointerPath = r7310PointerPathForSurface(report.surfaceName, report.northeastFurnitureMode || 'bed');
+  const acceptedFormalFullBake = Boolean(formalPointerPath)
+    && report.bakedRadianceKind === 'full_diffuse_radiance'
+    && report.directLightAlreadyIncluded === true
+    && report.addDirectLightAfterBakeLookup === false;
   const pointer = {
     version: report.version,
-    packageStatus: 'architecture_probe',
+    packageStatus: acceptedIronDoorBody || acceptedFormalFullBake ? 'accepted' : 'diagnostic_only',
+    deliveryRole: acceptedIronDoorBody
+      ? 'accepted_hybrid_baked_diffuse_live_specular'
+      : (acceptedFormalFullBake ? 'formal_full_bake' : 'diagnostic_only'),
     runtimeScope: r7310RuntimeScopeForSurface(report.surfaceName),
     runtimeEnabledDefault: true,
     packageDir: manifest.packageDir,
@@ -5699,6 +5647,7 @@ async function main() {
       return;
     }
     if (args.northWallNormalFidelityProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall normal fidelity Step A probe');
       const targetSamples = args.targetSamples || 128;
       const defaultCameraCases = [
@@ -5898,7 +5847,7 @@ async function main() {
         const pixels = new Float32Array(atlasBuffer.buffer, atlasBuffer.byteOffset, atlasBuffer.byteLength / 4);
         return { pointer, pixels, atlasPath };
       }
-      const northWallAtlas = loadRuntimeAtlasPointer('r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json');
+      const northWallAtlas = loadRuntimeAtlasPointer('__retired_architecture_probe_pointer_removed__.json');
       function lumaRgb(r, g, b) {
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       }
@@ -6421,6 +6370,7 @@ async function main() {
       return;
     }
     if (args.northBeamGapRedLiveProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall red LIVE-vs-baked phase-1 probe');
       const cameraCases = [
         {
@@ -6691,7 +6641,7 @@ async function main() {
         const id = Math.round(Number(targetId));
         if (atlasPointers.has(id)) return atlasPointers.get(id);
         const pointerFileByTarget = {
-          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json'
+          1002: '__retired_architecture_probe_pointer_removed__.json'
         };
         const fileName = pointerFileByTarget[id];
         if (!fileName) return null;
@@ -6848,6 +6798,7 @@ async function main() {
       return;
     }
     if (args.northBeamGapProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall / east-west beam red-blue hybrid probe');
       const cameraCases = [
         {
@@ -7233,11 +7184,11 @@ async function main() {
         const id = Math.round(Number(targetId));
         if (atlasPointers.has(id)) return atlasPointers.get(id);
         const pointerFileByTarget = {
-          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json',
-          1015: 'r7-3-10-c1-west-beam-inner-shadow-runtime-package.json',
-          1016: 'r7-3-10-c1-west-beam-under-shadow-runtime-package.json',
-          1017: 'r7-3-10-c1-east-beam-inner-shadow-runtime-package.json',
-          1018: 'r7-3-10-c1-east-beam-under-shadow-runtime-package.json'
+          1002: '__retired_architecture_probe_pointer_removed__.json',
+          1015: '__retired_architecture_probe_pointer_removed__.json',
+          1016: '__retired_architecture_probe_pointer_removed__.json',
+          1017: '__retired_architecture_probe_pointer_removed__.json',
+          1018: '__retired_architecture_probe_pointer_removed__.json'
         };
         const fileName = pointerFileByTarget[id];
         if (!fileName) return null;

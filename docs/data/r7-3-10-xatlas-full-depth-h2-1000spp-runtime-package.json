@@ -73,7 +73,8 @@
     "coverageReport": "coverage-report.json",
     "bakeDiagnostics": "bake-diagnostics.json",
     "crossPageRadianceSeamReport": "cross-page-radiance-seam-report.json",
-    "coplanarRadianceContinuityReport": "coplanar-radiance-continuity-report.json"
+    "coplanarRadianceContinuityReport": "coplanar-radiance-continuity-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "contactEdgeProtection": {
     "policy": "a-narrow-bake-ray-origin",
@@ -97,7 +98,8 @@
   },
   "artifactHashes": {
     "atlasPatch0Sha256": "9c9382d039e6d4dd3e111e8dd7d748aeca20a4c32ddee2337baabaec3d8b3f4c",
-    "texelMetadataPatch0Sha256": "41e20c4ce10183135b2fb2eae2df66fb4d197009933b30130dea620931c7933b"
+    "texelMetadataPatch0Sha256": "41e20c4ce10183135b2fb2eae2df66fb4d197009933b30130dea620931c7933b",
+    "runtimeAtlasPatch0Sha256": "0c4de80a1a5f0ac13f7a1e2e9889ab07703d4cc57b644c9591793db2527fb807"
   },
   "note": "Formal H2 is a direct 1000 SPP full-radiance page. Publishing requires metric A NARROW coverage and both first-texel continuity checks to pass. H2 radiance is stitched in world space from the current ceiling light field; publish requires the coplanar continuity report to pass. H2 radiance is stitched in world space from the current ceiling light field; publish requires the coplanar continuity report to pass.",
   "coplanarRadianceSource": {
@@ -128,5 +130,8 @@
       }
     ],
     "continuityReport": "coplanar-radiance-continuity-report.json"
-  }
+  },
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 2498560
 }
