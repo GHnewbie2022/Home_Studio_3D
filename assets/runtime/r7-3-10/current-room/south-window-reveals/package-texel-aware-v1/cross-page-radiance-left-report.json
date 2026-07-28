@@ -1,0 +1,98 @@
+{
+  "schema": "r7-3-10-cross-page-radiance-seam-check-v1",
+  "status": "PASS",
+  "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+  "packageAtlasGroup": "c1_xatlas_south_window_reveals_candidate",
+  "policy": {
+    "comparisonMode": "first-texel-neighbor",
+    "firstTexelBandMaxM": 0.0013,
+    "adjacentTexelBandMinM": 0.0013,
+    "adjacentTexelBandMaxM": 0.0038,
+    "nearBandMaxM": 0.005,
+    "interiorBandMinM": 0.015,
+    "interiorBandMaxM": 0.035,
+    "endpointInsetM": 0.004,
+    "intervalToleranceM": 0.000001,
+    "blackLumaThreshold": 0.00001,
+    "minNearSamples": 8,
+    "minInteriorSamples": 16,
+    "minMedianRatio": 0.95,
+    "minP10Ratio": 0.8,
+    "minAbsoluteDrop": 0.005
+  },
+  "counts": {
+    "packageSurfaces": 1,
+    "evaluatedEdges": 1,
+    "evaluatedSides": 1,
+    "failedSides": 0,
+    "nearTexels": 770,
+    "interiorTexels": 2310,
+    "nearExactBlackTexels": 0
+  },
+  "failedSideKeys": [],
+  "sides": [
+    {
+      "edgeId": "south_window_left_reveal__full|south_window_top_reveal_depth:z:3.056:3.256:{\"y\":2.905,\"x\":-1.75}",
+      "pairKey": "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "surfaceId": "south_window_left_reveal__full",
+      "line": {
+        "axis": "z",
+        "min": 3.056,
+        "max": 3.256,
+        "constants": {
+          "y": 2.905,
+          "x": -1.75
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 770,
+        "interiorTexels": 2310,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.1532691,
+        "firstTexelP10": 0.13851158,
+        "adjacentTexelsMedian": 0.1539189,
+        "adjacentTexelsP10": 0.1392154,
+        "medianRatio": 0.99577826,
+        "p10Ratio": 0.99494433,
+        "medianDrop": 0.00064981,
+        "p10Drop": 0.00070383,
+        "firstTexelSamples": 308,
+        "adjacentTexelSamples": 308
+      },
+      "radiance": {
+        "nearMedian": 0.15330364,
+        "nearP10": 0.13926289,
+        "interiorMedian": 0.15885597,
+        "interiorP10": 0.14466343,
+        "medianRatio": 0.96504802,
+        "p10Ratio": 0.96266828,
+        "medianDrop": 0.00555233,
+        "p10Drop": 0.00540053
+      }
+    }
+  ],
+  "pointer": "docs/data/r7-3-10-xatlas-south-window-reveals-runtime-package.json",
+  "packageDir": "assets/runtime/r7-3-10/current-room/south-window-reveals/package-texel-aware-v1",
+  "surfaceId": "south_window_left_reveal__full",
+  "triangleIds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "triangleMappingSource": "assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-input-mesh.json",
+  "evaluatedTriangleIds": [
+    0,
+    1
+  ],
+  "requiredPairKeys": [
+    "south_window_left_reveal__full|south_window_top_reveal_depth"
+  ]
+}

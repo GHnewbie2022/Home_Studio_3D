@@ -118,7 +118,7 @@ class CdpSocket {
 		this.host = parsed.hostname; this.port = Number(parsed.port || 80);
 		this.path = `${parsed.pathname}${parsed.search}`;
 		this.socket = null; this.buffer = Buffer.alloc(0); this.nextId = 1;
-		this.pending = new Map(); this.fragments = [];
+		this.pending = new Map(); this.fragments = []; this.diagnostics = [];
 	}
 	async connect() {
 		this.socket = net.connect(this.port, this.host);
@@ -180,6 +180,19 @@ class CdpSocket {
 				payload = Buffer.concat(this.fragments); this.fragments = [];
 			} else if (frame.opcode !== 0x1) { continue; }
 			const message = JSON.parse(payload.toString('utf8'));
+			if (!message.id && message.method) {
+				const isConsoleDiagnostic = message.method === 'Runtime.consoleAPICalled' &&
+					(message.params?.type === 'error' || message.params?.type === 'warning');
+				const isHttpFailure = message.method === 'Network.responseReceived' &&
+					Number(message.params?.response?.status || 0) >= 400;
+				if (isConsoleDiagnostic || isHttpFailure ||
+					message.method === 'Runtime.exceptionThrown' ||
+					message.method === 'Network.loadingFailed' ||
+					message.method === 'Log.entryAdded' ||
+					message.method === 'Inspector.targetCrashed') {
+					this.diagnostics.push({ method: message.method, params: message.params || null });
+				}
+			}
 			if (message.id && this.pending.has(message.id)) {
 				const pending = this.pending.get(message.id);
 				this.pending.delete(message.id);
@@ -240,6 +253,8 @@ function shotExpression(shot, minS, sampleTimeout) {
 		const set = (name, val) => { if (typeof window[name] === 'function') window[name](val); };
 		// Default the main room surfaces ON so contact zones render in context; per-shot flags override.
 		const def = (k, d) => (k in f ? f[k] : d);
+		if ('fullRoom' in f)
+			set('setR7310C1FullRoomDiffuseRuntimeEnabled', !!f.fullRoom);
 		set('setR7310C1FloorDiffuseRuntimeEnabled', def('floor', true));
 		set('setR7310C1NorthWallDiffuseRuntimeEnabled', def('north', true));
 		set('setR7310C1EastWallDiffuseRuntimeEnabled', def('east', true));
@@ -257,6 +272,19 @@ function shotExpression(shot, minS, sampleTimeout) {
 			r7310C1XatlasRuntimeWestWallSwitchActive = switchEnabled;
 			r7310C1XatlasRuntimeWestWallSwitchDirectIncluded = switchEnabled && !!r7310C1XatlasRuntimeWestWallSwitchRawDirectIncluded;
 			r7310C1SetXatlasParamWestWallSwitchEnabled(switchEnabled);
+			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
+				updateR7310C1FullRoomDiffuseRuntimeUniforms();
+			if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
+		}
+		// Diagnostic-only isolation for the retired per-reveal shadow pages. The
+		// formal south-window XATLAS page remains enabled so this identifies
+		// whether an invalid edge texel is falling through to the legacy route.
+		if ('legacySouthWindowRevealShadows' in f) {
+			const legacyEnabled = !!f.legacySouthWindowRevealShadows;
+			r7310C1SouthWindowLeftRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowRightRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowBottomRevealShadowRuntimeEnabled = legacyEnabled;
+			r7310C1SouthWindowTopRevealShadowRuntimeEnabled = legacyEnabled;
 			if (typeof updateR7310C1FullRoomDiffuseRuntimeUniforms === 'function')
 				updateR7310C1FullRoomDiffuseRuntimeUniforms();
 			if (typeof resetR738MainAccumulation === 'function') resetR738MainAccumulation();
@@ -358,6 +386,9 @@ async function main() {
 		await cdp.connect();
 		await cdp.send('Runtime.enable');
 		await cdp.send('Page.enable');
+		await cdp.send('Network.enable');
+		await cdp.send('Log.enable');
+		await cdp.send('Inspector.enable');
 		await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
 		await waitForExpression(cdp,
 			`document.readyState === 'complete' &&
@@ -368,6 +399,20 @@ async function main() {
 				document.getElementById('loading-screen') &&
 				getComputedStyle(document.getElementById('loading-screen')).display === 'none'`,
 			300000);
+		await waitForExpression(cdp,
+			`typeof window.reportHomeStudioLoadingTiming === 'function' && (() => {
+				const timing = window.reportHomeStudioLoadingTiming();
+				return timing.readyFrameRecorded === true &&
+					timing.stages.some((stage) => stage.name === 'first-ready-frame-gpu');
+			})()`,
+			30000);
+		const startupTiming = await evaluate(cdp,
+			`typeof window.reportHomeStudioLoadingTiming === 'function'
+				? window.reportHomeStudioLoadingTiming()
+				: null`,
+			{ timeoutMs: 120000 });
+		const startupShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+		fs.writeFileSync(path.join(outputDir, 'startup-viewport.png'), Buffer.from(startupShot.data, 'base64'));
 		if (preShotDelayMs > 0) await sleep(preShotDelayMs);
 		for (const shot of config.shots) {
 			const measurement = await evaluate(cdp, shotExpression(shot, minSamples, sampleTimeoutMs), { awaitPromise: true, timeoutMs: sampleTimeoutMs + 60000 });
@@ -380,7 +425,15 @@ async function main() {
 			results.push(measurement);
 			console.log(`${shot.name}: samples=${measurement ? measurement.sampleCounter : 'n/a'} canvas=${measurement ? measurement.canvasWidth + 'x' + measurement.canvasHeight : 'n/a'}`);
 		}
-		fs.writeFileSync(path.join(outputDir, 'capture-report.json'), JSON.stringify({ pageUrl, package: pkg, minSamples, generatedAt: new Date().toISOString(), results }, null, 2));
+		fs.writeFileSync(path.join(outputDir, 'capture-report.json'), JSON.stringify({
+			pageUrl,
+			package: pkg,
+			minSamples,
+			generatedAt: new Date().toISOString(),
+			startupTiming,
+			diagnostics: cdp.diagnostics,
+			results
+		}, null, 2));
 		console.log(path.join(outputDir, 'capture-report.json'));
 	} finally {
 		if (cdp) { try { await cdp.send('Browser.close', {}, 5000); } catch { cdp.close(); } }

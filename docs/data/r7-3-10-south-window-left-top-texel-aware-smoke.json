@@ -1,0 +1,68 @@
+{
+  "pageUrl": "http://localhost:9002/Home_Studio.html?atlasMaster=raw&cb=r7310-south-window-left-top-texel-aware-anarrow-v2",
+  "outputDir": "assets/runtime/r7-3-10/work/r7-3-10-south-window-left-top-texel-aware-anarrow-v2-smoke",
+  "minSamples": 100,
+  "sampleTimeoutMs": 300000,
+  "preShotDelayMs": 1000,
+  "query": {
+    "atlasMaster": "raw"
+  },
+  "shots": [
+    {
+      "name": "south-window-left-top-contact",
+      "position": {
+        "x": -1.649827,
+        "y": 2.768051,
+        "z": 3.036142
+      },
+      "forward": {
+        "x": -0.455679,
+        "y": 0.719443,
+        "z": 0.524174
+      },
+      "fov": 55,
+      "forceXatlasMasterVariant": "raw",
+      "flags": {
+        "floor": true,
+        "north": true,
+        "east": true,
+        "west": true,
+        "south": true,
+        "ceiling": true,
+        "structural": true,
+        "ironDoorReveal": true,
+        "nonSquare": true,
+        "acShadow": false,
+        "legacySouthWindowRevealShadows": false
+      }
+    },
+    {
+      "name": "ceiling-h2-continuity-regression",
+      "position": {
+        "x": -1.243616,
+        "y": 2.021138,
+        "z": 2.343643
+      },
+      "forward": {
+        "x": 0.350305,
+        "y": 0.75062,
+        "z": 0.560228
+      },
+      "fov": 53,
+      "forceXatlasMasterVariant": "raw",
+      "flags": {
+        "floor": true,
+        "north": true,
+        "east": true,
+        "west": true,
+        "south": true,
+        "ceiling": true,
+        "structural": true,
+        "ironDoorReveal": true,
+        "nonSquare": true,
+        "acShadow": false,
+        "legacySouthWindowRevealShadows": false
+      }
+    }
+  ]
+}

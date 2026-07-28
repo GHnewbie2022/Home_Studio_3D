@@ -65,6 +65,44 @@ test('mutation self-test rejects a target page darkened by three percent and rep
   assert.equal(result.report.after.radiance.medianRatio, 1);
 });
 
+test('mutation self-test extends valid interior radiance across a dark first source texel', async () => {
+  const core = await import('../tools/lib/r7-3-10-coplanar-lightmap-stitch-core.mjs');
+  const fixture = makeFixture();
+  const source = new Float32Array(
+    fixture.sourceAtlasBuffer.buffer,
+    fixture.sourceAtlasBuffer.byteOffset,
+    fixture.sourceAtlasBuffer.byteLength / 4
+  );
+  for (let y = 0; y < fixture.sourceHeight; y += 1)
+    source.set([0.01, 0.01, 0.01, 1], (y * fixture.sourceWidth) * 4);
+  const unprotected = core.stitchCoplanarLightmap(fixture);
+  const protectedResult = core.stitchCoplanarLightmap({
+    ...fixture,
+    sourceEdgeExtensions: [{
+      pairKey: 'fixture-left-contact',
+      axis: 'x',
+      value: 0,
+      inwardDirection: 1,
+      radiusM: 0.1875
+    }]
+  });
+  const unprotectedAtlas = new Float32Array(
+    unprotected.atlasBuffer.buffer,
+    unprotected.atlasBuffer.byteOffset,
+    unprotected.atlasBuffer.byteLength / 4
+  );
+  const protectedAtlas = new Float32Array(
+    protectedResult.atlasBuffer.buffer,
+    protectedResult.atlasBuffer.byteOffset,
+    protectedResult.atlasBuffer.byteLength / 4
+  );
+  assert.ok(unprotectedAtlas[0] < 0.05, 'mutation must create a dark first-texel seam');
+  assert.ok(Math.abs(protectedAtlas[0] - protectedAtlas[4]) <= 1.0e-6,
+    'protected first texel must inherit the nearest valid interior radiance');
+  assert.equal(protectedResult.report.edgeExtensionPolicy.enabled, true);
+  assert.equal(protectedResult.report.edgeExtensionPolicy.extensions[0].pairKey, 'fixture-left-contact');
+});
+
 test('formal H2 page is stitched from the current ceiling light field', () => {
   const pointer = JSON.parse(fs.readFileSync(H2_POINTER, 'utf8'));
   const ceiling = JSON.parse(fs.readFileSync(CEILING_POINTER, 'utf8'));
@@ -74,6 +112,12 @@ test('formal H2 page is stitched from the current ceiling light field', () => {
   assert.equal(stitch.sourceSurfaceId, 'ceiling_open');
   assert.equal(stitch.sourcePointer, CEILING_POINTER);
   assert.equal(stitch.sourcePackageDir, ceiling.packageDir);
+  assert.equal(stitch.edgeExtensionMethod, 'world-space-nearest-valid-interior-texel-extension');
+  assert.equal(stitch.edgeExtensions.length, 2);
+  assert.deepEqual(stitch.edgeExtensions.map((entry) => entry.pairKey).sort(), [
+    'south_window_left_reveal__full|south_window_top_reveal_depth',
+    'south_window_right_reveal__full|south_window_top_reveal_depth'
+  ]);
   assert.match(stitch.sourceAtlasSha256, /^[a-f0-9]{64}$/);
   assert.match(stitch.targetAtlasSha256, /^[a-f0-9]{64}$/);
   const reportPath = `${pointer.packageDir}/${pointer.artifacts.coplanarRadianceContinuityReport}`;
@@ -84,4 +128,11 @@ test('formal H2 page is stitched from the current ceiling light field', () => {
   assert.ok(report.after.radiance.p95RelativeDifference <= 0.01);
   assert.equal(report.provenance.sourceAtlasSha256, stitch.sourceAtlasSha256);
   assert.equal(report.provenance.targetAtlasSha256, stitch.targetAtlasSha256);
+  const seamReportPath = `${pointer.packageDir}/${pointer.artifacts.crossPageRadianceSeamReport}`;
+  const seamReport = JSON.parse(fs.readFileSync(seamReportPath, 'utf8'));
+  assert.equal(seamReport.status, 'PASS');
+  assert.deepEqual(seamReport.sides.map((entry) => entry.pairKey).sort(), [
+    'south_window_left_reveal__full|south_window_top_reveal_depth',
+    'south_window_right_reveal__full|south_window_top_reveal_depth'
+  ]);
 });

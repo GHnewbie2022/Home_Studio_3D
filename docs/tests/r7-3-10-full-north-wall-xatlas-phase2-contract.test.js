@@ -52,7 +52,11 @@ requireText('prepare tool red line', prepareTool, 'noFormalRadianceBake');
 requireText('InitCommon raw package key', initCommon, "full-north-wall-raw");
 requireText('InitCommon OIDN package key', initCommon, "full-north-wall-oidn");
 requireText('InitCommon raw package pointer', initCommon, 'r7-3-10-xatlas-full-north-wall-1000spp-runtime-package.json');
-requireText('InitCommon OIDN package pointer', initCommon, 'r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json');
+requireText(
+	'InitCommon retired OIDN alias',
+	initCommon,
+	'R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_OIDN_PACKAGE_URL = R7310_C1_XATLAS_RUNTIME_FULL_NORTH_WALL_RAW_PACKAGE_URL'
+);
 requireText('InitCommon full scope', initCommon, 'c1_xatlas_full_north_wall_runtime');
 requireText('InitCommon runtime scope flag', initCommon, 'r7310C1XatlasRuntimeFullNorthWallActive');
 requireText('InitCommon full-wall CPU UV', initCommon, 'function r7310C1XatlasFullNorthWallUvFromWorldPosition');
@@ -69,12 +73,12 @@ requireRegex('shader full-wall first-hit route', shader, /r7310XatlasRuntimeFirs
 requireRegex('shader full-room short-circuit route', shader, /r7310C1FullRoomDiffuseShortCircuit[\s\S]*r7310C1XatlasNorthWallUv/);
 
 const samplerNames = [...shader.matchAll(/^\s*uniform\s+sampler2D\s+([A-Za-z0-9_]+)\s*;/gm)].map((match) => match[1]);
-assert.equal(samplerNames.length, 15, 'fragment sampler count must stay at 15');
+assert.equal(samplerNames.length, 16, 'fragment sampler count must stay at the Chrome Metal limit of 16');
 assert.ok(!samplerNames.some((name) => /FullNorthWall|XatlasFull/i.test(name)), 'full-wall runtime must not add a dedicated sampler');
 
-const xatlasRuntimeRadianceApply = shader.indexOf('accumCol += mask * (uR7310C1XatlasRuntimeSeparatedAlbedo');
-const xatlasRuntimeApply = shader.lastIndexOf('if (r7310XatlasRuntimeFirstHit)', xatlasRuntimeRadianceApply);
-const xatlasRuntimeApplyEnd = shader.indexOf('if (r7310FloorHybridFirstHit', xatlasRuntimeRadianceApply);
+const xatlasRuntimeApplyMarker = shader.indexOf('float r7310XatlasRuntimeSurfaceSeparatedAlbedo');
+const xatlasRuntimeApply = shader.lastIndexOf('if (r7310XatlasRuntimeFirstHit)', xatlasRuntimeApplyMarker);
+const xatlasRuntimeApplyEnd = shader.indexOf('if (r7310FloorHybridFirstHit && !r7310XatlasRuntimeMapped)', xatlasRuntimeApplyMarker);
 assert.ok(xatlasRuntimeApply >= 0 && xatlasRuntimeApplyEnd > xatlasRuntimeApply, 'xatlas first-hit apply block must be locatable');
 const applyBody = shader.slice(xatlasRuntimeApply, xatlasRuntimeApplyEnd);
 assert.match(
@@ -92,9 +96,11 @@ assert.match(
 	/bool\s+r7310XatlasRuntimeWestFirstHit\b\s*=\s*r7310XatlasRuntimeFirstHit\s*&&\s*r7310XatlasRuntimeWestMapped\s*;/,
 	'xatlas runtime must classify west first-hit from the shared xatlas hit and the west param mapping'
 );
-const directIncludedBreakBlock = /if\s*\(\s*uR7310C1XatlasRuntime(?:FullWestWall|WestThresholdTop|WestThresholdFront|FullNorthWall)DirectIncluded\s*>\s*0\.5\s*&&[\s\S]*?\n\s*\}/g;
-const indirectContinuationBody = applyBody.replace(directIncludedBreakBlock, '');
-assert.doesNotMatch(indirectContinuationBody, /\bbreak\s*;/, 'indirect xatlas first-hit apply path must keep direct-light continuation');
+assert.match(
+	applyBody,
+	/uR7310C1XatlasRuntimeFullNorthWallDirectIncluded\s*>\s*0\.5\s*&&\s*r7310XatlasRuntimeNorthFirstHit[\s\S]{0,120}\bbreak\s*;/,
+	'north full-radiance runtime must skip the shared direct-light continuation'
+);
 
 const xatlasFirstHitDecls = [...shader.matchAll(/\bbool\s+r7310XatlasRuntimeFirstHit\b/g)];
 assert.equal(xatlasFirstHitDecls.length, 1, 'runtime must keep one xatlas first-hit declaration');

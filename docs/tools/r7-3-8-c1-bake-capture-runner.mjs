@@ -157,9 +157,6 @@ export function parseArgs(argv) {
     beamUnderShadowProbeTest: false,
     cameraPoseInfoTest: false,
     eastWallShadowVisualTest: false,
-    northBeamGapProbeTest: false,
-    northBeamGapRedLiveProbeTest: false,
-    northWallNormalFidelityProbeTest: false,
     hybridOwnerProbe: false,
     cutawayGeometryProbe: false,
     uiToggleTest: false,
@@ -252,9 +249,6 @@ export function parseArgs(argv) {
     else if (arg === '--r7310-beam-under-shadow-probe') out.beamUnderShadowProbeTest = true;
     else if (arg === '--r7310-camera-pose-info-test') out.cameraPoseInfoTest = true;
     else if (arg === '--r7310-east-wall-shadow-visual-test') out.eastWallShadowVisualTest = true;
-    else if (arg === '--r7310-north-beam-gap-probe') out.northBeamGapProbeTest = true;
-    else if (arg === '--r7310-north-beam-gap-red-live-probe') out.northBeamGapRedLiveProbeTest = true;
-    else if (arg === '--r7310-north-wall-normal-fidelity-probe') out.northWallNormalFidelityProbeTest = true;
     else if (arg === '--r7310-hybrid-owner-probe') out.hybridOwnerProbe = true;
     else if (arg === '--r7310-cutaway-geometry-probe') out.cutawayGeometryProbe = true;
     else if (arg === '--r7310-ui-toggle-test') out.uiToggleTest = true;
@@ -280,7 +274,7 @@ export function parseArgs(argv) {
   if (!['chrome', 'chromium', 'auto'].includes(out.browser)) throw new Error('Invalid browser mode');
   if (!['auto', 'default', 'no-borrow'].includes(out.bakeShader)) throw new Error('Invalid r7310 bake shader mode');
   if (!['none', 'flush', 'fence', 'finish'].includes(out.r7310BakeSubmissionBoundary)) throw new Error('Invalid r7310BakeSubmissionBoundary');
-	  if (!['floor', 'north-wall', 'east-wall', 'full-east-wall-xatlas', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'structural-beams-columns-xatlas', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-floor-xatlas', 'central-desk-xatlas', 'iron-door-reveal', 'iron-door-body'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
+	  if (!['floor', 'north-wall', 'east-wall', 'full-east-wall-xatlas', 'west-wall', 'south-wall', 'ceiling', 'structural-beams-columns', 'structural-beams-columns-xatlas', 'se-column-north-shadow', 'se-column-west-shadow', 'south-wall-ac-shadow', 'east-wall-beam-shadow', 'sw-column-north-shadow', 'west-wall-beam-shadow', 'sw-column-inner-shadow', 'west-beam-inner-shadow', 'west-beam-under-shadow', 'east-beam-inner-shadow', 'east-beam-under-shadow', 'south-window-left-reveal-shadow', 'south-window-right-reveal-shadow', 'south-window-bottom-reveal-shadow', 'south-window-top-reveal-shadow', 'south-window-top-reveal-depth-h2', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-floor-xatlas', 'central-desk-xatlas', 'northeast-bed-xatlas', 'south-fixed-furniture-xatlas', 'iron-door-reveal', 'iron-door-body'].includes(out.r7310Surface)) throw new Error('Invalid r7310Surface');
   // R7-3.10 第6步防呆（CODEX 4，2026-06-16）：south-window-top-reveal-depth-h2（H2 -Y 窗楣）必須搭 --r7310-full-room-diffuse-bake，
   // 否則 captureHelper 會掉回預設 reportR738C1BakeCaptureAfterSamples、靜默烤成地板（0519/0616 兩次地板錯包的真因）。直接擋下。
   if (out.r7310Surface === 'south-window-top-reveal-depth-h2' && !out.fullRoomDiffuseBake)
@@ -296,6 +290,24 @@ export function parseArgs(argv) {
     throw new Error('--r7310-surface=central-desk-xatlas requires --r7310-xatlas-full-radiance-bake');
   if (out.r7310Surface === 'central-desk-xatlas' && out.r7310SeparatedIrradianceBake)
     throw new Error('--r7310-surface=central-desk-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+  if (out.r7310Surface === 'northeast-bed-xatlas' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=northeast-bed-xatlas requires --r7310-full-room-diffuse-bake');
+  if (out.r7310Surface === 'northeast-bed-xatlas' && !out.xatlasBake)
+    throw new Error('--r7310-surface=northeast-bed-xatlas requires --r7310-xatlas-bake');
+  if (out.r7310Surface === 'northeast-bed-xatlas' && !out.xatlasFullRadianceBake)
+    throw new Error('--r7310-surface=northeast-bed-xatlas requires --r7310-xatlas-full-radiance-bake');
+  if (out.r7310Surface === 'northeast-bed-xatlas' && out.r7310SeparatedIrradianceBake)
+    throw new Error('--r7310-surface=northeast-bed-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
+  if (out.r7310Surface === 'northeast-bed-xatlas' && out.r7310NeFurniture !== 'bed')
+    throw new Error('--r7310-surface=northeast-bed-xatlas requires --r7310-ne-furniture=bed');
+  if (out.r7310Surface === 'south-fixed-furniture-xatlas' && !out.fullRoomDiffuseBake)
+    throw new Error('--r7310-surface=south-fixed-furniture-xatlas requires --r7310-full-room-diffuse-bake');
+  if (out.r7310Surface === 'south-fixed-furniture-xatlas' && !out.xatlasBake)
+    throw new Error('--r7310-surface=south-fixed-furniture-xatlas requires --r7310-xatlas-bake');
+  if (out.r7310Surface === 'south-fixed-furniture-xatlas' && !out.xatlasFullRadianceBake)
+    throw new Error('--r7310-surface=south-fixed-furniture-xatlas requires --r7310-xatlas-full-radiance-bake');
+  if (out.r7310Surface === 'south-fixed-furniture-xatlas' && out.r7310SeparatedIrradianceBake)
+    throw new Error('--r7310-surface=south-fixed-furniture-xatlas uses full-radiance; remove --r7310-separated-irradiance-bake');
   if (out.r7310Surface === 'structural-beams-columns-xatlas' && !out.xatlasBake)
     throw new Error('--r7310-surface=structural-beams-columns-xatlas requires --r7310-xatlas-bake');
   if (out.r7310Surface === 'structural-beams-columns-xatlas' && !out.xatlasFullRadianceBake)
@@ -2596,7 +2608,7 @@ function validatePayload({ report, validationReport, atlasBuffer, metadataBuffer
 	    c1_se_column_west_shadow: 0.50,
 	    c1_ceiling: 0.83,
 	    c1_iron_door_reveal: 0.60,
-	    c1_iron_door_body_diffuse_light_live_specular_probe: 0.99,
+	    c1_iron_door_body_diffuse_light_live_specular: 0.99,
 	    c1_xatlas_a1_bake_spike: 0.70,
 	    central_desk: 0.75,
 	    floor_open: 0.618
@@ -2654,6 +2666,8 @@ function loadStructuralGeometryGateReport() {
 }
 
 function r7310RuntimeScopeForSurface(surfaceName) {
+  if (surfaceName === 'northeast_bed') return 'c1_xatlas_northeast_bed_runtime';
+  if (surfaceName === 'south_fixed_furniture') return 'c1_xatlas_south_fixed_furniture_runtime';
   if (surfaceName === 'c1_floor_full_room') return 'c1_floor_full_room_first_hit_hybrid';
   if (surfaceName === 'c1_north_wall') return 'c1_north_wall_first_hit_hybrid';
   if (surfaceName === 'c1_east_wall') return 'c1_east_wall_first_hit_hybrid';
@@ -2681,72 +2695,30 @@ function r7310RuntimeScopeForSurface(surfaceName) {
 }
 
 function r7310PointerPathForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
-  if (surfaceName === 'c1_floor_full_room') return 'docs/data/r7-3-10-c1-floor-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-north-wall-wardrobe-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return 'docs/data/r7-3-10-c1-north-wall-separated-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_north_wall') return 'docs/data/r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-wardrobe-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_east_wall') return 'docs/data/r7-3-10-c1-east-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_west_wall') return 'docs/data/r7-3-10-c1-west-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_south_wall') return 'docs/data/r7-3-10-c1-south-wall-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_ceiling') return 'docs/data/r7-3-10-c1-ceiling-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_structural_beams_columns') return 'docs/data/r7-3-10-c1-structural-beams-columns-full-room-diffuse-runtime-package.json';
-  if (surfaceName === 'c1_se_column_north_shadow') return 'docs/data/r7-3-10-c1-se-column-north-shadow-runtime-package.json';
-  if (surfaceName === 'c1_se_column_west_shadow') return 'docs/data/r7-3-10-c1-se-column-west-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_wall_ac_shadow') return 'docs/data/r7-3-10-c1-south-wall-ac-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-wardrobe-runtime-package.json';
-  if (surfaceName === 'c1_east_wall_beam_shadow') return 'docs/data/r7-3-10-c1-east-wall-beam-shadow-runtime-package.json';
-  if (surfaceName === 'c1_sw_column_north_shadow') return 'docs/data/r7-3-10-c1-sw-column-north-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_wall_beam_shadow') return 'docs/data/r7-3-10-c1-west-wall-beam-shadow-runtime-package.json';
-  if (surfaceName === 'c1_sw_column_inner_shadow') return 'docs/data/r7-3-10-c1-sw-column-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_beam_inner_shadow') return 'docs/data/r7-3-10-c1-west-beam-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_west_beam_under_shadow') return 'docs/data/r7-3-10-c1-west-beam-under-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_beam_inner_shadow') return 'docs/data/r7-3-10-c1-east-beam-inner-shadow-runtime-package.json';
-  if (surfaceName === 'c1_east_beam_under_shadow') return 'docs/data/r7-3-10-c1-east-beam-under-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_left_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-left-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_right_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-right-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-bottom-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_south_window_top_reveal_shadow') return 'docs/data/r7-3-10-c1-south-window-top-reveal-shadow-runtime-package.json';
-  if (surfaceName === 'c1_iron_door_reveal') return 'docs/data/r7-3-10-c1-iron-door-reveal-runtime-package.json';
+  if (surfaceName === 'northeast_bed') return 'docs/data/r7-3-10-xatlas-northeast-bed-runtime-package.json';
+  if (surfaceName === 'south_fixed_furniture') return 'docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json';
   return null;
 }
 
 function r7310FormalPackageDirForSurface(surfaceName, northeastFurnitureMode = 'bed', options = {}) {
-  const root = path.join(repoRoot, 'assets', 'bakes', 'r7-3-10', 'c1-static-diffuse');
-  if (surfaceName === 'c1_floor_full_room') return path.join(root, 'floor-full-room-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'north-wall-wardrobe-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall' && options.separatedIrradianceBake === true) return path.join(root, 'north-wall-separated-1024px-1000spp');
-  if (surfaceName === 'c1_north_wall') return path.join(root, 'north-wall-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-wardrobe-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall') return path.join(root, 'east-wall-1024px-1000spp');
-  if (surfaceName === 'c1_west_wall') return path.join(root, 'west-wall-iron-door-hole-1024px-1000spp');
-  if (surfaceName === 'c1_south_wall') return path.join(root, 'south-wall-window-hole-1024px-1000spp');
-  if (surfaceName === 'c1_ceiling') return path.join(root, 'ceiling-full-room-1024px-1000spp');
-  if (surfaceName === 'c1_structural_beams_columns') return path.join(root, 'structural-beams-columns-1024px-1000spp');
-  if (surfaceName === 'c1_se_column_north_shadow') return path.join(root, 'se-column-north-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_se_column_west_shadow') return path.join(root, 'se-column-west-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_wall_ac_shadow') return path.join(root, 'south-wall-ac-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall_beam_shadow' && northeastFurnitureMode === 'wardrobe') return path.join(root, 'east-wall-beam-shadow-wardrobe-1024px-1000spp');
-  if (surfaceName === 'c1_east_wall_beam_shadow') return path.join(root, 'east-wall-beam-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_sw_column_north_shadow') return path.join(root, 'sw-column-north-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_wall_beam_shadow') return path.join(root, 'west-wall-beam-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_sw_column_inner_shadow') return path.join(root, 'sw-column-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_beam_inner_shadow') return path.join(root, 'west-beam-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_west_beam_under_shadow') return path.join(root, 'west-beam-under-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_beam_inner_shadow') return path.join(root, 'east-beam-inner-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_east_beam_under_shadow') return path.join(root, 'east-beam-under-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_left_reveal_shadow') return path.join(root, 'south-window-left-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_right_reveal_shadow') return path.join(root, 'south-window-right-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_bottom_reveal_shadow') return path.join(root, 'south-window-bottom-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_south_window_top_reveal_shadow') return path.join(root, 'south-window-top-reveal-shadow-1024px-1000spp');
-  if (surfaceName === 'c1_iron_door_reveal') return path.join(root, 'iron-door-reveal-1024px-1000spp');
+  if (surfaceName === 'northeast_bed') return path.join(repoRoot, 'assets', 'runtime', 'r7-3-10', 'current-room', 'northeast-bed', 'package');
+  if (surfaceName === 'south_fixed_furniture') return path.join(repoRoot, 'assets', 'runtime', 'r7-3-10', 'current-room', 'south-fixed-furniture', 'package');
   return null;
 }
 
 function buildR7310RuntimePointer({ report, manifest, validationReport, artifactHashes }) {
+  const acceptedIronDoorBody = report.surfaceName === 'c1_iron_door_body_diffuse_light_live_specular';
+  const formalPointerPath = r7310PointerPathForSurface(report.surfaceName, report.northeastFurnitureMode || 'bed');
+  const acceptedFormalFullBake = Boolean(formalPointerPath)
+    && report.bakedRadianceKind === 'full_diffuse_radiance'
+    && report.directLightAlreadyIncluded === true
+    && report.addDirectLightAfterBakeLookup === false;
   const pointer = {
     version: report.version,
-    packageStatus: 'architecture_probe',
+    packageStatus: acceptedIronDoorBody || acceptedFormalFullBake ? 'accepted' : 'diagnostic_only',
+    deliveryRole: acceptedIronDoorBody
+      ? 'accepted_hybrid_baked_diffuse_live_specular'
+      : (acceptedFormalFullBake ? 'formal_full_bake' : 'diagnostic_only'),
     runtimeScope: r7310RuntimeScopeForSurface(report.surfaceName),
     runtimeEnabledDefault: true,
     packageDir: manifest.packageDir,
@@ -2756,10 +2728,13 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
     surfaceName: report.surfaceName,
     requestedSamples: report.requestedSamples,
     targetAtlasResolution: report.targetAtlasResolution,
+    targetAtlasWidth: manifest.targetAtlasWidth,
+    targetAtlasHeight: manifest.targetAtlasHeight,
     diffuseOnly: report.diffuseOnly === true,
     bakedRadianceKind: report.bakedRadianceKind || null,
     directLightAlreadyIncluded: report.directLightAlreadyIncluded === true,
     addDirectLightAfterBakeLookup: report.addDirectLightAfterBakeLookup === true,
+    multiplyAlbedoAfterBakeLookup: report.multiplyAlbedoAfterBakeLookup === true,
     upscaled: report.upscaled === false ? false : report.upscaled,
     worldBounds: report.worldBounds || null,
     artifacts: {
@@ -2776,6 +2751,21 @@ function buildR7310RuntimePointer({ report, manifest, validationReport, artifact
       validTexelRatio: report.atlasSummary ? report.atlasSummary.validTexelRatio : null
     }
   };
+  if (report.surfaceName === 'northeast_bed') {
+    pointer.packageStatus = 'accepted';
+    pointer.runtimeScope = 'c1_xatlas_northeast_bed_runtime';
+    pointer.northeastFurnitureMode = 'bed';
+    pointer.mapping = 'xatlas_texel_worldpos_furniture_static';
+    pointer.runtimeAtlasSlot = 14;
+    pointer.runtimeArchitecture = 'multi_page_furniture_lightmap';
+  }
+  if (report.surfaceName === 'south_fixed_furniture') {
+    pointer.packageStatus = 'accepted';
+    pointer.runtimeScope = 'c1_xatlas_south_fixed_furniture_runtime';
+    pointer.mapping = 'xatlas_texel_worldpos_furniture_static';
+    pointer.runtimeAtlasSlot = 15;
+    pointer.runtimeArchitecture = 'multi_page_furniture_lightmap';
+  }
   if (report.surfaceName === 'c1_structural_beams_columns') {
     const gateReport = loadStructuralGeometryGateReport();
     pointer.mapping = 'packed_rect_islands';
@@ -2982,6 +2972,33 @@ function sha256(buffer) {
 
 function readF32LE(buffer, floatIndex) {
   return buffer.readFloatLE(floatIndex * 4);
+}
+
+export function summarizeR7310C1XatlasFinalAtlasExactBlack({ atlasBuffer, width, height }) {
+  if (!Buffer.isBuffer(atlasBuffer)) throw new TypeError('atlasBuffer must be a Buffer');
+  const pixelCount = Number(width) * Number(height);
+  const expectedBytes = pixelCount * 4 * 4;
+  if (!Number.isInteger(pixelCount) || pixelCount <= 0 || atlasBuffer.length !== expectedBytes) {
+    throw new Error(`final atlas byte length mismatch: expected ${expectedBytes}, got ${atlasBuffer.length}`);
+  }
+  let alphaOneTexels = 0;
+  let alphaOneExactBlackTexels = 0;
+  for (let index = 0; index < pixelCount; index += 1) {
+    const offset = index * 4;
+    if (readF32LE(atlasBuffer, offset + 3) < 0.5) continue;
+    alphaOneTexels += 1;
+    const energy = Math.abs(readF32LE(atlasBuffer, offset + 0)) +
+      Math.abs(readF32LE(atlasBuffer, offset + 1)) +
+      Math.abs(readF32LE(atlasBuffer, offset + 2));
+    if (energy === 0) alphaOneExactBlackTexels += 1;
+  }
+  return {
+    schema: 'r7-3-10-xatlas-final-atlas-exact-black-v1',
+    width: Number(width),
+    height: Number(height),
+    alphaOneTexels,
+    alphaOneExactBlackTexels
+  };
 }
 
 function writeF32LE(buffer, floatIndex, value) {
@@ -3737,6 +3754,19 @@ function validateR739Payload({ report, validationReport, referenceBuffer, maskBu
   return { status: failed.length === 0 ? 'pass' : 'fail', checks, failed };
 }
 
+function xatlasPackageSurfaceName(runnerSurfaceKey) {
+  return ({
+    'full-east-wall-xatlas': 'east_wall',
+    'full-floor-xatlas': 'floor',
+    'central-desk-xatlas': 'central_desk',
+    'structural-beams-columns-xatlas': 'structural_beams_columns',
+    'south-window-reveals-xatlas': 'south_window_reveals',
+    'west-wall-switch-xatlas': 'west_wall_switch',
+    'northeast-bed-xatlas': 'northeast_bed',
+    'south-fixed-furniture-xatlas': 'south_fixed_furniture'
+  })[runnerSurfaceKey] || '';
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const useBakeOnlyNoBorrowShader = args.bakeShader === 'no-borrow' ||
@@ -3772,7 +3802,9 @@ async function main() {
     const adrExtensionsQuery = [
       args.seed !== null ? `seed=${encodeURIComponent(args.seed)}` : '',
       `outputMode=${encodeURIComponent(args.outputMode)}`,
-      args.dumpAtSamples.length ? `dumpAtSamples=${encodeURIComponent(args.dumpAtSamples.join(','))}` : ''
+      args.dumpAtSamples.length ? `dumpAtSamples=${encodeURIComponent(args.dumpAtSamples.join(','))}` : '',
+      args.xatlasBake ? `r7310XatlasCaptureSurface=${encodeURIComponent(args.r7310Surface)}` : '',
+      args.xatlasBake ? `r7310XatlasCapturePackageFace=${encodeURIComponent(xatlasPackageSurfaceName(args.r7310Surface) || '')}` : ''
     ].filter(Boolean).join('&');
     const url = args.r7310IronDoorHybridReflectionVisualAbTest
       ? `http://127.0.0.1:${args.httpPort}/Home_Studio.html?atlasMaster=raw&cb=r7310-iron-door-hybrid-visual-ab-${Date.now()}`
@@ -5615,6 +5647,7 @@ async function main() {
       return;
     }
     if (args.northWallNormalFidelityProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall normal fidelity Step A probe');
       const targetSamples = args.targetSamples || 128;
       const defaultCameraCases = [
@@ -5814,7 +5847,7 @@ async function main() {
         const pixels = new Float32Array(atlasBuffer.buffer, atlasBuffer.byteOffset, atlasBuffer.byteLength / 4);
         return { pointer, pixels, atlasPath };
       }
-      const northWallAtlas = loadRuntimeAtlasPointer('r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json');
+      const northWallAtlas = loadRuntimeAtlasPointer('__retired_architecture_probe_pointer_removed__.json');
       function lumaRgb(r, g, b) {
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       }
@@ -6337,6 +6370,7 @@ async function main() {
       return;
     }
     if (args.northBeamGapRedLiveProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall red LIVE-vs-baked phase-1 probe');
       const cameraCases = [
         {
@@ -6607,7 +6641,7 @@ async function main() {
         const id = Math.round(Number(targetId));
         if (atlasPointers.has(id)) return atlasPointers.get(id);
         const pointerFileByTarget = {
-          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json'
+          1002: '__retired_architecture_probe_pointer_removed__.json'
         };
         const fileName = pointerFileByTarget[id];
         if (!fileName) return null;
@@ -6764,6 +6798,7 @@ async function main() {
       return;
     }
     if (args.northBeamGapProbeTest) {
+      throw new Error('Retired architecture probe: use the formal XATLAS full-room contract.');
       console.error('[r738-runner] running R7-3.10 north-wall / east-west beam red-blue hybrid probe');
       const cameraCases = [
         {
@@ -7149,11 +7184,11 @@ async function main() {
         const id = Math.round(Number(targetId));
         if (atlasPointers.has(id)) return atlasPointers.get(id);
         const pointerFileByTarget = {
-          1002: 'r7-3-10-c1-north-wall-full-room-diffuse-runtime-package.json',
-          1015: 'r7-3-10-c1-west-beam-inner-shadow-runtime-package.json',
-          1016: 'r7-3-10-c1-west-beam-under-shadow-runtime-package.json',
-          1017: 'r7-3-10-c1-east-beam-inner-shadow-runtime-package.json',
-          1018: 'r7-3-10-c1-east-beam-under-shadow-runtime-package.json'
+          1002: '__retired_architecture_probe_pointer_removed__.json',
+          1015: '__retired_architecture_probe_pointer_removed__.json',
+          1016: '__retired_architecture_probe_pointer_removed__.json',
+          1017: '__retired_architecture_probe_pointer_removed__.json',
+          1018: '__retired_architecture_probe_pointer_removed__.json'
         };
         const fileName = pointerFileByTarget[id];
         if (!fileName) return null;
@@ -11334,10 +11369,10 @@ async function main() {
 	          northeastFurnitureMode: '${args.r7310NeFurniture}',
 	          separatedIrradianceBake: ${args.r7310SeparatedIrradianceBake ? 'true' : 'false'},
 	          xatlasFullRadianceBake: ${args.xatlasFullRadianceBake ? 'true' : 'false'},
-		          xatlasSurfaceName: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'central_desk' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'structural_beams_columns' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'south_window_reveals' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'west_wall_switch' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'east_wall' : undefined)))))},
-		          xatlasBatch: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'central_desk_full_radiance' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'structural_beams_columns_full_radiance' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'south_window_reveals_full_radiance' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'west_wall_switch_full_radiance' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'east_wall_full_radiance' : undefined)))))},
-		          xatlasTargetId: ${args.r7310Surface === 'central-desk-xatlas' ? 1100 : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 1200 : (args.r7310Surface === 'south-window-reveals-xatlas' ? 1300 : (args.r7310Surface === 'west-wall-switch-xatlas' ? 1400 : (args.r7310Surface === 'full-east-wall-xatlas' ? 1003 : 'undefined'))))},
-		          xatlasMapping: ${JSON.stringify(args.r7310Surface === 'central-desk-xatlas' ? 'xatlas_texel_worldpos_furniture_static' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'xatlas_texel_worldpos_structural_static' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'xatlas_texel_worldpos_south_window_reveals_static' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'xatlas_texel_worldpos_west_wall_switch_static' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'xatlas_texel_worldpos_east_wall_static' : undefined)))))},
+	          xatlasSurfaceName: ${JSON.stringify(xatlasPackageSurfaceName(args.r7310Surface) || undefined)},
+		          xatlasBatch: ${JSON.stringify(args.r7310Surface === 'south-fixed-furniture-xatlas' ? 'south_fixed_furniture_full_radiance' : (args.r7310Surface === 'northeast-bed-xatlas' ? 'northeast_bed_full_radiance' : (args.r7310Surface === 'central-desk-xatlas' ? 'central_desk_full_radiance' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'structural_beams_columns_full_radiance' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'south_window_reveals_full_radiance' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'west_wall_switch_full_radiance' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'east_wall_full_radiance' : undefined)))))))},
+		          xatlasTargetId: ${args.r7310Surface === 'south-fixed-furniture-xatlas' ? 1600 : (args.r7310Surface === 'northeast-bed-xatlas' ? 1500 : (args.r7310Surface === 'central-desk-xatlas' ? 1100 : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 1200 : (args.r7310Surface === 'south-window-reveals-xatlas' ? 1300 : (args.r7310Surface === 'west-wall-switch-xatlas' ? 1400 : (args.r7310Surface === 'full-east-wall-xatlas' ? 1003 : 'undefined'))))))},
+		          xatlasMapping: ${JSON.stringify(args.r7310Surface === 'south-fixed-furniture-xatlas' ? 'xatlas_texel_worldpos_furniture_static' : (args.r7310Surface === 'northeast-bed-xatlas' ? 'xatlas_texel_worldpos_furniture_static' : (args.r7310Surface === 'central-desk-xatlas' ? 'xatlas_texel_worldpos_furniture_static' : (args.r7310Surface === 'structural-beams-columns-xatlas' ? 'xatlas_texel_worldpos_structural_static' : (args.r7310Surface === 'south-window-reveals-xatlas' ? 'xatlas_texel_worldpos_south_window_reveals_static' : (args.r7310Surface === 'west-wall-switch-xatlas' ? 'xatlas_texel_worldpos_west_wall_switch_static' : (args.r7310Surface === 'full-east-wall-xatlas' ? 'xatlas_texel_worldpos_east_wall_static' : undefined)))))))},
 	          fullRadianceBake: ${args.fullRadianceBake ? 'true' : 'false'},
 	          cameraState: ${JSON.stringify(r7310FullRoomCaptureCameraOptions.cameraState)},
 	          northWallCamera: ${r7310FullRoomCaptureCameraOptions.northWallCamera ? 'true' : 'false'},
@@ -11373,6 +11408,8 @@ async function main() {
       awaitPromise: true,
       timeoutMs: args.timeoutMs + 180000
     });
+    if (args.r7310Surface === 'northeast-bed-xatlas')
+      payload.report.northeastFurnitureMode = args.r7310NeFurniture;
     console.error('[r738-runner] capture helper returned');
     let atlasBuffer = rectangularR7310Bake
       ? await readBrowserFloatArtifactBuffer(cdp, 'window.getR738C1BakeCaptureArtifacts().atlasPixels')
@@ -11400,18 +11437,6 @@ async function main() {
         const xatlasPreparedMeshSource = args.xatlasBake
           ? loadR7310C1XatlasPreparedMesh(args)
           : null;
-        const xatlasGeometricEdgeExtrapolation = xatlasPreparedMeshSource
-          ? applyR7310C1XatlasGeometricEdgeExtrapolation({
-              atlasBuffer,
-              metadataBuffer,
-              width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
-              height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
-              trianglePieceIds: xatlasPreparedMeshSource.mesh.triangleMetadata.map((entry) => entry.pieceId),
-              maxDistanceLimitTexels: args.xatlasAlphaDilationLimit
-            })
-          : null;
-        if (xatlasGeometricEdgeExtrapolation)
-          atlasBuffer = xatlasGeometricEdgeExtrapolation.atlasBuffer;
         const xatlasAlphaPolicy = args.xatlasBake && xatlasValidityMask
       ? applyR7310C1XatlasAlphaPolicy({
           atlasBuffer,
@@ -11425,6 +11450,22 @@ async function main() {
             })
           : null;
         if (xatlasAlphaPolicy) atlasBuffer = xatlasAlphaPolicy.atlasBuffer;
+        // Repair valid radiance first. Physical-edge extrapolation must consume the
+        // repaired interior, then chart padding must consume the final edge values.
+        const xatlasGeometricEdgeExtrapolation = xatlasPreparedMeshSource
+          ? applyR7310C1XatlasGeometricEdgeExtrapolation({
+              atlasBuffer,
+              metadataBuffer,
+              width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+              height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution,
+              trianglePieceIds: xatlasPreparedMeshSource.mesh.triangleMetadata.map((entry) =>
+                entry.pieceId ?? entry.surfaceHint
+              ),
+              maxDistanceLimitTexels: args.xatlasAlphaDilationLimit
+            })
+          : null;
+        if (xatlasGeometricEdgeExtrapolation)
+          atlasBuffer = xatlasGeometricEdgeExtrapolation.atlasBuffer;
         const xatlasChartGutterDilation = args.xatlasBake && xatlasDilationSource
           ? applyR7310C1XatlasChartGutterDilation({
               atlasBuffer,
@@ -11447,7 +11488,17 @@ async function main() {
       : null;
     if (centralDeskGeometricEdgeExtrapolation)
       atlasBuffer = centralDeskGeometricEdgeExtrapolation.atlasBuffer;
-    const xatlasBakedSeamRadianceGate = xatlasPreparedMeshSource
+    const xatlasFinalAtlasExactBlack = xatlasPreparedMeshSource
+      ? summarizeR7310C1XatlasFinalAtlasExactBlack({
+          atlasBuffer,
+          width: payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
+          height: payload.report.targetAtlasHeight || (payload.report.atlasSummary && payload.report.atlasSummary.patchHeight) || payload.report.targetAtlasResolution
+        })
+      : null;
+    const furnitureXatlasSurface = ['northeast-bed-xatlas', 'south-fixed-furniture-xatlas'].includes(args.r7310Surface);
+    const southFixedFurnitureSeamGateRequired = args.r7310Surface === 'south-fixed-furniture-xatlas';
+    const xatlasBakedSeamRadianceGate = xatlasPreparedMeshSource &&
+      (southFixedFurnitureSeamGateRequired || !furnitureXatlasSurface)
       ? evaluateBakedSeamRadianceGate({
           atlasBuffer,
           metadataBuffer,
@@ -11458,10 +11509,13 @@ async function main() {
             repoRoot,
             'docs/data/r7-3-10-full-room-black-edge-report.json'
           ), 'utf8')),
-          packageAtlasGroup: payload.report.surfaceName || args.r7310Surface
+          packageAtlasGroup: payload.report.surfaceName || args.r7310Surface,
+          policy: southFixedFurnitureSeamGateRequired
+            ? { comparisonMode: 'first-texel-neighbor' }
+            : {}
         })
       : null;
-	    const xatlasSurfaceExpectedValidTexelRatio = ['structural-beams-columns-xatlas', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-east-wall-xatlas'].includes(args.r7310Surface) && xatlasValidityMask
+	    const xatlasSurfaceExpectedValidTexelRatio = ['structural-beams-columns-xatlas', 'south-window-reveals-xatlas', 'west-wall-switch-xatlas', 'full-east-wall-xatlas', 'northeast-bed-xatlas', 'south-fixed-furniture-xatlas'].includes(args.r7310Surface) && xatlasValidityMask
       ? r7310C1XatlasValidityMaskRatio(
           xatlasValidityMask.maskBuffer,
           payload.report.targetAtlasWidth || (payload.report.atlasSummary && payload.report.atlasSummary.patchWidth) || payload.report.targetAtlasResolution,
@@ -11476,8 +11530,12 @@ async function main() {
       smokeTest: args.smokeTest,
 	      expectedValidTexelRatio: xatlasSurfaceExpectedValidTexelRatio
     });
-	    const packageRoot = args.r7310Surface === 'central-desk-xatlas'
-	      ? 'r7-3-10-central-desk-xatlas-bake'
+	    const packageRoot = args.r7310Surface === 'south-fixed-furniture-xatlas'
+	      ? 'r7-3-10-south-fixed-furniture-xatlas-bake'
+	      : (args.r7310Surface === 'northeast-bed-xatlas'
+	      ? 'r7-3-10-northeast-bed-xatlas-bake'
+	      : (args.r7310Surface === 'central-desk-xatlas'
+	        ? 'r7-3-10-central-desk-xatlas-bake'
 		      : (args.r7310Surface === 'structural-beams-columns-xatlas'
 		        ? 'r7-3-10-structural-xatlas-bake'
 		        : (args.r7310Surface === 'south-window-reveals-xatlas'
@@ -11486,11 +11544,10 @@ async function main() {
 		            ? 'r7-3-10-west-wall-switch-xatlas-bake'
 		            : (args.r7310Surface === 'full-east-wall-xatlas'
 		              ? 'r7-3-10-full-east-wall-xatlas-bake'
-		              : (args.xatlasBake ? 'r7-3-10-xatlas-bake-spike' : (args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture'))))));
+	              : (args.xatlasBake ? 'r7-3-10-xatlas-bake-spike' : (args.fullRoomDiffuseBake ? 'r7-3-10-full-room-diffuse-bake' : 'r7-3-8-c1-1000spp-bake-capture'))))))));
 	    const formalR7310Bake = args.fullRoomDiffuseBake &&
-	      args.atlasResolution === 1024 &&
+	      (furnitureXatlasSurface || (args.atlasResolution === 1024 && !rectangularR7310Bake)) &&
 	      (args.targetSamples || args.samples) >= 1000 &&
-	      !rectangularR7310Bake &&
 	      !args.smokeTest &&
 	      !args.throwawayPackage;
 	    const separatedR7310Bake = args.r7310SeparatedIrradianceBake === true;
@@ -11523,6 +11580,14 @@ async function main() {
         preparedMeshPath: path.relative(repoRoot, xatlasPreparedMeshSource.meshPath),
         sourceScope: xatlasGeometricEdgeExtrapolation.report.policy.sourceScope,
         targetScope: xatlasGeometricEdgeExtrapolation.report.policy.targetScope
+      };
+    }
+    if (xatlasFinalAtlasExactBlack) {
+      manifest.artifacts.xatlasFinalAtlasReport = 'xatlas-final-atlas-report.json';
+      manifest.xatlasFinalAtlasExactBlack = {
+        enabled: true,
+        decisionSource: 'fully-postprocessed-atlas',
+        alphaOneExactBlackTexels: xatlasFinalAtlasExactBlack.alphaOneExactBlackTexels
       };
     }
     if (xatlasBakedSeamRadianceGate) {
@@ -11601,12 +11666,10 @@ async function main() {
       }
       if (!xatlasAlphaPolicy || !xatlasAlphaPolicy.report)
         markRunnerFailedCheck('xatlas-edge-dilation-missing');
-      else {
-        const edgeCounts = xatlasAlphaPolicy.report.counts || {};
-        if ((edgeCounts.unrepairedVisibleExactBlackTexels || 0) > 0 ||
-          (edgeCounts.alphaOneExactBlackTexels || 0) > 0)
-          markRunnerFailedCheck('xatlas-visible-black-edge-texels');
-      }
+      if (!xatlasFinalAtlasExactBlack)
+        markRunnerFailedCheck('xatlas-final-atlas-exact-black-missing');
+      else if (xatlasFinalAtlasExactBlack.alphaOneExactBlackTexels > 0)
+        markRunnerFailedCheck('xatlas-visible-black-edge-texels');
       if (!xatlasChartGutterDilation || !xatlasChartGutterDilation.report)
         markRunnerFailedCheck('xatlas-chart-gutter-dilation-missing');
       else {
@@ -11616,20 +11679,20 @@ async function main() {
           (gutterCounts.sourceExactBlackTexels || 0) > 0)
           markRunnerFailedCheck('xatlas-chart-gutter-dilation-incomplete');
       }
-      if (!xatlasBakedSeamRadianceGate)
-        markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-missing');
-      else if (xatlasBakedSeamRadianceGate.status !== 'PASS')
-        markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-failed');
+      if (southFixedFurnitureSeamGateRequired || !furnitureXatlasSurface) {
+        if (!xatlasBakedSeamRadianceGate)
+          markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-missing');
+        else if (xatlasBakedSeamRadianceGate.status !== 'PASS')
+          markRunnerFailedCheck('xatlas-baked-seam-radiance-gate-failed');
+      }
     }
     if (args.r7310Surface === 'central-desk-xatlas') {
       if (!xatlasAlphaPolicy || !xatlasAlphaPolicy.report)
         markRunnerFailedCheck('central-desk-xatlas-edge-dilation-missing');
-      else {
-        const edgeCounts = xatlasAlphaPolicy.report.counts || {};
-        if ((edgeCounts.unrepairedVisibleExactBlackTexels || 0) > 0 ||
-          (edgeCounts.alphaOneExactBlackTexels || 0) > 0)
-          markRunnerFailedCheck('central-desk-xatlas-visible-black-edge-texels');
-      }
+      if (!xatlasFinalAtlasExactBlack)
+        markRunnerFailedCheck('central-desk-xatlas-final-atlas-exact-black-missing');
+      else if (xatlasFinalAtlasExactBlack.alphaOneExactBlackTexels > 0)
+        markRunnerFailedCheck('central-desk-xatlas-visible-black-edge-texels');
       if (!centralDeskGeometricEdgeExtrapolation || !centralDeskGeometricEdgeExtrapolation.report)
         markRunnerFailedCheck('central-desk-xatlas-geometric-edge-extrapolation-missing');
       else {
@@ -11679,6 +11742,8 @@ async function main() {
       fs.writeFileSync(path.join(packageDir, 'xatlas-chart-gutter-report.json'), `${JSON.stringify(xatlasChartGutterDilation.report, null, 2)}\n`);
     if (xatlasGeometricEdgeExtrapolation && xatlasGeometricEdgeExtrapolation.report)
       fs.writeFileSync(path.join(packageDir, 'xatlas-geometric-edge-report.json'), `${JSON.stringify(xatlasGeometricEdgeExtrapolation.report, null, 2)}\n`);
+    if (xatlasFinalAtlasExactBlack)
+      fs.writeFileSync(path.join(packageDir, 'xatlas-final-atlas-report.json'), `${JSON.stringify(xatlasFinalAtlasExactBlack, null, 2)}\n`);
     if (xatlasBakedSeamRadianceGate)
       fs.writeFileSync(path.join(packageDir, 'baked-seam-radiance-report.json'), `${JSON.stringify(xatlasBakedSeamRadianceGate, null, 2)}\n`);
     if (centralDeskGeometricEdgeExtrapolation && centralDeskGeometricEdgeExtrapolation.report)

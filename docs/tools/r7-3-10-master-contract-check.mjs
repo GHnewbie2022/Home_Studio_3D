@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// R7-3.10 Phase 2B I2/I3 全域 master 契約檢查（改寫自 west-only check-r7310-west-wall-albedo-contract.cjs，
-// 改為涵蓋全 master sub-rect；west 只是第一個使用者，後續南牆/樑柱吃同一套）。
+// R7-3.10 Phase 2B I2/I3 全域 master 契約檢查。
 // R4-2C master contract（registry 已含 west_wall_open owner、west identity 硬契約已實作）：驗
-//   1. 牆面 / H2 / 天花板 albedo 規格一致；floor 由地板專用 uniform 控制
+//   1. 每個 surface 的 albedo 規格自洽：分離光照須在 runtime 乘材質色；完整彩色 radiance 不再乘色
 //   2. 每 pointer bakeAlbedoFree（multiplyAlbedo=true 須伴 bakeAlbedoFree=true，防雙乘色）
 //   3. 已存在 sub-rect 尺寸（package targetAtlasWidth/Height == 獨立 axis spec atlasW/H）
 //   4. packing 可行性（各面與 master target 尺寸 ≤ MAX_TEXTURE_SIZE 16384）
@@ -17,13 +16,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SPEC = JSON.parse(readFileSync(join(ROOT, 'docs/tools/r7-3-10-surface-axis-spec.json'), 'utf8'));
 const MAX_TEX = 16384;            // M4 Pro 實測 MAX_TEXTURE_SIZE
 const MASTER_W = 8923, MASTER_H = 7645; // C1A packed 三欄 master target（CODEX 接受）
-const OIDN = {
-  ceiling: 'docs/data/r7-3-10-xatlas-full-ceiling-1000spp-oidn-runtime-package.json',
-  north: 'docs/data/r7-3-10-xatlas-full-north-wall-1000spp-oidn-rtlightmap-runtime-package.json',
-  east: 'docs/data/r7-3-10-xatlas-full-east-wall-1000spp-oidn-runtime-package.json',
-  depth_h2: 'docs/data/r7-3-10-xatlas-full-depth-h2-1000spp-oidn-runtime-package.json',
-  floor: 'docs/data/r7-3-10-xatlas-full-floor-oidn-runtime-package.json'
-};
 
 function loadPointer(rel) {
   const p = join(ROOT, rel);
@@ -38,7 +30,6 @@ const records = []; // {face, variant, mul, free, kind, direct, addDirect, w, h,
 for (const s of SPEC.surfaces) {
   const cands = [];
   if (s.packageRaw) cands.push(['RAW', s.packageRaw]);
-  if (OIDN[s.masterRectKey]) cands.push(['OIDN', OIDN[s.masterRectKey]]);
   for (const [variant, rel] of cands) {
     const pj = loadPointer(rel);
     if (!pj) { lines.push(`NOTE ${s.masterRectKey}/${variant}：pointer 不存在（${rel}）`); continue; }
@@ -56,18 +47,8 @@ for (const s of SPEC.surfaces) {
   }
 }
 
-// 1. albedo 規格：牆面 / H2 / 天花板仍一致；floor 由 uR7310C1XatlasRuntimeFullFloorSeparatedAlbedo 控制
-const sharedRecords = records.filter(r => r.face !== 'floor');
-const floorRecords = records.filter(r => r.face === 'floor');
-const mulSet = [...new Set(sharedRecords.map(r => r.mul))];
-if (mulSet.length > 1) {
-  fail = true;
-  lines.push(`FAIL albedo 共享面一致性：floor 以外的 pointer multiplyAlbedoAfterBakeLookup 出現混用 ${JSON.stringify(mulSet)}`);
-  for (const r of sharedRecords) lines.push(`     ${r.face}/${r.variant} mul=${r.mul} (${r.rel})`);
-} else {
-  lines.push(`PASS albedo 共享面一致性：floor 以外 ${sharedRecords.length} 個 pointer multiplyAlbedoAfterBakeLookup=${mulSet[0]}`);
-}
-const badFloorAlbedo = floorRecords.filter(r => {
+// 1. albedo 規格：每面可採分離光照或完整彩色 radiance，兩種都必須逐面自洽。
+const badAlbedo = records.filter(r => {
   const albedoFreeIndirect = r.mul && r.free;
   const fullRadianceCarriesMaterialColor =
     !r.mul &&
@@ -77,12 +58,12 @@ const badFloorAlbedo = floorRecords.filter(r => {
     !r.addDirect;
   return !(albedoFreeIndirect || fullRadianceCarriesMaterialColor);
 });
-if (badFloorAlbedo.length) {
+if (badAlbedo.length) {
   fail = true;
-  for (const r of badFloorAlbedo)
-    lines.push(`FAIL floor albedo 規格：${r.face}/${r.variant} mul=${r.mul} free=${r.free} kind=${r.kind} direct=${r.direct} addDirect=${r.addDirect}（${r.rel}）`);
-} else if (floorRecords.length) {
-  lines.push(`PASS floor albedo 規格：${floorRecords.length} 個 floor pointer 符合地板專用 runtime 旗標`);
+  for (const r of badAlbedo)
+    lines.push(`FAIL albedo 規格：${r.face}/${r.variant} mul=${r.mul} free=${r.free} kind=${r.kind} direct=${r.direct} addDirect=${r.addDirect}（${r.rel}）`);
+} else {
+  lines.push(`PASS albedo 規格：${records.length} 個 pointer 的材質色與完整 radiance 旗標逐面自洽`);
 }
 
 // 2. bakeAlbedoFree 契約（mul=true 必伴 free=true）

@@ -1,0 +1,31 @@
+[
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[R7-3.10 xatlas auto-load failed]"
+        },
+        {
+          "type": "string",
+          "value": "R7-3.10 xatlas raw lightmap page size mismatch northeast_bed 0x0"
+        }
+      ],
+      "executionContextId": 2,
+      "timestamp": 1784199849701.115,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "7",
+            "url": "http://127.0.0.1:9017/js/InitCommon.js?v=r7310-iron-door-fix7-scale-restore-v1",
+            "lineNumber": 7901,
+            "columnNumber": 15
+          }
+        ]
+      }
+    }
+  }
+]

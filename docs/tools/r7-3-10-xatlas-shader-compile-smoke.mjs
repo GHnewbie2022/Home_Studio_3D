@@ -18,6 +18,7 @@ const viewportWidth = Number(args.width || process.env.R7310_VIEWPORT_WIDTH || 1
 const viewportHeight = Number(args.height || process.env.R7310_VIEWPORT_HEIGHT || 720);
 const minSamples = Number(args['min-samples'] || process.env.R7310_MIN_SAMPLES || 8);
 const sppCap = Number(args['spp-cap'] || process.env.R7310_SPP_CAP || 0);
+const maxMagentaRatio = Number(args['max-magenta-ratio'] || process.env.R7310_MAX_MAGENTA_RATIO || 0.01);
 const timeoutMs = Number(args['timeout-ms'] || process.env.R7310_TIMEOUT_MS || 180000);
 const postLoadWaitMs = Number(args['post-load-wait-ms'] || process.env.R7310_POST_LOAD_WAIT_MS || 0);
 const ironDoorCamera = args['iron-door-camera'] === 'true' || process.env.R7310_IRON_DOOR_CAMERA === 'true';
@@ -28,6 +29,7 @@ if (ironDoorRuntimePlanar || ironDoorRuntimePlanarSourceDisplay)
 	throw new Error('iron door runtime planar smoke retired: retired_baking_mainline_keep_fix7_live');
 const ironDoorBodyDebugMode = args['iron-door-body-debug-mode'] || process.env.R7310_IRON_DOOR_BODY_DEBUG_MODE || '';
 const cameraStateJson = args['camera-state-json'] || process.env.R7310_CAMERA_STATE_JSON || '';
+const xatlasProbeJson = args['xatlas-probe-json'] || process.env.R7310_XATLAS_PROBE_JSON || '';
 const floorProbeMode = String(args['floor-probe-mode'] || process.env.R7310_FLOOR_PROBE_MODE || '').toLowerCase();
 const outputDir = args['out-dir'] || process.env.R7310_OUTPUT_DIR || path.join(os.tmpdir(), `r7310-xatlas-shader-compile-smoke-${Date.now()}`);
 const userDataDir = args['user-data-dir'] || process.env.R7310_USER_DATA_DIR || path.join(os.tmpdir(), `r7310-xatlas-shader-compile-smoke-chrome-${Date.now()}`);
@@ -41,6 +43,14 @@ if (cameraStateJson) {
 		cameraState = JSON.parse(cameraStateJson);
 	} catch (error) {
 		throw new Error(`Invalid --camera-state-json: ${error.message}`);
+	}
+}
+let xatlasProbe = null;
+if (xatlasProbeJson) {
+	try {
+		xatlasProbe = JSON.parse(xatlasProbeJson);
+	} catch (error) {
+		throw new Error(`Invalid --xatlas-probe-json: ${error.message}`);
 	}
 }
 
@@ -374,17 +384,20 @@ function atlasMasterSourceReady(config) {
 	const expectedVariant = expectedAtlasMasterVariant();
 	if (!expectedVariant) return true;
 	const xatlas = config && config.xatlasRuntime ? config.xatlasRuntime : {};
+	const readiness = xatlas.lightmapPageReadiness || {};
 	return xatlas.enabled === true &&
 		xatlas.ready === true &&
 		xatlas.lightmapPagesMode === true &&
-		xatlas.fullNorthWallActive === true &&
-		xatlas.fullWestWallActive === true &&
-		xatlas.fullWestWallDirectIncluded === true &&
-		xatlas.westThresholdTopActive === true &&
-		xatlas.westThresholdFrontActive === true &&
-		xatlas.masterWestVariant === expectedVariant &&
-		xatlas.masterWestThresholdTopVariant === expectedVariant &&
-		xatlas.masterWestThresholdFrontVariant === expectedVariant;
+		xatlas.paramTableLoadStatus === 'ready' &&
+		xatlas.paramTableLoadError === null &&
+		Number.isFinite(xatlas.paramTableSurfaceCount) &&
+		xatlas.paramTableSurfaceCount > 0 &&
+		xatlas.paramTableStorageKind === 'box_data_texture_rows' &&
+		Number.isFinite(xatlas.paramTableTextureHeight) &&
+		xatlas.paramTableTextureHeight > 1 &&
+		readiness.ready === true &&
+		Array.isArray(readiness.missingPageIds) &&
+		readiness.missingPageIds.length === 0;
 }
 
 function pageSmokeExpression() {
@@ -480,6 +493,76 @@ function pageSmokeExpression() {
 				: {};
 		}
 
+		function halfToFloat(value) {
+			const sign = (value & 0x8000) ? -1 : 1;
+			const exponent = (value >> 10) & 0x1f;
+			const fraction = value & 0x03ff;
+			if (exponent === 0) return sign * Math.pow(2, -14) * (fraction / 1024);
+			if (exponent === 31) return fraction ? NaN : sign * Infinity;
+			return sign * Math.pow(2, exponent - 15) * (1 + fraction / 1024);
+		}
+
+		function reportXatlasProbe(probe) {
+			if (!probe || !Number.isInteger(probe.surfaceIndex) || !Array.isArray(probe.point)) return null;
+			const atlasSizeUniform = pathTracingUniforms && pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize
+				? pathTracingUniforms.uR7310C1XatlasRuntimeAtlasSize.value
+				: null;
+			const image = typeof r7310C1XatlasRuntimeDataTexture !== 'undefined' && r7310C1XatlasRuntimeDataTexture
+				? r7310C1XatlasRuntimeDataTexture.image
+				: null;
+			const data = image && image.data ? image.data :
+				(typeof r7310C1XatlasLightmapPageBuffer !== 'undefined' ? r7310C1XatlasLightmapPageBuffer : null);
+			if (typeof r7310C1XatlasParamSurfaceVec4 !== 'function') return { error: 'param table entry unavailable' };
+			const vectors = Array.from({ length: 7 }, function (_, fieldIndex) {
+				const value = r7310C1XatlasParamSurfaceVec4(probe.surfaceIndex, fieldIndex);
+				return value ? value.map(Number) : null;
+			});
+			if (vectors.some(function (value) { return !Array.isArray(value); })) return { error: 'param table entry unavailable' };
+			const umap = vectors[3];
+			const vmap = vectors[4];
+			const mixuv = vectors[5];
+			const rect = vectors[6];
+			const ua = Math.trunc(umap[0]);
+			const va = Math.trunc(vmap[0]);
+			const clamp01 = function (v) { return Math.max(0, Math.min(1, v)); };
+			const mix = function (a, b, t) { return a + (b - a) * t; };
+			const tu = clamp01((Number(probe.point[ua]) - umap[1]) * umap[2]);
+			const tv = clamp01((Number(probe.point[va]) - vmap[1]) * vmap[2]);
+			const localUv = [mix(mixuv[0], mixuv[1], tu), mix(mixuv[2], mixuv[3], tv)];
+			const pixel = [rect[0] + localUv[0] * rect[2], rect[1] + localUv[1] * rect[3]];
+			const width = image ? Number(image.width) : Number(atlasSizeUniform && atlasSizeUniform.x);
+			const height = image ? Number(image.height) : Number(atlasSizeUniform && atlasSizeUniform.y);
+			const centerX = Math.max(0, Math.min(width - 1, Math.floor(pixel[0])));
+			const centerY = Math.max(0, Math.min(height - 1, Math.floor(pixel[1])));
+			const samples = [];
+			if (data && width > 0 && height > 0) {
+				for (let dy = -1; dy <= 1; dy += 1) {
+					for (let dx = -1; dx <= 1; dx += 1) {
+						const x = Math.max(0, Math.min(width - 1, centerX + dx));
+						const y = Math.max(0, Math.min(height - 1, centerY + dy));
+						const offset = (y * width + x) * 4;
+						const raw = [data[offset], data[offset + 1], data[offset + 2], data[offset + 3]].map(Number);
+						samples.push({ x, y, raw, decoded: raw.map(halfToFloat) });
+					}
+				}
+			}
+			return {
+				surfaceIndex: probe.surfaceIndex,
+				point: probe.point.map(Number),
+				vectors,
+				localRect: typeof r7310C1XatlasParamSurfaceLocalRects !== 'undefined'
+					? r7310C1XatlasParamSurfaceLocalRects[probe.surfaceIndex]
+					: null,
+				atlasSize: atlasSizeUniform ? [Number(atlasSizeUniform.x), Number(atlasSizeUniform.y)] : null,
+				textureSize: image ? [Number(image.width), Number(image.height)] : null,
+				tu,
+				tv,
+				localUv,
+				pixel,
+				samples
+			};
+		}
+
 			function normalizeRuntimePlanarLightingMode(value) {
 				return 'same-scene';
 			}
@@ -513,17 +596,20 @@ function pageSmokeExpression() {
 				const expectedVariant = expectedAtlasMasterVariant();
 				if (!expectedVariant) return true;
 				const xatlas = config && config.xatlasRuntime ? config.xatlasRuntime : {};
+				const readiness = xatlas.lightmapPageReadiness || {};
 				return xatlas.enabled === true &&
 					xatlas.ready === true &&
 					xatlas.lightmapPagesMode === true &&
-					xatlas.fullNorthWallActive === true &&
-					xatlas.fullWestWallActive === true &&
-					xatlas.fullWestWallDirectIncluded === true &&
-					xatlas.westThresholdTopActive === true &&
-					xatlas.westThresholdFrontActive === true &&
-					xatlas.masterWestVariant === expectedVariant &&
-					xatlas.masterWestThresholdTopVariant === expectedVariant &&
-					xatlas.masterWestThresholdFrontVariant === expectedVariant;
+					xatlas.paramTableLoadStatus === 'ready' &&
+					xatlas.paramTableLoadError === null &&
+					Number.isFinite(xatlas.paramTableSurfaceCount) &&
+					xatlas.paramTableSurfaceCount > 0 &&
+					xatlas.paramTableStorageKind === 'box_data_texture_rows' &&
+					Number.isFinite(xatlas.paramTableTextureHeight) &&
+					xatlas.paramTableTextureHeight > 1 &&
+					readiness.ready === true &&
+					Array.isArray(readiness.missingPageIds) &&
+					readiness.missingPageIds.length === 0;
 			}
 
 			function retiredRuntimePlanarReady(config) {
@@ -581,18 +667,6 @@ function pageSmokeExpression() {
 		}
 
 		applySmokeCameraState();
-		if (typeof window.setR7310C1NorthWallDiffuseRuntimeEnabled === 'function') {
-			window.setR7310C1NorthWallDiffuseRuntimeEnabled(true);
-		}
-		if (typeof window.setR7310C1UseNonSquareAtlas === 'function') {
-			window.setR7310C1UseNonSquareAtlas(false);
-		}
-		if (typeof window.setR7310C1FullNorthWallXatlasPackage === 'function') {
-			window.setR7310C1FullNorthWallXatlasPackage('raw');
-		}
-		if (typeof window.setR7310C1FullNorthWallXatlasRuntimeEnabled === 'function') {
-			window.setR7310C1FullNorthWallXatlasRuntimeEnabled(true);
-		}
 		if (smokeConfig.ironDoorBodyDebugMode && typeof window.setR7310C1IronDoorBodyDebugMode === 'function') {
 			window.setR7310C1IronDoorBodyDebugMode(smokeConfig.ironDoorBodyDebugMode);
 		}
@@ -702,6 +776,7 @@ function pageSmokeExpression() {
 			sppCap: typeof window.reportSppCap === 'function' ? window.reportSppCap() : null,
 			cameraPose: typeof window.reportR7310CameraPoseInfo === 'function' ? window.reportR7310CameraPoseInfo() : null,
 			requestedCameraState: smokeConfig.cameraState || null,
+			xatlasProbe: reportXatlasProbe(smokeConfig.xatlasProbe),
 			helpers: {
 				cameraSetter: typeof window.setR739Config1ValidationCameraState,
 				runtimeConfigReporter: typeof window.reportR7310C1FullRoomDiffuseRuntimeConfig,
@@ -798,7 +873,7 @@ function pageSmokeExpression() {
 					: null
 			}
 		};
-	}})(${JSON.stringify({ minSamples, sppCap, timeoutMs, postLoadWaitMs, ironDoorCamera, ironDoorRuntimePlanar, ironDoorRuntimePlanarLighting, ironDoorRuntimePlanarSourceDisplay, ironDoorBodyDebugMode, cameraState, floorProbeMode })})`;
+	}})(${JSON.stringify({ minSamples, sppCap, timeoutMs, postLoadWaitMs, ironDoorCamera, ironDoorRuntimePlanar, ironDoorRuntimePlanarLighting, ironDoorRuntimePlanarSourceDisplay, ironDoorBodyDebugMode, cameraState, xatlasProbe, floorProbeMode })})`;
 }
 
 function eventText(event) {
@@ -869,6 +944,7 @@ async function main() {
 		fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));
 		const classified = classifyEvents(cdp.events, chrome.stderrText);
 		const nonBlack = pageSmoke.canvas.nonBlackRatio > 0.01 && pageSmoke.canvas.lumaMax > 2;
+		const magentaWithinLimit = pageSmoke.canvas.magentaDominantRatio <= maxMagentaRatio;
 		const expectedLightingMode = expectedRuntimePlanarLightingMode();
 		const runtimePlanarSourceModeReady = !ironDoorRuntimePlanar ||
 				(pageSmoke.config.ironDoorRuntimePlanarReflectionReady === true &&
@@ -889,6 +965,7 @@ async function main() {
 		);
 		const status = pageSmoke.documentReadyState === 'complete' &&
 			nonBlack &&
+			magentaWithinLimit &&
 			classified.programInvalidCount === 0 &&
 			classified.shaderErrorCount === 0 &&
 			classified.contextLostCount === 0 &&
@@ -914,6 +991,9 @@ async function main() {
 			checks: {
 				pageLoaded: pageSmoke.documentReadyState === 'complete',
 				nonBlack,
+				magentaWithinLimit,
+				maxMagentaRatio,
+				actualMagentaRatio: pageSmoke.canvas.magentaDominantRatio,
 				programInvalidCount: classified.programInvalidCount,
 				shaderErrorCount: classified.shaderErrorCount,
 				contextLostCount: classified.contextLostCount,

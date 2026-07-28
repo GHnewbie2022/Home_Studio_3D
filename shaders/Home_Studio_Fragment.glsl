@@ -173,6 +173,9 @@ uniform float uR7310C1XatlasRuntimeFullCeilingDirectIncluded;
 uniform float uR7310C1XatlasRuntimeDepthH2DirectIncluded;
 uniform float uR7310C1XatlasRuntimeFullFloorDirectIncluded;
 uniform float uR7310C1XatlasRuntimeCentralDeskDirectIncluded;
+uniform float uR7310C1XatlasRuntimeNortheastBedDirectIncluded;
+uniform float uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded;
+uniform int uR7310C1NortheastFurnitureMode;
 uniform float uR7310C1XatlasRuntimeStructuralDirectIncluded;
 uniform float uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded;
 uniform float uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded;
@@ -183,7 +186,8 @@ uniform float uR7310C1XatlasRuntimeFullCeilingMode;
 uniform float uR7310C1XatlasRuntimeFullFloorMode;
 uniform float uR7310C1XatlasRuntimeStackedMode;
 uniform float uR7310C1XatlasParamSurfaceCount; // R4-2A-2 param runtime：dynamic while loop 上界（uniform、非編譯期常數）
-uniform vec4 uR7310C1XatlasParamSurfaceTable[336]; // generated param table：最多 48 面 × 7 vec4
+uniform int uR7310C1XatlasParamSurfaceTexelBase;
+uniform int uR7310C1XatlasParamDataTextureWidth;
 // master shelf-pack：北+東+天花板（寬度不同）打包進同一張貼圖、共用 bake-atlas slot（守 16-TIU）
 // rect = (x,y,w,h) 像素（左上原點、y 往下）；MasterMode>0.5 時各面 UV 投到自己的 sub-rect
 uniform float uR7310C1XatlasRuntimeMasterMode;
@@ -738,6 +742,8 @@ const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_X_MAX = 1.908;
 const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MIN = 2.516;
 const float R7310_C1_NORTH_WALL_BEAM_GAP_EAST_Y_MAX = 2.905;
 const float R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS = 0.000625;
+// One complete 800 texel/m perimeter texel, plus 1 um for float comparison stability.
+const float R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS = 0.001251;
 const float R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_LIFT = 0.000125;
 const float R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_DIR_EPS = 0.000001;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE = 0;
@@ -754,6 +760,8 @@ const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM = 10;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM = 11;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM = 12;
 const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM = 13;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM = 14;
+const int R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM = 15;
 // R7-3.10 source.md §39-§40: confirmed bed-top coplanar bake bug line.
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN = -0.027;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MAX = 1.910;
@@ -775,6 +783,11 @@ const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX = 2.905;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X = 1.850;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN = 2.515;
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MAX = 2.905;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_LEFT_X = -1.750;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_RIGHT_X = 0.690;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y = 2.905;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN = 3.056;
+const float R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX = 3.256;
 
 // 東牆 bed-top 接觸邊（床東面 x=1.91 與東牆共面、床頂 y=0.28、z 為床深度範圍）
 const float R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BED_TOP_PLANE_X = 1.910;
@@ -1588,6 +1601,18 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -0.611 && bmax.x <= 0.611 &&
 		bmin.y >= -0.001 && bmax.y <= 0.768 &&
 		bmin.z >= 0.394 && bmax.z <= 0.956;
+	bool northeastBed =
+		bmin.x >= -0.038 && bmax.x <= 1.911 &&
+		bmin.y >= -0.001 && bmax.y <= 0.291 &&
+		bmin.z >= -1.875 && bmax.z <= -0.303;
+	bool southSystemFurniture =
+		bmin.x >= -1.911 && bmax.x <= 1.031 &&
+		bmin.y >= -0.001 && bmax.y <= 0.781 &&
+		bmin.z >= 2.374 && bmax.z <= 3.057;
+	bool southeastBookshelf =
+		bmin.x >= 1.009 && bmax.x <= 1.781 &&
+		bmin.y >= -0.001 && bmax.y <= 2.051 &&
+		bmin.z >= 2.719 && bmax.z <= 3.057;
 	bool structural =
 		((bmin.x >= -1.93 && bmax.x <= -1.73) || (bmin.x >= 1.76 && bmax.x <= 1.93)) &&
 		bmin.y >= -0.011 && bmax.y <= 2.916 &&
@@ -1596,18 +1621,26 @@ bool r7310C1XatlasParamSurfaceAllowsObjectHit(vec4 nf, vec4 bmin, vec4 bmax)
 		bmin.x >= -1.902 && bmax.x <= -1.897 &&
 		bmin.y >= 1.147 && bmax.y <= 1.219 &&
 		bmin.z >= -0.090 && bmax.z <= 0.032;
-	return westThresholdFront || westThresholdTop || centralDesk || structural || westWallSwitch;
+	return westThresholdFront || westThresholdTop || centralDesk || northeastBed ||
+		southSystemFurniture || southeastBookshelf || structural || westWallSwitch;
+}
+vec4 r7310C1XatlasParamSurfaceTexel(int sid, int field)
+{
+	int linearTexel = uR7310C1XatlasParamSurfaceTexelBase + sid * 7 + field;
+	int textureWidth = max(uR7310C1XatlasParamDataTextureWidth, 1);
+	int texelY = linearTexel / textureWidth;
+	int texelX = linearTexel - texelY * textureWidth;
+	return texelFetch(tBoxDataTexture, ivec2(texelX, texelY), 0);
 }
 bool r7310C1XatlasParamSurfaceUv(int sid, float visibleObjectID, vec3 n, vec3 p, out vec2 atlasUv)
 {
-	int b = sid * 7;
-	vec4 nf   = uR7310C1XatlasParamSurfaceTable[b + 0];
-	vec4 bmin = uR7310C1XatlasParamSurfaceTable[b + 1];
-	vec4 bmax = uR7310C1XatlasParamSurfaceTable[b + 2];
-	vec4 umap = uR7310C1XatlasParamSurfaceTable[b + 3];
-	vec4 vmap = uR7310C1XatlasParamSurfaceTable[b + 4];
-	vec4 mixuv= uR7310C1XatlasParamSurfaceTable[b + 5];
-	vec4 rect = uR7310C1XatlasParamSurfaceTable[b + 6];
+	vec4 nf   = r7310C1XatlasParamSurfaceTexel(sid, 0);
+	vec4 bmin = r7310C1XatlasParamSurfaceTexel(sid, 1);
+	vec4 bmax = r7310C1XatlasParamSurfaceTexel(sid, 2);
+	vec4 umap = r7310C1XatlasParamSurfaceTexel(sid, 3);
+	vec4 vmap = r7310C1XatlasParamSurfaceTexel(sid, 4);
+	vec4 mixuv= r7310C1XatlasParamSurfaceTexel(sid, 5);
+	vec4 rect = r7310C1XatlasParamSurfaceTexel(sid, 6);
 	if (bmin.w < 0.5) { atlasUv = vec2(0.0); return false; }
 	if (visibleObjectID >= 1.5 && !r7310C1XatlasParamSurfaceAllowsObjectHit(nf, bmin, bmax)) { atlasUv = vec2(0.0); return false; }
 	if (dot(n, nf.xyz) < vmap.w) { atlasUv = vec2(0.0); return false; }
@@ -1633,10 +1666,9 @@ bool r7310C1XatlasParamSampleAny(float visibleObjectID, vec3 n, vec3 p, out vec2
 bool r7310C1XatlasParamWestSurfaceActive()
 {
 	if (uR7310C1XatlasParamWestSurfaceIndex < 0.0) return false;
-	int b = int(uR7310C1XatlasParamWestSurfaceIndex) * 7;
-	return uR7310C1XatlasParamSurfaceTable[b + 1].w > 0.5;
+	return r7310C1XatlasParamSurfaceTexel(int(uR7310C1XatlasParamWestSurfaceIndex), 1).w > 0.5;
 }
-// === GENERATED: surface-owner BEGIN  (registry bfebcab598756c9b) ===
+// === GENERATED: surface-owner BEGIN  (registry 65d86f861d613145) ===
 // Source of truth: docs/data/r7-3-10-surface-owner-registry.json
 // Generator     : docs/tools/r7-3-10-surface-owner-codegen.mjs  (DO NOT hand-edit this block)
 const int R7310_OWNER_NONE = 0;
@@ -1654,11 +1686,33 @@ const int R7310_OWNER_CENTRAL_DESK_FRONT = 11;
 const int R7310_OWNER_CENTRAL_DESK_BACK = 12;
 const int R7310_OWNER_CENTRAL_DESK_LEFT = 13;
 const int R7310_OWNER_CENTRAL_DESK_RIGHT = 14;
-const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 15;
-const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 16;
-const int R7310_OWNER_WEST_WALL_OPEN = 17;
-const int R7310_OWNER_WEST_THRESHOLD_FRONT = 18;
-const int R7310_OWNER_WEST_THRESHOLD_TOP = 19;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_TOP = 15;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_UNDERSIDE = 16;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_NORTH = 17;
+const int R7310_OWNER_SOUTH_SYSTEM_DESK_EAST_EXPOSED = 18;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_1 = 19;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_2 = 20;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_3 = 21;
+const int R7310_OWNER_SOUTHWEST_DRAWER_NORTH_4 = 22;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_1 = 23;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_2 = 24;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_3 = 25;
+const int R7310_OWNER_SOUTHWEST_DRAWER_EAST_4 = 26;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_TOP = 27;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_NORTH = 28;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_BELOW_OUTLET = 29;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_ABOVE_OUTLET = 30;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_NORTH_OF_OUTLET = 31;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_SOUTH_OF_OUTLET = 32;
+const int R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER = 33;
+const int R7310_OWNER_NORTHEAST_BED_TOP = 34;
+const int R7310_OWNER_NORTHEAST_BED_SOUTH = 35;
+const int R7310_OWNER_NORTHEAST_BED_WEST = 36;
+const int R7310_OWNER_WEST_WALL_SWITCH_PLATE = 37;
+const int R7310_OWNER_WEST_WALL_SWITCH_BUTTON = 38;
+const int R7310_OWNER_WEST_WALL_OPEN = 39;
+const int R7310_OWNER_WEST_THRESHOLD_FRONT = 40;
+const int R7310_OWNER_WEST_THRESHOLD_TOP = 41;
 bool r7310SurfaceOwnerIsPending(int ownerId) {
 	return false;
 }
@@ -1694,6 +1748,50 @@ int r7310SurfaceOwnerId(vec3 p, vec3 n, float objId) {
 	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= -0.61 && p.x <= -0.59) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_LEFT; } }
 	// central_desk_right (precedence 40)
 	if (n.x * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.757 && p.z >= 0.405 && p.z <= 0.945 && p.x >= 0.59 && p.x <= 0.61) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_CENTRAL_DESK_RIGHT; } }
+	// south_system_desk_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && ((p.x >= -1.75 && p.x <= 1.02 && p.y >= 0.76 && p.y <= 0.78 && p.z >= 2.385 && p.z <= 3.056) || (p.x >= -1.91 && p.x <= -1.75 && p.y >= 0.76 && p.y <= 0.78 && p.z >= 2.385 && p.z <= 2.846))) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_TOP; } }
+	// south_system_desk_underside (precedence 40)
+	if (n.y * -1.0 > 0.5 && p.y >= 0.62 && p.y <= 0.64 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.035 && p.x <= 1.02) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_UNDERSIDE; } }
+	// south_system_desk_north (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.63 && p.y <= 0.77 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= 1.02) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_NORTH; } }
+	// south_system_desk_east_exposed (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.63 && p.y <= 0.77 && p.z >= 2.385 && p.z <= 2.73 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTH_SYSTEM_DESK_EAST_EXPOSED; } }
+	// southwest_drawer_north_1 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.0025 && p.y <= 0.155 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_1; } }
+	// southwest_drawer_north_2 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.16 && p.y <= 0.3125 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_2; } }
+	// southwest_drawer_north_3 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.3175 && p.y <= 0.47 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_3; } }
+	// southwest_drawer_north_4 (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.6275 && p.z >= 2.375 && p.z <= 2.395 && p.x >= -1.91 && p.x <= -1.035) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_NORTH_4; } }
+	// southwest_drawer_east_1 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.0025 && p.y <= 0.155 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_1; } }
+	// southwest_drawer_east_2 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.16 && p.y <= 0.3125 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_2; } }
+	// southwest_drawer_east_3 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.3175 && p.y <= 0.47 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_3; } }
+	// southwest_drawer_east_4 (precedence 40)
+	if (n.x * 1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.6275 && p.z >= 2.385 && p.z <= 3.056 && p.x >= -1.045 && p.x <= -1.025) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHWEST_DRAWER_EAST_4; } }
+	// southeast_bookshelf_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 2.03 && p.y <= 2.05 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.02 && p.x <= 1.78) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_TOP; } }
+	// southeast_bookshelf_north (precedence 40)
+	if (n.z * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 2.04 && p.z >= 2.72 && p.z <= 2.74 && p.x >= 1.02 && p.x <= 1.78) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_NORTH; } }
+	// southeast_bookshelf_west_lower_below_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.355 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_BELOW_OUTLET; } }
+	// southeast_bookshelf_west_lower_above_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.475 && p.y <= 0.63 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_ABOVE_OUTLET; } }
+	// southeast_bookshelf_west_lower_north_of_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.355 && p.y <= 0.475 && p.z >= 2.73 && p.z <= 2.906 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_NORTH_OF_OUTLET; } }
+	// southeast_bookshelf_west_lower_south_of_outlet (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.355 && p.y <= 0.475 && p.z >= 3.026 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_LOWER_SOUTH_OF_OUTLET; } }
+	// southeast_bookshelf_west_upper (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.77 && p.y <= 2.04 && p.z >= 2.73 && p.z <= 3.056 && p.x >= 1.01 && p.x <= 1.03) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER; } }
+	// northeast_bed_top (precedence 40)
+	if (n.y * 1.0 > 0.5 && p.y >= 0.27 && p.y <= 0.29 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_TOP; } }
+	// northeast_bed_south (precedence 40)
+	if (n.z * 1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -0.324 && p.z <= -0.304 && p.x >= -0.027 && p.x <= 1.91) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_SOUTH; } }
+	// northeast_bed_west (precedence 40)
+	if (n.x * -1.0 > 0.5 && p.y >= 0.0 && p.y <= 0.28 && p.z >= -1.874 && p.z <= -0.314 && p.x >= -0.037 && p.x <= -0.017) { if (40 > bestPrec) { bestPrec = 40; best = R7310_OWNER_NORTHEAST_BED_WEST; } }
 	// west_wall_switch_plate (precedence 50)
 	if (n.x * 1.0 > 0.5 && p.y >= 1.148 && p.y <= 1.218 && p.z >= -0.089 && p.z <= 0.031 && p.x >= -1.901 && p.x <= -1.899) { if (50 > bestPrec) { bestPrec = 50; best = R7310_OWNER_WEST_WALL_SWITCH_PLATE; } }
 	// west_wall_switch_button (precedence 51)
@@ -2270,12 +2368,60 @@ bool r7310C1RuntimeSurfaceIsSeColumnNorth(int visibleHitType, float visibleObjec
 		visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN &&
 		visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX;
 }
+bool r7310C1RuntimeSurfaceIsSouthWindowLeftRevealForBake(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x > 0.5 &&
+		visiblePosition.x >= -1.76 && visiblePosition.x <= -1.74 &&
+		visiblePosition.y >= 1.04 && visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y &&
+		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN &&
+		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX;
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowRightRevealForBake(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.x < -0.5 &&
+		visiblePosition.x >= 0.68 && visiblePosition.x <= 0.70 &&
+		visiblePosition.y >= 1.04 && visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y &&
+		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN &&
+		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX;
+}
+bool r7310C1RuntimeSurfaceIsSouthWindowTopRevealDepthForBake(int visibleHitType, float visibleObjectID, vec3 visibleNormal, vec3 visiblePosition)
+{
+	return visibleObjectID < 1.5 &&
+		visibleNormal.y < -0.5 &&
+		abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y) <= 0.010 &&
+		visiblePosition.x >= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_LEFT_X &&
+		visiblePosition.x <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_RIGHT_X &&
+		visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN &&
+		visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX;
+}
 int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	int visibleHitType,
 	float visibleObjectID,
 	vec3 visibleNormal,
 	vec3 visiblePosition)
 {
+	if (r7310C1RuntimeSurfaceIsSouthWindowLeftRevealForBake(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM;
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
+	if (r7310C1RuntimeSurfaceIsSouthWindowRightRevealForBake(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM;
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
+	if (r7310C1RuntimeSurfaceIsSouthWindowTopRevealDepthForBake(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
+	{
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_LEFT_X) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM;
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_RIGHT_X) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
+			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM;
+		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
+	}
 	if (r7310C1RuntimeSurfaceIsNorthWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
 		if (visiblePosition.x >= R7310_C1_XATLAS_BAKE_CONFIRMED_BED_TOP_X_MIN &&
@@ -2300,13 +2446,13 @@ int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	}
 	if (r7310C1RuntimeSurfaceIsEastWall(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
-		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS &&
 			visiblePosition.z >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MIN &&
 			visiblePosition.z <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Z_MAX)
 		{
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM;
 		}
-		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS &&
 			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MIN &&
 			visiblePosition.y <= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Y_MAX)
 		{
@@ -2323,26 +2469,26 @@ int r7310C1XatlasBakeCoplanarConfirmedLineId(
 	}
 	if (r7310C1RuntimeSurfaceIsEastBeamUnder(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
-		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM;
-		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_BEAM_UNDER_SEAM;
 		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 	}
 	if (r7310C1RuntimeSurfaceIsEastBeamInner(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
-		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		if (abs(visiblePosition.y - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_BEAM_UNDER_Y) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_INNER_UNDER_SEAM;
-		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		if (abs(visiblePosition.z - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM;
 		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 	}
 	if (r7310C1RuntimeSurfaceIsSeColumnNorth(visibleHitType, visibleObjectID, visibleNormal, visiblePosition))
 	{
-		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS &&
+		if (abs(visiblePosition.x - R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS &&
 			visiblePosition.y >= R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_BEAM_SE_COLUMN_VERTICAL_SEAM;
-		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_COPLANAR_DEGEN_PLANE_RADIUS)
+		if (abs(visiblePosition.x - 1.910) <= R7310_C1_XATLAS_BAKE_TEXEL_COVERAGE_RADIUS)
 			return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_EAST_WALL_SE_COLUMN_SEAM;
 		return R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_NONE;
 	}
@@ -2444,6 +2590,18 @@ bool r7310C1XatlasBakeCoplanarSeamAabb(int confirmedLineId, out vec3 seamMin, ou
 	{
 		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MIN, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
 		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_INNER_X, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_BEAM_SE_COLUMN_Y_MAX, R7310_C1_XATLAS_BAKE_CONFIRMED_EAST_WALL_SE_COLUMN_Z);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_LEFT_X, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_LEFT_X, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM)
+	{
+		seamMin = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_RIGHT_X, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MIN);
+		seamMax = vec3(R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_RIGHT_X, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_TOP_Y, R7310_C1_XATLAS_BAKE_CONFIRMED_SOUTH_WINDOW_DEPTH_Z_MAX);
 		return true;
 	}
 	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SW_COLUMN_VERTICAL_SEAM)
@@ -2565,11 +2723,21 @@ bool r7310C1XatlasBakeCoplanarNeighborAabb(int confirmedLineId, out vec3 neighbo
 	neighborMax = vec3(0.0);
 	return false;
 }
-bool r7310C1XatlasBakeCoplanarCornerEscapeDirection(int confirmedLineId, out vec3 escapeDir)
+bool r7310C1XatlasBakeCoplanarCornerEscapeDirection(int confirmedLineId, vec3 visibleNormal, out vec3 escapeDir)
 {
 	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_WEST_WALL_SOUTH_DESK_SW_COLUMN_CORNER)
 	{
 		escapeDir = vec3(0.0, 1.0, -1.0);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_LEFT_TOP_DEPTH_SEAM)
+	{
+		escapeDir = visibleNormal.x > 0.5 ? vec3(0.0, -1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+		return true;
+	}
+	if (confirmedLineId == R7310_C1_XATLAS_BAKE_CONFIRMED_LINE_SOUTH_WINDOW_RIGHT_TOP_DEPTH_SEAM)
+	{
+		escapeDir = visibleNormal.x < -0.5 ? vec3(0.0, -1.0, 0.0) : vec3(-1.0, 0.0, 0.0);
 		return true;
 	}
 	escapeDir = vec3(0.0);
@@ -2634,7 +2802,7 @@ vec3 r7310C1XatlasBakeCoplanarLiftDirection(
 		visiblePosition
 	);
 	vec3 cornerEscapeDir;
-	if (r7310C1XatlasBakeCoplanarCornerEscapeDirection(confirmedLineId, cornerEscapeDir))
+	if (r7310C1XatlasBakeCoplanarCornerEscapeDirection(confirmedLineId, visibleNormal, cornerEscapeDir))
 		return cornerEscapeDir;
 	vec3 seamMin;
 	vec3 seamMax;
@@ -7652,6 +7820,20 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeOwnerId == R7310_OWNER_CENTRAL_DESK_RIGHT);
 					bool r7310XatlasRuntimeCentralDeskFirstHit = r7310XatlasRuntimeFirstHit &&
 						r7310XatlasRuntimeCentralDeskMapped;
+					bool r7310XatlasRuntimeNortheastBedMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						uR7310C1NortheastFurnitureMode == 0 &&
+						(r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_TOP ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_SOUTH ||
+						r7310XatlasRuntimeOwnerId == R7310_OWNER_NORTHEAST_BED_WEST);
+					bool r7310XatlasRuntimeNortheastBedFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeNortheastBedMapped;
+					bool r7310XatlasRuntimeSouthFixedFurnitureMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
+						hitIsRayExiting != TRUE &&
+						r7310XatlasRuntimeOwnerId >= R7310_OWNER_SOUTH_SYSTEM_DESK_TOP &&
+						r7310XatlasRuntimeOwnerId <= R7310_OWNER_SOUTHEAST_BOOKSHELF_WEST_UPPER;
+					bool r7310XatlasRuntimeSouthFixedFurnitureFirstHit = r7310XatlasRuntimeFirstHit &&
+						r7310XatlasRuntimeSouthFixedFurnitureMapped;
 					float r7310XatlasRuntimeStructuralIslandId = r7310C1StructuralBeamColumnIslandId(hitType, hitObjectID, nl, x);
 					bool r7310XatlasRuntimeStructuralMapped = r7310C1RuntimeFirstHitBakeAllowed(bounces) &&
 						hitIsRayExiting != TRUE &&
@@ -7696,6 +7878,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 					bool r7310XatlasRuntimeFullBakeCentralDeskClaimed =
 						uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeCentralDeskMapped;
+					bool r7310XatlasRuntimeFullBakeNortheastBedClaimed =
+						uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeNortheastBedMapped;
+					bool r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed =
+						uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded > 0.5 &&
+						r7310XatlasRuntimeSouthFixedFurnitureMapped;
 					bool r7310XatlasRuntimeFullBakeStructuralClaimed =
 						uR7310C1XatlasRuntimeStructuralDirectIncluded > 0.5 &&
 						r7310XatlasRuntimeStructuralMapped;
@@ -7713,6 +7901,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeCeilingClaimed ||
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
+						r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed) &&
@@ -7734,6 +7924,8 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 						r7310XatlasRuntimeFullBakeCeilingClaimed ||
 						r7310XatlasRuntimeFullBakeDepthH2Claimed ||
 						r7310XatlasRuntimeFullBakeCentralDeskClaimed ||
+						r7310XatlasRuntimeFullBakeNortheastBedClaimed ||
+						r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed ||
 						r7310XatlasRuntimeFullBakeStructuralClaimed ||
 						r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed ||
 						r7310XatlasRuntimeFullBakeWestWallSwitchClaimed;
@@ -8617,6 +8809,16 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 							}
 							if (uR7310C1XatlasRuntimeCentralDeskDirectIncluded > 0.5 &&
 								r7310XatlasRuntimeCentralDeskFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeNortheastBedDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeNortheastBedFirstHit)
+							{
+								break;
+							}
+							if (uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded > 0.5 &&
+								r7310XatlasRuntimeSouthFixedFurnitureFirstHit)
 							{
 								break;
 							}

@@ -16,6 +16,8 @@ function parseArgs(argv) {
     sourceSurface: null,
     targetSurface: null,
     axisSpec: 'docs/tools/r7-3-10-surface-axis-spec.json',
+    edgeInventory: null,
+    edgeExtensionPairs: [],
     outDir: null,
     updatePointer: false
   };
@@ -26,6 +28,8 @@ function parseArgs(argv) {
     else if (key === '--source-surface') args.sourceSurface = argv[++index];
     else if (key === '--target-surface') args.targetSurface = argv[++index];
     else if (key === '--axis-spec') args.axisSpec = argv[++index];
+    else if (key === '--edge-inventory') args.edgeInventory = argv[++index];
+    else if (key === '--edge-extension-pair') args.edgeExtensionPairs.push(argv[++index]);
     else if (key === '--out-dir') args.outDir = argv[++index];
     else if (key === '--update-pointer') args.updatePointer = true;
     else throw new Error(`Unknown argument: ${key}`);
@@ -56,6 +60,31 @@ function artifactPath(pointer, key, fallback) {
   return path.join(pointer.packageDir, pointer.artifacts?.[key] || fallback);
 }
 
+function deriveEdgeExtensions({ inventory, pairKeys, targetSpec }) {
+  if (pairKeys.length === 0) return [];
+  if (!inventory) throw new Error('--edge-inventory is required with --edge-extension-pair');
+  const edges = inventory.sharedEdges || inventory.edges || [];
+  return pairKeys.map((pairKey) => {
+    const edge = edges.find((candidate) => candidate.pairKey === pairKey);
+    if (!edge) throw new Error(`Edge inventory is missing pair: ${pairKey}`);
+    const radiusM = Number(edge.configuredProtectionRadiusM || edge.requiredProtectionRadiusM);
+    if (!(radiusM > 0)) throw new Error(`Edge pair has no metric protection radius: ${pairKey}`);
+    const candidates = Object.entries(edge.line?.constants || {}).flatMap(([axis, rawValue]) => {
+      const value = Number(rawValue);
+      const targetAxis = [targetSpec.u, targetSpec.v].find((spec) => spec.axis === axis);
+      if (!targetAxis) return [];
+      if (Math.abs(value - Number(targetAxis.min)) <= 1.0e-5)
+        return [{ pairKey, axis, value, inwardDirection: 1, radiusM }];
+      if (Math.abs(value - Number(targetAxis.max)) <= 1.0e-5)
+        return [{ pairKey, axis, value, inwardDirection: -1, radiusM }];
+      return [];
+    });
+    if (candidates.length !== 1)
+      throw new Error(`Cannot derive one target-chart boundary for edge pair: ${pairKey}`);
+    return candidates[0];
+  });
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const sourcePointer = readJson(args.sourcePointer);
@@ -69,6 +98,12 @@ function main() {
     throw new Error('Coplanar stitch requires matching surface normals');
   if (sourceSpec.fixed.axis !== targetSpec.fixed.axis || Math.abs(sourceSpec.fixed.value - targetSpec.fixed.value) > 1.0e-5)
     throw new Error('Coplanar stitch requires matching fixed planes');
+  const edgeInventory = args.edgeInventory ? readJson(args.edgeInventory) : null;
+  const sourceEdgeExtensions = deriveEdgeExtensions({
+    inventory: edgeInventory,
+    pairKeys: args.edgeExtensionPairs,
+    targetSpec
+  });
 
   const sourceAtlasPath = absolute(artifactPath(sourcePointer, 'atlasPatch0', 'atlas-patch-000-rgba-f32.bin'));
   const targetAtlasPath = absolute(artifactPath(targetPointer, 'atlasPatch0', 'atlas-patch-000-rgba-f32.bin'));
@@ -84,7 +119,8 @@ function main() {
     targetAtlasBuffer: targetAtlas,
     targetMetadataBuffer: targetMetadata,
     targetWidth: targetPointer.targetAtlasWidth,
-    targetHeight: targetPointer.targetAtlasHeight
+    targetHeight: targetPointer.targetAtlasHeight,
+    sourceEdgeExtensions
   });
   if (result.report.status !== 'PASS') {
     console.error(JSON.stringify(result.report, null, 2));
@@ -101,7 +137,9 @@ function main() {
     sourcePointer: args.sourcePointer,
     sourcePackageDir: sourcePointer.packageDir,
     sourceAtlasSha256,
-    targetAtlasSha256
+    targetAtlasSha256,
+    edgeInventory: args.edgeInventory,
+    edgeExtensions: result.report.edgeExtensionPolicy.extensions
   };
   const report = { ...result.report, provenance };
   const outDir = absolute(args.outDir);
@@ -117,6 +155,7 @@ function main() {
   const coplanarRadianceSource = {
     enabled: true,
     method: result.report.method,
+    edgeExtensionMethod: result.report.edgeExtensionPolicy.method,
     ...provenance,
     continuityReport: reportName
   };
@@ -156,7 +195,8 @@ function main() {
     sourceAtlasSha256,
     targetAtlasSha256,
     before: report.before,
-    after: report.after
+    after: report.after,
+    edgeExtensionPolicy: report.edgeExtensionPolicy
   }, null, 2));
 }
 

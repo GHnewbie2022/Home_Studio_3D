@@ -1,0 +1,188 @@
+{
+  "schema": "r7-3-10-northeast-bed-xatlas-input-mesh-v1",
+  "phase": "r7-3-10-northeast-bed-xatlas-prepare-v1",
+  "surfaceGroup": "northeast_bed",
+  "atlasGroup": "furniture",
+  "furnitureMode": "bed",
+  "positions": [
+    [
+      -0.027,
+      0.28,
+      -1.874
+    ],
+    [
+      -0.027,
+      0.28,
+      -0.314
+    ],
+    [
+      1.91,
+      0.28,
+      -0.314
+    ],
+    [
+      1.91,
+      0.28,
+      -1.874
+    ],
+    [
+      -0.027,
+      0.0,
+      -0.314
+    ],
+    [
+      1.91,
+      0.0,
+      -0.314
+    ],
+    [
+      1.91,
+      0.28,
+      -0.314
+    ],
+    [
+      -0.027,
+      0.28,
+      -0.314
+    ],
+    [
+      -0.027,
+      0.0,
+      -1.874
+    ],
+    [
+      -0.027,
+      0.0,
+      -0.314
+    ],
+    [
+      -0.027,
+      0.28,
+      -0.314
+    ],
+    [
+      -0.027,
+      0.28,
+      -1.874
+    ]
+  ],
+  "indices": [
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      2,
+      3
+    ],
+    [
+      4,
+      5,
+      6
+    ],
+    [
+      4,
+      6,
+      7
+    ],
+    [
+      8,
+      9,
+      10
+    ],
+    [
+      8,
+      10,
+      11
+    ]
+  ],
+  "triangleMetadata": [
+    {
+      "triangleId": 0,
+      "surfaceHint": "northeast_bed_top",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    },
+    {
+      "triangleId": 1,
+      "surfaceHint": "northeast_bed_top",
+      "faceAxis": "y",
+      "faceSign": 1,
+      "faceName": "y+",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    },
+    {
+      "triangleId": 2,
+      "surfaceHint": "northeast_bed_south",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "faceName": "z+",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    },
+    {
+      "triangleId": 3,
+      "surfaceHint": "northeast_bed_south",
+      "faceAxis": "z",
+      "faceSign": 1,
+      "faceName": "z+",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    },
+    {
+      "triangleId": 4,
+      "surfaceHint": "northeast_bed_west",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    },
+    {
+      "triangleId": 5,
+      "surfaceHint": "northeast_bed_west",
+      "faceAxis": "x",
+      "faceSign": -1,
+      "faceName": "x-",
+      "sourceBoxIndex": 33,
+      "materialType": 1
+    }
+  ],
+  "counts": {
+    "includedSurfaces": 3,
+    "vertices": 12,
+    "triangles": 6
+  },
+  "sourceBoxIndices": [
+    33
+  ],
+  "surfaceIds": [
+    "northeast_bed_top",
+    "northeast_bed_south",
+    "northeast_bed_west"
+  ],
+  "worldBounds": {
+    "xMin": -0.027,
+    "xMax": 1.91,
+    "yMin": 0.0,
+    "yMax": 0.28,
+    "zMin": -1.874,
+    "zMax": -0.314
+  },
+  "excludedOccludedFaces": [
+    "north: flush with north wall",
+    "east: flush with east wall",
+    "bottom: covered by floor contact"
+  ],
+  "fullRadianceContract": {
+    "bakedRadianceKind": "full_diffuse_radiance",
+    "directLightAlreadyIncluded": true,
+    "addDirectLightAfterBakeLookup": false
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "r7-3-10-xatlas-geometric-edge-extrapolation-v1",
+  "atlas": {
+    "width": 2354,
+    "height": 2090
+  },
+  "policy": {
+    "sourceScope": "same-piece-interior-valid-radiance",
+    "targetScope": "one-texel physical chart perimeter",
+    "maxDistanceLimitTexels": 4
+  },
+  "counts": {
+    "pieces": 20,
+    "targetTexels": 39713,
+    "repairedTexels": 39713,
+    "unrepairedTexels": 0,
+    "sourceExactBlackTexels": 0,
+    "sourcePieceMismatchTexels": 0,
+    "maxDistanceTexels": 2
+  },
+  "repairedByPiece": {
+    "south_system_desk_top_west_arm": 992,
+    "southeast_bookshelf_west_lower_above_outlet": 770,
+    "southwest_drawer_east_2": 1314,
+    "southwest_drawer_east_1": 1314,
+    "southwest_drawer_north_1": 1644,
+    "southwest_drawer_east_4": 1318,
+    "southwest_drawer_north_2": 1643,
+    "south_system_desk_east_exposed": 774,
+    "south_system_desk_underside": 4362,
+    "southwest_drawer_north_3": 1644,
+    "southeast_bookshelf_west_upper": 2550,
+    "southeast_bookshelf_west_lower_below_outlet": 1086,
+    "southeast_bookshelf_west_lower_south_of_outlet": 238,
+    "southeast_bookshelf_west_lower_north_of_outlet": 472,
+    "southwest_drawer_north_4": 1640,
+    "southeast_bookshelf_north": 4480,
+    "southeast_bookshelf_top": 1738,
+    "south_system_desk_north": 4910,
+    "south_system_desk_top_main": 5506,
+    "southwest_drawer_east_3": 1318
+  }
+}

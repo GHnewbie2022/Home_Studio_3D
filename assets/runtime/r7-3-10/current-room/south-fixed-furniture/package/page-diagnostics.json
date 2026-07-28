@@ -1,0 +1,44 @@
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1784236743394.352,
+        "url": "http://127.0.0.1:9002/docs/data/r7-3-10-xatlas-south-fixed-furniture-runtime-package.json",
+        "networkRequestId": "86714.138"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[R7-3.10 xatlas auto-load failed]"
+        },
+        {
+          "type": "string",
+          "value": "R7-3.10 xatlas raw lightmap page pointer not found: south_fixed_furniture"
+        }
+      ],
+      "executionContextId": 2,
+      "timestamp": 1784236743394.748,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "10",
+            "url": "http://127.0.0.1:9002/js/InitCommon.js?v=r7310-iron-door-fix7-scale-restore-v1",
+            "lineNumber": 7964,
+            "columnNumber": 15
+          }
+        ]
+      }
+    }
+  }
+]

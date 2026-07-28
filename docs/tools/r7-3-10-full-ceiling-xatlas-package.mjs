@@ -108,8 +108,17 @@ function finalizeOidnManifest(rawDir, oidnDir) {
 
 function runtimePointer(dir, kind, prepareDir) {
 	const { manifest, validation, alphaReport } = packageRecord(dir);
+	const bakedRadianceKind = manifest.bakedRadianceKind === 'full_diffuse_radiance'
+		? 'full_diffuse_radiance'
+		: 'indirect_diffuse_radiance';
+	const directLightAlreadyIncluded = bakedRadianceKind === 'full_diffuse_radiance';
+	const addDirectLightAfterBakeLookup = !directLightAlreadyIncluded;
+	const accepted = validation.status === 'pass'
+		&& bakedRadianceKind === 'full_diffuse_radiance'
+		&& manifest.directLightAlreadyIncluded === true
+		&& manifest.addDirectLightAfterBakeLookup === false;
 	const pointer = {
-		packageStatus: 'architecture_probe',
+		packageStatus: accepted ? 'accepted' : 'diagnostic_only',
 		runtimeScope: 'c1_xatlas_full_ceiling_runtime',
 		runtimeTexture: 'tR7310C1XatlasRuntimeAtlasTexture',
 		runtimeArchitecture: 'single_xatlas_full_ceiling_phase2',
@@ -119,9 +128,9 @@ function runtimePointer(dir, kind, prepareDir) {
 		requestedSamples: manifest.requestedSamples,
 		diffuseOnly: manifest.diffuseOnly === true,
 		upscaled: manifest.upscaled === true,
-		bakedRadianceKind: 'indirect_diffuse_radiance',
-		directLightAlreadyIncluded: false,
-		addDirectLightAfterBakeLookup: true,
+		bakedRadianceKind,
+		directLightAlreadyIncluded,
+		addDirectLightAfterBakeLookup,
 		multiplyAlbedoAfterBakeLookup: true,
 		uploadRowFlip: false,
 		phase2: {

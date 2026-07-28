@@ -133,6 +133,10 @@ function runtimePointer(dir, kind, prepareDir) {
 		: 'indirect_diffuse_radiance';
 	const directLightAlreadyIncluded = bakedRadianceKind === 'full_diffuse_radiance';
 	const addDirectLightAfterBakeLookup = !directLightAlreadyIncluded;
+	const accepted = validation.status === 'pass'
+		&& bakedRadianceKind === 'full_diffuse_radiance'
+		&& manifest.directLightAlreadyIncluded === true
+		&& manifest.addDirectLightAfterBakeLookup === false;
 	const dilationLimit = alphaReport.dilation?.maxDistanceLimitTexels;
 	const dilationDistance = alphaReport.dilation?.maxDistanceTexels;
 	if (dilationLimit !== WEST_MAX_ALPHA_DILATION_TEXELS || dilationDistance > WEST_MAX_ALPHA_DILATION_TEXELS) {
@@ -145,7 +149,7 @@ function runtimePointer(dir, kind, prepareDir) {
 		throw new Error(`west identity 尺寸不符：manifest ${mw}x${mh} != 規格 ${WEST_ATLAS_W}x${WEST_ATLAS_H}（package 拒寫；烤製 atlas 尺寸錯）`);
 	}
 	const pointer = {
-		packageStatus: 'architecture_probe',
+		packageStatus: accepted ? 'accepted' : 'diagnostic_only',
 		runtimeScope: 'c1_xatlas_full_west_wall_runtime',
 		runtimeTexture: 'tR7310C1XatlasRuntimeAtlasTexture',
 		runtimeArchitecture: 'single_xatlas_full_west_wall_phase2',

@@ -1,0 +1,22 @@
+{
+  "schema": "r7-3-10-xatlas-chart-gutter-dilation-report-v1",
+  "sourcePath": "assets/runtime/r7-3-10/work/r7-3-10-south-window-reveals-xatlas/prepare/xatlas-bake-dilation-source.bin",
+  "atlas": {
+    "width": 502,
+    "height": 1953
+  },
+  "policy": {
+    "sourceScope": "nearest valid texel from the same prepared xatlas chart",
+    "targetScope": "prepared chart padding only",
+    "maxDistanceLimitTexels": 4,
+    "rowMapping": "flipped"
+  },
+  "counts": {
+    "targetTexels": 27072,
+    "repairedTexels": 27072,
+    "sourceExactBlackTexels": 0,
+    "sourceAlphaZeroTexels": 0,
+    "unrepairedTexels": 0,
+    "maxDistanceTexels": 4
+  }
+}

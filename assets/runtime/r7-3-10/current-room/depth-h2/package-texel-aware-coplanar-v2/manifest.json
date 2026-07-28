@@ -1,0 +1,93 @@
+{
+  "version": "r7-3-10-full-room-diffuse-bake-architecture-probe",
+  "config": 1,
+  "northeastFurnitureMode": "bed",
+  "batch": "south_window_top_reveal_depth_h2",
+  "targetId": 1022,
+  "surfaceName": "south_window_top_reveal_depth",
+  "worldBounds": {
+    "xMin": -1.75,
+    "xMax": 0.69,
+    "zMin": 3.056,
+    "zMax": 3.256,
+    "y": 2.905
+  },
+  "createdAt": "2026-07-15T03:42:01.691Z",
+  "branch": "codex/r7-3-10-furniture-baking",
+  "commit": "WORKTREE_DIRTY",
+  "smokeTest": false,
+  "targetAtlasResolution": 512,
+  "targetAtlasWidth": 1952,
+  "targetAtlasHeight": 160,
+  "requestedSamples": 1000,
+  "diffuseOnly": false,
+  "fullRadianceProbe": true,
+  "bakedRadianceKind": "full_diffuse_radiance",
+  "directLightAlreadyIncluded": true,
+  "addDirectLightAfterBakeLookup": false,
+  "multiplyAlbedoAfterBakeLookup": false,
+  "bakeAlbedoFree": false,
+  "liveSpecularReflection": false,
+  "upscaled": false,
+  "packageDir": "assets/runtime/r7-3-10/current-room/depth-h2/package-texel-aware-coplanar-v2",
+  "artifacts": {
+    "rawHdrSummary": "raw-hdr-summary.json",
+    "surfaceClassSummary": "surface-class-summary.json",
+    "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
+    "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
+    "validationReport": "validation-report.json",
+    "coverageReport": "coverage-report.json",
+    "bakeDiagnostics": "bake-diagnostics.json",
+    "crossPageRadianceSeamReport": "cross-page-radiance-seam-report.json",
+    "coplanarRadianceContinuityReport": "coplanar-radiance-continuity-report.json"
+  },
+  "contactEdgeProtection": {
+    "policy": "a-narrow-bake-ray-origin",
+    "protectedPairs": [
+      "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "south_window_right_reveal__full|south_window_top_reveal_depth"
+    ],
+    "confirmedLineIds": [
+      14,
+      15
+    ],
+    "requiredProtectionRadiusM": 0.00125,
+    "configuredProtectionRadiusM": 0.001251,
+    "inventory": "docs/data/r7-3-10-full-room-black-edge-report.json",
+    "validationEvidence": "cross-page-radiance-seam-report.json"
+  },
+  "crossPageRadianceSeamGate": {
+    "enabled": true,
+    "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+    "report": "cross-page-radiance-seam-report.json"
+  },
+  "coplanarRadianceSource": {
+    "enabled": true,
+    "method": "world-space-coplanar-lightmap-stitch",
+    "edgeExtensionMethod": "world-space-nearest-valid-interior-texel-extension",
+    "sourceSurfaceId": "ceiling_open",
+    "targetSurfaceId": "south_window_top_reveal_depth",
+    "sourcePointer": "docs/data/r7-3-10-xatlas-full-ceiling-1000spp-runtime-package.json",
+    "sourcePackageDir": "assets/runtime/r7-3-10/current-room/ceiling/package",
+    "sourceAtlasSha256": "5472b1adef74ecc2043df3766bb4ae2720c34a52c8e2163dcbff836bc534a47a",
+    "targetAtlasSha256": "9c9382d039e6d4dd3e111e8dd7d748aeca20a4c32ddee2337baabaec3d8b3f4c",
+    "edgeInventory": "docs/data/r7-3-10-full-room-black-edge-report.json",
+    "edgeExtensions": [
+      {
+        "pairKey": "south_window_left_reveal__full|south_window_top_reveal_depth",
+        "axis": "x",
+        "value": -1.75,
+        "inwardDirection": 1,
+        "radiusM": 0.001251
+      },
+      {
+        "pairKey": "south_window_right_reveal__full|south_window_top_reveal_depth",
+        "axis": "x",
+        "value": 0.69,
+        "inwardDirection": -1,
+        "radiusM": 0.001251
+      }
+    ],
+    "continuityReport": "coplanar-radiance-continuity-report.json"
+  }
+}

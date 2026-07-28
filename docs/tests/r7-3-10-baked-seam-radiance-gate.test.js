@@ -37,6 +37,38 @@ function makeFixture({ mutateNearToBlack = false } = {}) {
   };
 }
 
+function makeSmoothGradientFixture({ mutateFirstTexel = false } = {}) {
+  const fixture = makeFixture();
+  const atlas = new Float32Array(
+    fixture.atlasBuffer.buffer,
+    fixture.atlasBuffer.byteOffset,
+    fixture.atlasBuffer.byteLength / 4
+  );
+  for (let y = 0; y < fixture.height; y += 1) {
+    for (let x = 0; x < fixture.width; x += 1) {
+      const value = mutateFirstTexel && x === 0 ? 0.1 : 0.4 + x * 0.01;
+      atlas.set([value, value, value, 1], (y * fixture.width + x) * 4);
+    }
+  }
+  return fixture;
+}
+
+function makeToleranceOnlyGapFixture() {
+  const fixture = makeSmoothGradientFixture();
+  const metadata = new Float32Array(
+    fixture.metadataBuffer.buffer,
+    fixture.metadataBuffer.byteOffset,
+    fixture.metadataBuffer.byteLength / 4
+  );
+  for (let y = 0; y < fixture.height; y += 1) {
+    for (let x = 0; x < fixture.width; x += 1) {
+      const pixel = y * fixture.width + x;
+      metadata[pixel * 12] = 0.004 + x * 0.004;
+    }
+  }
+  return fixture;
+}
+
 test('baked seam radiance gate passes a continuous same-surface edge', async () => {
   const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
   const report = gate.evaluateBakedSeamRadianceGate({
@@ -55,4 +87,65 @@ test('mutation self-test rejects a narrow exact-black edge band', async () => {
   assert.equal(report.status, 'FAIL');
   assert.ok(report.sides[0].failures.includes('exact-black-near-seam'));
   assert.ok(report.counts.nearExactBlackTexels > 0);
+});
+
+test('first-texel mode accepts a smooth physical gradient', async () => {
+  const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
+  const report = gate.evaluateBakedSeamRadianceGate({
+    ...makeSmoothGradientFixture(),
+    policy: {
+      comparisonMode: 'first-texel-neighbor',
+      firstTexelBandMaxM: 0.001,
+      adjacentTexelBandMinM: 0.003,
+      adjacentTexelBandMaxM: 0.009,
+      endpointInsetM: 0,
+      minNearSamples: 4,
+      minInteriorSamples: 4,
+      minMedianRatio: 0.9,
+      minP10Ratio: 0.9,
+      minAbsoluteDrop: 0.02
+    }
+  });
+  assert.equal(report.status, 'PASS');
+  assert.equal(report.method, 'same-surface-first-texel-versus-adjacent-texels-hdr-radiance');
+  assert.equal(report.sides[0].firstTexelRadiance.firstTexelSamples, 4);
+});
+
+test('first-texel mode rejects a one-texel radiance cliff', async () => {
+  const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
+  const report = gate.evaluateBakedSeamRadianceGate({
+    ...makeSmoothGradientFixture({ mutateFirstTexel: true }),
+    policy: {
+      comparisonMode: 'first-texel-neighbor',
+      firstTexelBandMaxM: 0.001,
+      adjacentTexelBandMinM: 0.003,
+      adjacentTexelBandMaxM: 0.009,
+      endpointInsetM: 0,
+      minNearSamples: 4,
+      minInteriorSamples: 4,
+      minMedianRatio: 0.9,
+      minP10Ratio: 0.9,
+      minAbsoluteDrop: 0.02
+    }
+  });
+  assert.equal(report.status, 'FAIL');
+  assert.ok(report.sides[0].failures.includes('first-texel-median-radiance-cliff'));
+});
+
+test('first-texel mode skips a scanner tolerance match with no physical edge texel', async () => {
+  const gate = await import('../tools/lib/r7-3-10-baked-seam-radiance-gate-core.mjs');
+  const report = gate.evaluateBakedSeamRadianceGate({
+    ...makeToleranceOnlyGapFixture(),
+    policy: {
+      comparisonMode: 'first-texel-neighbor',
+      firstTexelBandMaxM: 0.0013,
+      endpointInsetM: 0,
+      minNearSamples: 4,
+      minInteriorSamples: 4
+    }
+  });
+  assert.equal(report.status, 'PASS');
+  assert.equal(report.counts.evaluatedSides, 0);
+  assert.equal(report.counts.skippedToleranceGapSides, 1);
+  assert.equal(report.skippedSides[0].skipReason, 'scanner-tolerance-only-gap-first-texel');
 });

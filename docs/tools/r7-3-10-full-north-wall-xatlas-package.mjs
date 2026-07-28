@@ -130,7 +130,7 @@ function runtimePointer(dir, kind, prepareDir) {
 	}
 	assertNorthFullBakeAdmission(manifest, validation, bakedRadianceKind);
 	const pointer = {
-		packageStatus: 'architecture_probe',
+		packageStatus: 'accepted',
 		runtimeScope: 'c1_xatlas_full_north_wall_runtime',
 		runtimeTexture: 'tR7310C1XatlasRuntimeAtlasTexture',
 		runtimeArchitecture: 'single_xatlas_full_north_wall_phase2',

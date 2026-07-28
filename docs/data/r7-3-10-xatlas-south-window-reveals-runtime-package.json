@@ -19,16 +19,20 @@
   "bakeAlbedoFree": false,
   "liveSpecularReflection": false,
   "nonSquareAtlas": true,
-  "packageDir": "assets/runtime/r7-3-10/current-room/south-window-reveals/package",
+  "packageDir": "assets/runtime/r7-3-10/current-room/south-window-reveals/package-texel-aware-v1",
   "artifacts": {
     "manifest": "manifest.json",
     "atlasPatch0": "atlas-patch-000-rgba-f32.bin",
     "texelMetadataPatch0": "texel-metadata-patch-000-f32.bin",
     "validationReport": "validation-report.json",
+    "bakeDiagnostics": "bake-diagnostics.json",
     "xatlasC2CAlphaReport": "xatlas-c2c-alpha-report.json",
     "xatlasChartGutterReport": "xatlas-chart-gutter-report.json",
     "xatlasGeometricEdgeReport": "xatlas-geometric-edge-report.json",
-    "bakedSeamRadianceReport": "baked-seam-radiance-report.json"
+    "bakedSeamRadianceReport": "baked-seam-radiance-report.json",
+    "crossPageRadianceLeftReport": "cross-page-radiance-left-report.json",
+    "crossPageRadianceRightReport": "cross-page-radiance-right-report.json",
+    "runtimeAtlasPatch0": "atlas-patch-000-rgba-f16.bin"
   },
   "chartEdgeDilation": {
     "enabled": true,
@@ -39,9 +43,36 @@
     "unrepairedVisibleExactBlackTexels": 0,
     "alphaOneExactBlackTexels": 0
   },
+  "contactEdgeProtection": {
+    "policy": "a-narrow-bake-ray-origin",
+    "protectedPairs": [
+      "south_window_left_reveal__full|south_window_top_reveal_depth",
+      "south_window_right_reveal__full|south_window_top_reveal_depth"
+    ],
+    "confirmedLineIds": [
+      14,
+      15
+    ],
+    "requiredProtectionRadiusM": 0.00125,
+    "configuredProtectionRadiusM": 0.001251,
+    "inventory": "docs/data/r7-3-10-full-room-black-edge-report.json",
+    "validationEvidence": [
+      "cross-page-radiance-left-report.json",
+      "cross-page-radiance-right-report.json"
+    ]
+  },
+  "crossPageRadianceSeamGate": {
+    "enabled": true,
+    "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+    "reports": [
+      "cross-page-radiance-left-report.json",
+      "cross-page-radiance-right-report.json"
+    ]
+  },
   "artifactHashes": {
-    "atlasPatch0Sha256": "99b67e278ba003387d1e1b9be21a3bfdf89bbac0f64738161ff6d540d7ff8246",
-    "texelMetadataPatch0Sha256": "01cafa6ac13a9dfb3adac0e0ea7d63920776bb2c6d7c1f496349db4a71a5e024"
+    "atlasPatch0Sha256": "b64adda4bb2cb6d60f96236adb334770d5b0a175e83a1b460052401523b37ed6",
+    "texelMetadataPatch0Sha256": "01cafa6ac13a9dfb3adac0e0ea7d63920776bb2c6d7c1f496349db4a71a5e024",
+    "runtimeAtlasPatch0Sha256": "b9b8cabc5d4947ab8f0cbdfc13e6ed355956c04dba5035d7e8479d466174235d"
   },
   "validation": {
     "status": "pass",
@@ -52,5 +83,8 @@
     "tileCount": 4,
     "minCompletedSamples": 1000
   },
-  "note": "South-window left jamb, right jamb, and sill use one formal non-square full-radiance XATLAS page. Formal package publishing now requires geometric edge extrapolation, chart gutter dilation, and the full-room baked seam gate."
+  "note": "South-window left jamb, right jamb, and sill use one formal non-square full-radiance XATLAS page. Publishing requires chart repair, metric A NARROW coverage, and first-texel continuity reports for both side-to-H2 contacts.",
+  "sourceAtlasFormat": "rgba-f32",
+  "runtimeAtlasFormat": "rgba-f16",
+  "runtimeAtlasByteLength": 7843248
 }

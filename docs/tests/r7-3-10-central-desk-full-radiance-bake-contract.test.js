@@ -156,17 +156,22 @@ test('accepted central desk package records complete geometric edge extrapolatio
 test('central desk xatlas report identity is not the old spike identity', () => {
 	assertSnippet(
 		runner,
-		/xatlasSurfaceName:\s*\$\{JSON\.stringify\(args\.r7310Surface === 'central-desk-xatlas' \? 'central_desk' : undefined\)\}/,
+		/'central-desk-xatlas':\s*'central_desk'/,
+		'runner surface-name table must retain the central desk identity'
+	);
+	assertSnippet(
+		runner,
+		/xatlasSurfaceName:\s*\$\{JSON\.stringify\(xatlasPackageSurfaceName\(args\.r7310Surface\) \|\| undefined\)\}/,
 		'runner must pass central_desk identity to the browser helper'
 	);
 	assertSnippet(
 		runner,
-		/xatlasBatch:\s*\$\{JSON\.stringify\(args\.r7310Surface === 'central-desk-xatlas' \? 'central_desk_full_radiance' : undefined\)\}/,
+		/args\.r7310Surface === 'central-desk-xatlas' \? 'central_desk_full_radiance'/,
 		'runner must pass central desk full-radiance batch identity'
 	);
 	assertSnippet(
 		runner,
-		/xatlasTargetId:\s*\$\{args\.r7310Surface === 'central-desk-xatlas' \? 1100 : 'undefined'\}/,
+		/args\.r7310Surface === 'central-desk-xatlas' \? 1100/,
 		'runner must pass the central desk combined page target id'
 	);
 	assert.match(
@@ -323,5 +328,5 @@ test('central desk xatlas params are allowed to map object hits', () => {
 	assert.match(shader, /bmin\.x\s*>=\s*-0\.611\s*&&\s*bmax\.x\s*<=\s*0\.611/);
 	assert.match(shader, /bmin\.y\s*>=\s*-0\.001\s*&&\s*bmax\.y\s*<=\s*0\.768/);
 	assert.match(shader, /bmin\.z\s*>=\s*0\.394\s*&&\s*bmax\.z\s*<=\s*0\.956/);
-	assert.match(shader, /return\s+westThresholdFront\s*\|\|\s*westThresholdTop\s*\|\|\s*centralDesk\s*;/);
+	assert.match(shader, /westThresholdFront\s*\|\|\s*westThresholdTop\s*\|\|\s*centralDesk\s*\|\|\s*northeastBed/);
 });

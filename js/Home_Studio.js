@@ -564,6 +564,9 @@ function buildSceneBVH() {
         pathTracingUniforms.tBVHTexture = { value: bvhDataTexture };
         pathTracingUniforms.tBoxDataTexture = { value: boxDataTexture };
     }
+    if (typeof r7310C1InstallXatlasParamTableInBoxDataTexture === 'function') {
+        r7310C1InstallXatlasParamTableInBoxDataTexture();
+    }
 }
 
 function updateBoxDataTexture() {
@@ -5626,6 +5629,9 @@ function initSceneData() {
 		pathTracingUniforms.uR7310C1XatlasRuntimeDepthH2DirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeFullFloorDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeCentralDeskDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeNortheastBedDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1XatlasRuntimeSouthFixedFurnitureDirectIncluded = { value: 0.0 };
+		pathTracingUniforms.uR7310C1NortheastFurnitureMode = { value: 0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeStructuralDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeSouthWindowRevealsDirectIncluded = { value: 0.0 };
 		pathTracingUniforms.uR7310C1XatlasRuntimeWestWallSwitchDirectIncluded = { value: 0.0 };

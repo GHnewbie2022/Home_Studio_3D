@@ -38,6 +38,10 @@ const SOUTH_WINDOW_REVEALS_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/sourc
 const SOUTH_WINDOW_REVEALS_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-window-reveals/south-window-reveals-xatlas-input-mesh.json');
 const WEST_WALL_SWITCH_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-dry-run-uv.json');
 const WEST_WALL_SWITCH_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/west-wall-switch/west-wall-switch-xatlas-input-mesh.json');
+const NORTHEAST_BED_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-dry-run-uv.json');
+const NORTHEAST_BED_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/northeast-bed/northeast-bed-xatlas-input-mesh.json');
+const SOUTH_FIXED_FURNITURE_UV_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-dry-run-uv.json');
+const SOUTH_FIXED_FURNITURE_MESH_PATH = resolve(REPO, 'assets/runtime/r7-3-10/source/xatlas/south-fixed-furniture/south-fixed-furniture-xatlas-input-mesh.json');
 const OUT_DIR = resolve(REPO, 'docs/generated');
 const OUT_PATH = resolve(OUT_DIR, 'r7-3-10-xatlas-param-table.generated.json');
 
@@ -66,7 +70,8 @@ const AXIS_IDX = { x: 0, y: 1, z: 2 };
 function computeRegistryVersion() {
   const machineFields = registrySurfaces.map((s) => ({
     surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
-    x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+    x: s.x, y: s.y, z: s.z, xRects: s.xRects, regions: s.regions,
+    precedence: s.precedence, pendingPolicy: s.pendingPolicy,
     configId: s.configId, atlasGroup: s.atlasGroup,
   }));
   return createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
@@ -288,15 +293,16 @@ function entryFromCentralDeskChart(surfaceId, opts) {
   });
 }
 
-function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource) {
+function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource, groupBySurfaceHint = false) {
   const uvReport = JSON.parse(readFileSync(uvPath, 'utf8'));
   const mesh = JSON.parse(readFileSync(meshPath, 'utf8'));
   const pageW = uvReport.atlas.width;
   const pageH = uvReport.atlas.height;
   const groups = new Map();
   for (const triangle of uvReport.triangles) {
-    if (!groups.has(triangle.pieceId)) groups.set(triangle.pieceId, []);
-    groups.get(triangle.pieceId).push(triangle);
+    const groupId = groupBySurfaceHint ? triangle.surfaceHint : triangle.pieceId;
+    if (!groups.has(groupId)) groups.set(groupId, []);
+    groups.get(groupId).push(triangle);
   }
   return [...groups.entries()].map(([pieceId, triangles]) => {
     const samples = [];
@@ -314,14 +320,29 @@ function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource) {
     bboxMax[fixedAxis] += 0.01;
     const uvMin = [0, 1].map((axis) => Math.min(...samples.map((sample) => sample.uv[axis])));
     const uvMax = [0, 1].map((axis) => Math.max(...samples.map((sample) => sample.uv[axis])));
-    const slope = (worldAxis, uvAxis) => {
-      const lo = samples.reduce((best, sample) => sample.p[worldAxis] < best.p[worldAxis] ? sample : best, samples[0]);
-      const hi = samples.reduce((best, sample) => sample.p[worldAxis] > best.p[worldAxis] ? sample : best, samples[0]);
-      const worldDelta = hi.p[worldAxis] - lo.p[worldAxis];
-      return Math.abs(worldDelta) > 1e-9 ? (hi.uv[uvAxis] - lo.uv[uvAxis]) / worldDelta : 0;
+    const fitAxis = (worldAxis, uvAxis) => {
+      const meanWorld = samples.reduce((sum, sample) => sum + sample.p[worldAxis], 0) / samples.length;
+      const meanUv = samples.reduce((sum, sample) => sum + sample.uv[uvAxis], 0) / samples.length;
+      const variance = samples.reduce((sum, sample) => {
+        const delta = sample.p[worldAxis] - meanWorld;
+        return sum + delta * delta;
+      }, 0);
+      const covariance = samples.reduce((sum, sample) => (
+        sum + (sample.p[worldAxis] - meanWorld) * (sample.uv[uvAxis] - meanUv)
+      ), 0);
+      const slope = variance > 1e-12 ? covariance / variance : 0;
+      const intercept = meanUv - slope * meanWorld;
+      const maxError = Math.max(...samples.map((sample) => Math.abs(
+        intercept + slope * sample.p[worldAxis] - sample.uv[uvAxis]
+      )));
+      return { worldAxis, slope, maxError };
     };
-    const uAxis = Math.abs(slope(freeAxes[0], 0)) >= Math.abs(slope(freeAxes[1], 0)) ? freeAxes[0] : freeAxes[1];
+    const uFit = freeAxes
+      .map((axis) => fitAxis(axis, 0))
+      .sort((a, b) => a.maxError - b.maxError || Math.abs(b.slope) - Math.abs(a.slope))[0];
+    const uAxis = uFit.worldAxis;
     const vAxis = freeAxes.find((axis) => axis !== uAxis);
+    const vFit = fitAxis(vAxis, 1);
     const runtimeUvMin = [uvMin[0], 1 - uvMax[1]];
     const runtimeUvMax = [uvMax[0], 1 - uvMin[1]];
     const rect = [
@@ -336,13 +357,34 @@ function entriesFromChart(uvPath, meshPath, atlasGroup, truthSource) {
       normal: [0, 1, 2].map((axis) => axis === fixedAxis ? Number(meta.faceSign) : 0),
       bboxMin, bboxMax,
       fixedAxis, uAxis, vAxis,
-      uMin: bboxMin[uAxis], uMax: bboxMax[uAxis], uFlip: slope(uAxis, 0) < 0, uInset: true,
-      vMin: bboxMin[vAxis], vMax: bboxMax[vAxis], vFlip: slope(vAxis, 1) > 0, vInset: true,
+      uMin: bboxMin[uAxis], uMax: bboxMax[uAxis], uFlip: uFit.slope < 0, uInset: true,
+      vMin: bboxMin[vAxis], vMax: bboxMax[vAxis], vFlip: vFit.slope > 0, vInset: true,
       atlasW: rect[2], atlasH: rect[3], rectOverride: rect,
       modeId: MODE_MASTER, specialExclusionId: EXCL_NONE,
       representative: false, hasTruth: true, truthSource,
     });
-    entry.semanticSurfaceId = meta.surfaceHint;
+    const reprojectionErrors = samples.map((sample) => {
+      const tu = Math.max(0, Math.min(1, (sample.p[entry.uAxis] - entry.uOrigin) * entry.uScale));
+      const tv = Math.max(0, Math.min(1, (sample.p[entry.vAxis] - entry.vOrigin) * entry.vScale));
+      const localU = entry.uMixLo + (entry.uMixHi - entry.uMixLo) * tu;
+      const localV = entry.vMixLo + (entry.vMixHi - entry.vMixLo) * tv;
+      const runtimeUv = [
+        (entry.rect[0] + localU * entry.rect[2]) / pageW,
+        (entry.rect[1] + localV * entry.rect[3]) / pageH,
+      ];
+      const expectedRuntimeUv = [sample.uv[0], 1 - sample.uv[1]];
+      return Math.hypot(
+        (runtimeUv[0] - expectedRuntimeUv[0]) * pageW,
+        (runtimeUv[1] - expectedRuntimeUv[1]) * pageH
+      );
+    });
+    const chartReprojectionMaxErrorTexels = r6(Math.max(...reprojectionErrors));
+    if (chartReprojectionMaxErrorTexels > 1) {
+      throw new Error(
+        `${pieceId} chart reprojection error ${chartReprojectionMaxErrorTexels} texels exceeds one texel`
+      );
+    }
+    entry.semanticSurfaceId = meta.semanticSurfaceId || meta.surfaceHint;
     return entry;
   });
 }
@@ -366,6 +408,26 @@ function westWallSwitchEntriesFromChart() {
     WEST_WALL_SWITCH_MESH_PATH,
     'west_wall_switch',
     'west-wall-switch-xatlas-chart'
+  );
+}
+
+function northeastBedEntriesFromChart() {
+  return entriesFromChart(
+    NORTHEAST_BED_UV_PATH,
+    NORTHEAST_BED_MESH_PATH,
+    'northeast_bed',
+    'northeast-bed-xatlas-chart',
+    true
+  );
+}
+
+function southFixedFurnitureEntriesFromChart() {
+  return entriesFromChart(
+    SOUTH_FIXED_FURNITURE_UV_PATH,
+    SOUTH_FIXED_FURNITURE_MESH_PATH,
+    'south_fixed_furniture',
+    'south-fixed-furniture-xatlas-chart',
+    true
   );
 }
 
@@ -432,6 +494,8 @@ baseEntries.push(entryFromCentralDeskChart('central_desk_right', {
 baseEntries.push(...structuralEntriesFromChart());
 baseEntries.push(...southWindowRevealEntriesFromChart());
 baseEntries.push(...westWallSwitchEntriesFromChart());
+baseEntries.push(...northeastBedEntriesFromChart());
+baseEntries.push(...southFixedFurnitureEntriesFromChart());
 
 // (3) representative 樑/柱/reveals/C2A 代表面（房間幾何程式化合成 plausible bbox/rect）
 

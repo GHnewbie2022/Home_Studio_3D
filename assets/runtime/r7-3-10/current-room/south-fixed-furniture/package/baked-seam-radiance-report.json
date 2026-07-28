@@ -1,0 +1,3082 @@
+{
+  "schema": "r7-3-10-baked-seam-radiance-gate-v1",
+  "status": "PASS",
+  "method": "same-surface-first-texel-versus-adjacent-texels-hdr-radiance",
+  "packageAtlasGroup": "south_fixed_furniture",
+  "policy": {
+    "comparisonMode": "first-texel-neighbor",
+    "firstTexelBandMaxM": 0.0013,
+    "adjacentTexelBandMinM": 0.0013,
+    "adjacentTexelBandMaxM": 0.0038,
+    "nearBandMaxM": 0.005,
+    "interiorBandMinM": 0.015,
+    "interiorBandMaxM": 0.035,
+    "endpointInsetM": 0.004,
+    "intervalToleranceM": 0.000001,
+    "blackLumaThreshold": 0,
+    "minNearSamples": 8,
+    "minInteriorSamples": 16,
+    "minMedianRatio": 0.2,
+    "minP10Ratio": 0.05,
+    "minAbsoluteDrop": 0.02
+  },
+  "counts": {
+    "packageSurfaces": 19,
+    "evaluatedEdges": 33,
+    "evaluatedSides": 55,
+    "skippedToleranceGapSides": 26,
+    "failedSides": 0,
+    "nearTexels": 90023,
+    "interiorTexels": 329816,
+    "nearExactBlackTexels": 0
+  },
+  "failedSideKeys": [],
+  "skippedSides": [
+    {
+      "edgeId": "south_system_desk_north|southwest_drawer_north_4:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.62875}",
+      "pairKey": "south_system_desk_north|southwest_drawer_north_4",
+      "surfaceId": "south_system_desk_north",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.62875
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 77616,
+        "minDistanceToLineM": 0.00249996
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|southwest_drawer_north_4:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.62875}",
+      "pairKey": "south_system_desk_north|southwest_drawer_north_4",
+      "surfaceId": "southwest_drawer_north_4",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.62875
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 83853,
+        "minDistanceToLineM": 0.00249997
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|south_wall:x:-1.91:1.02:{\"z\":3.06,\"y\":0.77}",
+      "pairKey": "south_system_desk_top|south_wall",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": 1.02,
+        "constants": {
+          "z": 3.06,
+          "y": 0.77
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 35408,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 1236844,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_system_desk_underside|south_wall:x:-1.035:1.02:{\"z\":3.06,\"y\":0.63}",
+      "pairKey": "south_system_desk_underside|south_wall",
+      "surfaceId": "south_system_desk_underside",
+      "line": {
+        "axis": "x",
+        "min": -1.035,
+        "max": 1.02,
+        "constants": {
+          "z": 3.06,
+          "y": 0.63
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 26192,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 880706,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_system_desk_underside|southwest_drawer_east_4:z:2.385:3.056:{\"y\":0.63,\"x\":-1.035}",
+      "pairKey": "south_system_desk_underside|southwest_drawer_east_4",
+      "surfaceId": "southwest_drawer_east_4",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "y": 0.63,
+          "x": -1.035
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 65190,
+        "minDistanceToLineM": 0.0025
+      }
+    },
+    {
+      "edgeId": "south_wall|southeast_bookshelf_top:x:1.02:1.78:{\"z\":3.06,\"y\":2.04}",
+      "pairKey": "south_wall|southeast_bookshelf_top",
+      "surfaceId": "southeast_bookshelf_top",
+      "line": {
+        "axis": "x",
+        "min": 1.02,
+        "max": 1.78,
+        "constants": {
+          "z": 3.06,
+          "y": 2.04
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 9616,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 157462,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southeast_bookshelf_west_lower_above_outlet:y:0.475:0.63:{\"z\":3.06,\"x\":1.02}",
+      "pairKey": "south_wall|southeast_bookshelf_west_lower_above_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_above_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.63,
+        "constants": {
+          "z": 3.06,
+          "x": 1.02
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1872,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 30654,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southeast_bookshelf_west_lower_below_outlet:y:0:0.355:{\"z\":3.06,\"x\":1.02}",
+      "pairKey": "south_wall|southeast_bookshelf_west_lower_below_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_below_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.355,
+        "constants": {
+          "z": 3.06,
+          "x": 1.02
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 4432,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 72297,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southeast_bookshelf_west_lower_south_of_outlet:y:0.355:0.475:{\"z\":3.06,\"x\":1.02}",
+      "pairKey": "south_wall|southeast_bookshelf_west_lower_south_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_south_of_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0.355,
+        "max": 0.475,
+        "constants": {
+          "z": 3.06,
+          "x": 1.02
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1424,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 2136,
+        "minDistanceToLineM": 0.00525003
+      }
+    },
+    {
+      "edgeId": "south_wall|southeast_bookshelf_west_upper:y:0.77:2.04:{\"z\":3.06,\"x\":1.02}",
+      "pairKey": "south_wall|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_west_upper",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.04,
+        "constants": {
+          "z": 3.06,
+          "x": 1.02
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 16144,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 262340,
+        "minDistanceToLineM": 0.00524908
+      }
+    },
+    {
+      "edgeId": "south_wall|southwest_drawer_east_1:y:0.0025:0.155:{\"z\":3.06,\"x\":-1.035}",
+      "pairKey": "south_wall|southwest_drawer_east_1",
+      "surfaceId": "southwest_drawer_east_1",
+      "line": {
+        "axis": "y",
+        "min": 0.0025,
+        "max": 0.155,
+        "constants": {
+          "z": 3.06,
+          "x": -1.035
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 61870,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southwest_drawer_east_2:y:0.16:0.3125:{\"z\":3.06,\"x\":-1.035}",
+      "pairKey": "south_wall|southwest_drawer_east_2",
+      "surfaceId": "southwest_drawer_east_2",
+      "line": {
+        "axis": "y",
+        "min": 0.16,
+        "max": 0.3125,
+        "constants": {
+          "z": 3.06,
+          "x": -1.035
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 61870,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southwest_drawer_east_3:y:0.3175:0.47:{\"z\":3.06,\"x\":-1.035}",
+      "pairKey": "south_wall|southwest_drawer_east_3",
+      "surfaceId": "southwest_drawer_east_3",
+      "line": {
+        "axis": "y",
+        "min": 0.3175,
+        "max": 0.47,
+        "constants": {
+          "z": 3.06,
+          "x": -1.035
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 61870,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "south_wall|southwest_drawer_east_4:y:0.475:0.6275:{\"z\":3.06,\"x\":-1.035}",
+      "pairKey": "south_wall|southwest_drawer_east_4",
+      "surfaceId": "southwest_drawer_east_4",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.6275,
+        "constants": {
+          "z": 3.06,
+          "x": -1.035
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 61870,
+        "minDistanceToLineM": 0.00400001
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_1|southwest_drawer_east_2:z:2.385:3.056:{\"x\":-1.035,\"y\":0.1575}",
+      "pairKey": "southwest_drawer_east_1|southwest_drawer_east_2",
+      "surfaceId": "southwest_drawer_east_1",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.1575
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 64130,
+        "minDistanceToLineM": 0.00374992
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_1|southwest_drawer_east_2:z:2.385:3.056:{\"x\":-1.035,\"y\":0.1575}",
+      "pairKey": "southwest_drawer_east_1|southwest_drawer_east_2",
+      "surfaceId": "southwest_drawer_east_2",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.1575
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 64130,
+        "minDistanceToLineM": 0.00374994
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_2|southwest_drawer_east_3:z:2.385:3.056:{\"x\":-1.035,\"y\":0.315}",
+      "pairKey": "southwest_drawer_east_2|southwest_drawer_east_3",
+      "surfaceId": "southwest_drawer_east_2",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.315
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 64130,
+        "minDistanceToLineM": 0.00374994
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_2|southwest_drawer_east_3:z:2.385:3.056:{\"x\":-1.035,\"y\":0.315}",
+      "pairKey": "southwest_drawer_east_2|southwest_drawer_east_3",
+      "surfaceId": "southwest_drawer_east_3",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.315
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 65190,
+        "minDistanceToLineM": 0.00250003
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_3|southwest_drawer_east_4:z:2.385:3.056:{\"x\":-1.035,\"y\":0.4725}",
+      "pairKey": "southwest_drawer_east_3|southwest_drawer_east_4",
+      "surfaceId": "southwest_drawer_east_3",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.4725
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 65190,
+        "minDistanceToLineM": 0.00250006
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_3|southwest_drawer_east_4:z:2.385:3.056:{\"x\":-1.035,\"y\":0.4725}",
+      "pairKey": "southwest_drawer_east_3|southwest_drawer_east_4",
+      "surfaceId": "southwest_drawer_east_4",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.035,
+          "y": 0.4725
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 65190,
+        "minDistanceToLineM": 0.00250002
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_1|southwest_drawer_north_2:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.1575}",
+      "pairKey": "southwest_drawer_north_1|southwest_drawer_north_2",
+      "surfaceId": "southwest_drawer_north_1",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.1575
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 85239,
+        "minDistanceToLineM": 0.00249998
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_1|southwest_drawer_north_2:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.1575}",
+      "pairKey": "southwest_drawer_north_1|southwest_drawer_north_2",
+      "surfaceId": "southwest_drawer_north_2",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.1575
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 84546,
+        "minDistanceToLineM": 0.00374998
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_2|southwest_drawer_north_3:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.315}",
+      "pairKey": "southwest_drawer_north_2|southwest_drawer_north_3",
+      "surfaceId": "southwest_drawer_north_2",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.315
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 84546,
+        "minDistanceToLineM": 0.00250003
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_2|southwest_drawer_north_3:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.315}",
+      "pairKey": "southwest_drawer_north_2|southwest_drawer_north_3",
+      "surfaceId": "southwest_drawer_north_3",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.315
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 85239,
+        "minDistanceToLineM": 0.00250003
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_3|southwest_drawer_north_4:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.4725}",
+      "pairKey": "southwest_drawer_north_3|southwest_drawer_north_4",
+      "surfaceId": "southwest_drawer_north_3",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.4725
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 10395,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 85239,
+        "minDistanceToLineM": 0.0025
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_3|southwest_drawer_north_4:x:-1.91:-1.035:{\"z\":2.385,\"y\":0.4725}",
+      "pairKey": "southwest_drawer_north_3|southwest_drawer_north_4",
+      "surfaceId": "southwest_drawer_north_4",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.035,
+        "constants": {
+          "z": 2.385,
+          "y": 0.4725
+        }
+      },
+      "status": "SKIP",
+      "skipReason": "scanner-tolerance-only-gap-first-texel",
+      "counts": {
+        "nearTexels": 0,
+        "interiorTexels": 11088,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0,
+        "intervalSamples": 83853,
+        "minDistanceToLineM": 0.00374996
+      }
+    }
+  ],
+  "sides": [
+    {
+      "edgeId": "se_column_inner_x__front_lower|southeast_bookshelf_north:y:0:2.04:{\"x\":1.78,\"z\":2.73}",
+      "pairKey": "se_column_inner_x__front_lower|southeast_bookshelf_north",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 2.04,
+        "constants": {
+          "x": 1.78,
+          "z": 2.73
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 6500,
+        "interiorTexels": 27625,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.72735476,
+        "firstTexelP10": 0.63772187,
+        "adjacentTexelsMedian": 0.72901078,
+        "adjacentTexelsP10": 0.63815805,
+        "medianRatio": 0.99772841,
+        "p10Ratio": 0.99931651,
+        "medianDrop": 0.00165601,
+        "p10Drop": 0.00043618,
+        "firstTexelSamples": 3250,
+        "adjacentTexelSamples": 3250
+      },
+      "radiance": {
+        "nearMedian": 0.72817167,
+        "nearP10": 0.63787393,
+        "interiorMedian": 0.73511842,
+        "interiorP10": 0.64484678,
+        "medianRatio": 0.99055017,
+        "p10Ratio": 0.98918681,
+        "medianDrop": 0.00694674,
+        "p10Drop": 0.00697285
+      }
+    },
+    {
+      "edgeId": "se_column_inner_x__upper|southeast_bookshelf_top:z:2.73:3.056:{\"x\":1.78,\"y\":2.04}",
+      "pairKey": "se_column_inner_x__upper|southeast_bookshelf_top",
+      "surfaceId": "southeast_bookshelf_top",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "x": 1.78,
+          "y": 2.04
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1016,
+        "interiorTexels": 4318,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.30502786,
+        "firstTexelP10": 0.29437196,
+        "adjacentTexelsMedian": 0.30182414,
+        "adjacentTexelsP10": 0.29181655,
+        "medianRatio": 1.01061455,
+        "p10Ratio": 1.00875688,
+        "medianDrop": -0.00320373,
+        "p10Drop": -0.0025554,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.3033172,
+        "nearP10": 0.29283744,
+        "interiorMedian": 0.2895661,
+        "interiorP10": 0.27807364,
+        "medianRatio": 1.04748864,
+        "p10Ratio": 1.05309315,
+        "medianDrop": -0.0137511,
+        "p10Drop": -0.0147638
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_north:y:0.63:0.77:{\"z\":2.385,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_north",
+      "surfaceId": "south_system_desk_east_exposed",
+      "line": {
+        "axis": "y",
+        "min": 0.63,
+        "max": 0.77,
+        "constants": {
+          "z": 2.385,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 420,
+        "interiorTexels": 1680,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.51663939,
+        "firstTexelP10": 0.50347975,
+        "adjacentTexelsMedian": 0.51586254,
+        "adjacentTexelsP10": 0.50195448,
+        "medianRatio": 1.00150592,
+        "p10Ratio": 1.00303865,
+        "medianDrop": -0.00077685,
+        "p10Drop": -0.00152527,
+        "firstTexelSamples": 105,
+        "adjacentTexelSamples": 210
+      },
+      "radiance": {
+        "nearMedian": 0.51663411,
+        "nearP10": 0.5020091,
+        "interiorMedian": 0.51206139,
+        "interiorP10": 0.49771824,
+        "medianRatio": 1.00893003,
+        "p10Ratio": 1.00862106,
+        "medianDrop": -0.00457273,
+        "p10Drop": -0.00429086
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_north:y:0.63:0.77:{\"z\":2.385,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_north",
+      "surfaceId": "south_system_desk_north",
+      "line": {
+        "axis": "y",
+        "min": 0.63,
+        "max": 0.77,
+        "constants": {
+          "z": 2.385,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 525,
+        "interiorTexels": 1680,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.92755763,
+        "firstTexelP10": 0.90691679,
+        "adjacentTexelsMedian": 0.92995433,
+        "adjacentTexelsP10": 0.90832813,
+        "medianRatio": 0.99742277,
+        "p10Ratio": 0.99844623,
+        "medianDrop": 0.0023967,
+        "p10Drop": 0.00141134,
+        "firstTexelSamples": 210,
+        "adjacentTexelSamples": 210
+      },
+      "radiance": {
+        "nearMedian": 0.9289611,
+        "nearP10": 0.90743637,
+        "interiorMedian": 0.93531134,
+        "interiorP10": 0.9122674,
+        "medianRatio": 0.99321056,
+        "p10Ratio": 0.99470437,
+        "medianDrop": 0.00635024,
+        "p10Drop": 0.00483103
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_top:z:2.385:2.73:{\"y\":0.77,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_top",
+      "surfaceId": "south_system_desk_east_exposed",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 2.73,
+        "constants": {
+          "y": 0.77,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 810,
+        "interiorTexels": 4590,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.49280164,
+        "firstTexelP10": 0.47093247,
+        "adjacentTexelsMedian": 0.49324269,
+        "adjacentTexelsP10": 0.47093247,
+        "medianRatio": 0.99910582,
+        "p10Ratio": 1,
+        "medianDrop": 0.00044105,
+        "p10Drop": 0,
+        "firstTexelSamples": 270,
+        "adjacentTexelSamples": 540
+      },
+      "radiance": {
+        "nearMedian": 0.49305463,
+        "nearP10": 0.47093247,
+        "interiorMedian": 0.48840874,
+        "interiorP10": 0.45950619,
+        "medianRatio": 1.00951231,
+        "p10Ratio": 1.02486643,
+        "medianDrop": -0.00464589,
+        "p10Drop": -0.01142628
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_top:z:2.385:2.73:{\"y\":0.77,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_top",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 2.73,
+        "constants": {
+          "y": 0.77,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1076,
+        "interiorTexels": 4573,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.75659026,
+        "firstTexelP10": 0.72289274,
+        "adjacentTexelsMedian": 0.75765066,
+        "adjacentTexelsP10": 0.72172858,
+        "medianRatio": 0.99860041,
+        "p10Ratio": 1.00161303,
+        "medianDrop": 0.0010604,
+        "p10Drop": -0.00116417,
+        "firstTexelSamples": 538,
+        "adjacentTexelSamples": 538
+      },
+      "radiance": {
+        "nearMedian": 0.75708568,
+        "nearP10": 0.72223124,
+        "interiorMedian": 0.75680305,
+        "interiorP10": 0.7094792,
+        "medianRatio": 1.00037345,
+        "p10Ratio": 1.0179738,
+        "medianDrop": -0.00028263,
+        "p10Drop": -0.01275204
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_underside:z:2.385:2.73:{\"y\":0.63,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_underside",
+      "surfaceId": "south_system_desk_east_exposed",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 2.73,
+        "constants": {
+          "y": 0.63,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1350,
+        "interiorTexels": 4050,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.46793135,
+        "firstTexelP10": 0.37897538,
+        "adjacentTexelsMedian": 0.46973235,
+        "adjacentTexelsP10": 0.38070115,
+        "medianRatio": 0.99616591,
+        "p10Ratio": 0.99546688,
+        "medianDrop": 0.00180099,
+        "p10Drop": 0.00172576,
+        "firstTexelSamples": 540,
+        "adjacentTexelSamples": 540
+      },
+      "radiance": {
+        "nearMedian": 0.46890558,
+        "nearP10": 0.37955151,
+        "interiorMedian": 0.472598,
+        "interiorP10": 0.39194964,
+        "medianRatio": 0.99218697,
+        "p10Ratio": 0.96836806,
+        "medianDrop": 0.00369242,
+        "p10Drop": 0.01239813
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|south_system_desk_underside:z:2.385:2.73:{\"y\":0.63,\"x\":1.02}",
+      "pairKey": "south_system_desk_east_exposed|south_system_desk_underside",
+      "surfaceId": "south_system_desk_underside",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 2.73,
+        "constants": {
+          "y": 0.63,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1076,
+        "interiorTexels": 4573,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.40095918,
+        "firstTexelP10": 0.32496727,
+        "adjacentTexelsMedian": 0.39785545,
+        "adjacentTexelsP10": 0.32250961,
+        "medianRatio": 1.00780114,
+        "p10Ratio": 1.0076204,
+        "medianDrop": -0.00310373,
+        "p10Drop": -0.00245765,
+        "firstTexelSamples": 538,
+        "adjacentTexelSamples": 538
+      },
+      "radiance": {
+        "nearMedian": 0.39995269,
+        "nearP10": 0.32377045,
+        "interiorMedian": 0.39814637,
+        "interiorP10": 0.32470219,
+        "medianRatio": 1.00453681,
+        "p10Ratio": 0.99713047,
+        "medianDrop": -0.00180632,
+        "p10Drop": 0.00093174
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|southeast_bookshelf_north:y:0.63:0.77:{\"x\":1.02,\"z\":2.73}",
+      "pairKey": "south_system_desk_east_exposed|southeast_bookshelf_north",
+      "surfaceId": "south_system_desk_east_exposed",
+      "line": {
+        "axis": "y",
+        "min": 0.63,
+        "max": 0.77,
+        "constants": {
+          "x": 1.02,
+          "z": 2.73
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 525,
+        "interiorTexels": 1680,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.30149526,
+        "firstTexelP10": 0.280174,
+        "adjacentTexelsMedian": 0.31165362,
+        "adjacentTexelsP10": 0.29418148,
+        "medianRatio": 0.96740497,
+        "p10Ratio": 0.9523849,
+        "medianDrop": 0.01015836,
+        "p10Drop": 0.01400748,
+        "firstTexelSamples": 210,
+        "adjacentTexelSamples": 210
+      },
+      "radiance": {
+        "nearMedian": 0.30900374,
+        "nearP10": 0.28927343,
+        "interiorMedian": 0.40257133,
+        "interiorP10": 0.35539581,
+        "medianRatio": 0.76757511,
+        "p10Ratio": 0.8139472,
+        "medianDrop": 0.0935676,
+        "p10Drop": 0.06612238
+      }
+    },
+    {
+      "edgeId": "south_system_desk_east_exposed|southeast_bookshelf_north:y:0.63:0.77:{\"x\":1.02,\"z\":2.73}",
+      "pairKey": "south_system_desk_east_exposed|southeast_bookshelf_north",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0.63,
+        "max": 0.77,
+        "constants": {
+          "x": 1.02,
+          "z": 2.73
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 525,
+        "interiorTexels": 1680,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.28485401,
+        "firstTexelP10": 0.269345,
+        "adjacentTexelsMedian": 0.28440649,
+        "adjacentTexelsP10": 0.26778685,
+        "medianRatio": 1.00157353,
+        "p10Ratio": 1.00581863,
+        "medianDrop": -0.00044752,
+        "p10Drop": -0.00155815,
+        "firstTexelSamples": 210,
+        "adjacentTexelSamples": 210
+      },
+      "radiance": {
+        "nearMedian": 0.28517489,
+        "nearP10": 0.26945998,
+        "interiorMedian": 0.39321994,
+        "interiorP10": 0.31664996,
+        "medianRatio": 0.72522998,
+        "p10Ratio": 0.85097116,
+        "medianDrop": 0.10804505,
+        "p10Drop": 0.04718998
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|south_system_desk_top:x:-1.91:1.02:{\"y\":0.77,\"z\":2.385}",
+      "pairKey": "south_system_desk_north|south_system_desk_top",
+      "surfaceId": "south_system_desk_north",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": 1.02,
+        "constants": {
+          "y": 0.77,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 9348,
+        "interiorTexels": 39729,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.98703109,
+        "firstTexelP10": 0.82713256,
+        "adjacentTexelsMedian": 0.9850331,
+        "adjacentTexelsP10": 0.82432358,
+        "medianRatio": 1.00202835,
+        "p10Ratio": 1.00340762,
+        "medianDrop": -0.00199799,
+        "p10Drop": -0.00280898,
+        "firstTexelSamples": 4674,
+        "adjacentTexelSamples": 4674
+      },
+      "radiance": {
+        "nearMedian": 0.98615046,
+        "nearP10": 0.82643859,
+        "interiorMedian": 0.98034838,
+        "interiorP10": 0.82087053,
+        "medianRatio": 1.00591839,
+        "p10Ratio": 1.00678311,
+        "medianDrop": -0.00580208,
+        "p10Drop": -0.00556805
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|south_system_desk_top:x:-1.91:1.02:{\"y\":0.77,\"z\":2.385}",
+      "pairKey": "south_system_desk_north|south_system_desk_top",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": 1.02,
+        "constants": {
+          "y": 0.77,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 11690,
+        "interiorTexels": 37408,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.79873043,
+        "firstTexelP10": 0.6606914,
+        "adjacentTexelsMedian": 0.79593694,
+        "adjacentTexelsP10": 0.65967664,
+        "medianRatio": 1.00350969,
+        "p10Ratio": 1.00153828,
+        "medianDrop": -0.00279349,
+        "p10Drop": -0.00101477,
+        "firstTexelSamples": 4676,
+        "adjacentTexelSamples": 4676
+      },
+      "radiance": {
+        "nearMedian": 0.79757225,
+        "nearP10": 0.660052,
+        "interiorMedian": 0.78574085,
+        "interiorP10": 0.6517408,
+        "medianRatio": 1.01505763,
+        "p10Ratio": 1.0127523,
+        "medianDrop": -0.0118314,
+        "p10Drop": -0.0083112
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|south_system_desk_underside:x:-1.035:1.02:{\"y\":0.63,\"z\":2.385}",
+      "pairKey": "south_system_desk_north|south_system_desk_underside",
+      "surfaceId": "south_system_desk_north",
+      "line": {
+        "axis": "x",
+        "min": -1.035,
+        "max": 1.02,
+        "constants": {
+          "y": 0.63,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 6548,
+        "interiorTexels": 26192,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.98082091,
+        "firstTexelP10": 0.93039337,
+        "adjacentTexelsMedian": 0.98054113,
+        "adjacentTexelsP10": 0.92767591,
+        "medianRatio": 1.00028534,
+        "p10Ratio": 1.00292933,
+        "medianDrop": -0.00027979,
+        "p10Drop": -0.00271747,
+        "firstTexelSamples": 1637,
+        "adjacentTexelSamples": 3274
+      },
+      "radiance": {
+        "nearMedian": 0.98043542,
+        "nearP10": 0.92778441,
+        "interiorMedian": 0.98522355,
+        "interiorP10": 0.93231112,
+        "medianRatio": 0.99514006,
+        "p10Ratio": 0.99514464,
+        "medianDrop": 0.00478813,
+        "p10Drop": 0.0045267
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|south_system_desk_underside:x:-1.035:1.02:{\"y\":0.63,\"z\":2.385}",
+      "pairKey": "south_system_desk_north|south_system_desk_underside",
+      "surfaceId": "south_system_desk_underside",
+      "line": {
+        "axis": "x",
+        "min": -1.035,
+        "max": 1.02,
+        "constants": {
+          "y": 0.63,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 8185,
+        "interiorTexels": 26192,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.44459609,
+        "firstTexelP10": 0.40377665,
+        "adjacentTexelsMedian": 0.44392005,
+        "adjacentTexelsP10": 0.39820919,
+        "medianRatio": 1.00152288,
+        "p10Ratio": 1.01398123,
+        "medianDrop": -0.00067604,
+        "p10Drop": -0.00556746,
+        "firstTexelSamples": 3274,
+        "adjacentTexelSamples": 3274
+      },
+      "radiance": {
+        "nearMedian": 0.44394424,
+        "nearP10": 0.4002698,
+        "interiorMedian": 0.43094392,
+        "interiorP10": 0.37903185,
+        "medianRatio": 1.03016708,
+        "p10Ratio": 1.05603208,
+        "medianDrop": -0.01300032,
+        "p10Drop": -0.02123794
+      }
+    },
+    {
+      "edgeId": "south_system_desk_north|west_wall_open:y:0.63:0.77:{\"x\":-1.91,\"z\":2.385}",
+      "pairKey": "south_system_desk_north|west_wall_open",
+      "surfaceId": "south_system_desk_north",
+      "line": {
+        "axis": "y",
+        "min": 0.63,
+        "max": 0.77,
+        "constants": {
+          "x": -1.91,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 420,
+        "interiorTexels": 1680,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.71088652,
+        "firstTexelP10": 0.69031523,
+        "adjacentTexelsMedian": 0.70837457,
+        "adjacentTexelsP10": 0.69118827,
+        "medianRatio": 1.00354609,
+        "p10Ratio": 0.9987369,
+        "medianDrop": -0.00251196,
+        "p10Drop": 0.00087304,
+        "firstTexelSamples": 210,
+        "adjacentTexelSamples": 210
+      },
+      "radiance": {
+        "nearMedian": 0.71002937,
+        "nearP10": 0.69046639,
+        "interiorMedian": 0.72517384,
+        "interiorP10": 0.70832026,
+        "medianRatio": 0.97911608,
+        "p10Ratio": 0.97479406,
+        "medianDrop": 0.01514447,
+        "p10Drop": 0.01785388
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|southeast_bookshelf_west_upper:z:2.73:3.056:{\"y\":0.77,\"x\":1.02}",
+      "pairKey": "south_system_desk_top|southeast_bookshelf_west_upper",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 0.77,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1016,
+        "interiorTexels": 4318,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.58497893,
+        "firstTexelP10": 0.56381969,
+        "adjacentTexelsMedian": 0.58723131,
+        "adjacentTexelsP10": 0.56814581,
+        "medianRatio": 0.9961644,
+        "p10Ratio": 0.99238554,
+        "medianDrop": 0.00225238,
+        "p10Drop": 0.00432612,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.58608776,
+        "nearP10": 0.56579205,
+        "interiorMedian": 0.60477999,
+        "interiorP10": 0.58669942,
+        "medianRatio": 0.96909251,
+        "p10Ratio": 0.96436442,
+        "medianDrop": 0.01869223,
+        "p10Drop": 0.02090737
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|southeast_bookshelf_west_upper:z:2.73:3.056:{\"y\":0.77,\"x\":1.02}",
+      "pairKey": "south_system_desk_top|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_west_upper",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 0.77,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1016,
+        "interiorTexels": 4064,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.55868388,
+        "firstTexelP10": 0.54238919,
+        "adjacentTexelsMedian": 0.55962103,
+        "adjacentTexelsP10": 0.54224648,
+        "medianRatio": 0.99832539,
+        "p10Ratio": 1.00026317,
+        "medianDrop": 0.00093715,
+        "p10Drop": -0.0001427,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.55893097,
+        "nearP10": 0.54231626,
+        "interiorMedian": 0.5766005,
+        "interiorP10": 0.55979415,
+        "medianRatio": 0.96935568,
+        "p10Ratio": 0.968778,
+        "medianDrop": 0.01766953,
+        "p10Drop": 0.01747789
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|sw_column_inner_x__full:z:2.846:3.056:{\"x\":-1.75,\"y\":0.77}",
+      "pairKey": "south_system_desk_top|sw_column_inner_x__full",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "z",
+        "min": 2.846,
+        "max": 3.056,
+        "constants": {
+          "x": -1.75,
+          "y": 0.77
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 805,
+        "interiorTexels": 2576,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.51511558,
+        "firstTexelP10": 0.50506237,
+        "adjacentTexelsMedian": 0.5143574,
+        "adjacentTexelsP10": 0.50139498,
+        "medianRatio": 1.00147405,
+        "p10Ratio": 1.00731437,
+        "medianDrop": -0.00075819,
+        "p10Drop": -0.00366739,
+        "firstTexelSamples": 322,
+        "adjacentTexelSamples": 322
+      },
+      "radiance": {
+        "nearMedian": 0.51509176,
+        "nearP10": 0.50263675,
+        "interiorMedian": 0.52742894,
+        "interiorP10": 0.51366618,
+        "medianRatio": 0.97660883,
+        "p10Ratio": 0.97852803,
+        "medianDrop": 0.01233718,
+        "p10Drop": 0.01102942
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|sw_column_north_z__full:x:-1.91:-1.75:{\"z\":2.846,\"y\":0.77}",
+      "pairKey": "south_system_desk_top|sw_column_north_z__full",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "x",
+        "min": -1.91,
+        "max": -1.75,
+        "constants": {
+          "z": 2.846,
+          "y": 0.77
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 605,
+        "interiorTexels": 1936,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.68241675,
+        "firstTexelP10": 0.6518009,
+        "adjacentTexelsMedian": 0.67634029,
+        "adjacentTexelsP10": 0.64921906,
+        "medianRatio": 1.00898433,
+        "p10Ratio": 1.00397683,
+        "medianDrop": -0.00607647,
+        "p10Drop": -0.00258184,
+        "firstTexelSamples": 242,
+        "adjacentTexelSamples": 242
+      },
+      "radiance": {
+        "nearMedian": 0.6763745,
+        "nearP10": 0.64842213,
+        "interiorMedian": 0.63937477,
+        "interiorP10": 0.61047833,
+        "medianRatio": 1.05786861,
+        "p10Ratio": 1.0621542,
+        "medianDrop": -0.03699973,
+        "p10Drop": -0.03794379
+      }
+    },
+    {
+      "edgeId": "south_system_desk_top|west_wall_open:z:2.385:3.056:{\"x\":-1.91,\"y\":0.77}",
+      "pairKey": "south_system_desk_top|west_wall_open",
+      "surfaceId": "south_system_desk_top",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "x": -1.91,
+          "y": 0.77
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1464,
+        "interiorTexels": 5490,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.59323528,
+        "firstTexelP10": 0.57463599,
+        "adjacentTexelsMedian": 0.59315909,
+        "adjacentTexelsP10": 0.57436159,
+        "medianRatio": 1.00012844,
+        "p10Ratio": 1.00047775,
+        "medianDrop": -0.00007619,
+        "p10Drop": -0.0002744,
+        "firstTexelSamples": 366,
+        "adjacentTexelSamples": 732
+      },
+      "radiance": {
+        "nearMedian": 0.59371347,
+        "nearP10": 0.57478509,
+        "interiorMedian": 0.60116182,
+        "interiorP10": 0.58035506,
+        "medianRatio": 0.98761007,
+        "p10Ratio": 0.99040247,
+        "medianDrop": 0.00744835,
+        "p10Drop": 0.00556998
+      }
+    },
+    {
+      "edgeId": "south_system_desk_underside|southeast_bookshelf_west_lower_above_outlet:z:2.73:3.056:{\"y\":0.63,\"x\":1.02}",
+      "pairKey": "south_system_desk_underside|southeast_bookshelf_west_lower_above_outlet",
+      "surfaceId": "south_system_desk_underside",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 0.63,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1016,
+        "interiorTexels": 4318,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.13087703,
+        "firstTexelP10": 0.09826549,
+        "adjacentTexelsMedian": 0.13145034,
+        "adjacentTexelsP10": 0.09829673,
+        "medianRatio": 0.99563859,
+        "p10Ratio": 0.99968218,
+        "medianDrop": 0.00057331,
+        "p10Drop": 0.00003124,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.13097012,
+        "nearP10": 0.0982624,
+        "interiorMedian": 0.14325234,
+        "interiorP10": 0.10735042,
+        "medianRatio": 0.91426162,
+        "p10Ratio": 0.91534248,
+        "medianDrop": 0.01228222,
+        "p10Drop": 0.00908802
+      }
+    },
+    {
+      "edgeId": "south_system_desk_underside|southeast_bookshelf_west_lower_above_outlet:z:2.73:3.056:{\"y\":0.63,\"x\":1.02}",
+      "pairKey": "south_system_desk_underside|southeast_bookshelf_west_lower_above_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_above_outlet",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 0.63,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1016,
+        "interiorTexels": 4064,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.10637988,
+        "firstTexelP10": 0.08548187,
+        "adjacentTexelsMedian": 0.10768167,
+        "adjacentTexelsP10": 0.0840297,
+        "medianRatio": 0.98791078,
+        "p10Ratio": 1.01728165,
+        "medianDrop": 0.00130179,
+        "p10Drop": -0.00145217,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.1070573,
+        "nearP10": 0.08498186,
+        "interiorMedian": 0.10860151,
+        "interiorP10": 0.08630769,
+        "medianRatio": 0.98578092,
+        "p10Ratio": 0.98463831,
+        "medianDrop": 0.00154421,
+        "p10Drop": 0.00132583
+      }
+    },
+    {
+      "edgeId": "south_system_desk_underside|southwest_drawer_east_4:z:2.385:3.056:{\"y\":0.63,\"x\":-1.035}",
+      "pairKey": "south_system_desk_underside|southwest_drawer_east_4",
+      "surfaceId": "south_system_desk_underside",
+      "line": {
+        "axis": "z",
+        "min": 2.385,
+        "max": 3.056,
+        "constants": {
+          "y": 0.63,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 2120,
+        "interiorTexels": 8480,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.17109319,
+        "firstTexelP10": 0.10864289,
+        "adjacentTexelsMedian": 0.17415049,
+        "adjacentTexelsP10": 0.110566,
+        "medianRatio": 0.98244449,
+        "p10Ratio": 0.98260668,
+        "medianDrop": 0.0030573,
+        "p10Drop": 0.00192311,
+        "firstTexelSamples": 1060,
+        "adjacentTexelSamples": 1060
+      },
+      "radiance": {
+        "nearMedian": 0.17176885,
+        "nearP10": 0.10931662,
+        "interiorMedian": 0.18379583,
+        "interiorP10": 0.1149321,
+        "medianRatio": 0.93456338,
+        "p10Ratio": 0.95114096,
+        "medianDrop": 0.01202698,
+        "p10Drop": 0.00561547
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_top:x:1.02:1.78:{\"y\":2.04,\"z\":2.73}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_top",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "x",
+        "min": 1.02,
+        "max": 1.78,
+        "constants": {
+          "y": 2.04,
+          "z": 2.73
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 3005,
+        "interiorTexels": 9616,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.7185345,
+        "firstTexelP10": 0.65053576,
+        "adjacentTexelsMedian": 0.71953749,
+        "adjacentTexelsP10": 0.65321389,
+        "medianRatio": 0.99860606,
+        "p10Ratio": 0.99590007,
+        "medianDrop": 0.00100299,
+        "p10Drop": 0.00267813,
+        "firstTexelSamples": 1202,
+        "adjacentTexelSamples": 1202
+      },
+      "radiance": {
+        "nearMedian": 0.71943685,
+        "nearP10": 0.65221858,
+        "interiorMedian": 0.72869053,
+        "interiorP10": 0.66124142,
+        "medianRatio": 0.98730095,
+        "p10Ratio": 0.98635469,
+        "medianDrop": 0.00925368,
+        "p10Drop": 0.00902285
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_top:x:1.02:1.78:{\"y\":2.04,\"z\":2.73}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_top",
+      "surfaceId": "southeast_bookshelf_top",
+      "line": {
+        "axis": "x",
+        "min": 1.02,
+        "max": 1.78,
+        "constants": {
+          "y": 2.04,
+          "z": 2.73
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 3005,
+        "interiorTexels": 9616,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.22400305,
+        "firstTexelP10": 0.21181827,
+        "adjacentTexelsMedian": 0.22406411,
+        "adjacentTexelsP10": 0.21149954,
+        "medianRatio": 0.99972747,
+        "p10Ratio": 1.001507,
+        "medianDrop": 0.00006106,
+        "p10Drop": -0.00031873,
+        "firstTexelSamples": 1202,
+        "adjacentTexelSamples": 1202
+      },
+      "radiance": {
+        "nearMedian": 0.22406653,
+        "nearP10": 0.21153641,
+        "interiorMedian": 0.22442873,
+        "interiorP10": 0.21155178,
+        "medianRatio": 0.99838612,
+        "p10Ratio": 0.99992734,
+        "medianDrop": 0.0003622,
+        "p10Drop": 0.00001537
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_above_outlet:y:0.475:0.63:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_above_outlet",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.63,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 585,
+        "interiorTexels": 1872,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.42927722,
+        "firstTexelP10": 0.40712928,
+        "adjacentTexelsMedian": 0.4320577,
+        "adjacentTexelsP10": 0.40723629,
+        "medianRatio": 0.99356457,
+        "p10Ratio": 0.99973723,
+        "medianDrop": 0.00278048,
+        "p10Drop": 0.00010701,
+        "firstTexelSamples": 234,
+        "adjacentTexelSamples": 234
+      },
+      "radiance": {
+        "nearMedian": 0.43047384,
+        "nearP10": 0.40735676,
+        "interiorMedian": 0.43340166,
+        "interiorP10": 0.41175784,
+        "medianRatio": 0.99324457,
+        "p10Ratio": 0.98931148,
+        "medianDrop": 0.00292781,
+        "p10Drop": 0.00440108
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_above_outlet:y:0.475:0.63:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_above_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_above_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.63,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 585,
+        "interiorTexels": 1872,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.15086551,
+        "firstTexelP10": 0.12894383,
+        "adjacentTexelsMedian": 0.14720796,
+        "adjacentTexelsP10": 0.13051959,
+        "medianRatio": 1.0248461,
+        "p10Ratio": 0.98792702,
+        "medianDrop": -0.00365754,
+        "p10Drop": 0.00157576,
+        "firstTexelSamples": 234,
+        "adjacentTexelSamples": 234
+      },
+      "radiance": {
+        "nearMedian": 0.14864834,
+        "nearP10": 0.13002908,
+        "interiorMedian": 0.14443667,
+        "interiorP10": 0.12610297,
+        "medianRatio": 1.02915929,
+        "p10Ratio": 1.03113414,
+        "medianDrop": -0.00421167,
+        "p10Drop": -0.00392611
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_below_outlet:y:0:0.355:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_below_outlet",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.355,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1385,
+        "interiorTexels": 4432,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.69797102,
+        "firstTexelP10": 0.4514989,
+        "adjacentTexelsMedian": 0.70134504,
+        "adjacentTexelsP10": 0.45078485,
+        "medianRatio": 0.99518921,
+        "p10Ratio": 1.00158401,
+        "medianDrop": 0.00337402,
+        "p10Drop": -0.00071405,
+        "firstTexelSamples": 554,
+        "adjacentTexelSamples": 554
+      },
+      "radiance": {
+        "nearMedian": 0.69990362,
+        "nearP10": 0.45095713,
+        "interiorMedian": 0.69344545,
+        "interiorP10": 0.4518818,
+        "medianRatio": 1.00931316,
+        "p10Ratio": 0.99795372,
+        "medianDrop": -0.00645817,
+        "p10Drop": 0.00092468
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_below_outlet:y:0:0.355:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_below_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_below_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0,
+        "max": 0.355,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1108,
+        "interiorTexels": 4432,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.32927609,
+        "firstTexelP10": 0.19788582,
+        "adjacentTexelsMedian": 0.33175406,
+        "adjacentTexelsP10": 0.1981876,
+        "medianRatio": 0.99253071,
+        "p10Ratio": 0.99847726,
+        "medianDrop": 0.00247797,
+        "p10Drop": 0.00030179,
+        "firstTexelSamples": 277,
+        "adjacentTexelSamples": 554
+      },
+      "radiance": {
+        "nearMedian": 0.32990492,
+        "nearP10": 0.19893614,
+        "interiorMedian": 0.28250342,
+        "interiorP10": 0.18882618,
+        "medianRatio": 1.16779091,
+        "p10Ratio": 1.05354112,
+        "medianDrop": -0.0474015,
+        "p10Drop": -0.01010996
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_north_of_outlet:y:0.355:0.475:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0.355,
+        "max": 0.475,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 445,
+        "interiorTexels": 1424,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.4547345,
+        "firstTexelP10": 0.43711464,
+        "adjacentTexelsMedian": 0.4526368,
+        "adjacentTexelsP10": 0.43630497,
+        "medianRatio": 1.0046344,
+        "p10Ratio": 1.00185574,
+        "medianDrop": -0.0020977,
+        "p10Drop": -0.00080967,
+        "firstTexelSamples": 178,
+        "adjacentTexelSamples": 178
+      },
+      "radiance": {
+        "nearMedian": 0.45388212,
+        "nearP10": 0.43623719,
+        "interiorMedian": 0.45281257,
+        "interiorP10": 0.43531541,
+        "medianRatio": 1.00236201,
+        "p10Ratio": 1.00211751,
+        "medianDrop": -0.00106955,
+        "p10Drop": -0.00092178
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_lower_north_of_outlet:y:0.355:0.475:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_north_of_outlet",
+      "line": {
+        "axis": "y",
+        "min": 0.355,
+        "max": 0.475,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 356,
+        "interiorTexels": 1424,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.18234761,
+        "firstTexelP10": 0.16421392,
+        "adjacentTexelsMedian": 0.18167015,
+        "adjacentTexelsP10": 0.16325577,
+        "medianRatio": 1.00372907,
+        "p10Ratio": 1.00586902,
+        "medianDrop": -0.00067746,
+        "p10Drop": -0.00095815,
+        "firstTexelSamples": 89,
+        "adjacentTexelSamples": 178
+      },
+      "radiance": {
+        "nearMedian": 0.18134213,
+        "nearP10": 0.16335739,
+        "interiorMedian": 0.17201704,
+        "interiorP10": 0.15716565,
+        "medianRatio": 1.0542103,
+        "p10Ratio": 1.03939627,
+        "medianDrop": -0.00932509,
+        "p10Drop": -0.00619174
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_upper:y:0.77:2.04:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_north",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.04,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 5045,
+        "interiorTexels": 16144,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.90053836,
+        "firstTexelP10": 0.84462901,
+        "adjacentTexelsMedian": 0.90092521,
+        "adjacentTexelsP10": 0.84247013,
+        "medianRatio": 0.99957061,
+        "p10Ratio": 1.00256255,
+        "medianDrop": 0.00038685,
+        "p10Drop": -0.00215887,
+        "firstTexelSamples": 2018,
+        "adjacentTexelSamples": 2018
+      },
+      "radiance": {
+        "nearMedian": 0.90094001,
+        "nearP10": 0.8427701,
+        "interiorMedian": 0.89672893,
+        "interiorP10": 0.8327552,
+        "medianRatio": 1.00469605,
+        "p10Ratio": 1.01202623,
+        "medianDrop": -0.00421108,
+        "p10Drop": -0.0100149
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_north|southeast_bookshelf_west_upper:y:0.77:2.04:{\"z\":2.73,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_north|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_west_upper",
+      "line": {
+        "axis": "y",
+        "min": 0.77,
+        "max": 2.04,
+        "constants": {
+          "z": 2.73,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 4036,
+        "interiorTexels": 16144,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.59708813,
+        "firstTexelP10": 0.52944088,
+        "adjacentTexelsMedian": 0.59697017,
+        "adjacentTexelsP10": 0.52984918,
+        "medianRatio": 1.0001976,
+        "p10Ratio": 0.99922941,
+        "medianDrop": -0.00011796,
+        "p10Drop": 0.00040829,
+        "firstTexelSamples": 1009,
+        "adjacentTexelSamples": 2018
+      },
+      "radiance": {
+        "nearMedian": 0.59687939,
+        "nearP10": 0.5293073,
+        "interiorMedian": 0.59625902,
+        "interiorP10": 0.53063524,
+        "medianRatio": 1.00104044,
+        "p10Ratio": 0.99749745,
+        "medianDrop": -0.00062037,
+        "p10Drop": 0.00132794
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_top|southeast_bookshelf_west_upper:z:2.73:3.056:{\"y\":2.04,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_top|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_top",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 2.04,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1270,
+        "interiorTexels": 4064,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.26081133,
+        "firstTexelP10": 0.23404575,
+        "adjacentTexelsMedian": 0.26116194,
+        "adjacentTexelsP10": 0.23261177,
+        "medianRatio": 0.99865753,
+        "p10Ratio": 1.00616467,
+        "medianDrop": 0.0003506,
+        "p10Drop": -0.00143398,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.26081133,
+        "nearP10": 0.23326527,
+        "interiorMedian": 0.25919804,
+        "interiorP10": 0.23035016,
+        "medianRatio": 1.00622416,
+        "p10Ratio": 1.01265513,
+        "medianDrop": -0.00161329,
+        "p10Drop": -0.00291511
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_top|southeast_bookshelf_west_upper:z:2.73:3.056:{\"y\":2.04,\"x\":1.02}",
+      "pairKey": "southeast_bookshelf_top|southeast_bookshelf_west_upper",
+      "surfaceId": "southeast_bookshelf_west_upper",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 3.056,
+        "constants": {
+          "y": 2.04,
+          "x": 1.02
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 1270,
+        "interiorTexels": 4064,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.51919207,
+        "firstTexelP10": 0.48839004,
+        "adjacentTexelsMedian": 0.52026545,
+        "adjacentTexelsP10": 0.48998501,
+        "medianRatio": 0.99793686,
+        "p10Ratio": 0.99674486,
+        "medianDrop": 0.00107338,
+        "p10Drop": 0.00159497,
+        "firstTexelSamples": 508,
+        "adjacentTexelSamples": 508
+      },
+      "radiance": {
+        "nearMedian": 0.51969216,
+        "nearP10": 0.48885449,
+        "interiorMedian": 0.52666676,
+        "interiorP10": 0.4958596,
+        "medianRatio": 0.98675709,
+        "p10Ratio": 0.98587279,
+        "medianDrop": 0.0069746,
+        "p10Drop": 0.00700511
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_north_of_outlet:z:2.73:2.906:{\"x\":1.02,\"y\":0.475}",
+      "pairKey": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_above_outlet",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 2.906,
+        "constants": {
+          "x": 1.02,
+          "y": 0.475
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 536,
+        "interiorTexels": 2278,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.14153668,
+        "firstTexelP10": 0.12622052,
+        "adjacentTexelsMedian": 0.14233979,
+        "adjacentTexelsP10": 0.12424309,
+        "medianRatio": 0.99435777,
+        "p10Ratio": 1.01591585,
+        "medianDrop": 0.00080311,
+        "p10Drop": -0.00197743,
+        "firstTexelSamples": 268,
+        "adjacentTexelSamples": 268
+      },
+      "radiance": {
+        "nearMedian": 0.14198387,
+        "nearP10": 0.1252094,
+        "interiorMedian": 0.1392101,
+        "interiorP10": 0.12040394,
+        "medianRatio": 1.01992502,
+        "p10Ratio": 1.03991113,
+        "medianDrop": -0.00277376,
+        "p10Drop": -0.00480546
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_north_of_outlet:z:2.73:2.906:{\"x\":1.02,\"y\":0.475}",
+      "pairKey": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_north_of_outlet",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 2.906,
+        "constants": {
+          "x": 1.02,
+          "y": 0.475
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 536,
+        "interiorTexels": 2144,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.14437422,
+        "firstTexelP10": 0.12415489,
+        "adjacentTexelsMedian": 0.14338909,
+        "adjacentTexelsP10": 0.12338889,
+        "medianRatio": 1.00687033,
+        "p10Ratio": 1.00620809,
+        "medianDrop": -0.00098513,
+        "p10Drop": -0.00076601,
+        "firstTexelSamples": 268,
+        "adjacentTexelSamples": 268
+      },
+      "radiance": {
+        "nearMedian": 0.14417058,
+        "nearP10": 0.1236168,
+        "interiorMedian": 0.1470131,
+        "interiorP10": 0.12562885,
+        "medianRatio": 0.98066483,
+        "p10Ratio": 0.98398415,
+        "medianDrop": 0.00284252,
+        "p10Drop": 0.00201205
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_south_of_outlet:z:3.026:3.056:{\"x\":1.02,\"y\":0.475}",
+      "pairKey": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_south_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_above_outlet",
+      "line": {
+        "axis": "z",
+        "min": 3.026,
+        "max": 3.056,
+        "constants": {
+          "x": 1.02,
+          "y": 0.475
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 68,
+        "interiorTexels": 289,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.07033866,
+        "firstTexelP10": 0.05223355,
+        "adjacentTexelsMedian": 0.07488524,
+        "adjacentTexelsP10": 0.04892435,
+        "medianRatio": 0.93928603,
+        "p10Ratio": 1.06763919,
+        "medianDrop": 0.00454658,
+        "p10Drop": -0.0033092,
+        "firstTexelSamples": 34,
+        "adjacentTexelSamples": 34
+      },
+      "radiance": {
+        "nearMedian": 0.07241896,
+        "nearP10": 0.04917735,
+        "interiorMedian": 0.08808793,
+        "interiorP10": 0.07620635,
+        "medianRatio": 0.82212128,
+        "p10Ratio": 0.64531829,
+        "medianDrop": 0.01566897,
+        "p10Drop": 0.027029
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_south_of_outlet:z:3.026:3.056:{\"x\":1.02,\"y\":0.475}",
+      "pairKey": "southeast_bookshelf_west_lower_above_outlet|southeast_bookshelf_west_lower_south_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_south_of_outlet",
+      "line": {
+        "axis": "z",
+        "min": 3.026,
+        "max": 3.056,
+        "constants": {
+          "x": 1.02,
+          "y": 0.475
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 68,
+        "interiorTexels": 272,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.06778403,
+        "firstTexelP10": 0.04280202,
+        "adjacentTexelsMedian": 0.07157593,
+        "adjacentTexelsP10": 0.03248162,
+        "medianRatio": 0.94702268,
+        "p10Ratio": 1.31773058,
+        "medianDrop": 0.0037919,
+        "p10Drop": -0.0103204,
+        "firstTexelSamples": 34,
+        "adjacentTexelSamples": 34
+      },
+      "radiance": {
+        "nearMedian": 0.06943866,
+        "nearP10": 0.03437617,
+        "interiorMedian": 0.07181507,
+        "interiorP10": 0.03221997,
+        "medianRatio": 0.96690931,
+        "p10Ratio": 1.06692115,
+        "medianDrop": 0.00237641,
+        "p10Drop": -0.0021562
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_north_of_outlet:z:2.73:2.906:{\"x\":1.02,\"y\":0.355}",
+      "pairKey": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_below_outlet",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 2.906,
+        "constants": {
+          "x": 1.02,
+          "y": 0.355
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 536,
+        "interiorTexels": 2144,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.16293598,
+        "firstTexelP10": 0.13679525,
+        "adjacentTexelsMedian": 0.16011918,
+        "adjacentTexelsP10": 0.13724269,
+        "medianRatio": 1.01759191,
+        "p10Ratio": 0.99673978,
+        "medianDrop": -0.0028168,
+        "p10Drop": 0.00044744,
+        "firstTexelSamples": 268,
+        "adjacentTexelSamples": 268
+      },
+      "radiance": {
+        "nearMedian": 0.16123724,
+        "nearP10": 0.13687776,
+        "interiorMedian": 0.1651431,
+        "interiorP10": 0.13769554,
+        "medianRatio": 0.97634863,
+        "p10Ratio": 0.99406099,
+        "medianDrop": 0.00390586,
+        "p10Drop": 0.00081778
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_north_of_outlet:z:2.73:2.906:{\"x\":1.02,\"y\":0.355}",
+      "pairKey": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_north_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_north_of_outlet",
+      "line": {
+        "axis": "z",
+        "min": 2.73,
+        "max": 2.906,
+        "constants": {
+          "x": 1.02,
+          "y": 0.355
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 536,
+        "interiorTexels": 2278,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.16095749,
+        "firstTexelP10": 0.13823247,
+        "adjacentTexelsMedian": 0.16107619,
+        "adjacentTexelsP10": 0.13513265,
+        "medianRatio": 0.99926304,
+        "p10Ratio": 1.02293908,
+        "medianDrop": 0.00011871,
+        "p10Drop": -0.00309982,
+        "firstTexelSamples": 268,
+        "adjacentTexelSamples": 268
+      },
+      "radiance": {
+        "nearMedian": 0.16098242,
+        "nearP10": 0.13745845,
+        "interiorMedian": 0.15818183,
+        "interiorP10": 0.13436488,
+        "medianRatio": 1.0177049,
+        "p10Ratio": 1.02302368,
+        "medianDrop": -0.00280059,
+        "p10Drop": -0.00309357
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_south_of_outlet:z:3.026:3.056:{\"x\":1.02,\"y\":0.355}",
+      "pairKey": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_south_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_below_outlet",
+      "line": {
+        "axis": "z",
+        "min": 3.026,
+        "max": 3.056,
+        "constants": {
+          "x": 1.02,
+          "y": 0.355
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 68,
+        "interiorTexels": 272,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.08873328,
+        "firstTexelP10": 0.08017817,
+        "adjacentTexelsMedian": 0.09412901,
+        "adjacentTexelsP10": 0.08093968,
+        "medianRatio": 0.94267731,
+        "p10Ratio": 0.99059158,
+        "medianDrop": 0.00539573,
+        "p10Drop": 0.00076151,
+        "firstTexelSamples": 34,
+        "adjacentTexelSamples": 34
+      },
+      "radiance": {
+        "nearMedian": 0.09273636,
+        "nearP10": 0.07924928,
+        "interiorMedian": 0.0942133,
+        "interiorP10": 0.08429108,
+        "medianRatio": 0.98432348,
+        "p10Ratio": 0.94018587,
+        "medianDrop": 0.00147694,
+        "p10Drop": 0.0050418
+      }
+    },
+    {
+      "edgeId": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_south_of_outlet:z:3.026:3.056:{\"x\":1.02,\"y\":0.355}",
+      "pairKey": "southeast_bookshelf_west_lower_below_outlet|southeast_bookshelf_west_lower_south_of_outlet",
+      "surfaceId": "southeast_bookshelf_west_lower_south_of_outlet",
+      "line": {
+        "axis": "z",
+        "min": 3.026,
+        "max": 3.056,
+        "constants": {
+          "x": 1.02,
+          "y": 0.355
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 68,
+        "interiorTexels": 289,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.09062221,
+        "firstTexelP10": 0.0775549,
+        "adjacentTexelsMedian": 0.08442015,
+        "adjacentTexelsP10": 0.06915527,
+        "medianRatio": 1.07346658,
+        "p10Ratio": 1.12146046,
+        "medianDrop": -0.00620206,
+        "p10Drop": -0.00839963,
+        "firstTexelSamples": 34,
+        "adjacentTexelSamples": 34
+      },
+      "radiance": {
+        "nearMedian": 0.08613387,
+        "nearP10": 0.07059881,
+        "interiorMedian": 0.0730433,
+        "interiorP10": 0.03377456,
+        "medianRatio": 1.1792166,
+        "p10Ratio": 2.09029536,
+        "medianDrop": -0.01309057,
+        "p10Drop": -0.03682425
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_1|southwest_drawer_north_1:y:0.0025:0.155:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_1|southwest_drawer_north_1",
+      "surfaceId": "southwest_drawer_east_1",
+      "line": {
+        "axis": "y",
+        "min": 0.0025,
+        "max": 0.155,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.55124372,
+        "firstTexelP10": 0.53372811,
+        "adjacentTexelsMedian": 0.54734249,
+        "adjacentTexelsP10": 0.53269993,
+        "medianRatio": 1.00712758,
+        "p10Ratio": 1.00193013,
+        "medianDrop": -0.00390123,
+        "p10Drop": -0.00102818,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.54946041,
+        "nearP10": 0.53286988,
+        "interiorMedian": 0.54007542,
+        "interiorP10": 0.52376986,
+        "medianRatio": 1.0173772,
+        "p10Ratio": 1.01737407,
+        "medianDrop": -0.009385,
+        "p10Drop": -0.00910002
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_1|southwest_drawer_north_1:y:0.0025:0.155:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_1|southwest_drawer_north_1",
+      "surfaceId": "southwest_drawer_north_1",
+      "line": {
+        "axis": "y",
+        "min": 0.0025,
+        "max": 0.155,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 460,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.80118619,
+        "firstTexelP10": 0.77885241,
+        "adjacentTexelsMedian": 0.80322892,
+        "adjacentTexelsP10": 0.77870099,
+        "medianRatio": 0.99745685,
+        "p10Ratio": 1.00019445,
+        "medianDrop": 0.00204273,
+        "p10Drop": -0.00015142,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.80223684,
+        "nearP10": 0.77870099,
+        "interiorMedian": 0.79710984,
+        "interiorP10": 0.77459177,
+        "medianRatio": 1.00643198,
+        "p10Ratio": 1.00530501,
+        "medianDrop": -0.005127,
+        "p10Drop": -0.00410922
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_2|southwest_drawer_north_2:y:0.16:0.3125:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_2|southwest_drawer_north_2",
+      "surfaceId": "southwest_drawer_east_2",
+      "line": {
+        "axis": "y",
+        "min": 0.16,
+        "max": 0.3125,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.54306413,
+        "firstTexelP10": 0.52763782,
+        "adjacentTexelsMedian": 0.54085301,
+        "adjacentTexelsP10": 0.52312313,
+        "medianRatio": 1.00408821,
+        "p10Ratio": 1.00863027,
+        "medianDrop": -0.00221112,
+        "p10Drop": -0.00451469,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.54183996,
+        "nearP10": 0.5260868,
+        "interiorMedian": 0.53335012,
+        "interiorP10": 0.51476974,
+        "medianRatio": 1.01591795,
+        "p10Ratio": 1.02198471,
+        "medianDrop": -0.00848984,
+        "p10Drop": -0.01131706
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_2|southwest_drawer_north_2:y:0.16:0.3125:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_2|southwest_drawer_north_2",
+      "surfaceId": "southwest_drawer_north_2",
+      "line": {
+        "axis": "y",
+        "min": 0.16,
+        "max": 0.3125,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.83198866,
+        "firstTexelP10": 0.81079617,
+        "adjacentTexelsMedian": 0.83279847,
+        "adjacentTexelsP10": 0.81450618,
+        "medianRatio": 0.9990276,
+        "p10Ratio": 0.99544508,
+        "medianDrop": 0.00080982,
+        "p10Drop": 0.00371001,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.83231749,
+        "nearP10": 0.81232553,
+        "interiorMedian": 0.82750995,
+        "interiorP10": 0.80761657,
+        "medianRatio": 1.00580965,
+        "p10Ratio": 1.00583069,
+        "medianDrop": -0.00480755,
+        "p10Drop": -0.00470896
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_3|southwest_drawer_north_3:y:0.3175:0.47:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_3|southwest_drawer_north_3",
+      "surfaceId": "southwest_drawer_east_3",
+      "line": {
+        "axis": "y",
+        "min": 0.3175,
+        "max": 0.47,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.54183652,
+        "firstTexelP10": 0.52176614,
+        "adjacentTexelsMedian": 0.53594902,
+        "adjacentTexelsP10": 0.52000449,
+        "medianRatio": 1.01098518,
+        "p10Ratio": 1.00338777,
+        "medianDrop": -0.0058875,
+        "p10Drop": -0.00176166,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.53865321,
+        "nearP10": 0.5201574,
+        "interiorMedian": 0.52663164,
+        "interiorP10": 0.50836538,
+        "medianRatio": 1.02282728,
+        "p10Ratio": 1.02319595,
+        "medianDrop": -0.01202157,
+        "p10Drop": -0.01179202
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_3|southwest_drawer_north_3:y:0.3175:0.47:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_3|southwest_drawer_north_3",
+      "surfaceId": "southwest_drawer_north_3",
+      "line": {
+        "axis": "y",
+        "min": 0.3175,
+        "max": 0.47,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.86091492,
+        "firstTexelP10": 0.84131669,
+        "adjacentTexelsMedian": 0.85885558,
+        "adjacentTexelsP10": 0.83585817,
+        "medianRatio": 1.00239777,
+        "p10Ratio": 1.00653044,
+        "medianDrop": -0.00205934,
+        "p10Drop": -0.00545852,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.85945203,
+        "nearP10": 0.83820563,
+        "interiorMedian": 0.85535764,
+        "interiorP10": 0.8339365,
+        "medianRatio": 1.00478675,
+        "p10Ratio": 1.00511925,
+        "medianDrop": -0.00409438,
+        "p10Drop": -0.00426913
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_4|southwest_drawer_north_4:y:0.475:0.6275:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_4|southwest_drawer_north_4",
+      "surfaceId": "southwest_drawer_east_4",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.6275,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.53777497,
+        "firstTexelP10": 0.51853582,
+        "adjacentTexelsMedian": 0.53509697,
+        "adjacentTexelsP10": 0.5181536,
+        "medianRatio": 1.00500469,
+        "p10Ratio": 1.00073766,
+        "medianDrop": -0.002678,
+        "p10Drop": -0.00038222,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.53590014,
+        "nearP10": 0.51776824,
+        "interiorMedian": 0.51457302,
+        "interiorP10": 0.24918468,
+        "medianRatio": 1.04144625,
+        "p10Ratio": 2.07784936,
+        "medianDrop": -0.02132712,
+        "p10Drop": -0.26858355
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_east_4|southwest_drawer_north_4:y:0.475:0.6275:{\"z\":2.385,\"x\":-1.035}",
+      "pairKey": "southwest_drawer_east_4|southwest_drawer_north_4",
+      "surfaceId": "southwest_drawer_north_4",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.6275,
+        "constants": {
+          "z": 2.385,
+          "x": -1.035
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 460,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.88831114,
+        "firstTexelP10": 0.86965563,
+        "adjacentTexelsMedian": 0.88990174,
+        "adjacentTexelsP10": 0.86649578,
+        "medianRatio": 0.99821261,
+        "p10Ratio": 1.0036467,
+        "medianDrop": 0.0015906,
+        "p10Drop": -0.00315985,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.888798,
+        "nearP10": 0.86794685,
+        "interiorMedian": 0.88691288,
+        "interiorP10": 0.86393509,
+        "medianRatio": 1.00212549,
+        "p10Ratio": 1.00464358,
+        "medianDrop": -0.00188512,
+        "p10Drop": -0.00401176
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_1|west_wall_open:y:0.0025:0.155:{\"x\":-1.91,\"z\":2.385}",
+      "pairKey": "southwest_drawer_north_1|west_wall_open",
+      "surfaceId": "southwest_drawer_north_1",
+      "line": {
+        "axis": "y",
+        "min": 0.0025,
+        "max": 0.155,
+        "constants": {
+          "x": -1.91,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 460,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.59091468,
+        "firstTexelP10": 0.56652918,
+        "adjacentTexelsMedian": 0.59277122,
+        "adjacentTexelsP10": 0.57038734,
+        "medianRatio": 0.99686802,
+        "p10Ratio": 0.9932359,
+        "medianDrop": 0.00185655,
+        "p10Drop": 0.00385816,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.59158617,
+        "nearP10": 0.56866636,
+        "interiorMedian": 0.6027709,
+        "interiorP10": 0.58004118,
+        "medianRatio": 0.98144448,
+        "p10Ratio": 0.98038964,
+        "medianDrop": 0.01118473,
+        "p10Drop": 0.01137482
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_2|west_wall_open:y:0.16:0.3125:{\"x\":-1.91,\"z\":2.385}",
+      "pairKey": "southwest_drawer_north_2|west_wall_open",
+      "surfaceId": "southwest_drawer_north_2",
+      "line": {
+        "axis": "y",
+        "min": 0.16,
+        "max": 0.3125,
+        "constants": {
+          "x": -1.91,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1725,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.62975804,
+        "firstTexelP10": 0.61098864,
+        "adjacentTexelsMedian": 0.63145873,
+        "adjacentTexelsP10": 0.61525293,
+        "medianRatio": 0.99730673,
+        "p10Ratio": 0.99306905,
+        "medianDrop": 0.00170069,
+        "p10Drop": 0.00426429,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.63108732,
+        "nearP10": 0.61287206,
+        "interiorMedian": 0.642818,
+        "interiorP10": 0.62534867,
+        "medianRatio": 0.98175117,
+        "p10Ratio": 0.98004854,
+        "medianDrop": 0.01173068,
+        "p10Drop": 0.01247662
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_3|west_wall_open:y:0.3175:0.47:{\"x\":-1.91,\"z\":2.385}",
+      "pairKey": "southwest_drawer_north_3|west_wall_open",
+      "surfaceId": "southwest_drawer_north_3",
+      "line": {
+        "axis": "y",
+        "min": 0.3175,
+        "max": 0.47,
+        "constants": {
+          "x": -1.91,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 575,
+        "interiorTexels": 1725,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.65887903,
+        "firstTexelP10": 0.64614319,
+        "adjacentTexelsMedian": 0.66052947,
+        "adjacentTexelsP10": 0.64405958,
+        "medianRatio": 0.99750134,
+        "p10Ratio": 1.00323511,
+        "medianDrop": 0.00165044,
+        "p10Drop": -0.0020836,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.65980949,
+        "nearP10": 0.64539638,
+        "interiorMedian": 0.67402259,
+        "interiorP10": 0.6574646,
+        "medianRatio": 0.97891302,
+        "p10Ratio": 0.9816443,
+        "medianDrop": 0.0142131,
+        "p10Drop": 0.01206822
+      }
+    },
+    {
+      "edgeId": "southwest_drawer_north_4|west_wall_open:y:0.475:0.6275:{\"x\":-1.91,\"z\":2.385}",
+      "pairKey": "southwest_drawer_north_4|west_wall_open",
+      "surfaceId": "southwest_drawer_north_4",
+      "line": {
+        "axis": "y",
+        "min": 0.475,
+        "max": 0.6275,
+        "constants": {
+          "x": -1.91,
+          "z": 2.385
+        }
+      },
+      "status": "PASS",
+      "failures": [],
+      "counts": {
+        "nearTexels": 460,
+        "interiorTexels": 1840,
+        "nearExactBlackTexels": 0,
+        "nearAlphaZeroTexels": 0
+      },
+      "firstTexelRadiance": {
+        "firstTexelMedian": 0.68585837,
+        "firstTexelP10": 0.66938655,
+        "adjacentTexelsMedian": 0.68782979,
+        "adjacentTexelsP10": 0.67190632,
+        "medianRatio": 0.99713385,
+        "p10Ratio": 0.99624981,
+        "medianDrop": 0.00197142,
+        "p10Drop": 0.00251977,
+        "firstTexelSamples": 230,
+        "adjacentTexelSamples": 230
+      },
+      "radiance": {
+        "nearMedian": 0.6868005,
+        "nearP10": 0.67047087,
+        "interiorMedian": 0.70128887,
+        "interiorP10": 0.68356113,
+        "medianRatio": 0.97934037,
+        "p10Ratio": 0.98084991,
+        "medianDrop": 0.01448837,
+        "p10Drop": 0.01309026
+      }
+    }
+  ]
+}

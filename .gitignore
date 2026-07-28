@@ -17,6 +17,16 @@ textures/*.bak-pre-padding-fix
 .omc/
 assets/runtime/r7-3-10/work/
 
+# R7-3.10 local validation captures, retired package copies, and loading probes.
+assets/runtime/r7-3-10/current-room/validation/
+assets/runtime/r7-3-10/current-room/depth-h2/package-texel-aware-coplanar-v1/
+assets/runtime/r7-3-10/current-room/depth-h2/package-texel-aware-v1/
+assets/runtime/r7-3-10/current-room/south-window-reveals/package/
+docs/data/r7-3-10-loading-byte-progress-smoke.json
+docs/data/r7-3-10-loading-stage-timing-smoke.json
+docs/reports/r7-3-10-loading-byte-progress-*/
+docs/reports/r7-3-10-loading-stage-timing-*/
+
 # Editor
 .vscode/
 .idea/

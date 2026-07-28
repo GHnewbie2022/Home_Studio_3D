@@ -9,6 +9,7 @@ const initCommon = fs.readFileSync('js/InitCommon.js', 'utf8');
 const homeStudio = fs.readFileSync('js/Home_Studio.js', 'utf8');
 const pathTracingCommon = fs.readFileSync('js/PathTracingCommon.js', 'utf8');
 const shader = fs.readFileSync('shaders/Home_Studio_Fragment.glsl', 'utf8');
+const smokeSource = fs.readFileSync('docs/tools/r7-3-10-xatlas-shader-compile-smoke.mjs', 'utf8');
 
 function readJson(path)
 {
@@ -136,8 +137,8 @@ test('raw multi-page sheet bounds cover both page columns', () => {
 	);
 	assert.match(
 		initCommon,
-		/const\s+R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_Y\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_DEPTH_H2_H\s*;/,
-		'right sheet height must include the depth_h2 page bottom'
+		/const\s+R7310_C1_XATLAS_LIGHTMAP_SHEET_RIGHT_H\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_Y\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_SOUTH_FIXED_FURNITURE_H\s*;/,
+		'right sheet height must include the south furniture page bottom'
 	);
 	assert.match(
 		initCommonConst('R7310_C1_XATLAS_LIGHTMAP_SHEET_H'),
@@ -154,7 +155,9 @@ test('raw multi-page sheet bounds cover both page columns', () => {
 		'west_threshold_front',
 		'central_desk',
 		'structural',
-		'depth_h2'
+		'depth_h2',
+		'northeast_bed',
+		'south_fixed_furniture'
 	]) {
 		assert.match(
 			initCommon,
@@ -168,7 +171,10 @@ test('raw multi-page loader builds the upload buffer without a Float32 sheet cop
 	const rawLoader = sliceFunction(initCommon, 'loadR7310C1XatlasRawLightmapPages');
 	assert.doesNotMatch(rawLoader, /new Float32Array\s*\(\s*R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*\*\s*R7310_C1_XATLAS_LIGHTMAP_SHEET_H\s*\*\s*4\s*\)/);
 	assert.match(rawLoader, /new Uint16Array\s*\(\s*R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*\*\s*R7310_C1_XATLAS_LIGHTMAP_SHEET_H\s*\*\s*4\s*\)/);
-	assert.match(rawLoader, /r7310C1Float32RgbaToHalfInto/);
+	assert.match(rawLoader, /pointer\.artifacts\.runtimeAtlasPatch0/);
+	assert.match(rawLoader, /new Uint16Array\s*\(\s*atlasBuffer\s*\)/);
+	assert.match(rawLoader, /pageBuffer\.set\(facePixels\.subarray\(/);
+	assert.doesNotMatch(rawLoader, /r7310C1Float32RgbaToHalfInto/);
 });
 
 test('atlasMaster raw loads the floor as a separate runtime page texture', () => {
@@ -183,7 +189,20 @@ test('atlasMaster raw loads the floor as a separate runtime page texture', () =>
 	assert.doesNotMatch(rawLoader, /surface\.packageFace === 'floor'[\s\S]{0,600}r7310C1Float32RgbaToHalfInto/);
 	assert.match(rawCommit, /r7310C1XatlasRuntimeFullFloorActive[\s\S]{0,160}R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_ID/);
 	assert.doesNotMatch(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_FLOOR_W/);
-	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_WEST_W/);
+	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W\s*=\s*Math\.max\(/);
+	assert.match(initCommon, /R7310_C1_XATLAS_LIGHTMAP_SHEET_W\s*=\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_X\s*\+\s*R7310_C1_XATLAS_LIGHTMAP_PAGE_RIGHT_W/);
+});
+
+test('formal raw smoke waits for every required lightmap page without mutating legacy modes', () => {
+	const smokePageExpression = sliceFunction(smokeSource, 'pageSmokeExpression');
+	assert.match(initCommon, /let\s+r7310C1XatlasLoadedRawLightmapPageIds\s*=\s*\[\]/);
+	assert.match(initCommon, /function\s+r7310C1RequiredRawLightmapPageIds\s*\(/);
+	assert.match(initCommon, /function\s+r7310C1RawLightmapPageReadinessReport\s*\(/);
+	assert.match(initCommon, /lightmapPageReadiness:\s*r7310C1RawLightmapPageReadinessReport\(\)/);
+	assert.match(smokeSource, /lightmapPageReadiness/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1UseNonSquareAtlas\s*\(/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1FullNorthWallXatlasPackage\s*\(/);
+	assert.doesNotMatch(smokePageExpression, /window\.setR7310C1FullNorthWallXatlasRuntimeEnabled\s*\(/);
 });
 
 test('formal atlasMaster raw shader stays within Chrome Metal texture unit budget', () => {
@@ -207,6 +226,18 @@ test('floor page sampler never borrows the shared bake-atlas slot', () => {
 	assert.match(floorDispose, /bindR7310C1XatlasRuntimeFloorPageTextureUniform\(null\)/);
 	assert.doesNotMatch(floorDispose, /tR738C1BakeAtlasTexture/);
 	assert.match(uniformUpdate, /bindR7310C1XatlasRuntimeFloorPageTextureUniform\(\s*xatlasApplied\s*&&\s*r7310C1XatlasRuntimeFloorPageTexture\s*\?\s*r7310C1XatlasRuntimeFloorPageTexture\s*:\s*null\s*\)/);
+});
+
+test('formal floor mode uses the loaded XATLAS floor page instead of legacy full-room readiness', () => {
+	const uniformUpdate = sliceFunction(initCommon, 'updateR7310C1FullRoomDiffuseRuntimeUniforms');
+	assert.match(
+		uniformUpdate,
+		/var\s+floorXatlasPageReady\s*=\s*r7310C1XatlasRuntimeEnabled\s*&&[\s\S]{0,320}r7310C1XatlasRuntimeFullFloorActive\s*&&[\s\S]{0,120}r7310C1XatlasRuntimeFloorPageTexture/
+	);
+	assert.match(
+		uniformUpdate,
+		/var\s+floorApplied\s*=\s*r7310C1FloorDiffuseRuntimeEnabled\s*&&\s*\(floorXatlasPageReady\s*\|\|\s*r7310C1FullRoomDiffuseRuntimeReady\)/
+	);
 });
 
 test('runtime report records render feedback-loop texture candidates', () => {
@@ -443,7 +474,7 @@ test('formal atlasMaster raw wires direct-included uniforms for east south ceili
 	assert.match(rawLoader, /r7310C1XatlasRuntimeDepthH2DirectIncluded[\s\S]{0,180}r7310C1XatlasDepthH2DirectIncludedForVariant\(v\)/);
 });
 
-test('raw multi-page loader reports visible progress for each page', () => {
+test('raw multi-page loader reports visible progress from actual loading stages', () => {
 	const rawLoader = sliceFunction(initCommon, 'loadR7310C1XatlasRawLightmapPages');
 	const beginLoading = sliceFunction(initCommon, 'beginR7310C1XatlasRawLightmapPageLoadingUi');
 	const hideLoading = sliceFunction(initCommon, 'hideHomeStudioLoadingScreen');
@@ -451,13 +482,15 @@ test('raw multi-page loader reports visible progress for each page', () => {
 	assert.notEqual(autoLoadStart, -1, 'atlasMaster raw auto-load scheduler must exist');
 	const autoLoadBlock = initCommon.slice(autoLoadStart, initCommon.indexOf('};', autoLoadStart) + 2);
 	assert.match(initCommon, /function\s+beginR7310C1XatlasRawLightmapPageLoadingUi\s*\(/);
-	assert.match(initCommon, /function\s+updateR7310C1XatlasRawLightmapPageLoadingUi\s*\(/);
+	assert.match(initCommon, /function\s+updateR7310C1XatlasRawLightmapLoadingProgress\s*\(/);
 	assert.match(initCommon, /function\s+finishR7310C1XatlasRawLightmapPageLoadingUi\s*\(/);
 	assert.match(initCommon, /r7310C1XatlasRawLightmapPageLoadingActive/);
 	assert.match(hideLoading, /if\s*\(\s*r7310C1XatlasRawLightmapPageLoadingActive\s*\)/);
 	assert.doesNotMatch(beginLoading, /homeStudioLoadingDisplayedProgress\s*=\s*0\.0/);
-	assert.match(rawLoader, /beginR7310C1XatlasRawLightmapPageLoadingUi\(surfaces\.length\)/);
-	assert.match(rawLoader, /updateR7310C1XatlasRawLightmapPageLoadingUi\([\s\S]{0,120}surface\.surfaceId/);
+	assert.match(rawLoader, /createR7310C1XatlasRawLightmapLoadingProgressPlan\(surfaces,/);
+	assert.match(rawLoader, /beginR7310C1XatlasRawLightmapPageLoadingUi\(loadingProgressPlan\)/);
+	for (const stage of ['sheet-allocation', 'pointer-read', 'data-copy', 'runtime-commit'])
+		assert.match(rawLoader, new RegExp(`updateR7310C1XatlasRawLightmapLoadingProgress\\('${stage}'`));
 	assert.match(rawLoader, /finishR7310C1XatlasRawLightmapPageLoadingUi\(\)/);
 	assert.doesNotMatch(autoLoadBlock, /setTimeout\(/);
 });
@@ -469,15 +502,17 @@ test('loading progress stays monotonic while the loading screen is visible', () 
 	assert.match(loadingUi, /homeStudioLoadingTargetProgress\s*=\s*nextProgress/);
 });
 
-test('raw multi-page loader yields a paint frame after page progress updates', () => {
+test('raw multi-page loader yields one coalesced paint frame before sheet allocation', () => {
 	const rawLoader = sliceFunction(initCommon, 'loadR7310C1XatlasRawLightmapPages');
-	const pageProgressUpdater = sliceFunction(initCommon, 'updateR7310C1XatlasRawLightmapPageLoadingUi');
-	assert.match(initCommon, /function\s+waitHomeStudioLoadingUiPaint\s*\(/);
-	assert.match(pageProgressUpdater, /homeStudioLoadingDisplayedProgress\s*=\s*Math\.max\(\s*homeStudioLoadingDisplayedProgress\s*,\s*clamped\s*\)/);
-	assert.doesNotMatch(pageProgressUpdater, /Math\.trunc\(Number\(donePages\)/);
-	assert.match(rawLoader, /updateR7310C1XatlasRawLightmapPageLoadingUi\(loadedPageCount,\s*surfaces\.length,\s*surface\.surfaceId\);\s*await\s+waitHomeStudioLoadingUiPaint\(\);[\s\S]{0,220}var rect/);
+	const loadingYield = sliceFunction(initCommon, 'yieldHomeStudioLoadingFrame');
+	assert.match(loadingYield, /homeStudioLoadingFrameYieldPromise/);
+	assert.equal((loadingYield.match(/requestAnimationFrame\(/g) || []).length, 1,
+		'coalesced loading yield must wait for at most one animation frame');
+	assert.equal((rawLoader.match(/await\s+yieldHomeStudioLoadingFrame\(/g) || []).length, 1,
+		'raw page loading must yield only once before allocating the runtime sheet');
+	assert.match(rawLoader, /beginR7310C1XatlasRawLightmapPageLoadingUi\(loadingProgressPlan\);\s*await\s+yieldHomeStudioLoadingFrame\(\{ reason: 'before-sheet-allocation' \}\);\s*var allocationStage/);
+	assert.doesNotMatch(rawLoader, /waitHomeStudioLoadingUiPaint/);
 	assert.match(rawLoader, /fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress/);
-	assert.match(rawLoader, /loadedPageCount\s*\+=\s*1;\s*updateR7310C1XatlasRawLightmapPageLoadingUi\(loadedPageCount,\s*surfaces\.length,\s*surface\.surfaceId\);\s*await\s+waitHomeStudioLoadingUiPaint\(\);/);
 });
 
 test('raw multi-page loader streams atlas downloads into visible progress', () => {
@@ -486,12 +521,12 @@ test('raw multi-page loader streams atlas downloads into visible progress', () =
 	assert.match(initCommon, /function\s+fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress\s*\(/);
 	assert.match(streamHelper, /response\.body\.getReader\(\)/);
 	assert.match(streamHelper, /headers\.get\('content-length'\)/);
-	assert.match(streamHelper, /updateR7310C1XatlasRawLightmapPageLoadingUi\(\s*donePages\s*\+\s*pageProgress/);
-	assert.match(streamHelper, /await\s+waitHomeStudioLoadingUiPaint\(\)/);
+	assert.match(streamHelper, /updateR7310C1XatlasRawLightmapLoadingProgress\('binary-read',[\s\S]{0,160}loadedBytes:\s*received,[\s\S]{0,160}expectedBytes:/);
+	assert.doesNotMatch(streamHelper, /waitHomeStudioLoadingUiPaint/);
 	assert.match(streamHelper, /lastProgressPaintAt/);
 	assert.match(streamHelper, /now\s*-\s*lastProgressPaintAt\s*>=\s*120/);
-	assert.match(streamHelper, /pageProgress\s*>=\s*0\.92/);
-	assert.match(rawLoader, /fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress\([\s\S]{0,180}surface\.surfaceId,[\s\S]{0,120}loadedPageCount,[\s\S]{0,120}surfaces\.length/);
+	assert.match(streamHelper, /received\s*>=\s*contentLength/);
+	assert.match(rawLoader, /fetchR7310C1XatlasRawLightmapPageAtlasBufferWithProgress\([\s\S]{0,180}surface\.surfaceId,[\s\S]{0,120}expectBytes/);
 	assert.doesNotMatch(rawLoader, /var\s+atlasResp\s*=\s*await\s+fetch\(pointer\.packageDir \+ '\/' \+ atlasArtifact/);
 });
 
@@ -501,12 +536,14 @@ test('baked route miss is visible, while intentional floor footprint holes fall 
 	assert.match(shader, /r7310XatlasRuntimeFullBakeCeilingClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeDepthH2Claimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeCentralDeskClaimed/);
+	assert.match(shader, /r7310XatlasRuntimeFullBakeNortheastBedClaimed/);
+	assert.match(shader, /r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeStructuralClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed/);
 	assert.match(shader, /r7310XatlasRuntimeFullBakeWestWallSwitchClaimed/);
 	assert.match(
 		shader,
-		/bool\s+r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*=\s*\(\s*r7310XatlasRuntimeFullBakeWestClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNorthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeEastClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCeilingClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeDepthH2Claimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCentralDeskClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeStructuralClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeWestWallSwitchClaimed\s*\)\s*&&\s*!r7310XatlasRuntimeFirstHit\s*;/
+		/bool\s+r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*=\s*\(\s*r7310XatlasRuntimeFullBakeWestClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNorthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeEastClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCeilingClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeDepthH2Claimed\s*\|\|\s*r7310XatlasRuntimeFullBakeCentralDeskClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeNortheastBedClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthFixedFurnitureClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeStructuralClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeSouthWindowRevealsClaimed\s*\|\|\s*r7310XatlasRuntimeFullBakeWestWallSwitchClaimed\s*\)\s*&&\s*!r7310XatlasRuntimeFirstHit\s*;/
 	);
 	assert.match(shader, /bool\s+r7310XatlasRuntimeFloorFootprintHoleFallsBackToLive\s*=\s*r7310XatlasRuntimeFullBakeFloorClaimed\s*&&\s*!r7310XatlasRuntimeFloorFirstHit/);
 	assert.match(shader, /if\s*\(\s*r7310XatlasRuntimeFullBakeRouteMissIsDebugError\s*\)/);

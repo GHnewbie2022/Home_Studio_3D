@@ -10,8 +10,8 @@
  * Every output carries the same REGISTRY_VERSION hash so the scanner can refuse stale codegen
  * (禁三份手寫漂移). GLSL bakes the rules into an explicit precedence if-chain; JS/Python embed the
  * surface table copied from the registry + a generic resolver. All three implement the identical
- * ownerOfSurface(sample) semantics: a surface matches when normalGate && objectIdGate && y/z bounds
- * && (x bounds OR any xRects); the highest-precedence match wins; equal-precedence ties = conflict;
+ * ownerOfSurface(sample) semantics: a surface matches when normalGate && objectIdGate && either
+ * one regions[] box or the legacy x/y/z bounds; the highest-precedence match wins; equal-precedence ties = conflict;
  * a winning pendingPolicy=='pending' surface resolves to PENDING.
  *
  * Read-only generator. Run: node docs/tools/r7-3-10-surface-owner-codegen.mjs
@@ -34,7 +34,8 @@ const surfaces = registry.surfaces;
 // Stable version hash over the machine-readable surface fields only (note/citation excluded).
 const machineFields = surfaces.map((s) => ({
   surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
-  x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+  x: s.x, y: s.y, z: s.z, xRects: s.xRects, regions: s.regions,
+  precedence: s.precedence, pendingPolicy: s.pendingPolicy,
   configId: s.configId, atlasGroup: s.atlasGroup,
 }));
 const REGISTRY_VERSION = createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
@@ -65,15 +66,26 @@ const glslFloat = (n) => {
 };
 
 function glslGate(s) {
+  const axisGate = (axis, range) => range
+    ? `p.${axis} >= ${glslFloat(range[0])} && p.${axis} <= ${glslFloat(range[1])}`
+    : null;
+  const regionGate = (region) => ['x', 'y', 'z']
+    .map((axis) => axisGate(axis, region[axis]))
+    .filter(Boolean)
+    .join(' && ');
   const parts = [];
   if (s.normalGate) parts.push(`n.${s.normalGate.axis} * ${glslFloat(s.normalGate.sign)} > ${glslFloat(s.normalGate.threshold)}`);
   if (s.objectIdGate) parts.push(`objId < ${glslFloat(s.objectIdGate.lt)}`);
-  if (s.y) parts.push(`p.y >= ${glslFloat(s.y[0])} && p.y <= ${glslFloat(s.y[1])}`);
-  if (s.z) parts.push(`p.z >= ${glslFloat(s.z[0])} && p.z <= ${glslFloat(s.z[1])}`);
-  if (Array.isArray(s.xRects)) {
-    parts.push('(' + s.xRects.map((r) => `(p.x >= ${glslFloat(r[0])} && p.x <= ${glslFloat(r[1])})`).join(' || ') + ')');
-  } else if (s.x) {
-    parts.push(`p.x >= ${glslFloat(s.x[0])} && p.x <= ${glslFloat(s.x[1])}`);
+  if (Array.isArray(s.regions)) {
+    parts.push('(' + s.regions.map((region) => `(${regionGate(region)})`).join(' || ') + ')');
+  } else {
+    if (s.y) parts.push(axisGate('y', s.y));
+    if (s.z) parts.push(axisGate('z', s.z));
+    if (Array.isArray(s.xRects)) {
+      parts.push('(' + s.xRects.map((r) => `(${axisGate('x', r)})`).join(' || ') + ')');
+    } else if (s.x) {
+      parts.push(axisGate('x', s.x));
+    }
   }
   return parts.join(' && ');
 }
@@ -123,11 +135,13 @@ export const OWNER_IDS = ${JSON.stringify(ids, null, 2)};
 export const SURFACES = ${JSON.stringify(machineFields, null, 2)};
 
 function inRange(v, r) { return r == null || (v >= r[0] && v <= r[1]); }
+function inRegion(p, region) { return ['x', 'y', 'z'].every((axis) => inRange(p[axis], region[axis])); }
 function surfaceMatches(s, sample) {
   const g = s.normalGate;
   if (g && !(sample.normal[g.axis] * g.sign > g.threshold)) return false;
   if (s.objectIdGate && !(sample.objectId < s.objectIdGate.lt)) return false;
   const p = sample.position;
+  if (Array.isArray(s.regions)) return s.regions.some((region) => inRegion(p, region));
   if (!inRange(p.y, s.y) || !inRange(p.z, s.z)) return false;
   if (Array.isArray(s.xRects)) { if (!s.xRects.some((r) => inRange(p.x, r))) return false; }
   else if (!inRange(p.x, s.x)) return false;
@@ -166,6 +180,10 @@ def _in_range(v, r):
     return r is None or (v >= r[0] and v <= r[1])
 
 
+def _in_region(position, region):
+    return all(_in_range(position[axis], region.get(axis)) for axis in ("x", "y", "z"))
+
+
 def _matches(s, sample):
     g = s.get("normalGate")
     if g and not (sample["normal"][g["axis"]] * g["sign"] > g["threshold"]):
@@ -174,6 +192,8 @@ def _matches(s, sample):
     if oid and not (sample["objectId"] < oid["lt"]):
         return False
     p = sample["position"]
+    if isinstance(s.get("regions"), list):
+        return any(_in_region(p, region) for region in s["regions"])
     if not _in_range(p["y"], s.get("y")) or not _in_range(p["z"], s.get("z")):
         return False
     if isinstance(s.get("xRects"), list):
@@ -240,11 +260,13 @@ function emitInitJs() {
 \tvar R7310_SURFACE_OWNER_REGISTRY_VERSION = ${JSON.stringify(REGISTRY_VERSION)};
 \tvar R7310_SURFACE_OWNER_SURFACES = ${JSON.stringify(machineFields)};
 \tfunction r7310SurfaceOwnerInRange(v, r) { return r == null || (v >= r[0] && v <= r[1]); }
+\tfunction r7310SurfaceOwnerInRegion(p, region) { var axes = ['x', 'y', 'z']; for (var i = 0; i < axes.length; i++) if (!r7310SurfaceOwnerInRange(p[axes[i]], region[axes[i]])) return false; return true; }
 \tfunction r7310SurfaceOwnerMatches(s, sample) {
 \t\tvar g = s.normalGate;
 \t\tif (g && !(sample.normal[g.axis] * g.sign > g.threshold)) return false;
 \t\tif (s.objectIdGate && !(sample.objectId < s.objectIdGate.lt)) return false;
 \t\tvar p = sample.position;
+\t\tif (Array.isArray(s.regions)) { for (var regionIndex = 0; regionIndex < s.regions.length; regionIndex++) if (r7310SurfaceOwnerInRegion(p, s.regions[regionIndex])) return true; return false; }
 \t\tif (!r7310SurfaceOwnerInRange(p.y, s.y) || !r7310SurfaceOwnerInRange(p.z, s.z)) return false;
 \t\tif (Array.isArray(s.xRects)) { var ok = false; for (var i = 0; i < s.xRects.length; i++) if (r7310SurfaceOwnerInRange(p.x, s.xRects[i])) ok = true; if (!ok) return false; }
 \t\telse if (!r7310SurfaceOwnerInRange(p.x, s.x)) return false;

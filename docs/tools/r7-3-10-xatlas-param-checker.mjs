@@ -58,7 +58,8 @@ if (!registry || !axisSpec || !param) {
 function computeRegistryVersion() {
   const machineFields = registry.surfaces.map((s) => ({
     surfaceId: s.surfaceId, normalGate: s.normalGate, objectIdGate: s.objectIdGate,
-    x: s.x, y: s.y, z: s.z, xRects: s.xRects, precedence: s.precedence, pendingPolicy: s.pendingPolicy,
+    x: s.x, y: s.y, z: s.z, xRects: s.xRects, regions: s.regions,
+    precedence: s.precedence, pendingPolicy: s.pendingPolicy,
     configId: s.configId, atlasGroup: s.atlasGroup,
   }));
   return createHash('sha256').update(JSON.stringify(machineFields)).digest('hex').slice(0, 16);
