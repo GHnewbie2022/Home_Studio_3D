@@ -12,6 +12,13 @@
 *.orig
 textures/*.bak-pre-padding-fix
 
+# Blender local recovery and reconstruction outputs
+*.blend1
+*.blend2
+blender_native/backups/
+blender_native/reconstruction_output/
+blender_native/**/*_validation.json
+
 # Local generated artifacts and bake/probe outputs.
 # Current bake/probe work output belongs under assets/runtime/r7-3-10/work.
 .omc/

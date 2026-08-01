@@ -1,0 +1,181 @@
+{
+  "project": "blender_native",
+  "phase": "01_architecture_reconstruction",
+  "units": "meters",
+  "coordinate_system": {
+    "up": "+Z",
+    "east": "+X",
+    "north": "+Y",
+    "origin": "listening point projected onto finished floor"
+  },
+  "room": {
+    "interior_bounds": {
+      "x": [-1.91, 1.91],
+      "y": [-3.056, 1.874],
+      "z": [0.0, 2.905]
+    },
+    "exterior_bounds": {
+      "x": [-2.11, 2.11],
+      "y": [-3.256, 2.074],
+      "z": [-0.2, 3.105]
+    },
+    "wall_thickness": 0.2,
+    "floor_thickness": 0.2,
+    "ceiling_thickness": 0.2
+  },
+  "openings": {
+    "Door_North": {
+      "wall": "Wall_North",
+      "bounds": {
+        "x": [-1.52, -0.73],
+        "y": [1.864, 2.084],
+        "z": [-0.01, 2.03]
+      }
+    },
+    "Door_West": {
+      "wall": "Wall_West",
+      "bounds": {
+        "x": [-2.12, -1.9],
+        "y": [0.984, 1.874],
+        "z": [0.09, 2.04]
+      }
+    },
+    "Window_South": {
+      "wall": "Wall_South",
+      "bounds": {
+        "x": [-1.75, 0.69],
+        "y": [-3.266, -3.046],
+        "z": [1.04, 2.915]
+      }
+    }
+  },
+  "architecture": {
+    "Floor_Slab": {
+      "collection": "Floor",
+      "material": "M_Floor_Wood",
+      "bounds": {
+        "x": [-2.11, 2.11],
+        "y": [-3.256, 2.074],
+        "z": [-0.2, 0.0]
+      }
+    },
+    "Ceiling_Slab": {
+      "collection": "Ceiling",
+      "material": "M_Ceiling",
+      "bounds": {
+        "x": [-2.11, 2.11],
+        "y": [-3.256, 2.074],
+        "z": [2.905, 3.105]
+      }
+    },
+    "Wall_North": {
+      "collection": "Walls",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [-2.11, 2.11],
+        "y": [1.874, 2.074],
+        "z": [0.0, 2.905]
+      }
+    },
+    "Wall_East": {
+      "collection": "Walls",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [1.91, 2.11],
+        "y": [-3.056, 1.874],
+        "z": [0.0, 2.905]
+      }
+    },
+    "Wall_South": {
+      "collection": "Walls",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [-2.11, 2.11],
+        "y": [-3.256, -3.056],
+        "z": [0.0, 2.905]
+      }
+    },
+    "Wall_West": {
+      "collection": "Walls",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [-2.11, -1.91],
+        "y": [-3.056, 1.874],
+        "z": [0.0, 2.905]
+      }
+    },
+    "Beam_West": {
+      "collection": "Structure",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [-1.91, -1.75],
+        "y": [-2.846, 1.874],
+        "z": [2.525, 2.905]
+      }
+    },
+    "Beam_East": {
+      "collection": "Structure",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [1.85, 1.91],
+        "y": [-2.49, 1.874],
+        "z": [2.515, 2.905]
+      }
+    },
+    "Column_SW": {
+      "collection": "Structure",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [-1.91, -1.75],
+        "y": [-3.056, -2.846],
+        "z": [0.0, 2.905]
+      }
+    },
+    "Column_SE": {
+      "collection": "Structure",
+      "material": "M_Wall_Paint",
+      "bounds": {
+        "x": [1.78, 1.91],
+        "y": [-3.056, -2.49],
+        "z": [0.0, 2.905]
+      }
+    }
+  },
+  "camera": {
+    "Camera_View_01": {
+      "position": [-1.4, -3.9, 2.3],
+      "yaw": -0.4,
+      "pitch": -0.18,
+      "field_of_view_degrees": 55.0
+    },
+    "Camera_View_02": {
+      "position": [-0.9, -3.7, 1.1],
+      "yaw": -0.25,
+      "pitch": 0.3,
+      "field_of_view_degrees": 55.0
+    },
+    "Camera_View_03": {
+      "position": [0.0, 1.0, 1.3],
+      "yaw": -3.141592653589793,
+      "pitch": 0.0,
+      "field_of_view_degrees": 55.0
+    }
+  },
+  "materials": {
+    "M_Floor_Wood": {
+      "base_color": [0.55, 0.47, 0.41, 1.0],
+      "roughness": 0.1,
+      "metallic": 0.0
+    },
+    "M_Wall_Paint": {
+      "base_color": [0.8, 0.7872, 0.7592, 1.0],
+      "roughness": 0.9,
+      "metallic": 0.0
+    },
+    "M_Ceiling": {
+      "base_color": [0.8, 0.7872, 0.7592, 1.0],
+      "roughness": 0.9,
+      "metallic": 0.0
+    }
+  }
+}

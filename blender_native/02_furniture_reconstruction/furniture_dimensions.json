@@ -1,0 +1,108 @@
+{
+  "project": "blender_native",
+  "phase": "02_furniture_reconstruction",
+  "units": "meters",
+  "coordinate_system": {
+    "up": "+Z",
+    "east": "+X",
+    "north": "+Y",
+    "origin": "listening point projected onto finished floor"
+  },
+  "configuration_policy": {
+    "primary": "C2",
+    "reference": "C1",
+    "c2_gik": "east and west each have three vertical white panels; north has three horizontal grey panels",
+    "c1_gik": "three grey reference panels; geometry only, excluded from C2"
+  },
+  "bounds": {
+    "Bed_Northeast": {"x": [-0.027, 1.91], "y": [0.314, 1.874], "z": [0.0, 0.28]},
+    "Desk_Central": {"x": [-0.6, 0.6], "y": [-0.945, -0.405], "z": [0.0, 0.757]},
+    "South_Desk": {"x": [-1.91, 1.02], "y": [-3.056, -2.385], "z": [0.63, 0.77]},
+    "South_Bookcase": {"x": [1.02, 1.78], "y": [-3.056, -2.73], "z": [0.0, 2.04]},
+    "Subwoofer_KH750": {"x": [-0.165, 0.165], "y": [-2.656, -2.273], "z": [0.0, 0.383]},
+    "Door_Wood_North": {"x": [-1.52, -0.73], "y": [1.874, 1.914], "z": [0.0, 2.03]},
+    "Door_Iron_West": {"x": [-2.0, -1.96], "y": [0.984, 1.874], "z": [0.09, 2.04]},
+    "AirConditioner_Main": {"x": [0.83, 1.7], "y": [-3.056, -2.681], "z": [2.425, 2.725]}
+  },
+  "air_conditioner": {
+    "opening_bounds": {"x": [0.91, 1.62], "y": [-2.9, -2.681], "z": [2.425, 2.455]},
+    "boolean_overhang_m": 0.001,
+    "liner_thickness_m": 0.002
+  },
+  "south_desk_footprint": [
+    [-1.75, -3.056],
+    [1.02, -3.056],
+    [1.02, -2.385],
+    [-1.91, -2.385],
+    [-1.91, -2.846],
+    [-1.75, -2.846]
+  ],
+  "south_drawers": [
+    {"name": "South_Drawer_01", "x": [-1.91, -1.035], "y": [-3.056, -2.385], "z": [0.0025, 0.155]},
+    {"name": "South_Drawer_02", "x": [-1.91, -1.035], "y": [-3.056, -2.385], "z": [0.16, 0.3125]},
+    {"name": "South_Drawer_03", "x": [-1.91, -1.035], "y": [-3.056, -2.385], "z": [0.3175, 0.47]},
+    {"name": "South_Drawer_04", "x": [-1.91, -1.035], "y": [-3.056, -2.385], "z": [0.475, 0.6275]}
+  ],
+  "gik_c2": [
+    {"name": "GIK_C2_North_01", "color": "grey", "orientation": "horizontal", "x": [-0.6, 0.6], "y": [1.756, 1.874], "z": [0.585, 1.185]},
+    {"name": "GIK_C2_North_02", "color": "grey", "orientation": "horizontal", "x": [-0.6, 0.6], "y": [1.756, 1.874], "z": [1.255, 1.855]},
+    {"name": "GIK_C2_North_03", "color": "grey", "orientation": "horizontal", "x": [-0.6, 0.6], "y": [1.756, 1.874], "z": [1.925, 2.525]},
+    {"name": "GIK_C2_East_01", "color": "white", "orientation": "vertical", "x": [1.792, 1.91], "y": [0.089, 0.689], "z": [0.795, 1.995]},
+    {"name": "GIK_C2_East_02", "color": "white", "orientation": "vertical", "x": [1.792, 1.91], "y": [-0.798, -0.198], "z": [0.655, 1.855]},
+    {"name": "GIK_C2_East_03", "color": "white", "orientation": "vertical", "x": [1.8592, 1.91], "y": [-1.685, -1.085], "z": [0.795, 1.995]},
+    {"name": "GIK_C2_West_01", "color": "white", "orientation": "vertical", "x": [-1.91, -1.792], "y": [0.089, 0.689], "z": [0.795, 1.995]},
+    {"name": "GIK_C2_West_02", "color": "white", "orientation": "vertical", "x": [-1.91, -1.792], "y": [-0.798, -0.198], "z": [0.655, 1.855]},
+    {"name": "GIK_C2_West_03", "color": "white", "orientation": "vertical", "x": [-1.91, -1.8592], "y": [-1.685, -1.085], "z": [0.795, 1.995]}
+  ],
+  "gik_c1_reference": [
+    {"name": "GIK_C1_East", "color": "grey", "orientation": "vertical", "x": [1.792, 1.91], "y": [-0.798, -0.198], "z": [0.655, 1.855]},
+    {"name": "GIK_C1_West", "color": "grey", "orientation": "vertical", "x": [-1.91, -1.792], "y": [-0.798, -0.198], "z": [0.655, 1.855]},
+    {"name": "GIK_C1_North", "color": "grey", "orientation": "vertical", "x": [-0.27, 0.33], "y": [1.756, 1.874], "z": [0.655, 1.855]}
+  ],
+  "audio": {
+    "left": {"x": -0.66825, "y": -1.1574, "rotation_z_degrees": -30.0},
+    "right": {"x": 0.66825, "y": -1.1574, "rotation_z_degrees": 30.0},
+    "speaker": {"center_z": 1.0965, "size": [0.225, 0.273, 0.345]},
+    "stand_base": {"center_z": 0.015, "size": [0.25, 0.3, 0.03]},
+    "stand_pillar": {"center_z": 0.46, "size": [0.04, 0.1, 0.86]},
+    "stand_top": {"center_z": 0.89, "size": [0.2, 0.25, 0.02]},
+    "iso_puck": {"radius": 0.022, "height": 0.024, "center_z": 0.912, "local_offsets_xy": [[-0.078, 0.103], [-0.078, -0.103], [0.078, 0.103], [0.078, -0.103]]}
+  },
+  "outlets": [
+    {"name": "Outlet_North", "front": "-Y", "x": [-0.39, -0.27], "y": [1.864, 1.874], "z": [1.185, 1.255]},
+    {"name": "Outlet_West_01", "front": "+X", "x": [-1.91, -1.9], "y": [-0.096, 0.024], "z": [0.325, 0.395]},
+    {"name": "Outlet_West_02", "front": "+X", "x": [-1.91, -1.9], "y": [-0.776, -0.656], "z": [0.585, 0.655]},
+    {"name": "Outlet_East_01", "front": "-X", "x": [1.9, 1.91], "y": [0.234, 0.354], "z": [0.725, 0.795]},
+    {"name": "Outlet_East_02", "front": "-X", "x": [1.9, 1.91], "y": [-2.05, -1.93], "z": [0.74, 0.81]},
+    {"name": "Outlet_South_Cabinet", "front": "-X", "x": [1.01, 1.02], "y": [-3.026, -2.906], "z": [0.355, 0.475]}
+  ],
+  "switch": {
+    "plate": {"x": [-1.91, -1.9], "y": [-0.031, 0.089], "z": [1.148, 1.218]},
+    "button": {"x": [-1.9, -1.898], "y": [-0.018, 0.076], "z": [1.161, 1.205]}
+  },
+  "ceiling_light": {
+    "center": [0.0, -0.591, 2.855],
+    "radius": 0.235,
+    "body_height": 0.04,
+    "lumens": 900.0,
+    "color_temperature_kelvin": 4000.0,
+    "eevee_preview_power_watts": 100.0
+  },
+  "textures": {
+    "wood_door": "../../textures/wood_door.jpeg",
+    "iron_door": "../../textures/iron_door.jpg",
+    "gik_grey": "../../textures/gik244_grey.jpeg",
+    "gik_white": "../../textures/gik244_white.jpeg",
+    "kh150_front": "../../textures/kh150_front.jpg",
+    "kh150_back": "../../textures/kh150_back.jpg",
+    "kh750_front": "../../textures/kh750_front.jpg",
+    "kh750_back": "../../textures/kh750_back.jpg",
+    "window_scene": "../../textures/window_scene.png"
+  },
+  "texture_crop_margins": {
+    "kh150_front": [0.0192307692307692, 0.0192307692307692],
+    "kh150_back": [0.0192307692307692, 0.0192307692307692],
+    "kh750_front": [0.0192307692307692, 0.0192307692307692],
+    "kh750_back": [0.0192307692307692, 0.0192307692307692]
+  }
+}
